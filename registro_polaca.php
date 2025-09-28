@@ -1173,18 +1173,15 @@ function polish_registration_form_shortcode() {
             }
 
             .pr-navigation {
-                flex-wrap: nowrap;
-                overflow-x: auto;
-                gap: 6px;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
                 padding: 4px;
                 margin-bottom: 12px;
-                -webkit-overflow-scrolling: touch;
             }
 
             .pr-nav-item {
-                flex: 0 0 auto;
-                min-width: 100px;
-                padding: 8px 12px;
+                padding: 10px 8px;
                 font-size: 11px;
                 white-space: nowrap;
             }
@@ -1363,15 +1360,15 @@ function polish_registration_form_shortcode() {
             }
 
             .pr-navigation {
-                gap: 4px;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
                 padding: 3px;
             }
 
             .pr-nav-item {
-                min-width: 85px;
-                padding: 8px 10px;
+                padding: 10px 6px;
                 font-size: 10px;
-                gap: 4px;
+                gap: 3px;
             }
 
             .pr-tramite-option {
