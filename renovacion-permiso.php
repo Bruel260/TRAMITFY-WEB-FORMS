@@ -389,15 +389,15 @@ function navigation_permit_renewal_form_shortcode() {
         /* Upload section */
         .npn-upload-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-            margin: 12px 0;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
         }
 
         .npn-upload-item {
             background: #f8f9fa;
-            padding: 12px;
-            border-radius: 8px;
+            padding: 25px;
+            border-radius: 12px;
             border: 2px dashed rgb(var(--neutral-300));
             transition: all 0.3s ease;
         }
@@ -410,9 +410,9 @@ function navigation_permit_renewal_form_shortcode() {
         .npn-upload-item label {
             display: block;
             font-weight: 600;
-            margin-bottom: 6px;
+            margin-bottom: 12px;
             color: rgb(var(--neutral-800));
-            font-size: 12px;
+            font-size: 15px;
         }
 
         .npn-upload-item input[type="file"] {
@@ -437,9 +437,47 @@ function navigation_permit_renewal_form_shortcode() {
             text-decoration: underline;
         }
 
+        /* Layout 2 columnas para autorización */
+        .npn-auth-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin: 20px 0;
+        }
+
+        .npn-auth-document {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.7;
+            border: 2px solid rgb(var(--neutral-200));
+        }
+
+        .npn-auth-document h4 {
+            font-size: 16px;
+            font-weight: 700;
+            color: rgb(var(--primary));
+            margin-bottom: 15px;
+        }
+
+        .npn-auth-signature-area {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .npn-signature-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgb(var(--neutral-700));
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
         /* Firma */
         .npn-signature-container {
-            margin: 20px 0;
+            margin: 0;
             text-align: center;
         }
 
@@ -447,12 +485,10 @@ function navigation_permit_renewal_form_shortcode() {
             border: 3px solid rgb(var(--primary));
             border-radius: 8px;
             width: 100%;
-            max-width: 600px;
-            height: 200px;
+            height: 180px;
             cursor: crosshair;
             background: white;
             box-shadow: 0 2px 8px rgba(var(--primary), 0.15);
-            margin: 0 auto;
         }
 
         .npn-signature-clear {
@@ -700,6 +736,11 @@ function navigation_permit_renewal_form_shortcode() {
                 grid-template-columns: 1fr;
             }
 
+            .npn-auth-layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
             .npn-button-group {
                 flex-direction: column;
             }
@@ -913,17 +954,26 @@ function navigation_permit_renewal_form_shortcode() {
                 <div id="page-authorization" class="npn-form-page hidden">
                     <h3><i class="fa-solid fa-signature"></i> Autorización y Firma</h3>
 
-                    <div id="authorization-document" style="background:#f8f9fa; padding:20px 25px; border-radius:10px; margin:25px 0; font-size:14px; line-height:1.7;">
-                        <p><strong>AUTORIZACIÓN PARA TRAMITACIÓN</strong></p>
-                        <p>Yo, <strong id="auth-name">[Nombre]</strong>, con DNI <strong id="auth-dni">[DNI]</strong>, autorizo a TRAMITFY para que, en mi nombre y representación, gestione ante las autoridades competentes la renovación de mi permiso de navegación.</p>
-                        <p>Me comprometo a aportar toda la documentación necesaria y a abonar las tasas correspondientes.</p>
-                    </div>
+                    <div class="npn-auth-layout">
+                        <!-- Documento de autorización (izquierda) -->
+                        <div class="npn-auth-document">
+                            <h4>AUTORIZACIÓN PARA TRAMITACIÓN</h4>
+                            <p>Yo, <strong id="auth-name">[Nombre]</strong>, con DNI/NIE <strong id="auth-dni">[DNI]</strong>, autorizo a <strong>TRAMITFY</strong> para que, en mi nombre y representación, gestione ante las autoridades competentes la renovación de mi permiso de navegación.</p>
+                            <p style="margin-top: 15px;">Me comprometo a aportar toda la documentación necesaria y a abonar las tasas correspondientes.</p>
+                        </div>
 
-                    <div class="npn-signature-container">
-                        <canvas id="signature-pad" width="600" height="200"></canvas>
-                        <button type="button" class="npn-signature-clear" id="clear-signature">
-                            <i class="fa-solid fa-eraser"></i> Limpiar Firma
-                        </button>
+                        <!-- Área de firma (derecha) -->
+                        <div class="npn-auth-signature-area">
+                            <div class="npn-signature-label">
+                                <i class="fa-solid fa-pen-to-square"></i> Firme aquí para autorizar
+                            </div>
+                            <div class="npn-signature-container">
+                                <canvas id="signature-pad" width="600" height="180"></canvas>
+                                <button type="button" class="npn-signature-clear" id="clear-signature">
+                                    <i class="fa-solid fa-eraser"></i> Limpiar Firma
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="npn-terms">
@@ -1269,7 +1319,7 @@ function navigation_permit_renewal_form_shortcode() {
                         const ctx = canvas.getContext('2d');
                         ctx.font = '30px cursive';
                         ctx.fillStyle = '#000';
-                        ctx.fillText('Admin Test', 50, 100);
+                        ctx.fillText('Admin Test', 50, 90);
                     }, 300);
 
                     alert('✅ Formulario auto-rellenado. Los archivos deben subirse manualmente.');
