@@ -806,6 +806,9 @@ function polish_registration_form_shortcode() {
             cursor: crosshair;
             background: white;
             box-shadow: 0 2px 8px rgba(var(--primary), 0.15);
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         /* Botón ampliar para móvil */
@@ -822,6 +825,12 @@ function polish_registration_form_shortcode() {
             cursor: pointer;
             margin-bottom: 15px;
             transition: all 0.3s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .pr-expand-signature-btn:active {
+            transform: scale(0.98);
         }
 
         .pr-signature-controls {
@@ -839,6 +848,8 @@ function polish_registration_form_shortcode() {
             font-weight: 500;
             font-size: 13px;
             transition: all 0.2s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .pr-clear-signature {
@@ -872,11 +883,17 @@ function polish_registration_form_shortcode() {
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.9);
-            z-index: 9999999;
+            z-index: 9999999 !important;
             display: none;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            overflow: hidden;
+            overscroll-behavior: contain;
+        }
+
+        .pr-signature-modal.active {
+            display: flex !important;
         }
 
         .pr-signature-modal-content {
@@ -886,6 +903,8 @@ function polish_registration_form_shortcode() {
             width: 100%;
             max-width: 800px;
             text-align: center;
+            touch-action: pan-y;
+            overscroll-behavior: contain;
         }
 
         .pr-signature-modal h3 {
@@ -901,6 +920,10 @@ function polish_registration_form_shortcode() {
             cursor: crosshair;
             background: white;
             margin-bottom: 20px;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .pr-signature-guide {
@@ -1324,6 +1347,11 @@ function polish_registration_form_shortcode() {
             #signature-pad-fullscreen {
                 height: 300px;
                 margin-bottom: 15px;
+                touch-action: none;
+            }
+
+            .pr-signature-modal {
+                padding: 10px;
             }
 
             .pr-payment-modal {
@@ -1418,6 +1446,21 @@ function polish_registration_form_shortcode() {
 
             #signature-pad-fullscreen {
                 height: 250px;
+                touch-action: none;
+            }
+
+            .pr-signature-modal-content {
+                padding: 10px;
+            }
+
+            .pr-signature-modal h3 {
+                font-size: 16px;
+                margin-bottom: 10px;
+            }
+
+            .pr-signature-modal p {
+                font-size: 12px;
+                margin-bottom: 15px;
             }
         }
     </style>
@@ -2037,7 +2080,10 @@ function polish_registration_form_shortcode() {
                     backgroundColor: 'rgb(255, 255, 255)',
                     penColor: 'rgb(0, 0, 0)',
                     minWidth: 0.8,
-                    maxWidth: 3.5
+                    maxWidth: 3.5,
+                    velocityFilterWeight: 0.7,
+                    minDistance: 5,
+                    throttle: 0
                 });
 
                 signaturePad.addEventListener('beginStroke', function() {
@@ -2045,19 +2091,32 @@ function polish_registration_form_shortcode() {
                 });
             }
 
-            // Configurar canvas de firma fullscreen
+            // Configurar canvas de firma fullscreen con parámetros optimizados para móvil
             const canvasFullscreen = document.getElementById('signature-pad-fullscreen');
             if (canvasFullscreen) {
                 signaturePadFullscreen = new SignaturePad(canvasFullscreen, {
                     backgroundColor: 'rgb(255, 255, 255)',
                     penColor: 'rgb(0, 0, 0)',
-                    minWidth: 1.0,
-                    maxWidth: 4.0
+                    minWidth: 1.5,
+                    maxWidth: 4.5,
+                    velocityFilterWeight: 0.5,
+                    minDistance: 3,
+                    throttle: 0,
+                    dotSize: 2
                 });
 
                 signaturePadFullscreen.addEventListener('beginStroke', function() {
                     document.getElementById('confirm-fullscreen-signature-btn').disabled = false;
                 });
+
+                // Prevenir scroll durante firma en canvas fullscreen
+                canvasFullscreen.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                }, { passive: false });
+
+                canvasFullscreen.addEventListener('touchmove', function(e) {
+                    e.preventDefault();
+                }, { passive: false });
             }
 
             // Redimensionar canvas cuando sea necesario
@@ -2197,35 +2256,72 @@ function polish_registration_form_shortcode() {
 
         // Funciones de firma
         function openSignatureModal() {
-            document.getElementById('signature-modal').style.display = 'flex';
+            const modal = document.getElementById('signature-modal');
+            modal.classList.add('active');
+            modal.style.display = 'flex';
 
-            // Ocultar WhatsApp Ninja (múltiples selectores posibles)
+            // Prevenir scroll del body
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
+
+            // Ocultar WhatsApp Ninja de forma agresiva (múltiples selectores)
             const whatsappSelectors = [
                 '.wp-whatsapp-chat',
                 '#whatsapp-chat-widget',
                 '.whatsapp-button',
                 '.wa-chat-box',
                 '.wa-chat-button',
+                '.wa-widget',
+                '.wa-chat-bubble',
                 '[id*="whatsapp"]',
-                '[class*="whatsapp"]'
+                '[class*="whatsapp"]',
+                '[class*="wa-"]',
+                '.ctc-analytics',
+                '#ctc_chat'
             ];
 
             whatsappSelectors.forEach(selector => {
-                const element = document.querySelector(selector);
-                if (element) {
-                    element.style.display = 'none';
-                    element.setAttribute('data-hidden-by-modal', 'true');
+                try {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(element => {
+                        if (element && !element.closest('.pr-signature-modal')) {
+                            element.style.setProperty('display', 'none', 'important');
+                            element.style.setProperty('visibility', 'hidden', 'important');
+                            element.style.setProperty('opacity', '0', 'important');
+                            element.style.setProperty('z-index', '-1', 'important');
+                            element.setAttribute('data-hidden-by-modal', 'true');
+                        }
+                    });
+                } catch (e) {
+                    console.log('Selector no válido:', selector);
                 }
             });
+
+            // Limpiar firma al abrir modal
+            if (signaturePadFullscreen) {
+                signaturePadFullscreen.clear();
+                document.getElementById('confirm-fullscreen-signature-btn').disabled = true;
+            }
         }
 
         function closeSignatureModal() {
-            document.getElementById('signature-modal').style.display = 'none';
+            const modal = document.getElementById('signature-modal');
+            modal.classList.remove('active');
+            modal.style.display = 'none';
+
+            // Restaurar scroll del body
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
 
             // Restaurar WhatsApp Ninja
             const hiddenElements = document.querySelectorAll('[data-hidden-by-modal="true"]');
             hiddenElements.forEach(element => {
-                element.style.display = '';
+                element.style.removeProperty('display');
+                element.style.removeProperty('visibility');
+                element.style.removeProperty('opacity');
+                element.style.removeProperty('z-index');
                 element.removeAttribute('data-hidden-by-modal');
             });
         }
