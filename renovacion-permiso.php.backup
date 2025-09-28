@@ -880,14 +880,9 @@ function navigation_permit_renewal_form_shortcode() {
                     // Extraer el importe final del elemento (quitar el símbolo € y espacios)
                     let finalAmountText = document.getElementById('final-amount').textContent;
                     let finalAmountNumeric = parseFloat(finalAmountText.replace('€','').trim());
-                    formData.append('finalAmount', finalAmountNumeric);
-                    formData.append('hasSignature', 'true');
-                    formData.append('renewalType', document.getElementById('renewal_type').value);
-                    formData.append('couponCode', document.getElementById('coupon_code')?.value || '');
-                    formData.append('termsAccept', 'true');
+                    formData.append('final_amount', finalAmountNumeric);
 
-                    // Enviar a API Tramitfy
-                    fetch('https://46-202-128-35.sslip.io/api/herramientas/permiso-navegacion/webhook', {
+                    fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
                         method: 'POST',
                         body: formData
                     })
@@ -895,10 +890,10 @@ function navigation_permit_renewal_form_shortcode() {
                     .then(data => {
                         document.getElementById('loading-overlay').style.display = 'none';
                         if (data.success) {
-                            alert(`Formulario enviado con éxito. ID del trámite: ${data.tramiteId}`);
-                            window.location.href = `https://46-202-128-35.sslip.io/seguimiento/${data.id}`;
+                            alert('Formulario enviado con éxito.');
+                            window.location.href = '<?php echo site_url('/pago-realizado-con-exito'); ?>';
                         } else {
-                            alert('Error al enviar el formulario: ' + (data.error || 'Error desconocido'));
+                            alert('Error al enviar el formulario: ' + data.message);
                         }
                     })
                     .catch(error => {
