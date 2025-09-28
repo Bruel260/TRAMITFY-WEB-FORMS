@@ -1,0 +1,27 @@
+# Archivos sensibles con credenciales
+credentials.json
+*.env
+.env
+.env.local
+
+# Archivos de backup con claves
+*backup*.php
+*-backup.php
+
+# Composer vendor
+vendor/
+composer.phar
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+tramitfy-test.log
+
+# Archivos tar
+*.tar
+
+# WordPress cache
+wp-cache-config.php
+advanced-cache.php

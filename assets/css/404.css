@@ -1,0 +1,59 @@
+.error404 .page_content {
+	margin-top: 20px
+}
+html[dir="rtl"]:not(html[lang="ar"]) .error404 .page_content {
+	margin-top: 40px
+}
+.codevz-404 {
+	text-align: center
+}
+.codevz-404 span {
+	font-size: 400px;
+	background-clip: text;
+	color: transparent !important;
+	background-image: linear-gradient(#676767 0%, transparent 75%)
+}
+.codevz-404 small {
+	width: 50%;
+	display: table;
+	font-size: 38px;
+	font-weight: bold;
+	margin: -160px auto 0
+}
+.error404 .clr > .button {
+	display: table;
+	margin: 50px auto 20px;
+	transform: scale(.9)
+}
+
+@media screen and (max-width: 768px) {
+
+	.codevz-404 span {
+		font-size: 250px
+	}
+	.codevz-404 small {
+		font-size: 20px;
+		margin-top: -80px
+	}
+	.error404 .content .button {
+		font-size: 14px;
+		margin-top: 30px
+	}
+
+}
+
+@media screen and (max-width: 480px) {
+
+	.codevz-404 span {
+		font-size: 130px
+	}
+	.codevz-404 small {
+		width: 85%;
+		font-size: 16px;
+		margin-top: -30px
+	}
+	.error404 .content .button {
+		font-size: 12px
+	}
+
+}

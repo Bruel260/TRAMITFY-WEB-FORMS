@@ -1,0 +1,1471 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Codevz strings\n"
+"POT-Creation-Date: 2024-09-21 00:51+0330\n"
+"PO-Revision-Date: 2024-09-21 00:52+0330\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
+"&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
+"X-Generator: Poedit 3.5\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-KeywordsList: _e;_n;esc_html_e;esc_attr_e;_n_noop;esc_html__;"
+"esc_attr__\n"
+"X-Poedit-SearchPath-0: .\n"
+
+#: classes/class-config.php:18
+msgid "XTRA"
+msgstr "إكسترا"
+
+#: classes/class-config.php:103
+msgid "gadgets"
+msgstr "أدوات"
+
+#: classes/class-config.php:113
+msgid "supermarket"
+msgstr "سوبر ماركت"
+
+#: classes/class-config.php:123
+msgid "book-shop"
+msgstr "متجر الكتب"
+
+#: classes/class-config.php:133
+msgid "portfolio"
+msgstr "معرض الأعمال"
+
+#: classes/class-config.php:143
+msgid "Photographer 2"
+msgstr "مصور ٢"
+
+#: classes/class-config.php:153
+msgid "agency-2"
+msgstr "وكالة ٢"
+
+#: classes/class-config.php:163
+msgid "photography3"
+msgstr "تصوير ٣"
+
+#: classes/class-config.php:173
+msgid "camping-adventures"
+msgstr "مغامرات التخييم"
+
+#: classes/class-config.php:183
+msgid "logo-portfolio"
+msgstr "شعار معرض الأعمال"
+
+#: classes/class-config.php:193
+msgid "metro-blog"
+msgstr "مدونة مترو"
+
+#: classes/class-config.php:203
+msgid "game"
+msgstr "لعبة"
+
+#: classes/class-config.php:213
+msgid "cryptocurrency"
+msgstr "العملات الرقمية"
+
+#: classes/class-config.php:228
+msgid "Mechanic 2"
+msgstr "ميكانيكي ٢"
+
+#: classes/class-config.php:236
+msgid "SEO 3"
+msgstr "تحسين محركات البحث ٣"
+
+#: classes/class-config.php:244
+msgid "Logistic 2"
+msgstr "اللوجستيات ٢"
+
+#: classes/class-config.php:252
+msgid "Home Renovation 2"
+msgstr "تجديد المنزل ٢"
+
+#: classes/class-config.php:260
+msgid "SPA 2"
+msgstr "منتجع صحي ٢"
+
+#: classes/class-config.php:268
+msgid "Application 3"
+msgstr "التفعيل ٣"
+
+#: classes/class-config.php:276
+msgid "Fashion Shop 2"
+msgstr "متجر أزياء ٢"
+
+#: classes/class-config.php:284
+msgid "Gardening 2"
+msgstr "البستنة ٢"
+
+#: classes/class-config.php:292
+msgid "Medical 2"
+msgstr "طبي ٢"
+
+#: classes/class-config.php:300
+msgid "Business 6"
+msgstr "عمل ٦"
+
+#: classes/class-config.php:308
+msgid "Dentist 2"
+msgstr "طبيب الأسنان ٢"
+
+#: classes/class-config.php:316
+msgid "Digital Marketing 2"
+msgstr "التسويق الرقمي ٢"
+
+#: classes/class-config.php:324
+msgid "Construction 3"
+msgstr "البناء ٣"
+
+#: classes/class-config.php:332
+msgid "Horse Club"
+msgstr "نادي الخيول"
+
+#: classes/class-config.php:340
+msgid "Barber 2"
+msgstr "حلاق ٢"
+
+#: classes/class-config.php:349
+msgid "Big Shop"
+msgstr "متجر كبير"
+
+#: classes/class-config.php:357
+msgid "Furniture Shop 2"
+msgstr "متجر الأثاث ٢"
+
+#: classes/class-config.php:366
+msgid "app-2"
+msgstr "تطبيق ٢"
+
+#: classes/class-config.php:374
+msgid "pet-shop"
+msgstr "متجر الحيوانات الأليفة"
+
+#: classes/class-config.php:382
+msgid "event"
+msgstr "حدث"
+
+#: classes/class-config.php:391
+msgid "car-rental"
+msgstr "تأجير سيارات"
+
+#: classes/class-config.php:399
+msgid "factory-2"
+msgstr "مصنع ٢"
+
+#: classes/class-config.php:407
+msgid "beauty-salon-2"
+msgstr "صالون تجميل ٢"
+
+#: classes/class-config.php:415
+msgid "music-and-band"
+msgstr "الموسيقى والفرقة"
+
+#: classes/class-config.php:423
+msgid "nail-salon"
+msgstr "صالون الأظافر"
+
+#: classes/class-config.php:431
+msgid "perfume-shop"
+msgstr "متجر العطور"
+
+#: classes/class-config.php:439
+msgid "watch-shop"
+msgstr "متجر الساعات"
+
+#: classes/class-config.php:448
+msgid "flower-shop"
+msgstr "متجر الزهور"
+
+#: classes/class-config.php:456
+msgid "magazine"
+msgstr "مجلة"
+
+#: classes/class-config.php:464
+msgid "architect-2"
+msgstr "مهندس معماري ٢"
+
+#: classes/class-config.php:472
+msgid "photographer"
+msgstr "مصور"
+
+#: classes/class-config.php:480
+msgid "elderly-care"
+msgstr "رعاية المسنين"
+
+#: classes/class-config.php:488
+msgid "investment"
+msgstr "استثمار"
+
+#: classes/class-config.php:496
+msgid "dance"
+msgstr "رقص"
+
+#: classes/class-config.php:504
+msgid "business-5"
+msgstr "عمل ٥"
+
+#: classes/class-config.php:512
+msgid "construction-2"
+msgstr "البناء ٢"
+
+#: classes/class-config.php:520
+msgid "advisor"
+msgstr "مستشار"
+
+#: classes/class-config.php:528
+msgid "seo-2"
+msgstr "تحسين محركات البحث ٢"
+
+#: classes/class-config.php:537
+msgid "personal-blog-2"
+msgstr "مدونة شخصية ٢"
+
+#: classes/class-config.php:545
+msgid "insurance"
+msgstr "تأمين"
+
+#: classes/class-config.php:553
+msgid "corporate-2"
+msgstr "شركة ٢"
+
+#: classes/class-config.php:561
+msgid "business-4"
+msgstr "عمل ٤"
+
+#: classes/class-config.php:569
+msgid "startup"
+msgstr "شركة ناشئة"
+
+#: classes/class-config.php:578
+msgid "medical"
+msgstr "طبي"
+
+#: classes/class-config.php:586
+msgid "factory"
+msgstr "مصنع"
+
+#: classes/class-config.php:594
+msgid "furniture"
+msgstr "أثاث"
+
+#: classes/class-config.php:602
+msgid "carwash"
+msgstr "غسيل سيارات"
+
+#: classes/class-config.php:610
+msgid "rims"
+msgstr "إطارات"
+
+#: classes/class-config.php:618
+msgid "jewelry"
+msgstr "مجوهرات"
+
+#: classes/class-config.php:626
+msgid "church"
+msgstr "كنيسة"
+
+#: classes/class-config.php:634
+msgid "yoga"
+msgstr "يوغا"
+
+#: classes/class-config.php:642
+msgid "moving"
+msgstr "نقل"
+
+#: classes/class-config.php:650
+msgid "plumbing"
+msgstr "سباكة"
+
+#: classes/class-config.php:658
+msgid "travel"
+msgstr "سفر"
+
+#: classes/class-config.php:666
+msgid "beauty-salon"
+msgstr "صالون تجميل"
+
+#: classes/class-config.php:674
+msgid "home-renovation"
+msgstr "تجديد المنزل"
+
+#: classes/class-config.php:682
+msgid "creative-business"
+msgstr "عمل إبداعي"
+
+#: classes/class-config.php:690
+msgid "mechanic"
+msgstr "ميكانيكي"
+
+#: classes/class-config.php:698
+msgid "lawyer"
+msgstr "محامي"
+
+#: classes/class-config.php:706
+msgid "web-agency"
+msgstr "وكالة ويب"
+
+#: classes/class-config.php:714
+msgid "gardening"
+msgstr "البستنة"
+
+#: classes/class-config.php:722
+msgid "corporate"
+msgstr "شركة"
+
+#: classes/class-config.php:730
+msgid "business-3"
+msgstr "عمل ٣"
+
+#: classes/class-config.php:738
+msgid "digital-marketing"
+msgstr "التسويق الرقمي"
+
+#: classes/class-config.php:746
+msgid "business-classic"
+msgstr "عمل كلاسيكي"
+
+#: classes/class-config.php:754
+msgid "charity"
+msgstr "جمعية خيرية"
+
+#: classes/class-config.php:762
+msgid "creative-studio"
+msgstr "استوديو إبداعي"
+
+#: classes/class-config.php:770
+msgid "kids"
+msgstr "أطفال"
+
+#: classes/class-config.php:778
+msgid "smart-home"
+msgstr "منزل ذكي"
+
+#: classes/class-config.php:786
+msgid "logistic"
+msgstr "لوجستيات"
+
+#: classes/class-config.php:794
+msgid "industrial"
+msgstr "صناعي"
+
+#: classes/class-config.php:802
+msgid "tattoo"
+msgstr "وشم"
+
+#: classes/class-config.php:810
+msgid "personal-blog"
+msgstr "مدونة شخصية"
+
+#: classes/class-config.php:819
+msgid "cleaning"
+msgstr "تنظيف"
+
+#: classes/class-config.php:827
+msgid "parallax"
+msgstr "منظر متحرك"
+
+#: classes/class-config.php:835
+msgid "3d-portfolio"
+msgstr "معرض أعمال ثلاثي الأبعاد"
+
+#: classes/class-config.php:843
+msgid "agency"
+msgstr "وكالة"
+
+#: classes/class-config.php:851
+msgid "spa"
+msgstr "سبا"
+
+#: classes/class-config.php:859
+msgid "app"
+msgstr "تطبيق"
+
+#: classes/class-config.php:867
+msgid "architect"
+msgstr "مهندس معماري"
+
+#: classes/class-config.php:875
+msgid "barber"
+msgstr "حلاق"
+
+#: classes/class-config.php:883
+msgid "building"
+msgstr "مبنى"
+
+#: classes/class-config.php:891
+msgid "business"
+msgstr "عمل"
+
+#: classes/class-config.php:899
+msgid "coffee"
+msgstr "قهوة"
+
+#: classes/class-config.php:907
+msgid "conference"
+msgstr "مؤتمر"
+
+#: classes/class-config.php:915
+msgid "business-2"
+msgstr "عمل ۲"
+
+#: classes/class-config.php:923
+msgid "construction"
+msgstr "بناء"
+
+#: classes/class-config.php:931
+msgid "cryptocurrency-2"
+msgstr "العملة المشفرة ۲"
+
+#: classes/class-config.php:939
+msgid "cv-resume"
+msgstr "السيرة الذاتية"
+
+#: classes/class-config.php:948
+msgid "dentist"
+msgstr "طبيب الأسنان"
+
+#: classes/class-config.php:956
+msgid "fashion-shop"
+msgstr "متجر الأزياء"
+
+#: classes/class-config.php:964
+msgid "fast-food"
+msgstr "وجبات سريعة"
+
+#: classes/class-config.php:972
+msgid "finance"
+msgstr "التمويل"
+
+#: classes/class-config.php:980
+msgid "gym"
+msgstr "نادي رياضي"
+
+#: classes/class-config.php:988
+msgid "hosting"
+msgstr "الاستضافة"
+
+#: classes/class-config.php:996
+msgid "hotel"
+msgstr "فندق"
+
+#: classes/class-config.php:1004
+msgid "interior"
+msgstr "تصميم داخلي"
+
+#: classes/class-config.php:1012
+msgid "lawyers"
+msgstr "محامون"
+
+#: classes/class-config.php:1020
+msgid "music"
+msgstr "موسيقى"
+
+#: classes/class-config.php:1028
+msgid "photography"
+msgstr "التصوير الفوتوغرافي"
+
+#: classes/class-config.php:1036
+msgid "photography2"
+msgstr "التصوير الفوتوغرافي ۲"
+
+#: classes/class-config.php:1044
+msgid "plastic-surgery"
+msgstr "جراحة تجميلية"
+
+#: classes/class-config.php:1052
+msgid "restaurant"
+msgstr "مطعم"
+
+#: classes/class-config.php:1060
+msgid "dubai-investment"
+msgstr "استثمار دبي"
+
+#: classes/class-config.php:1068
+msgid "seo"
+msgstr "تحسين محركات البحث"
+
+#: classes/class-config.php:1076
+msgid "single-shop"
+msgstr "متجر واحد"
+
+#: classes/class-config.php:1084
+msgid "wedding"
+msgstr "زفاف"
+
+#: classes/class-config.php:1090
+msgid "winery"
+msgstr "معمل نبيذ"
+
+#: classes/class-config.php:1092
+msgid "winery demo"
+msgstr "عرض تجريبي للمعمل"
+
+#: classes/class-strings.php:55
+msgid "Codevz Plus"
+msgstr "كودفز بلس"
+
+#: classes/class-strings.php:56
+msgid "StyleKit, custom post types, options and page builder elements."
+msgstr "ستايل كيت، أنواع المنشورات المخصصة، الخيارات وعناصر بناء الصفحات."
+
+#: classes/class-strings.php:57
+msgid "Home"
+msgstr "الرئيسية"
+
+#: classes/class-strings.php:58
+msgid "Primary"
+msgstr "أساسي"
+
+#: classes/class-strings.php:59
+msgid "Secondary"
+msgstr "ثانوي"
+
+#: classes/class-strings.php:60 classes/class-strings.php:182
+msgid "Footer"
+msgstr "تذييل"
+
+#: classes/class-strings.php:61
+msgid "Offcanvas"
+msgstr "منزلق"
+
+#: classes/class-strings.php:62
+msgid "Shop primary"
+msgstr "المتجر الأساسي"
+
+#: classes/class-strings.php:63
+msgid "Shop secondary"
+msgstr "المتجر الثانوي"
+
+#: classes/class-strings.php:64
+msgid "Portfolio primary"
+msgstr "المعرض الأساسي"
+
+#: classes/class-strings.php:65
+msgid "Portfolio secondary"
+msgstr "المعرض الثانوي"
+
+#: classes/class-strings.php:66
+msgid "Add widgets here to appear in your"
+msgstr "أضف الأدوات هنا لتظهر في"
+
+#: classes/class-strings.php:67
+msgid "GO PRO"
+msgstr ""
+
+#: classes/class-strings.php:68
+msgid "PRO"
+msgstr ""
+
+#: classes/class-strings.php:69 classes/class-strings.php:159
+msgid "FREE"
+msgstr "مجاني"
+
+#: classes/class-strings.php:70
+msgid "Activate your theme to access premium demos"
+msgstr "فعِّل قالبك للوصول إلى العروض التوضيحية المميزة"
+
+#: classes/class-strings.php:71
+#, php-format
+msgid "Thank you for installing %s theme."
+msgstr "شكراً لك على تثبيت سمة %s."
+
+#: classes/class-strings.php:72
+msgid ""
+"Install the theme plugin to access the demo importer, elements, and other "
+"features."
+msgstr ""
+"ثبِّت إضافة القالب للوصول إلى المستورد التجريبي والعناصر والميزات الأخرى."
+
+#: classes/class-strings.php:73
+msgid "Install theme plugin"
+msgstr "تثبيت المكوِّن الإضافي للقالب"
+
+#: classes/class-strings.php:74
+msgid "Installing, It may take a minute"
+msgstr "التثبيت، قد يستغرق الأمر دقيقة"
+
+#: classes/class-strings.php:75
+msgid "Not active"
+msgstr "غير فعال"
+
+#: classes/class-strings.php:76 classes/class-strings.php:101
+msgid "Activated"
+msgstr "تم تفعيله"
+
+#: classes/class-strings.php:77
+msgid "Author posts"
+msgstr "مؤلف"
+
+#: classes/class-strings.php:78
+msgid "View all posts"
+msgstr "عرض جميع المشاركات"
+
+#: classes/class-strings.php:79
+msgid "Nothing Found"
+msgstr "لم يتم العثور على شيء"
+
+#: classes/class-strings.php:80
+msgid "Search"
+msgstr "البحث"
+
+#: classes/class-strings.php:81
+msgid "No comment"
+msgstr "لا يوجد تعليق"
+
+#: classes/class-strings.php:82
+msgid "Comment"
+msgstr "تعليق"
+
+#: classes/class-strings.php:83
+msgid "Comments"
+msgstr "تعليق"
+
+#: classes/class-strings.php:84
+msgid "Activation"
+msgstr "التفعيل"
+
+#: classes/class-strings.php:85
+msgid "Demo Importer"
+msgstr "مستورد تجريبي"
+
+#: classes/class-strings.php:86
+msgid "Page Importer"
+msgstr "مستورد الصفحة"
+
+#: classes/class-strings.php:87 classes/class-strings.php:143
+msgid "Install Plugins"
+msgstr "تثبيت الإضافات"
+
+#: classes/class-strings.php:88
+msgid "Theme Options"
+msgstr "خيارات القالب"
+
+#: classes/class-strings.php:89 classes/class-strings.php:211
+msgid "System Status"
+msgstr "حالة النظام"
+
+#: classes/class-strings.php:90
+msgid "Uninstall Demo"
+msgstr "إلغاء التثبيت التجريبي"
+
+#: classes/class-strings.php:91
+msgid "Report a bug"
+msgstr "الإبلاغ عن خلل"
+
+#: classes/class-strings.php:92
+msgid "Elementor Page Builder"
+msgstr "صانع الصفحات اليمنتر"
+
+#: classes/class-strings.php:93
+msgid "WPBakery Page Builder"
+msgstr "مطوّر الصفحات WPBakery"
+
+#: classes/class-strings.php:94 classes/class-strings.php:108
+msgid "Revolution Slider"
+msgstr "سلايدر الثورة"
+
+#: classes/class-strings.php:95
+msgid "Woocommerce"
+msgstr "ووكومرس"
+
+#: classes/class-strings.php:96
+msgid "Contact Form 7"
+msgstr "نموذج الاتصال ٧"
+
+#: classes/class-strings.php:97
+msgid "LiteSpeed Cache"
+msgstr "ذاكرة التخزين المؤقت لايت سبيد"
+
+#: classes/class-strings.php:98
+msgid "of"
+msgstr ""
+
+#: classes/class-strings.php:99
+msgid "Close"
+msgstr "إغلاق"
+
+#: classes/class-strings.php:100
+msgid "Installing"
+msgstr "تثبيت"
+
+#: classes/class-strings.php:102
+msgid "Importing"
+msgstr "استيراد"
+
+#: classes/class-strings.php:103
+msgid "Imported"
+msgstr "مستورد"
+
+#: classes/class-strings.php:104
+msgid "Downloading"
+msgstr "تحميل"
+
+#: classes/class-strings.php:105
+msgid "Demo Files"
+msgstr "ملفات العرض التجريبي"
+
+#: classes/class-strings.php:106
+msgid "Downloaded"
+msgstr "تم تحميله"
+
+#: classes/class-strings.php:107
+msgid "Widgets"
+msgstr "الويدجتات"
+
+#: classes/class-strings.php:109
+msgid "Pages & Posts"
+msgstr "الصفحات والمشاركات"
+
+#: classes/class-strings.php:110
+msgid "Images"
+msgstr "الصور"
+
+#: classes/class-strings.php:111
+msgid ""
+"PHP error 500, Internal server error, Please check your server error log "
+"file or contact with support."
+msgstr ""
+"خطأ PHP ٥٠٠، خطأ داخلي في الخادم، يرجى التحقق من ملف سجل أخطاء الخادم الخاص "
+"بك أو الاتصال بالدعم."
+
+#: classes/class-strings.php:112
+msgid ""
+"PHP error 503, Internal server error, Please try again with same import demo."
+msgstr ""
+"خطأ PHP ٥٠٣، خطأ داخلي في الخادم، يرجى المحاولة مرة أخرى بنفس العرض التجريبي."
+
+#: classes/class-strings.php:113
+msgid ""
+"An error has occured, Please deactivate all plugins except theme plugins and "
+"try again, If still have same issue, Please submit ticket to theme author."
+msgstr ""
+"حدث خطأ، يرجى تعطيل جميع الإضافات باستثناء إضافات القالب ثم المحاولة مرة "
+"أخرى. إذا استمرت المشكلة، يرجى تقديم تذكرة إلى مؤلف القالب."
+
+#: classes/class-strings.php:114
+msgid "Choose at least one feature to import."
+msgstr "اختر ميزة واحدة على الأقل للاستيراد."
+
+#: classes/class-strings.php:115
+msgid "Message box is empty, Please fill the box then submit."
+msgstr "صندوق الرسالة فارغ، يرجى ملء الصندوق ثم الإرسال."
+
+#: classes/class-strings.php:116
+msgid "URL input is empty, Please fill the input then submit."
+msgstr "مدخل URL فارغ، يرجى ملء المدخل ثم الإرسال."
+
+#: classes/class-strings.php:117
+#, php-format
+msgid "Welcome to %s WordPress Theme"
+msgstr "مرحبًا بك في قالب ووردبريس %s"
+
+#: classes/class-strings.php:118
+msgid "Current version:"
+msgstr "النسخة الحالية:"
+
+#: classes/class-strings.php:119
+msgid "Documentation"
+msgstr "المستندات"
+
+#: classes/class-strings.php:120
+msgid "Video Tutorials"
+msgstr "فيديو للدراسة"
+
+#: classes/class-strings.php:121
+msgid "Change Log"
+msgstr "سجل التغيير"
+
+#: classes/class-strings.php:122
+msgid "Support"
+msgstr "يدعم"
+
+#: classes/class-strings.php:123
+msgid "F.A.Q"
+msgstr "الأسئلة الشائعة"
+
+#: classes/class-strings.php:124
+msgid "Activation Certificate"
+msgstr "شهادة التفعيل"
+
+#: classes/class-strings.php:125
+msgid "Deregister License"
+msgstr "إلغاء تسجيل الترخيص"
+
+#: classes/class-strings.php:126
+msgid "Your Purchase Code"
+msgstr "رمز الشراء الخاص بك"
+
+#: classes/class-strings.php:127
+msgid "Purchase date:"
+msgstr "تاريخ الشراء:"
+
+#: classes/class-strings.php:128
+msgid "Support until:"
+msgstr "الدعم حتى:"
+
+#: classes/class-strings.php:129
+msgid ""
+"Your support has been expired, Click on below link and extend your support."
+msgstr "انتهى دعمك، انقر على الرابط أدناه واطلب تمديد دعمك."
+
+#: classes/class-strings.php:130
+msgid "Buy extended support or new license"
+msgstr "اشترِ دعمًا ممتدًا أو ترخيصًا جديدًا"
+
+#: classes/class-strings.php:131
+msgid "License Activation"
+msgstr "تفعيل الترخيص"
+
+#: classes/class-strings.php:132
+msgid "The license code for this website has been deregistered successfully."
+msgstr "تم إلغاء تسجيل رمز الترخيص لهذا الموقع بنجاح."
+
+#: classes/class-strings.php:133
+msgid "Congratulation"
+msgstr "تهانينا"
+
+#: classes/class-strings.php:134
+msgid "Your theme has been successfully activated."
+msgstr "تم تفعيل القالب الخاص بك بنجاح."
+
+#: classes/class-strings.php:135
+msgid "Please enter a valid license code."
+msgstr "يرجى إدخال رمز ترخيص صالح."
+
+#: classes/class-strings.php:136 classes/class-strings.php:204
+msgid ""
+"Please activate your theme via purchase code to access theme features, "
+"updates and demo importer."
+msgstr ""
+"يرجى تفعيل القالب باستخدام رمز الشراء للوصول إلى ميزات القالب، التحديثات، "
+"ومُستورد العرض التجريبي."
+
+#: classes/class-strings.php:137
+msgid "This demo is free to import and use."
+msgstr "هذه النسخة التجريبية مجانية للاستيراد والاستخدام."
+
+#: classes/class-strings.php:138
+msgid "Please enter the purchase code ..."
+msgstr "يرجى إدخال رمز الشراء ..."
+
+#: classes/class-strings.php:139
+msgid "Activate"
+msgstr "تفعيل"
+
+#: classes/class-strings.php:140
+msgid "How to find purchase code?"
+msgstr "كيفية العثور على رمز الشراء؟"
+
+#: classes/class-strings.php:141
+msgid "Buy XTRA theme"
+msgstr "شراء قالب إكسترا"
+
+#: classes/class-strings.php:142
+msgid "Buy new license"
+msgstr "شراء ترخيص جديد"
+
+#: classes/class-strings.php:144
+msgid "Required"
+msgstr "مطلوب"
+
+#: classes/class-strings.php:145
+msgid "Recommended"
+msgstr "موصى به"
+
+#: classes/class-strings.php:146
+msgid "Private repository"
+msgstr "مستودع خاص"
+
+#: classes/class-strings.php:147
+msgid "Premium"
+msgstr "مميز"
+
+#: classes/class-strings.php:148
+msgid "WordPress repository"
+msgstr "مستودع ووردبريس"
+
+#: classes/class-strings.php:149
+msgid "Free version"
+msgstr "نسخة مجانية"
+
+#: classes/class-strings.php:150
+msgid "Activated successfully"
+msgstr "تم التفعيل بنجاح"
+
+#: classes/class-strings.php:151
+msgid "Theme activated successfully"
+msgstr "تم تفعيل القالب بنجاح"
+
+#: classes/class-strings.php:152
+msgid "Install & Activate"
+msgstr "تثبيت وتفعيل"
+
+#: classes/class-strings.php:153
+msgid "Installed & Activated"
+msgstr "تم التثبيت والتفعيل"
+
+#: classes/class-strings.php:154
+msgid "Please wait"
+msgstr "من فضلك انتظر"
+
+#: classes/class-strings.php:155
+msgid ""
+"All plugins have been installed, and there are no additional plugins to "
+"install."
+msgstr "تم تثبيت جميع الإضافات، ولا توجد إضافات إضافية للتثبيت."
+
+#: classes/class-strings.php:156
+msgid "All"
+msgstr "كل"
+
+#: classes/class-strings.php:157
+msgid "Starter"
+msgstr "بداية"
+
+#: classes/class-strings.php:158
+msgid "Search demo name ..."
+msgstr "البحث عن اسم النسخة التجريبية ..."
+
+#: classes/class-strings.php:160
+msgid "Import"
+msgstr "استيراد"
+
+#: classes/class-strings.php:161
+msgid "Uninstall"
+msgstr "إلغاء التثبيت"
+
+#: classes/class-strings.php:162
+msgid "Preview"
+msgstr "معاينة"
+
+#: classes/class-strings.php:163
+msgid "Back to demos"
+msgstr "العودة إلى النسخ التجريبية"
+
+#: classes/class-strings.php:164
+msgid "Welcome to"
+msgstr "مرحبا بك في"
+
+#: classes/class-strings.php:165
+msgid "Selected demo:"
+msgstr "النسخة التجريبية المختارة:"
+
+#: classes/class-strings.php:166
+msgid "Exclusive"
+msgstr "حصري"
+
+#: classes/class-strings.php:167
+msgid "Demo Importer Wizard"
+msgstr "معالج استيراد النسخة التجريبية"
+
+#: classes/class-strings.php:168
+msgid "Live preview:"
+msgstr "معاينة مباشرة:"
+
+#: classes/class-strings.php:169
+msgid "Elementor"
+msgstr "إليمنتور"
+
+#: classes/class-strings.php:170
+msgid "WPBakery"
+msgstr "WPBakery"
+
+#: classes/class-strings.php:171
+msgid "Choose page builder:"
+msgstr "اختر منشئ الصفحات:"
+
+#: classes/class-strings.php:172
+msgid "Choose Builder"
+msgstr "اختر المنشئ"
+
+#: classes/class-strings.php:173
+msgid ""
+"To access this feature, please activate your theme with the license code."
+msgstr "للوصول إلى هذه الميزة، يرجى تفعيل القالب باستخدام رمز الترخيص."
+
+#: classes/class-strings.php:174
+msgid ""
+"By checking this field, wizard will import Arabic version of current demo "
+"that you have selected."
+msgstr ""
+"بتحديد هذا الحقل، سيقوم المعالج باستيراد النسخة العربية من النسخة التجريبية "
+"الحالية التي اخترتها."
+
+#: classes/class-strings.php:175
+msgid ""
+"By checking this field, wizard will import English version of current demo "
+"that you have selected."
+msgstr ""
+"بتحديد هذا الحقل، سيقوم المعالج باستيراد النسخة الإنجليزية من النسخة "
+"التجريبية الحالية التي اخترتها."
+
+#: classes/class-strings.php:176
+msgid "RTL version?"
+msgstr "النسخة العربية؟"
+
+#: classes/class-strings.php:177
+msgid "Full Import"
+msgstr "استيراد كامل"
+
+#: classes/class-strings.php:178
+msgid "Custom Import"
+msgstr "استيراد مخصص"
+
+#: classes/class-strings.php:179
+msgid "Part of theme options"
+msgstr "جزء من خيارات القالب"
+
+#: classes/class-strings.php:180
+msgid "General"
+msgstr "عام"
+
+#: classes/class-strings.php:181
+msgid "Header"
+msgstr "رأس الصفحة"
+
+#: classes/class-strings.php:183 classes/class-strings.php:273
+msgid "Blog"
+msgstr "مدونة"
+
+#: classes/class-strings.php:184
+msgid "Portfolio"
+msgstr "معرض الاعمال"
+
+#: classes/class-strings.php:185
+msgid "WooCommerce"
+msgstr "ووكومرس"
+
+#: classes/class-strings.php:186
+msgid "Images & Media"
+msgstr "الصور والوسائط"
+
+#: classes/class-strings.php:187
+msgid "Your website has been imported successfully."
+msgstr "تم استيراد موقعك بنجاح."
+
+#: classes/class-strings.php:188
+msgid "View your website"
+msgstr "عرض موقعك"
+
+#: classes/class-strings.php:189
+msgid "Customize webiste"
+msgstr "تخصيص موقع الويب"
+
+#: classes/class-strings.php:190
+msgid "Error!"
+msgstr "خطأ!"
+
+#: classes/class-strings.php:191
+msgid "An error has occured, Please try again."
+msgstr "حدث خطأ، يرجى المحاولة مرة أخرى."
+
+#: classes/class-strings.php:192
+msgid "Troubleshooting"
+msgstr "استكشاف الأخطاء وإصلاحها"
+
+#: classes/class-strings.php:193
+msgid "Prev Step"
+msgstr "الخطوة السابقة"
+
+#: classes/class-strings.php:194
+msgid "Getting Started"
+msgstr "بدء الاستخدام"
+
+#: classes/class-strings.php:195
+msgid "Configuration"
+msgstr "تكوين"
+
+#: classes/class-strings.php:196
+msgid "Please wait, Importing"
+msgstr "يرجى الانتظار، جاري الاستيراد"
+
+#: classes/class-strings.php:197
+msgid "Ready to go!"
+msgstr "جاهز للانطلاق!"
+
+#: classes/class-strings.php:198
+msgid "Next Step"
+msgstr "الخطوة التالية"
+
+#: classes/class-strings.php:199
+msgid "Single Page Importer"
+msgstr "استيراد صفحة واحدة"
+
+#: classes/class-strings.php:200
+#, php-format
+msgid ""
+"Page importer feature is available only when you %s activate your theme with "
+"a valid license code."
+msgstr ""
+"ميزة استيراد الصفحات متاحة فقط عندما تقوم %s بتفعيل القالب الخاص بك برمز "
+"ترخيص صالح."
+
+#: classes/class-strings.php:201
+msgid ""
+"The demo page you want to import may have a second color, To avoid the color "
+"problem, set a second color for your site from Theme Options > General > "
+"Colors"
+msgstr ""
+"قد تحتوي صفحة العرض التي ترغب في استيرادها على لون ثانٍ. لتجنب مشكلة اللون، "
+"قم بتعيين لون ثانٍ لموقعك من خيارات القالب > عام > الألوان"
+
+#: classes/class-strings.php:202
+msgid ""
+"Insert a demo page URL and click on import button then wait for the process "
+"to complete."
+msgstr ""
+"أدخل عنوان URL لصفحة العرض وانقر على زر الاستيراد ثم انتظر حتى تكتمل العملية."
+
+#: classes/class-strings.php:203
+msgid "Insert the demo link ..."
+msgstr "أدخل رابط العرض ..."
+
+#: classes/class-strings.php:205
+msgid "Please enter a valid URL"
+msgstr "يرجى إدخال عنوان URL صالح"
+
+#: classes/class-strings.php:206
+msgid "Enable allow_url_fopen on your server then you can import page."
+msgstr "قم بتمكين allow_url_fopen على خادمك ثم يمكنك استيراد الصفحة."
+
+#: classes/class-strings.php:207
+msgid "Page imported successfully."
+msgstr "تم استيراد الصفحة بنجاح."
+
+#: classes/class-strings.php:208
+msgid "Error, Please try again ..."
+msgstr "خطأ، يرجى المحاولة مرة أخرى ..."
+
+#: classes/class-strings.php:209
+msgid "The server isn't responding. Please ensure your link is valid"
+msgstr "الخادم لا يستجيب. يرجى التأكد من صحة الرابط الخاص بك"
+
+#: classes/class-strings.php:210
+msgid "Something went wrong, Please try again ..."
+msgstr "حدث خطأ ما، يرجى المحاولة مرة أخرى ..."
+
+#: classes/class-strings.php:212
+msgid "Good"
+msgstr "جيد"
+
+#: classes/class-strings.php:213
+msgid "Theme is not activated"
+msgstr "القالب غير مفعل"
+
+#: classes/class-strings.php:214
+msgid "Server PHP Version"
+msgstr "إصدار PHP على الخادم"
+
+#: classes/class-strings.php:215
+msgid "PHP 8.0 or above recommended"
+msgstr "يُوصى باستخدام PHP ٨.٠ أو أعلى"
+
+#: classes/class-strings.php:216
+msgid "Server PHP Memory Limit"
+msgstr "‫PHP Memory Limit على الخادم"
+
+#: classes/class-strings.php:217
+msgid "128M recommended"
+msgstr "١٢٨ ميجابايت يُوصى بها"
+
+#: classes/class-strings.php:218
+msgid "8 recommended"
+msgstr "٨ يُوصى بها"
+
+#: classes/class-strings.php:219
+msgid "30 recommended"
+msgstr "٣٠ يُوصى بها"
+
+#: classes/class-strings.php:220
+msgid "Your server has less than 1GB of disk free space"
+msgstr "خادمك يحتوي على أقل من ١ جيجابايت من مساحة القرص الفارغة"
+
+#: classes/class-strings.php:221
+msgid "Server PHP Post Max Size"
+msgstr "‫PHP Post Max Size على الخادم"
+
+#: classes/class-strings.php:222
+msgid "Server PHP Max Execution Time"
+msgstr "‫PHP Max Execution Time على الخادم"
+
+#: classes/class-strings.php:223
+msgid "Server PHP"
+msgstr "PHP على الخادم"
+
+#: classes/class-strings.php:224
+msgid "PHP cURL is required"
+msgstr "يُطلب cURL في PHP"
+
+#: classes/class-strings.php:225
+msgid "PHP allow_url_fopen is required"
+msgstr "يُطلب allow_url_fopen في PHP"
+
+#: classes/class-strings.php:226
+msgid "Active"
+msgstr "نشط"
+
+#: classes/class-strings.php:227
+msgid "Contact with your server support."
+msgstr "تواصل مع دعم خادمك."
+
+#: classes/class-strings.php:228
+#, php-format
+msgid ""
+"Please help us improve the \"%s\" theme, we have added a feedback form, you "
+"can send us your comments and criticisms."
+msgstr ""
+"يرجى مساعدتنا في تحسين قالب \"%s\"، لقد أضفنا نموذج ملاحظات، يمكنك إرسال "
+"تعليقاتك وانتقاداتك إلينا."
+
+#: classes/class-strings.php:229
+#, php-format
+msgid ""
+"Thanks for purchasing the \"%s\" theme; to improve the theme, through the "
+"following form, you can send your feedback such as report a bug, request a "
+"feature, request a demo, ask non-support questions, etc."
+msgstr ""
+"شكرًا لشراء قالب \"%s\"؛ لتحسين القالب، يمكنك من خلال النموذج التالي إرسال "
+"ملاحظاتك مثل الإبلاغ عن خطأ، طلب ميزة، طلب عرض توضيحي، طرح أسئلة غير متعلقة "
+"بالدعم، إلخ."
+
+#: classes/class-strings.php:230
+msgid "Submit"
+msgstr "إرسال"
+
+#: classes/class-strings.php:231
+msgid "Your message has been sent successfully."
+msgstr "تم إرسال رسالتك بنجاح."
+
+#: classes/class-strings.php:232
+msgid "Could not send your message, Please try again."
+msgstr "لم نتمكن من إرسال رسالتك، يرجى المحاولة مرة أخرى."
+
+#: classes/class-strings.php:233
+msgid "There is no message to send, Please try again."
+msgstr "لا توجد رسالة لإرسالها، يرجى المحاولة مرة أخرى."
+
+#: classes/class-strings.php:234
+msgid "Uninstall Demo(s)"
+msgstr "إلغاء تثبيت العرض التوضيحي(ات)"
+
+#: classes/class-strings.php:235
+msgid ""
+"In this list you can see imported demos on your site previously, You can "
+"uninstall any demo data."
+msgstr ""
+"في هذه القائمة يمكنك رؤية العروض التوضيحية التي تم استيرادها على موقعك "
+"سابقًا، يمكنك إلغاء تثبيت أي بيانات عرض توضيحي."
+
+#: classes/class-strings.php:236
+msgid "There is no demo to uninstall"
+msgstr "لا يوجد عرض توضيحي لإلغاء تثبيته"
+
+#: classes/class-strings.php:237
+msgid "Are you sure for this?"
+msgstr "هل أنت متأكد من ذلك؟"
+
+#: classes/class-strings.php:238
+msgid ""
+"This will be deleted all your website data such as posts, pages, "
+"attachments, theme options, sliders, etc. and there is no undo button for "
+"this action."
+msgstr ""
+"سيؤدي ذلك إلى حذف جميع بيانات موقعك مثل المشاركات، الصفحات، المرفقات، خيارات "
+"القالب، المنزلقات، إلخ. ولا يوجد زر تراجع عن هذا الإجراء."
+
+#: classes/class-strings.php:239
+msgid "No, never mind"
+msgstr "لا، لا داعي"
+
+#: classes/class-strings.php:240
+msgid "Uninstalling, Please wait"
+msgstr "إلغاء التثبيت، الرجاء الانتظار"
+
+#: classes/class-strings.php:241
+msgid "Yes please"
+msgstr "نعم من فضلك"
+
+#: classes/class-strings.php:242
+msgid "Reload page"
+msgstr "إعادة تحميل الصفحة"
+
+#: classes/class-strings.php:243
+msgid "The requested AJAX name is empty. Please try again."
+msgstr "اسم AJAX المطلوب فارغ. يرجى المحاولة مرة أخرى."
+
+#: classes/class-strings.php:244
+#, php-format
+msgid "Could not find plugin \"%s\" API, Please refresh page and try again."
+msgstr ""
+"تعذر العثور على API للإضافة \"%s\"، يرجى تحديث الصفحة والمحاولة مرة أخرى."
+
+#: classes/class-strings.php:245
+msgid "Codevz plus plugin is not installed or activated."
+msgstr "إضافة Codevz plus غير مثبتة أو مفعلة."
+
+#: classes/class-strings.php:246
+#, php-format
+msgid "Plugin \"%s\" is no listed as a valid plugin."
+msgstr "الإضافة \"%s\" غير مدرجة كإضافة صالحة."
+
+#: classes/class-strings.php:247
+#, php-format
+msgid ""
+"Could not download \"%s\" plugin ZIP file, Please go to Appearance > Install "
+"Plugins and install it manually, and try again demo importer."
+msgstr ""
+"تعذر تنزيل ملف ZIP للإضافة \"%s\"، يرجى الذهاب إلى المظهر > تثبيت الإضافات "
+"وتثبيتها يدويًا، ثم حاول مرة أخرى مع مستورد العرض التوضيحي."
+
+#: classes/class-strings.php:248
+#, php-format
+msgid ""
+"Error, Through FTP delete plugins > \"%s\" folder & increase PHP "
+"max_execution_time to 300 then try again."
+msgstr ""
+"خطأ، عبر FTP احذف المجلد plugins > \"%s\" وزد قيمة max_execution_time إلى "
+"300 ثم حاول مرة أخرى."
+
+#: classes/class-strings.php:249
+msgid "Plugin activation error, "
+msgstr "خطأ في تفعيل الإضافة، "
+
+#: classes/class-strings.php:250
+#, php-format
+msgid "Plugin \"%s\" installed and activated successfully."
+msgstr "الإضافة \"%s\" تم تثبيتها وتفعيلها بنجاح."
+
+#: classes/class-strings.php:251
+#, php-format
+msgid "Demo \"%s\" uninstalled successfully."
+msgstr "العرض التوضيحي \"%s\" تم إلغاء تثبيته بنجاح."
+
+#: classes/class-strings.php:252
+msgid ""
+"Sorry, but nothing matched your search terms. Please try again with some "
+"different keywords."
+msgstr ""
+"عذرا، ولكن لا شيء يطابق عبارات البحث. أرجو المحاولة مرة أخرى بإستخدام كلمات "
+"أخرى."
+
+#: classes/class-strings.php:253
+#, php-format
+msgid ""
+"Please install and activate Slider Revolution Plugin from Dashboard > %s > "
+"Install Plugins"
+msgstr ""
+"يرجى تثبيت وتفعيل إضافة ثورة السلايدر من لوحة التحكم > %s > تثبيت الإضافات"
+
+#: classes/class-strings.php:254
+msgid ""
+"Please edit your page in the backend and from Page settings > Header "
+"settings, Select slider name"
+msgstr ""
+"يرجى تحرير صفحتك من لوحة التحكم ومن إعدادات الصفحة > إعدادات الرأس، اختر اسم "
+"الشريط المتحرك"
+
+#: classes/class-strings.php:255
+msgid ""
+"This area is placeholder for Slider, you can customize the slider on "
+"Dashboard > Slider Revolution"
+msgstr ""
+"هذه المنطقة هي عنصر نائب للمنزلق، يمكنك تخصيص المنزلق من لوحة التحكم > ثورة "
+"السلايدر"
+
+#: classes/class-strings.php:256
+msgid "Source"
+msgstr "مصدر"
+
+#: classes/class-strings.php:257
+msgid "Posted by"
+msgstr "كتب بواسطة"
+
+#: classes/class-strings.php:258
+msgid "Published on"
+msgstr "نشرت في"
+
+#: classes/class-strings.php:259
+msgid "Category(s)"
+msgstr "فئة"
+
+#: classes/class-strings.php:260
+msgid "Tags"
+msgstr "العلامات"
+
+#: classes/class-strings.php:261
+msgid "Views"
+msgstr "الآراء"
+
+#: classes/class-strings.php:262
+msgid "Back to shop"
+msgstr "العودة إلى المتجر"
+
+#: classes/class-strings.php:263
+msgid "Add to wishlist"
+msgstr "أضف إلى قائمة الامنيات"
+
+#: classes/class-strings.php:264
+msgid "Add to compare"
+msgstr "أضف للمقارنة"
+
+#: classes/class-strings.php:265
+msgid "Browse wishlist"
+msgstr "تصفح قائمة الرغبات"
+
+#: classes/class-strings.php:266
+msgid "Compare products"
+msgstr "قارن بين المنتجات"
+
+#: classes/class-strings.php:267
+msgid "View wishlist page"
+msgstr "عرض صفحة قائمة الرغبات"
+
+#: classes/class-strings.php:268
+msgid "View compare page"
+msgstr "عرض صفحة المقارنة"
+
+#: classes/class-strings.php:269
+msgid "Enlarge the image"
+msgstr "تكبير الصورة"
+
+#: classes/class-strings.php:270
+msgid "Select options"
+msgstr "اشر على الخيارات"
+
+#: classes/class-strings.php:271
+msgid "Sevices"
+msgstr "خدمات"
+
+#: classes/class-strings.php:272
+msgid "Shop"
+msgstr "متجر"
+
+#: classes/class-strings.php:274
+msgid "Select category"
+msgstr "اختر الفئة"
+
+#: classes/class-strings.php:275
+msgid "All categories"
+msgstr "كل التصنيفات"
+
+#~ msgid "Customize website"
+#~ msgstr "تخصيص الموقع"
+
+#~ msgid "Server Disk Free Space"
+#~ msgstr "مساحة القرص الفارغة على الخادم"
+
+#~ msgid "Plugin API error:"
+#~ msgstr "خطأ في واجهة برمجة التطبيقات الإضافية:"
+
+#~ msgid "Activation Help"
+#~ msgstr "مساعدة التفعيل"
+
+#~ msgid "English version?"
+#~ msgstr "النسخة الإنجليزية؟"

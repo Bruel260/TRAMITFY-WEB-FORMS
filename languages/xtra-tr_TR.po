@@ -1,0 +1,1475 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Codevz strings\n"
+"POT-Creation-Date: 2024-09-21 00:55+0330\n"
+"PO-Revision-Date: 2024-09-21 00:56+0330\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: tr_TR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.5\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-KeywordsList: _e;_n;esc_html_e;esc_attr_e;_n_noop;esc_html__;"
+"esc_attr__\n"
+"X-Poedit-SearchPath-0: .\n"
+
+#: classes/class-config.php:18
+msgid "XTRA"
+msgstr "XTRA"
+
+#: classes/class-config.php:103
+msgid "gadgets"
+msgstr "aletler"
+
+#: classes/class-config.php:113
+msgid "supermarket"
+msgstr "süpermarket"
+
+#: classes/class-config.php:123
+msgid "book-shop"
+msgstr "kitapçı"
+
+#: classes/class-config.php:133
+msgid "portfolio"
+msgstr "portföy"
+
+#: classes/class-config.php:143
+msgid "Photographer 2"
+msgstr "Fotoğrafçı 2"
+
+#: classes/class-config.php:153
+msgid "agency-2"
+msgstr "ajans-2"
+
+#: classes/class-config.php:163
+msgid "photography3"
+msgstr "fotoğrafçılık3"
+
+#: classes/class-config.php:173
+msgid "camping-adventures"
+msgstr "kamp maceraları"
+
+#: classes/class-config.php:183
+msgid "logo-portfolio"
+msgstr "logo-portföy"
+
+#: classes/class-config.php:193
+msgid "metro-blog"
+msgstr "metro-blog"
+
+#: classes/class-config.php:203
+msgid "game"
+msgstr "oyun"
+
+#: classes/class-config.php:213
+msgid "cryptocurrency"
+msgstr "kripto para"
+
+#: classes/class-config.php:228
+msgid "Mechanic 2"
+msgstr "Mekanik 2"
+
+#: classes/class-config.php:236
+msgid "SEO 3"
+msgstr "SEO 3"
+
+#: classes/class-config.php:244
+msgid "Logistic 2"
+msgstr "Lojistik 2"
+
+#: classes/class-config.php:252
+msgid "Home Renovation 2"
+msgstr "Ev Yenileme 2"
+
+#: classes/class-config.php:260
+msgid "SPA 2"
+msgstr "SPA 2"
+
+#: classes/class-config.php:268
+msgid "Application 3"
+msgstr "Uygulama 3"
+
+#: classes/class-config.php:276
+msgid "Fashion Shop 2"
+msgstr "Moda alışveriş 2"
+
+#: classes/class-config.php:284
+msgid "Gardening 2"
+msgstr "Bahçecilik 2"
+
+#: classes/class-config.php:292
+msgid "Medical 2"
+msgstr "Tıp 2"
+
+#: classes/class-config.php:300
+msgid "Business 6"
+msgstr "İşletme 6"
+
+#: classes/class-config.php:308
+msgid "Dentist 2"
+msgstr "Diş Hekimi 2"
+
+#: classes/class-config.php:316
+msgid "Digital Marketing 2"
+msgstr "Dijital Pazarlama 2"
+
+#: classes/class-config.php:324
+msgid "Construction 3"
+msgstr "İnşaat 3"
+
+#: classes/class-config.php:332
+msgid "Horse Club"
+msgstr "At Kulübü"
+
+#: classes/class-config.php:340
+msgid "Barber 2"
+msgstr "Berber 2"
+
+#: classes/class-config.php:349
+msgid "Big Shop"
+msgstr "Büyük alışveriş"
+
+#: classes/class-config.php:357
+msgid "Furniture Shop 2"
+msgstr "Mobilya alışveriş 2"
+
+#: classes/class-config.php:366
+msgid "app-2"
+msgstr "uygulama 2"
+
+#: classes/class-config.php:374
+msgid "pet-shop"
+msgstr "evcil hayvan alışveriş"
+
+#: classes/class-config.php:382
+msgid "event"
+msgstr "etkinlik"
+
+#: classes/class-config.php:391
+msgid "car-rental"
+msgstr "araba-kiralama"
+
+#: classes/class-config.php:399
+msgid "factory-2"
+msgstr "fabrika-2"
+
+#: classes/class-config.php:407
+msgid "beauty-salon-2"
+msgstr "güzellik-salonu-2"
+
+#: classes/class-config.php:415
+msgid "music-and-band"
+msgstr "müzik-ve-grup"
+
+#: classes/class-config.php:423
+msgid "nail-salon"
+msgstr "manikür-salonu"
+
+#: classes/class-config.php:431
+msgid "perfume-shop"
+msgstr "parfüm-alışveriş"
+
+#: classes/class-config.php:439
+msgid "watch-shop"
+msgstr "saat-alışveriş"
+
+#: classes/class-config.php:448
+msgid "flower-shop"
+msgstr "çiçek-alışveriş"
+
+#: classes/class-config.php:456
+msgid "magazine"
+msgstr "dergi"
+
+#: classes/class-config.php:464
+msgid "architect-2"
+msgstr "mimar 2"
+
+#: classes/class-config.php:472
+msgid "photographer"
+msgstr "fotoğrafçı"
+
+#: classes/class-config.php:480
+msgid "elderly-care"
+msgstr "yaşlı bakımı"
+
+#: classes/class-config.php:488
+msgid "investment"
+msgstr "yatırım"
+
+#: classes/class-config.php:496
+msgid "dance"
+msgstr "dans"
+
+#: classes/class-config.php:504
+msgid "business-5"
+msgstr "iş 5"
+
+#: classes/class-config.php:512
+msgid "construction-2"
+msgstr "inşaat 2"
+
+#: classes/class-config.php:520
+msgid "advisor"
+msgstr "danışman"
+
+#: classes/class-config.php:528
+msgid "seo-2"
+msgstr "SEO 2"
+
+#: classes/class-config.php:537
+msgid "personal-blog-2"
+msgstr "kişisel blog 2"
+
+#: classes/class-config.php:545
+msgid "insurance"
+msgstr "sigorta"
+
+#: classes/class-config.php:553
+msgid "corporate-2"
+msgstr "kurumsal 2"
+
+#: classes/class-config.php:561
+msgid "business-4"
+msgstr "iş 4"
+
+#: classes/class-config.php:569
+msgid "startup"
+msgstr "girişim"
+
+#: classes/class-config.php:578
+msgid "medical"
+msgstr "medikal"
+
+#: classes/class-config.php:586
+msgid "factory"
+msgstr "fabrika"
+
+#: classes/class-config.php:594
+msgid "furniture"
+msgstr "mobilya"
+
+#: classes/class-config.php:602
+msgid "carwash"
+msgstr "araba-yıkama"
+
+#: classes/class-config.php:610
+msgid "rims"
+msgstr "jantlar"
+
+#: classes/class-config.php:618
+msgid "jewelry"
+msgstr "takı"
+
+#: classes/class-config.php:626
+msgid "church"
+msgstr "kilise"
+
+#: classes/class-config.php:634
+msgid "yoga"
+msgstr "yoga"
+
+#: classes/class-config.php:642
+msgid "moving"
+msgstr "taşınma"
+
+#: classes/class-config.php:650
+msgid "plumbing"
+msgstr "tesisat"
+
+#: classes/class-config.php:658
+msgid "travel"
+msgstr "seyahat"
+
+#: classes/class-config.php:666
+msgid "beauty-salon"
+msgstr "güzellik-salonu"
+
+#: classes/class-config.php:674
+msgid "home-renovation"
+msgstr "ev-tadilatı"
+
+#: classes/class-config.php:682
+msgid "creative-business"
+msgstr "yaratıcı-iş"
+
+#: classes/class-config.php:690
+msgid "mechanic"
+msgstr "mekanik"
+
+#: classes/class-config.php:698
+msgid "lawyer"
+msgstr "avukat"
+
+#: classes/class-config.php:706
+msgid "web-agency"
+msgstr "web ajansı"
+
+#: classes/class-config.php:714
+msgid "gardening"
+msgstr "bahçecilik"
+
+#: classes/class-config.php:722
+msgid "corporate"
+msgstr "kurumsal"
+
+#: classes/class-config.php:730
+msgid "business-3"
+msgstr "iş-3"
+
+#: classes/class-config.php:738
+msgid "digital-marketing"
+msgstr "dijital pazarlama"
+
+#: classes/class-config.php:746
+msgid "business-classic"
+msgstr "klasik iş"
+
+#: classes/class-config.php:754
+msgid "charity"
+msgstr "hayır kurumu"
+
+#: classes/class-config.php:762
+msgid "creative-studio"
+msgstr "yaratıcı stüdyo"
+
+#: classes/class-config.php:770
+msgid "kids"
+msgstr "çocuklar"
+
+#: classes/class-config.php:778
+msgid "smart-home"
+msgstr "akıllı ev"
+
+#: classes/class-config.php:786
+msgid "logistic"
+msgstr "lojistik"
+
+#: classes/class-config.php:794
+msgid "industrial"
+msgstr "endüstriyel"
+
+#: classes/class-config.php:802
+msgid "tattoo"
+msgstr "dövme"
+
+#: classes/class-config.php:810
+msgid "personal-blog"
+msgstr "kişisel blog"
+
+#: classes/class-config.php:819
+msgid "cleaning"
+msgstr "temizlik"
+
+#: classes/class-config.php:827
+msgid "parallax"
+msgstr "paralaks"
+
+#: classes/class-config.php:835
+msgid "3d-portfolio"
+msgstr "3D portföy"
+
+#: classes/class-config.php:843
+msgid "agency"
+msgstr "ajans"
+
+#: classes/class-config.php:851
+msgid "spa"
+msgstr "spa"
+
+#: classes/class-config.php:859
+msgid "app"
+msgstr "uygulama"
+
+#: classes/class-config.php:867
+msgid "architect"
+msgstr "mimar"
+
+#: classes/class-config.php:875
+msgid "barber"
+msgstr "berber"
+
+#: classes/class-config.php:883
+msgid "building"
+msgstr "inşaat"
+
+#: classes/class-config.php:891
+msgid "business"
+msgstr "iş"
+
+#: classes/class-config.php:899
+msgid "coffee"
+msgstr "kahve"
+
+#: classes/class-config.php:907
+msgid "conference"
+msgstr "konferans"
+
+#: classes/class-config.php:915
+msgid "business-2"
+msgstr "iş-2"
+
+#: classes/class-config.php:923
+msgid "construction"
+msgstr "inşaat"
+
+#: classes/class-config.php:931
+msgid "cryptocurrency-2"
+msgstr "kripto para-2"
+
+#: classes/class-config.php:939
+msgid "cv-resume"
+msgstr "özgeçmiş"
+
+#: classes/class-config.php:948
+msgid "dentist"
+msgstr "diş hekimi"
+
+#: classes/class-config.php:956
+msgid "fashion-shop"
+msgstr "moda mağazası"
+
+#: classes/class-config.php:964
+msgid "fast-food"
+msgstr "fast food"
+
+#: classes/class-config.php:972
+msgid "finance"
+msgstr "finans"
+
+#: classes/class-config.php:980
+msgid "gym"
+msgstr "spor salonu"
+
+#: classes/class-config.php:988
+msgid "hosting"
+msgstr "barındırma"
+
+#: classes/class-config.php:996
+msgid "hotel"
+msgstr "otel"
+
+#: classes/class-config.php:1004
+msgid "interior"
+msgstr "iç tasarım"
+
+#: classes/class-config.php:1012
+msgid "lawyers"
+msgstr "avukatlar"
+
+#: classes/class-config.php:1020
+msgid "music"
+msgstr "müzik"
+
+#: classes/class-config.php:1028
+msgid "photography"
+msgstr "fotoğrafçılık"
+
+#: classes/class-config.php:1036
+msgid "photography2"
+msgstr "fotoğrafçılık2"
+
+#: classes/class-config.php:1044
+msgid "plastic-surgery"
+msgstr "estetik cerrahi"
+
+#: classes/class-config.php:1052
+msgid "restaurant"
+msgstr "restoran"
+
+#: classes/class-config.php:1060
+msgid "dubai-investment"
+msgstr "dubai yatırımı"
+
+#: classes/class-config.php:1068
+msgid "seo"
+msgstr "seo"
+
+#: classes/class-config.php:1076
+msgid "single-shop"
+msgstr "tek mağaza"
+
+#: classes/class-config.php:1084
+msgid "wedding"
+msgstr "düğün"
+
+#: classes/class-config.php:1090
+msgid "winery"
+msgstr "şaraphane"
+
+#: classes/class-config.php:1092
+msgid "winery demo"
+msgstr "şaraphane demosu"
+
+#: classes/class-strings.php:55
+msgid "Codevz Plus"
+msgstr "Codevz Plus"
+
+#: classes/class-strings.php:56
+msgid "StyleKit, custom post types, options and page builder elements."
+msgstr ""
+"StyleKit, özel gönderi türleri, seçenekler ve sayfa oluşturucu öğeleri."
+
+#: classes/class-strings.php:57
+msgid "Home"
+msgstr "Ana Sayfa"
+
+#: classes/class-strings.php:58
+msgid "Primary"
+msgstr "Birincil"
+
+#: classes/class-strings.php:59
+msgid "Secondary"
+msgstr "İkincil"
+
+#: classes/class-strings.php:60 classes/class-strings.php:182
+msgid "Footer"
+msgstr "Altbilgi"
+
+#: classes/class-strings.php:61
+msgid "Offcanvas"
+msgstr "Offcanvas"
+
+#: classes/class-strings.php:62
+msgid "Shop primary"
+msgstr "Mağaza birincil"
+
+#: classes/class-strings.php:63
+msgid "Shop secondary"
+msgstr "Mağaza ikincil"
+
+#: classes/class-strings.php:64
+msgid "Portfolio primary"
+msgstr "Portföy birincil"
+
+#: classes/class-strings.php:65
+msgid "Portfolio secondary"
+msgstr "Portföy ikincil"
+
+#: classes/class-strings.php:66
+msgid "Add widgets here to appear in your"
+msgstr "Widget'ları buraya ekleyin, şurada görünsünler"
+
+#: classes/class-strings.php:67
+msgid "GO PRO"
+msgstr "PRO'YA GEÇ"
+
+#: classes/class-strings.php:68
+msgid "PRO"
+msgstr "PRO"
+
+#: classes/class-strings.php:69 classes/class-strings.php:159
+msgid "FREE"
+msgstr "ÜCRETSİZ"
+
+#: classes/class-strings.php:70
+msgid "Activate your theme to access premium demos"
+msgstr "Premium demoları kullanmak için temayı etkinleştirin"
+
+#: classes/class-strings.php:71
+#, php-format
+msgid "Thank you for installing %s theme."
+msgstr "Tema %s yüklediğiniz için teşekkür ederiz."
+
+#: classes/class-strings.php:72
+msgid ""
+"Install the theme plugin to access the demo importer, elements, and other "
+"features."
+msgstr ""
+"Demo ithalatçısına, öğelere ve diğer özelliklere erişmek için tema "
+"eklentisini yükleyin."
+
+#: classes/class-strings.php:73
+msgid "Install theme plugin"
+msgstr "Tema eklentisini yükleyin"
+
+#: classes/class-strings.php:74
+msgid "Installing, It may take a minute"
+msgstr "Yükleniyor, bir dakika sürebilir"
+
+#: classes/class-strings.php:75
+msgid "Not active"
+msgstr "Aktif değil"
+
+#: classes/class-strings.php:76 classes/class-strings.php:101
+msgid "Activated"
+msgstr "Etkinleştirildi"
+
+#: classes/class-strings.php:77
+msgid "Author posts"
+msgstr "Yazar gönderileri"
+
+#: classes/class-strings.php:78
+msgid "View all posts"
+msgstr "Tüm gönderileri görüntüle"
+
+#: classes/class-strings.php:79
+msgid "Nothing Found"
+msgstr "Hiçbir Şey Bulunamadı"
+
+#: classes/class-strings.php:80
+msgid "Search"
+msgstr "Ara"
+
+#: classes/class-strings.php:81
+msgid "No comment"
+msgstr "Yorum yok"
+
+#: classes/class-strings.php:82
+msgid "Comment"
+msgstr "Yorum"
+
+#: classes/class-strings.php:83
+msgid "Comments"
+msgstr "Yorumlar"
+
+#: classes/class-strings.php:84
+msgid "Activation"
+msgstr "Aktivasyon"
+
+#: classes/class-strings.php:85
+msgid "Demo Importer"
+msgstr "Demo İçe Aktarıcı"
+
+#: classes/class-strings.php:86
+msgid "Page Importer"
+msgstr "Sayfa İçe Aktarıcı"
+
+#: classes/class-strings.php:87 classes/class-strings.php:143
+msgid "Install Plugins"
+msgstr "Eklentileri Yükle"
+
+#: classes/class-strings.php:88
+msgid "Theme Options"
+msgstr "Tema Seçenekleri"
+
+#: classes/class-strings.php:89 classes/class-strings.php:211
+msgid "System Status"
+msgstr "Sistem Durumu"
+
+#: classes/class-strings.php:90
+msgid "Uninstall Demo"
+msgstr "Demo Kaldır"
+
+#: classes/class-strings.php:91
+msgid "Report a bug"
+msgstr "Hata bildir"
+
+#: classes/class-strings.php:92
+msgid "Elementor Page Builder"
+msgstr "Elementor Sayfa Oluşturucu"
+
+#: classes/class-strings.php:93
+msgid "WPBakery Page Builder"
+msgstr "WPBakery Sayfa Oluşturucu"
+
+#: classes/class-strings.php:94 classes/class-strings.php:108
+msgid "Revolution Slider"
+msgstr "Revolution Slider"
+
+#: classes/class-strings.php:95
+msgid "Woocommerce"
+msgstr "Woocommerce"
+
+#: classes/class-strings.php:96
+msgid "Contact Form 7"
+msgstr "İletişim Formu 7"
+
+#: classes/class-strings.php:97
+msgid "LiteSpeed Cache"
+msgstr "LiteSpeed Cache"
+
+#: classes/class-strings.php:98
+msgid "of"
+msgstr "-nin"
+
+#: classes/class-strings.php:99
+msgid "Close"
+msgstr "Kapat"
+
+#: classes/class-strings.php:100
+msgid "Installing"
+msgstr "Yükleniyor"
+
+#: classes/class-strings.php:102
+msgid "Importing"
+msgstr "İçe Aktarılıyor"
+
+#: classes/class-strings.php:103
+msgid "Imported"
+msgstr "İçe Aktarıldı"
+
+#: classes/class-strings.php:104
+msgid "Downloading"
+msgstr "İndiriliyor"
+
+#: classes/class-strings.php:105
+msgid "Demo Files"
+msgstr "Demo Dosyaları"
+
+#: classes/class-strings.php:106
+msgid "Downloaded"
+msgstr "İndirildi"
+
+#: classes/class-strings.php:107
+msgid "Widgets"
+msgstr "Widget'lar"
+
+#: classes/class-strings.php:109
+msgid "Pages & Posts"
+msgstr "Sayfalar ve Gönderiler"
+
+#: classes/class-strings.php:110
+msgid "Images"
+msgstr "Görseller"
+
+#: classes/class-strings.php:111
+msgid ""
+"PHP error 500, Internal server error, Please check your server error log "
+"file or contact with support."
+msgstr ""
+"PHP hatası 500, Dahili sunucu hatası, Lütfen sunucu hata günlüğü dosyanızı "
+"kontrol edin veya destek ile iletişime geçin."
+
+#: classes/class-strings.php:112
+msgid ""
+"PHP error 503, Internal server error, Please try again with same import demo."
+msgstr ""
+"PHP hatası 503, Dahili sunucu hatası, Lütfen aynı demo ile tekrar deneyin."
+
+#: classes/class-strings.php:113
+msgid ""
+"An error has occured, Please deactivate all plugins except theme plugins and "
+"try again, If still have same issue, Please submit ticket to theme author."
+msgstr ""
+"Bir hata oluştu, Lütfen tema eklentileri hariç tüm eklentileri devre dışı "
+"bırakın ve tekrar deneyin, Sorun devam ederse tema yazarına bildirin."
+
+#: classes/class-strings.php:114
+msgid "Choose at least one feature to import."
+msgstr "İçe aktarmak için en az bir özellik seçin."
+
+#: classes/class-strings.php:115
+msgid "Message box is empty, Please fill the box then submit."
+msgstr "Mesaj kutusu boş, Lütfen kutuyu doldurun ve gönderin."
+
+#: classes/class-strings.php:116
+msgid "URL input is empty, Please fill the input then submit."
+msgstr "URL alanı boş, lütfen alanı doldurun ve ardından gönderin."
+
+#: classes/class-strings.php:117
+#, php-format
+msgid "Welcome to %s WordPress Theme"
+msgstr "%s WordPress Temasına Hoş Geldiniz"
+
+#: classes/class-strings.php:118
+msgid "Current version:"
+msgstr "Mevcut sürüm:"
+
+#: classes/class-strings.php:119
+msgid "Documentation"
+msgstr "Dokümantasyon"
+
+#: classes/class-strings.php:120
+msgid "Video Tutorials"
+msgstr "Video Eğitimleri"
+
+#: classes/class-strings.php:121
+msgid "Change Log"
+msgstr "Değişiklik Günlüğü"
+
+#: classes/class-strings.php:122
+msgid "Support"
+msgstr "Destek"
+
+#: classes/class-strings.php:123
+msgid "F.A.Q"
+msgstr "S.S.S"
+
+#: classes/class-strings.php:124
+msgid "Activation Certificate"
+msgstr "Aktivasyon Sertifikası"
+
+#: classes/class-strings.php:125
+msgid "Deregister License"
+msgstr "Lisansı Kaldır"
+
+#: classes/class-strings.php:126
+msgid "Your Purchase Code"
+msgstr "Satın Alma Kodunuz"
+
+#: classes/class-strings.php:127
+msgid "Purchase date:"
+msgstr "Satın alma tarihi:"
+
+#: classes/class-strings.php:128
+msgid "Support until:"
+msgstr "Destek süresi:"
+
+#: classes/class-strings.php:129
+msgid ""
+"Your support has been expired, Click on below link and extend your support."
+msgstr ""
+"Destek süreniz dolmuş. Aşağıdaki bağlantıya tıklayarak desteğinizi uzatın."
+
+#: classes/class-strings.php:130
+msgid "Buy extended support or new license"
+msgstr "Uzatılmış destek veya yeni lisans satın al"
+
+#: classes/class-strings.php:131
+msgid "License Activation"
+msgstr "Lisans Aktivasyonu"
+
+#: classes/class-strings.php:132
+msgid "The license code for this website has been deregistered successfully."
+msgstr "Bu web sitesi için lisans kodu başarıyla kaldırıldı."
+
+#: classes/class-strings.php:133
+msgid "Congratulation"
+msgstr "Tebrikler"
+
+#: classes/class-strings.php:134
+msgid "Your theme has been successfully activated."
+msgstr "Temanız başarıyla etkinleştirildi."
+
+#: classes/class-strings.php:135
+msgid "Please enter a valid license code."
+msgstr "Lütfen geçerli bir lisans kodu girin."
+
+#: classes/class-strings.php:136 classes/class-strings.php:204
+msgid ""
+"Please activate your theme via purchase code to access theme features, "
+"updates and demo importer."
+msgstr ""
+"Tema özelliklerine, güncellemelere ve demo ithalatçısına erişmek için temayı "
+"satın alma koduyla etkinleştirin."
+
+#: classes/class-strings.php:137
+msgid "This demo is free to import and use."
+msgstr "Bu demo, ithalat ve kullanım için ücretsizdir."
+
+#: classes/class-strings.php:138
+msgid "Please enter the purchase code ..."
+msgstr "Lütfen satın alma kodunu girin ..."
+
+#: classes/class-strings.php:139
+msgid "Activate"
+msgstr "Etkinleştir"
+
+#: classes/class-strings.php:140
+msgid "How to find purchase code?"
+msgstr "Satın alma kodu nasıl bulunur?"
+
+#: classes/class-strings.php:141
+msgid "Buy XTRA theme"
+msgstr "XTRA temasını satın al"
+
+#: classes/class-strings.php:142
+msgid "Buy new license"
+msgstr "Yeni lisans satın al"
+
+#: classes/class-strings.php:144
+msgid "Required"
+msgstr "Gerekli"
+
+#: classes/class-strings.php:145
+msgid "Recommended"
+msgstr "Tavsiye edilen"
+
+#: classes/class-strings.php:146
+msgid "Private repository"
+msgstr "Özel depo"
+
+#: classes/class-strings.php:147
+msgid "Premium"
+msgstr "Premium"
+
+#: classes/class-strings.php:148
+msgid "WordPress repository"
+msgstr "WordPress deposu"
+
+#: classes/class-strings.php:149
+msgid "Free version"
+msgstr "Ücretsiz sürüm"
+
+#: classes/class-strings.php:150
+msgid "Activated successfully"
+msgstr "Başarıyla etkinleştirildi"
+
+#: classes/class-strings.php:151
+msgid "Theme activated successfully"
+msgstr "Tema başarıyla etkinleştirildi"
+
+#: classes/class-strings.php:152
+msgid "Install & Activate"
+msgstr "Yükle ve Etkinleştir"
+
+#: classes/class-strings.php:153
+msgid "Installed & Activated"
+msgstr "Yüklendi ve Etkinleştirildi"
+
+#: classes/class-strings.php:154
+msgid "Please wait"
+msgstr "Lütfen bekleyin"
+
+#: classes/class-strings.php:155
+msgid ""
+"All plugins have been installed, and there are no additional plugins to "
+"install."
+msgstr "Tüm eklentiler yüklendi ve yüklenecek başka eklenti yok."
+
+#: classes/class-strings.php:156
+msgid "All"
+msgstr "Hepsi"
+
+#: classes/class-strings.php:157
+msgid "Starter"
+msgstr "Başlangıç"
+
+#: classes/class-strings.php:158
+msgid "Search demo name ..."
+msgstr "Demo ismi ara ..."
+
+#: classes/class-strings.php:160
+msgid "Import"
+msgstr "İçe aktar"
+
+#: classes/class-strings.php:161
+msgid "Uninstall"
+msgstr "Kaldır"
+
+#: classes/class-strings.php:162
+msgid "Preview"
+msgstr "Önizleme"
+
+#: classes/class-strings.php:163
+msgid "Back to demos"
+msgstr "Demoslara geri dön"
+
+#: classes/class-strings.php:164
+msgid "Welcome to"
+msgstr "Hoş geldiniz"
+
+#: classes/class-strings.php:165
+msgid "Selected demo:"
+msgstr "Seçilen demo:"
+
+#: classes/class-strings.php:166
+msgid "Exclusive"
+msgstr "Özel"
+
+#: classes/class-strings.php:167
+msgid "Demo Importer Wizard"
+msgstr "Demo İçe Aktarıcı Sihirbazı"
+
+#: classes/class-strings.php:168
+msgid "Live preview:"
+msgstr "Canlı önizleme:"
+
+#: classes/class-strings.php:169
+msgid "Elementor"
+msgstr "Elementor"
+
+#: classes/class-strings.php:170
+msgid "WPBakery"
+msgstr "WPBakery"
+
+#: classes/class-strings.php:171
+msgid "Choose page builder:"
+msgstr "Sayfa oluşturucu seçin:"
+
+#: classes/class-strings.php:172
+msgid "Choose Builder"
+msgstr "Oluşturucu Seçin"
+
+#: classes/class-strings.php:173
+msgid ""
+"To access this feature, please activate your theme with the license code."
+msgstr "Bu özelliğe erişmek için temayı lisans kodu ile etkinleştirin."
+
+#: classes/class-strings.php:174
+msgid ""
+"By checking this field, wizard will import Arabic version of current demo "
+"that you have selected."
+msgstr ""
+"Bu alanı işaretleyerek, sihirbaz seçtiğiniz demoyu Arapça olarak içe "
+"aktaracaktır."
+
+#: classes/class-strings.php:175
+msgid ""
+"By checking this field, wizard will import English version of current demo "
+"that you have selected."
+msgstr ""
+"Bu alanı işaretleyerek, sihirbaz seçtiğiniz demoyu İngilizce olarak içe "
+"aktaracaktır."
+
+#: classes/class-strings.php:176
+msgid "RTL version?"
+msgstr "RTL versiyonu?"
+
+#: classes/class-strings.php:177
+msgid "Full Import"
+msgstr "Tam İçe Aktarma"
+
+#: classes/class-strings.php:178
+msgid "Custom Import"
+msgstr "Özel İçe Aktarma"
+
+#: classes/class-strings.php:179
+msgid "Part of theme options"
+msgstr "Tema seçeneklerinin bir parçası"
+
+#: classes/class-strings.php:180
+msgid "General"
+msgstr "Genel"
+
+#: classes/class-strings.php:181
+msgid "Header"
+msgstr "Başlık"
+
+#: classes/class-strings.php:183 classes/class-strings.php:273
+msgid "Blog"
+msgstr "Haber"
+
+#: classes/class-strings.php:184
+msgid "Portfolio"
+msgstr "Portfolyo"
+
+#: classes/class-strings.php:185
+msgid "WooCommerce"
+msgstr "WooCommerce"
+
+#: classes/class-strings.php:186
+msgid "Images & Media"
+msgstr "Görseller & Medya"
+
+#: classes/class-strings.php:187
+msgid "Your website has been imported successfully."
+msgstr "Web siteniz başarıyla içe aktarıldı."
+
+#: classes/class-strings.php:188
+msgid "View your website"
+msgstr "Web sitenizi görüntüleyin"
+
+#: classes/class-strings.php:189
+msgid "Customize webiste"
+msgstr "Web sitesini özelleştirin"
+
+#: classes/class-strings.php:190
+msgid "Error!"
+msgstr "Hata!"
+
+#: classes/class-strings.php:191
+msgid "An error has occured, Please try again."
+msgstr "Bir hata oluştu, lütfen tekrar deneyin."
+
+#: classes/class-strings.php:192
+msgid "Troubleshooting"
+msgstr "Sorun Giderme"
+
+#: classes/class-strings.php:193
+msgid "Prev Step"
+msgstr "Önceki Adım"
+
+#: classes/class-strings.php:194
+msgid "Getting Started"
+msgstr "Başlarken"
+
+#: classes/class-strings.php:195
+msgid "Configuration"
+msgstr "Yapılandırma"
+
+#: classes/class-strings.php:196
+msgid "Please wait, Importing"
+msgstr "Lütfen bekleyin, İçe aktarılıyor"
+
+#: classes/class-strings.php:197
+msgid "Ready to go!"
+msgstr "Hazır!"
+
+#: classes/class-strings.php:198
+msgid "Next Step"
+msgstr "Sonraki Adım"
+
+#: classes/class-strings.php:199
+msgid "Single Page Importer"
+msgstr "Tek Sayfa İçe Aktarıcı"
+
+#: classes/class-strings.php:200
+#, php-format
+msgid ""
+"Page importer feature is available only when you %s activate your theme with "
+"a valid license code."
+msgstr ""
+"Sayfa içe aktarıcı özelliği yalnızca temayı %s geçerli bir lisans kodu ile "
+"etkinleştirdiğinizde kullanılabilir."
+
+#: classes/class-strings.php:201
+msgid ""
+"The demo page you want to import may have a second color, To avoid the color "
+"problem, set a second color for your site from Theme Options > General > "
+"Colors"
+msgstr ""
+"İçe aktarmak istediğiniz demo sayfası ikinci bir renge sahip olabilir. Renk "
+"sorununu önlemek için Tema Seçenekleri > Genel > Renkler kısmından siteniz "
+"için ikinci bir renk belirleyin"
+
+#: classes/class-strings.php:202
+msgid ""
+"Insert a demo page URL and click on import button then wait for the process "
+"to complete."
+msgstr ""
+"Bir demo sayfası URL'si girin ve içe aktarma düğmesine tıklayın, ardından "
+"işlemin tamamlanmasını bekleyin."
+
+#: classes/class-strings.php:203
+msgid "Insert the demo link ..."
+msgstr "Demo bağlantısını girin ..."
+
+#: classes/class-strings.php:205
+msgid "Please enter a valid URL"
+msgstr "Lütfen geçerli bir URL girin"
+
+#: classes/class-strings.php:206
+msgid "Enable allow_url_fopen on your server then you can import page."
+msgstr ""
+"Sunucunuzda allow_url_fopen özelliğini etkinleştirin, ardından sayfayı içe "
+"aktarabilirsiniz."
+
+#: classes/class-strings.php:207
+msgid "Page imported successfully."
+msgstr "Sayfa başarıyla içe aktarıldı."
+
+#: classes/class-strings.php:208
+msgid "Error, Please try again ..."
+msgstr "Hata, lütfen tekrar deneyin ..."
+
+#: classes/class-strings.php:209
+msgid "The server isn't responding. Please ensure your link is valid"
+msgstr ""
+"Sunucu yanıt vermiyor. Lütfen bağlantınızın geçerli olduğundan emin olun"
+
+#: classes/class-strings.php:210
+msgid "Something went wrong, Please try again ..."
+msgstr "Bir şeyler ters gitti, lütfen tekrar deneyin ..."
+
+#: classes/class-strings.php:212
+msgid "Good"
+msgstr "İyi"
+
+#: classes/class-strings.php:213
+msgid "Theme is not activated"
+msgstr "Tema etkinleştirilmedi"
+
+#: classes/class-strings.php:214
+msgid "Server PHP Version"
+msgstr "Sunucu PHP Sürümü"
+
+#: classes/class-strings.php:215
+msgid "PHP 8.0 or above recommended"
+msgstr "PHP 8.0 veya üstü önerilir"
+
+#: classes/class-strings.php:216
+msgid "Server PHP Memory Limit"
+msgstr "Sunucu PHP Bellek Limiti"
+
+#: classes/class-strings.php:217
+msgid "128M recommended"
+msgstr "128M önerilir"
+
+#: classes/class-strings.php:218
+msgid "8 recommended"
+msgstr "8 önerilir"
+
+#: classes/class-strings.php:219
+msgid "30 recommended"
+msgstr "30 önerilir"
+
+#: classes/class-strings.php:220
+msgid "Your server has less than 1GB of disk free space"
+msgstr "Sunucunuzda 1GB'den az boş disk alanı var"
+
+#: classes/class-strings.php:221
+msgid "Server PHP Post Max Size"
+msgstr "Sunucu PHP Maksimum Posta Boyutu"
+
+#: classes/class-strings.php:222
+msgid "Server PHP Max Execution Time"
+msgstr "Sunucu PHP Maksimum Çalışma Süresi"
+
+#: classes/class-strings.php:223
+msgid "Server PHP"
+msgstr "Sunucu PHP"
+
+#: classes/class-strings.php:224
+msgid "PHP cURL is required"
+msgstr "PHP cURL gereklidir"
+
+#: classes/class-strings.php:225
+msgid "PHP allow_url_fopen is required"
+msgstr "PHP allow_url_fopen gereklidir"
+
+#: classes/class-strings.php:226
+msgid "Active"
+msgstr "Aktif"
+
+#: classes/class-strings.php:227
+msgid "Contact with your server support."
+msgstr "Sunucu desteğinizle iletişime geçin."
+
+#: classes/class-strings.php:228
+#, php-format
+msgid ""
+"Please help us improve the \"%s\" theme, we have added a feedback form, you "
+"can send us your comments and criticisms."
+msgstr ""
+"\"%s\" temasını geliştirmemize yardımcı olun, bir geri bildirim formu "
+"ekledik, yorumlarınızı ve eleştirilerinizi bize iletebilirsiniz."
+
+#: classes/class-strings.php:229
+#, php-format
+msgid ""
+"Thanks for purchasing the \"%s\" theme; to improve the theme, through the "
+"following form, you can send your feedback such as report a bug, request a "
+"feature, request a demo, ask non-support questions, etc."
+msgstr ""
+"\"%s\" temasını satın aldığınız için teşekkür ederiz; temayı geliştirmek "
+"için aşağıdaki form aracılığıyla hata raporu, özellik isteği, demo isteği "
+"gibi geri bildirimlerinizi, destek dışı sorularınızı iletebilirsiniz."
+
+#: classes/class-strings.php:230
+msgid "Submit"
+msgstr "Gönder"
+
+#: classes/class-strings.php:231
+msgid "Your message has been sent successfully."
+msgstr "Mesajınız başarıyla gönderildi."
+
+#: classes/class-strings.php:232
+msgid "Could not send your message, Please try again."
+msgstr "Mesajınız gönderilemedi, lütfen tekrar deneyin."
+
+#: classes/class-strings.php:233
+msgid "There is no message to send, Please try again."
+msgstr "Gönderilecek bir mesaj yok, lütfen tekrar deneyin."
+
+#: classes/class-strings.php:234
+msgid "Uninstall Demo(s)"
+msgstr "Demo(ları) Kaldır"
+
+#: classes/class-strings.php:235
+msgid ""
+"In this list you can see imported demos on your site previously, You can "
+"uninstall any demo data."
+msgstr ""
+"Bu listede daha önce sitenize içe aktarılan demoları görebilirsiniz. "
+"Herhangi bir demo verisini kaldırabilirsiniz."
+
+#: classes/class-strings.php:236
+msgid "There is no demo to uninstall"
+msgstr "Kaldırılacak demo yok"
+
+#: classes/class-strings.php:237
+msgid "Are you sure for this?"
+msgstr "Bundan emin misiniz?"
+
+#: classes/class-strings.php:238
+msgid ""
+"This will be deleted all your website data such as posts, pages, "
+"attachments, theme options, sliders, etc. and there is no undo button for "
+"this action."
+msgstr ""
+"Bu işlem, sitenizdeki tüm verileri, yazılar, sayfalar, ekler, tema "
+"seçenekleri, kaydırıcılar vb. dahil olmak üzere silecektir ve bu işlem için "
+"geri alma düğmesi bulunmamaktadır."
+
+#: classes/class-strings.php:239
+msgid "No, never mind"
+msgstr "Hayır, önemli değil"
+
+#: classes/class-strings.php:240
+msgid "Uninstalling, Please wait"
+msgstr "Kaldırılıyor, lütfen bekleyin"
+
+#: classes/class-strings.php:241
+msgid "Yes please"
+msgstr "Evet, lütfen"
+
+#: classes/class-strings.php:242
+msgid "Reload page"
+msgstr "Sayfayı yenile"
+
+#: classes/class-strings.php:243
+msgid "The requested AJAX name is empty. Please try again."
+msgstr "İstenen AJAX adı boş. Lütfen tekrar deneyin."
+
+#: classes/class-strings.php:244
+#, php-format
+msgid "Could not find plugin \"%s\" API, Please refresh page and try again."
+msgstr ""
+"Plugin \"%s\" API'si bulunamadı. Lütfen sayfayı yenileyin ve tekrar deneyin."
+
+#: classes/class-strings.php:245
+msgid "Codevz plus plugin is not installed or activated."
+msgstr "Codevz plus eklentisi yüklü değil veya etkinleştirilmemiş."
+
+#: classes/class-strings.php:246
+#, php-format
+msgid "Plugin \"%s\" is no listed as a valid plugin."
+msgstr "Eklenti \"%s\" geçerli bir eklenti olarak listelenmiyor."
+
+#: classes/class-strings.php:247
+#, php-format
+msgid ""
+"Could not download \"%s\" plugin ZIP file, Please go to Appearance > Install "
+"Plugins and install it manually, and try again demo importer."
+msgstr ""
+"\"%s\" eklentisinin ZIP dosyası indirilemedi, lütfen Görünüm > Eklentileri "
+"Yükle'ye gidin ve manuel olarak yükleyin, ardından demo içe aktarıcıyı "
+"tekrar deneyin‫."
+
+#: classes/class-strings.php:248
+#, php-format
+msgid ""
+"Error, Through FTP delete plugins > \"%s\" folder & increase PHP "
+"max_execution_time to 300 then try again."
+msgstr ""
+"Hata, FTP üzerinden eklentiler > \"%s\" klasörünü silin ve PHP "
+"max_execution_time değerini 300 olarak artırın, ardından tekrar deneyin."
+
+#: classes/class-strings.php:249
+msgid "Plugin activation error, "
+msgstr "Eklenti etkinleştirme hatası, "
+
+#: classes/class-strings.php:250
+#, php-format
+msgid "Plugin \"%s\" installed and activated successfully."
+msgstr "Eklenti \"%s\" başarıyla yüklendi ve etkinleştirildi."
+
+#: classes/class-strings.php:251
+#, php-format
+msgid "Demo \"%s\" uninstalled successfully."
+msgstr "Demo \"%s\" başarıyla kaldırıldı."
+
+#: classes/class-strings.php:252
+msgid ""
+"Sorry, but nothing matched your search terms. Please try again with some "
+"different keywords."
+msgstr ""
+"Üzgünüz, ancak arama terimlerinizle eşleşen hiçbir şey bulunamadı. Lütfen "
+"farklı anahtar kelimelerle tekrar deneyin."
+
+#: classes/class-strings.php:253
+#, php-format
+msgid ""
+"Please install and activate Slider Revolution Plugin from Dashboard > %s > "
+"Install Plugins"
+msgstr ""
+"Lütfen Slider Revolution Eklentisini Gösterge Paneli > %s > Eklentileri "
+"Yükle'den yükleyin ve etkinleştirin"
+
+#: classes/class-strings.php:254
+msgid ""
+"Please edit your page in the backend and from Page settings > Header "
+"settings, Select slider name"
+msgstr ""
+"Lütfen sayfanızı yönetici panelinde düzenleyin ve Sayfa ayarları > Başlık "
+"ayarları'ndan kaydırıcı adını seçin"
+
+#: classes/class-strings.php:255
+msgid ""
+"This area is placeholder for Slider, you can customize the slider on "
+"Dashboard > Slider Revolution"
+msgstr ""
+"Bu alan kaydırıcı için bir yer tutucudur, kaydırıcıyı Gösterge Paneli > "
+"Slider Revolution'dan özelleştirebilirsiniz"
+
+#: classes/class-strings.php:256
+msgid "Source"
+msgstr "Kaynak"
+
+#: classes/class-strings.php:257
+msgid "Posted by"
+msgstr "Gönderen"
+
+#: classes/class-strings.php:258
+msgid "Published on"
+msgstr "Yayınlanma tarihi"
+
+#: classes/class-strings.php:259
+msgid "Category(s)"
+msgstr "Kategori(ler)"
+
+#: classes/class-strings.php:260
+msgid "Tags"
+msgstr "Etiketler"
+
+#: classes/class-strings.php:261
+msgid "Views"
+msgstr "Görünümler"
+
+#: classes/class-strings.php:262
+msgid "Back to shop"
+msgstr "Alışverişe geri dön"
+
+#: classes/class-strings.php:263
+msgid "Add to wishlist"
+msgstr "İstek listesine ekle"
+
+#: classes/class-strings.php:264
+msgid "Add to compare"
+msgstr "Karşılaştırmaya ekle"
+
+#: classes/class-strings.php:265
+msgid "Browse wishlist"
+msgstr "İstek listesine göz at"
+
+#: classes/class-strings.php:266
+msgid "Compare products"
+msgstr "Ürünleri karşılaştır"
+
+#: classes/class-strings.php:267
+msgid "View wishlist page"
+msgstr "İstek listesi sayfasını görüntüle"
+
+#: classes/class-strings.php:268
+msgid "View compare page"
+msgstr "Karşılaştırma sayfasını görüntüle"
+
+#: classes/class-strings.php:269
+msgid "Enlarge the image"
+msgstr "Resmi büyüt"
+
+#: classes/class-strings.php:270
+msgid "Select options"
+msgstr "Seçenekleri seç"
+
+#: classes/class-strings.php:271
+msgid "Sevices"
+msgstr "Hizmetler"
+
+#: classes/class-strings.php:272
+msgid "Shop"
+msgstr "Alışveriş"
+
+#: classes/class-strings.php:274
+msgid "Select category"
+msgstr "Kategori seç"
+
+#: classes/class-strings.php:275
+msgid "All categories"
+msgstr "Tüm kategoriler"
+
+#~ msgid "Customize website"
+#~ msgstr "Web sitesini özelleştir"
+
+#~ msgid "An error has occurred, Please try again."
+#~ msgstr "Bir hata oluştu, lütfen tekrar deneyin."
+
+#~ msgid "Server Disk Free Space"
+#~ msgstr "Sunucu Disk Boş Alanı"
