@@ -754,7 +754,17 @@ function navigation_permit_renewal_form_shortcode() {
             }
 
             #signature-pad {
-                height: 150px;
+                height: 250px;
+                width: 100% !important;
+                max-width: 100%;
+            }
+
+            .npn-signature-container {
+                margin: 25px 0 !important;
+            }
+
+            .npn-form-page {
+                padding: 20px !important;
             }
         }
     </style>
@@ -846,10 +856,11 @@ function navigation_permit_renewal_form_shortcode() {
                         </p>
                     </div>
 
-                    <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; border-left: 4px solid rgba(255,255,255,0.5);">
+                    <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; border-left: 4px solid rgba(255,255,255,0.5);" class="sidebar-instruction">
                         <p style="font-size: 13px; line-height: 1.6; opacity: 0.95;">
                             <i class="fa-solid fa-info-circle" style="margin-right: 8px;"></i>
-                            Por favor, firme el documento en el área de la derecha para completar la autorización.
+                            <span class="sidebar-desktop-text">Por favor, firme el documento en el área de la derecha para completar la autorización.</span>
+                            <span class="sidebar-mobile-text" style="display: none;">Por favor, firme el documento en el área inferior para completar la autorización.</span>
                         </p>
                     </div>
                 </div>
@@ -995,8 +1006,9 @@ function navigation_permit_renewal_form_shortcode() {
                 <div id="page-authorization" class="npn-form-page hidden">
                     <h3><i class="fa-solid fa-signature"></i> Firme el Documento de Autorización</h3>
 
-                    <p style="color: rgb(var(--neutral-600)); margin-bottom: 25px; text-align: center;">
-                        El documento de autorización se muestra en el panel izquierdo. Por favor, firme en el área inferior para completar la autorización.
+                    <p style="color: rgb(var(--neutral-600)); margin-bottom: 25px; text-align: center;" class="auth-instruction-text">
+                        <span class="desktop-text">El documento de autorización se muestra en el panel izquierdo. Por favor, firme en el área inferior para completar la autorización.</span>
+                        <span class="mobile-text" style="display: none;">El documento de autorización se muestra en el panel superior. Por favor, firme en el área inferior para completar la autorización.</span>
                     </p>
 
                     <div class="npn-signature-label" style="text-align: center; margin-bottom: 15px; font-size: 15px; font-weight: 600; color: rgb(var(--neutral-700));">
@@ -1237,8 +1249,52 @@ function navigation_permit_renewal_form_shortcode() {
                 }
             }
 
-            // Inicializar firma
-            signaturePad = new SignaturePad(document.getElementById('signature-pad'));
+            // Inicializar firma con opciones mejoradas para móvil
+            const canvas = document.getElementById('signature-pad');
+            signaturePad = new SignaturePad(canvas, {
+                minWidth: 0.5,
+                maxWidth: 2.5,
+                throttle: 0,
+                velocityFilterWeight: 0.7,
+                penColor: '#000000'
+            });
+
+            // Ajustar tamaño del canvas en móvil
+            function resizeCanvas() {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                canvas.width = canvas.offsetWidth * ratio;
+                canvas.height = canvas.offsetHeight * ratio;
+                canvas.getContext('2d').scale(ratio, ratio);
+                signaturePad.clear();
+            }
+
+            // Cambiar texto según viewport
+            function updateAuthText() {
+                const desktopText = document.querySelector('.desktop-text');
+                const mobileText = document.querySelector('.mobile-text');
+                const sidebarDesktopText = document.querySelector('.sidebar-desktop-text');
+                const sidebarMobileText = document.querySelector('.sidebar-mobile-text');
+
+                if (window.innerWidth <= 1024) {
+                    if (desktopText) desktopText.style.display = 'none';
+                    if (mobileText) mobileText.style.display = 'inline';
+                    if (sidebarDesktopText) sidebarDesktopText.style.display = 'none';
+                    if (sidebarMobileText) sidebarMobileText.style.display = 'inline';
+                } else {
+                    if (desktopText) desktopText.style.display = 'inline';
+                    if (mobileText) mobileText.style.display = 'none';
+                    if (sidebarDesktopText) sidebarDesktopText.style.display = 'inline';
+                    if (sidebarMobileText) sidebarMobileText.style.display = 'none';
+                }
+            }
+
+            window.addEventListener('resize', function() {
+                resizeCanvas();
+                updateAuthText();
+            });
+
+            resizeCanvas();
+            updateAuthText();
 
             document.getElementById('clear-signature').addEventListener('click', function() {
                 signaturePad.clear();
