@@ -208,6 +208,14 @@ function navigation_permit_renewal_form_shortcode() {
             font-size: 11px;
         }
 
+        /* Sidebar de autorización */
+        .npn-sidebar-auth-doc {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
         /* ÁREA PRINCIPAL DEL FORMULARIO */
         .npn-form-area {
             padding: 30px 40px;
@@ -756,61 +764,94 @@ function navigation_permit_renewal_form_shortcode() {
         
         <!-- SIDEBAR IZQUIERDO -->
         <div class="npn-sidebar">
-            <div class="npn-logo">
-                <i class="fa-solid fa-ship"></i>
-                <span>Tramitfy</span>
+            <!-- Contenido por defecto (Páginas 1, 2 y 4) -->
+            <div id="sidebar-default">
+                <div class="npn-logo">
+                    <i class="fa-solid fa-ship"></i>
+                    <span>Tramitfy</span>
+                </div>
+
+                <div>
+                    <div class="npn-headline">
+                        Renovación Permiso de Navegación
+                    </div>
+                    <div class="npn-subheadline">
+                        Renueva tu permiso de navegación de forma rápida y segura. Gestión completa online sin desplazamientos.
+                    </div>
+                </div>
+
+                <div class="npn-price-box">
+                    <div class="npn-price-label">Precio Total</div>
+                    <div class="npn-price-amount">65€</div>
+                    <div class="npn-price-detail">IVA incluido · Pago único</div>
+                </div>
+
+                <div class="npn-benefits">
+                    <div class="npn-benefit">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Certificado de navegabilidad incluido</span>
+                    </div>
+                    <div class="npn-benefit">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Emisión oficial del nuevo permiso</span>
+                    </div>
+                    <div class="npn-benefit">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Gestión completa ante autoridades</span>
+                    </div>
+                    <div class="npn-benefit">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Tramitación rápida en 5-7 días</span>
+                    </div>
+                    <div class="npn-benefit">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Seguimiento online en tiempo real</span>
+                    </div>
+                </div>
+
+                <div class="npn-trust-badges">
+                    <div class="npn-badge">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>Pago seguro</span>
+                    </div>
+                    <div class="npn-badge">
+                        <i class="fa-solid fa-lock"></i>
+                        <span>Datos protegidos</span>
+                    </div>
+                    <div class="npn-badge">
+                        <i class="fa-solid fa-headset"></i>
+                        <span>Soporte 24/7</span>
+                    </div>
+                </div>
             </div>
 
-            <div>
-                <div class="npn-headline">
-                    Renovación Permiso de Navegación
+            <!-- Contenido para página de autorización (Página 3) -->
+            <div id="sidebar-authorization" style="display: none;">
+                <div class="npn-logo">
+                    <i class="fa-solid fa-file-signature"></i>
+                    <span>Autorización</span>
                 </div>
-                <div class="npn-subheadline">
-                    Renueva tu permiso de navegación de forma rápida y segura. Gestión completa online sin desplazamientos.
-                </div>
-            </div>
 
-            <div class="npn-price-box">
-                <div class="npn-price-label">Precio Total</div>
-                <div class="npn-price-amount">65€</div>
-                <div class="npn-price-detail">IVA incluido · Pago único</div>
-            </div>
+                <div class="npn-sidebar-auth-doc">
+                    <h4 style="font-size: 18px; font-weight: 700; color: white; margin-bottom: 15px;">
+                        DOCUMENTO DE AUTORIZACIÓN
+                    </h4>
 
-            <div class="npn-benefits">
-                <div class="npn-benefit">
-                    <i class="fa-solid fa-check"></i>
-                    <span>Certificado de navegabilidad incluido</span>
-                </div>
-                <div class="npn-benefit">
-                    <i class="fa-solid fa-check"></i>
-                    <span>Emisión oficial del nuevo permiso</span>
-                </div>
-                <div class="npn-benefit">
-                    <i class="fa-solid fa-check"></i>
-                    <span>Gestión completa ante autoridades</span>
-                </div>
-                <div class="npn-benefit">
-                    <i class="fa-solid fa-check"></i>
-                    <span>Tramitación rápida en 5-7 días</span>
-                </div>
-                <div class="npn-benefit">
-                    <i class="fa-solid fa-check"></i>
-                    <span>Seguimiento online en tiempo real</span>
-                </div>
-            </div>
+                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 20px; backdrop-filter: blur(10px);">
+                        <p style="font-size: 14px; line-height: 1.8; margin-bottom: 15px;">
+                            Yo, <strong id="sidebar-auth-name" style="color: #fff; font-size: 16px;">[Nombre]</strong>, con DNI/NIE <strong id="sidebar-auth-dni" style="color: #fff;">[DNI]</strong>, autorizo a <strong>TRAMITFY</strong> para que, en mi nombre y representación, gestione ante las autoridades competentes la renovación de mi permiso de navegación.
+                        </p>
+                        <p style="font-size: 14px; line-height: 1.8;">
+                            Me comprometo a aportar toda la documentación necesaria y a abonar las tasas correspondientes.
+                        </p>
+                    </div>
 
-            <div class="npn-trust-badges">
-                <div class="npn-badge">
-                    <i class="fa-solid fa-shield-halved"></i>
-                    <span>Pago seguro</span>
-                </div>
-                <div class="npn-badge">
-                    <i class="fa-solid fa-lock"></i>
-                    <span>Datos protegidos</span>
-                </div>
-                <div class="npn-badge">
-                    <i class="fa-solid fa-headset"></i>
-                    <span>Soporte 24/7</span>
+                    <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; border-left: 4px solid rgba(255,255,255,0.5);">
+                        <p style="font-size: 13px; line-height: 1.6; opacity: 0.95;">
+                            <i class="fa-solid fa-info-circle" style="margin-right: 8px;"></i>
+                            Por favor, firme el documento en el área de la derecha para completar la autorización.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -952,28 +993,21 @@ function navigation_permit_renewal_form_shortcode() {
 
                 <!-- PÁGINA 3: Autorización y Firma -->
                 <div id="page-authorization" class="npn-form-page hidden">
-                    <h3><i class="fa-solid fa-signature"></i> Autorización y Firma</h3>
+                    <h3><i class="fa-solid fa-signature"></i> Firme el Documento de Autorización</h3>
 
-                    <div class="npn-auth-layout">
-                        <!-- Documento de autorización (izquierda) -->
-                        <div class="npn-auth-document">
-                            <h4>AUTORIZACIÓN PARA TRAMITACIÓN</h4>
-                            <p>Yo, <strong id="auth-name">[Nombre]</strong>, con DNI/NIE <strong id="auth-dni">[DNI]</strong>, autorizo a <strong>TRAMITFY</strong> para que, en mi nombre y representación, gestione ante las autoridades competentes la renovación de mi permiso de navegación.</p>
-                            <p style="margin-top: 15px;">Me comprometo a aportar toda la documentación necesaria y a abonar las tasas correspondientes.</p>
-                        </div>
+                    <p style="color: rgb(var(--neutral-600)); margin-bottom: 25px; text-align: center;">
+                        El documento de autorización se muestra en el panel izquierdo. Por favor, firme en el área inferior para completar la autorización.
+                    </p>
 
-                        <!-- Área de firma (derecha) -->
-                        <div class="npn-auth-signature-area">
-                            <div class="npn-signature-label">
-                                <i class="fa-solid fa-pen-to-square"></i> Firme aquí para autorizar
-                            </div>
-                            <div class="npn-signature-container">
-                                <canvas id="signature-pad" width="600" height="180"></canvas>
-                                <button type="button" class="npn-signature-clear" id="clear-signature">
-                                    <i class="fa-solid fa-eraser"></i> Limpiar Firma
-                                </button>
-                            </div>
-                        </div>
+                    <div class="npn-signature-label" style="text-align: center; margin-bottom: 15px; font-size: 15px; font-weight: 600; color: rgb(var(--neutral-700));">
+                        <i class="fa-solid fa-pen-to-square"></i> Firme aquí para autorizar
+                    </div>
+
+                    <div class="npn-signature-container" style="margin: 20px 0; text-align: center;">
+                        <canvas id="signature-pad" width="800" height="200"></canvas>
+                        <button type="button" class="npn-signature-clear" id="clear-signature">
+                            <i class="fa-solid fa-eraser"></i> Limpiar Firma
+                        </button>
                     </div>
 
                     <div class="npn-terms">
@@ -1080,14 +1114,22 @@ function navigation_permit_renewal_form_shortcode() {
                     nav.classList.toggle('active', index === currentPageIndex);
                 });
 
+                // Cambiar contenido del sidebar según la página
+                const sidebarDefault = document.getElementById('sidebar-default');
+                const sidebarAuthorization = document.getElementById('sidebar-authorization');
+
+                if (pageId === 'page-authorization') {
+                    sidebarDefault.style.display = 'none';
+                    sidebarAuthorization.style.display = 'block';
+                    generateAuthorizationDocument();
+                } else {
+                    sidebarDefault.style.display = 'block';
+                    sidebarAuthorization.style.display = 'none';
+                }
+
                 // Inicializar Stripe en página de pago
                 if (pageId === 'page-payment' && !stripe) {
                     initializeStripe();
-                }
-
-                // Generar documento de autorización
-                if (pageId === 'page-authorization') {
-                    generateAuthorizationDocument();
                 }
 
                 // Manejar visibilidad del campo "permiso caducado"
@@ -1154,8 +1196,9 @@ function navigation_permit_renewal_form_shortcode() {
                 const name = document.getElementById('customer_name').value || '[Nombre]';
                 const dni = document.getElementById('customer_dni').value || '[DNI]';
 
-                document.getElementById('auth-name').textContent = name;
-                document.getElementById('auth-dni').textContent = dni;
+                // Actualizar sidebar
+                document.getElementById('sidebar-auth-name').textContent = name;
+                document.getElementById('sidebar-auth-dni').textContent = dni;
             }
 
             // Inicializar Stripe
