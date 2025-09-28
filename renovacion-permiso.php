@@ -72,84 +72,85 @@ function navigation_permit_renewal_form_shortcode() {
         /* Container principal - Grid de 2 columnas */
         .npn-container {
             max-width: 1400px;
-            margin: 40px auto;
+            margin: 15px auto;
             background: white;
-            border-radius: 20px;
+            border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
             display: grid;
-            grid-template-columns: 420px 1fr;
-            min-height: 800px;
+            grid-template-columns: 380px 1fr;
+            min-height: auto;
+            max-height: 95vh;
         }
 
         /* SIDEBAR IZQUIERDO */
         .npn-sidebar {
             background: linear-gradient(180deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
             color: white;
-            padding: 35px 28px;
+            padding: 20px 20px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 10px;
             position: sticky;
             top: 0;
-            height: 100vh;
+            height: 95vh;
             overflow-y: auto;
         }
 
         .npn-logo {
-            font-size: 26px;
+            font-size: 22px;
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .npn-logo i {
-            font-size: 36px;
+            font-size: 28px;
         }
 
         .npn-headline {
-            font-size: 20px;
+            font-size: 17px;
             font-weight: 600;
-            line-height: 1.4;
-            margin-bottom: 10px;
+            line-height: 1.3;
+            margin-bottom: 4px;
         }
 
         .npn-subheadline {
-            font-size: 15px;
+            font-size: 13px;
             opacity: 0.92;
-            line-height: 1.6;
+            line-height: 1.4;
         }
 
         /* Caja de precio destacada */
         .npn-price-box {
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
-            border-radius: 14px;
-            padding: 20px;
+            border-radius: 12px;
+            padding: 12px;
             text-align: center;
             border: 1px solid rgba(255, 255, 255, 0.25);
-            margin: 10px 0;
+            margin: 6px 0;
         }
 
         .npn-price-label {
-            font-size: 13px;
+            font-size: 11px;
             opacity: 0.85;
             text-transform: uppercase;
-            letter-spacing: 1.2px;
-            margin-bottom: 10px;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
         }
 
         .npn-price-amount {
-            font-size: 48px;
+            font-size: 38px;
             font-weight: 700;
-            margin: 8px 0;
+            margin: 4px 0;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .npn-price-detail {
-            font-size: 14px;
+            font-size: 12px;
             opacity: 0.88;
         }
 
@@ -157,78 +158,78 @@ function navigation_permit_renewal_form_shortcode() {
         .npn-benefits {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin: 15px 0;
+            gap: 6px;
+            margin: 8px 0;
         }
 
         .npn-benefit {
             display: flex;
             align-items: start;
-            gap: 12px;
-            font-size: 14px;
-            line-height: 1.5;
+            gap: 8px;
+            font-size: 12px;
+            line-height: 1.4;
         }
 
         .npn-benefit i {
-            font-size: 18px;
+            font-size: 14px;
             color: rgb(var(--success));
             background: white;
-            width: 28px;
-            height: 28px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            margin-top: 2px;
+            margin-top: 1px;
         }
 
         /* Trust badges */
         .npn-trust-badges {
             display: flex;
-            gap: 12px;
+            gap: 8px;
             flex-wrap: wrap;
             margin-top: auto;
-            padding-top: 20px;
+            padding-top: 10px;
         }
 
         .npn-badge {
             background: rgba(255, 255, 255, 0.18);
-            padding: 7px 14px;
-            border-radius: 20px;
-            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: 16px;
+            font-size: 10px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             border: 1px solid rgba(255, 255, 255, 0.25);
             font-weight: 500;
         }
 
         .npn-badge i {
-            font-size: 14px;
+            font-size: 11px;
         }
 
         /* ÁREA PRINCIPAL DEL FORMULARIO */
         .npn-form-area {
-            padding: 35px 45px;
+            padding: 20px 30px;
             background: #fafbfc;
             overflow-y: auto;
-            max-height: 100vh;
+            max-height: 95vh;
         }
 
         .npn-form-header {
-            margin-bottom: 25px;
+            margin-bottom: 15px;
         }
 
         .npn-form-title {
-            font-size: 28px;
+            font-size: 22px;
             font-weight: 700;
             color: rgb(var(--neutral-900));
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
 
         .npn-form-subtitle {
-            font-size: 16px;
+            font-size: 13px;
             color: rgb(var(--neutral-600));
         }
 
@@ -236,9 +237,9 @@ function navigation_permit_renewal_form_shortcode() {
         .npn-admin-panel {
             background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
             color: white;
-            padding: 15px 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -252,25 +253,25 @@ function navigation_permit_renewal_form_shortcode() {
         }
 
         .npn-admin-panel-title {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
             opacity: 0.95;
         }
 
         .npn-admin-panel-subtitle {
-            font-size: 12px;
+            font-size: 10px;
             opacity: 0.85;
         }
 
         .npn-admin-autofill-btn {
-            padding: 10px 20px;
+            padding: 8px 16px;
             background: white;
             color: #0ea5e9;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 12px;
             transition: all 0.2s ease;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
@@ -283,17 +284,17 @@ function navigation_permit_renewal_form_shortcode() {
         /* Navegación modernizada */
         .npn-navigation {
             display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
-            padding: 8px;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 6px;
             background: white;
-            border-radius: 12px;
+            border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
         .npn-nav-item {
             flex: 1;
-            padding: 14px 20px;
+            padding: 10px 16px;
             text-align: center;
             background: #f8f9fa;
             border-radius: 8px;
@@ -302,16 +303,16 @@ function navigation_permit_renewal_form_shortcode() {
             text-decoration: none;
             color: rgb(var(--neutral-700));
             font-weight: 500;
-            font-size: 14px;
+            font-size: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             border: 2px solid transparent;
         }
 
         .npn-nav-item i {
-            font-size: 16px;
+            font-size: 14px;
         }
 
         .npn-nav-item.active {
@@ -329,8 +330,8 @@ function navigation_permit_renewal_form_shortcode() {
         /* Páginas del formulario */
         .npn-form-page {
             background: white;
-            padding: 30px;
-            border-radius: 12px;
+            padding: 20px;
+            border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
 
@@ -339,23 +340,23 @@ function navigation_permit_renewal_form_shortcode() {
         }
 
         .npn-form-page h3 {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 600;
             color: rgb(var(--neutral-900));
-            margin: 0 0 20px 0;
+            margin: 0 0 12px 0;
         }
 
         /* Inputs mejorados */
         .npn-input-group {
-            margin-bottom: 20px;
+            margin-bottom: 12px;
         }
 
         .npn-input-group label {
             display: block;
             font-weight: 500;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             color: rgb(var(--neutral-800));
-            font-size: 14px;
+            font-size: 12px;
         }
 
         .npn-input-group input[type="text"],
@@ -364,10 +365,10 @@ function navigation_permit_renewal_form_shortcode() {
         .npn-input-group input[type="file"],
         .npn-input-group select {
             width: 100%;
-            padding: 12px 16px;
+            padding: 8px 12px;
             border: 2px solid rgb(var(--neutral-300));
             border-radius: 8px;
-            font-size: 15px;
+            font-size: 13px;
             transition: all 0.2s ease;
             background: white;
         }
@@ -383,22 +384,22 @@ function navigation_permit_renewal_form_shortcode() {
         .npn-inputs-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 12px;
         }
 
         /* Upload section */
         .npn-upload-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin: 20px 0;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 12px 0;
         }
 
         .npn-upload-item {
             background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 12px;
+            border-radius: 8px;
             border: 2px dashed rgb(var(--neutral-300));
             transition: all 0.3s ease;
         }
@@ -411,24 +412,26 @@ function navigation_permit_renewal_form_shortcode() {
         .npn-upload-item label {
             display: block;
             font-weight: 600;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
             color: rgb(var(--neutral-800));
+            font-size: 12px;
         }
 
         .npn-upload-item input[type="file"] {
             width: 100%;
-            padding: 10px;
+            padding: 6px;
             border: none;
             background: white;
             border-radius: 6px;
+            font-size: 11px;
         }
 
         .npn-upload-item .view-example {
             display: inline-block;
-            margin-top: 8px;
+            margin-top: 4px;
             color: rgb(var(--primary));
             text-decoration: none;
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 500;
         }
 
@@ -438,16 +441,16 @@ function navigation_permit_renewal_form_shortcode() {
 
         /* Firma */
         .npn-signature-container {
-            margin: 30px 0;
+            margin: 10px 0;
             text-align: center;
         }
 
         #signature-pad {
             border: 3px solid rgb(var(--primary));
-            border-radius: 10px;
+            border-radius: 8px;
             width: 100%;
-            max-width: 600px;
-            height: 200px;
+            max-width: 500px;
+            height: 120px;
             cursor: crosshair;
             background: white;
             box-shadow: 0 2px 8px rgba(var(--primary), 0.15);
@@ -455,14 +458,15 @@ function navigation_permit_renewal_form_shortcode() {
         }
 
         .npn-signature-clear {
-            margin-top: 15px;
-            padding: 10px 24px;
+            margin-top: 8px;
+            padding: 6px 16px;
             background: rgb(var(--neutral-500));
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 500;
+            font-size: 12px;
             transition: all 0.2s ease;
         }
 
@@ -473,25 +477,25 @@ function navigation_permit_renewal_form_shortcode() {
 
         /* Términos y condiciones */
         .npn-terms {
-            margin: 25px 0;
-            padding: 15px;
+            margin: 12px 0;
+            padding: 10px;
             background: #f8f9fa;
             border-radius: 8px;
-            border-left: 4px solid rgb(var(--info));
+            border-left: 3px solid rgb(var(--info));
         }
 
         .npn-terms label {
             display: flex;
             align-items: start;
-            gap: 10px;
+            gap: 8px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 11px;
         }
 
         .npn-terms input[type="checkbox"] {
-            margin-top: 3px;
-            width: 18px;
-            height: 18px;
+            margin-top: 2px;
+            width: 16px;
+            height: 16px;
             cursor: pointer;
         }
 
@@ -508,23 +512,23 @@ function navigation_permit_renewal_form_shortcode() {
         /* Botones de navegación */
         .npn-button-group {
             display: flex;
-            gap: 15px;
-            margin-top: 30px;
+            gap: 10px;
+            margin-top: 15px;
         }
 
         .npn-btn {
             flex: 1;
-            padding: 14px 28px;
+            padding: 10px 20px;
             border: none;
-            border-radius: 10px;
-            font-size: 16px;
+            border-radius: 8px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .npn-btn-prev {
@@ -551,17 +555,17 @@ function navigation_permit_renewal_form_shortcode() {
         /* Precio y pago */
         .npn-price-summary {
             background: #f8f9fa;
-            padding: 25px;
-            border-radius: 12px;
-            margin: 20px 0;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin: 12px 0;
             border: 2px solid rgb(var(--neutral-200));
         }
 
         .npn-price-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 12px;
-            font-size: 15px;
+            margin-bottom: 6px;
+            font-size: 13px;
         }
 
         .npn-price-row strong {
@@ -569,46 +573,46 @@ function navigation_permit_renewal_form_shortcode() {
         }
 
         .npn-price-total {
-            margin-top: 15px;
-            padding-top: 15px;
+            margin-top: 8px;
+            padding-top: 8px;
             border-top: 2px solid rgb(var(--neutral-300));
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 700;
             color: rgb(var(--primary));
         }
 
         /* Payment element de Stripe */
         #payment-element {
-            margin: 25px 0;
-            padding: 20px;
+            margin: 12px 0;
+            padding: 12px;
             background: white;
-            border-radius: 10px;
+            border-radius: 8px;
             border: 2px solid rgb(var(--neutral-200));
         }
 
         /* Cupón */
         .npn-coupon-container {
-            margin: 20px 0;
+            margin: 12px 0;
         }
 
         .npn-coupon-input {
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
         #coupon_code {
             flex: 1;
-            padding: 12px 16px;
+            padding: 8px 12px;
             border: 2px solid rgb(var(--neutral-300));
             border-radius: 8px;
-            font-size: 15px;
+            font-size: 13px;
         }
 
         .npn-coupon-message {
-            margin-top: 10px;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 14px;
+            margin-top: 6px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
         }
 
         .npn-coupon-message.success {
@@ -895,13 +899,13 @@ function navigation_permit_renewal_form_shortcode() {
 
                     <h3 style="margin-top: 30px;"><i class="fa-solid fa-signature"></i> Autorización y Firma</h3>
                     
-                    <div id="authorization-document" style="background:#f8f9fa; padding:20px; border-radius:8px; margin:20px 0; font-size:14px; line-height:1.6;">
+                    <div id="authorization-document" style="background:#f8f9fa; padding:12px 15px; border-radius:8px; margin:12px 0; font-size:12px; line-height:1.4;">
                         <p><strong>AUTORIZACIÓN PARA TRAMITACIÓN</strong></p>
                         <p>Mediante la presente, autorizo a TRAMITFY para que, en mi nombre y representación, gestione ante las autoridades competentes la renovación de mi permiso de navegación, comprometiéndome a aportar toda la documentación necesaria y a abonar las tasas correspondientes.</p>
                     </div>
 
                     <div class="npn-signature-container">
-                        <canvas id="signature-pad" width="600" height="200"></canvas>
+                        <canvas id="signature-pad" width="600" height="120"></canvas>
                         <button type="button" class="npn-signature-clear" id="clear-signature">
                             <i class="fa-solid fa-eraser"></i> Limpiar Firma
                         </button>
