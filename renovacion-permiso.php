@@ -515,6 +515,22 @@ function navigation_permit_renewal_form_shortcode() {
 
     <!-- Formulario principal -->
     <form id="navigation-permit-renewal-form" action="" method="POST" enctype="multipart/form-data">
+
+        <!-- Panel de Auto-rellenado para Administradores -->
+        <?php if (current_user_can('administrator')): ?>
+        <div class="admin-autofill-panel" style="background: #f0f9ff; border: 2px solid #0ea5e9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: bold; color: #0ea5e9;">
+                🔧 MODO ADMINISTRADOR
+            </p>
+            <button type="button" id="admin-autofill-btn" class="btn-primary" style="padding: 10px 20px; background: #0ea5e9; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                ⚡ Auto-rellenar Formulario (Solo Datos)
+            </button>
+            <p style="margin: 8px 0 0 0; font-size: 12px; color: #64748b;">
+                Rellena automáticamente todos los campos y llega hasta el resumen. Stripe se maneja independientemente.
+            </p>
+        </div>
+        <?php endif; ?>
+
         <!-- Mensajes de error -->
         <div id="error-messages"></div>
 
@@ -1133,6 +1149,52 @@ function navigation_permit_renewal_form_shortcode() {
                 }
                 // [/NUEVO - CUPÓN]
             });
+
+            // [AUTO-RELLENADO PARA ADMINISTRADORES]
+            <?php if (current_user_can('administrator')): ?>
+            const adminAutofillBtn = document.getElementById('admin-autofill-btn');
+            if (adminAutofillBtn) {
+                adminAutofillBtn.addEventListener('click', function() {
+                    alert('Iniciando auto-rellenado del formulario...');
+
+                    // PASO 1: Rellenar datos personales
+                    document.getElementById('customer_name').value = 'Admin Test';
+                    document.getElementById('customer_dni').value = '12345678Z';
+                    document.getElementById('customer_email').value = 'joanpinyol@hotmail.es';
+                    document.getElementById('customer_phone').value = '682246937';
+                    document.getElementById('renewal_type').value = 'caducidad';
+
+                    // Simular firma en el canvas (automática)
+                    setTimeout(() => {
+                        const canvas = document.getElementById('signature-pad');
+                        if (canvas) {
+                            const ctx = canvas.getContext('2d');
+                            ctx.font = '30px cursive';
+                            ctx.fillText('Admin Test', 50, 100);
+                        }
+                    }, 500);
+
+                    // Marcar checkbox de términos
+                    const termsCheckbox = document.querySelector('input[name="terms_accept"]');
+                    if (termsCheckbox) {
+                        termsCheckbox.checked = true;
+                    }
+
+                    // Navegar automáticamente al siguiente paso
+                    setTimeout(() => {
+                        // Cambiar a la página de documentación
+                        showPage('page-documents');
+
+                        // Después de 1 segundo, navegar a pago
+                        setTimeout(() => {
+                            showPage('page-payment');
+                            alert('Formulario auto-rellenado. Los archivos deben subirse manualmente y el pago se procesa con Stripe.');
+                        }, 1000);
+                    }, 1000);
+                });
+            }
+            <?php endif; ?>
+            // [/AUTO-RELLENADO]
         })(); // [CAMBIO 10] Fin del IIFE
     </script>
 
