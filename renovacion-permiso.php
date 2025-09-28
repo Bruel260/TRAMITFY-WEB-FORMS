@@ -72,7 +72,7 @@ function navigation_permit_renewal_form_shortcode() {
         /* Container principal - Grid de 2 columnas */
         .npn-container {
             max-width: 1400px;
-            margin: 15px auto;
+            margin: 25px auto;
             background: white;
             border-radius: 16px;
             overflow: hidden;
@@ -80,7 +80,6 @@ function navigation_permit_renewal_form_shortcode() {
             display: grid;
             grid-template-columns: 380px 1fr;
             min-height: auto;
-            max-height: 95vh;
         }
 
         /* SIDEBAR IZQUIERDO */
@@ -211,10 +210,9 @@ function navigation_permit_renewal_form_shortcode() {
 
         /* ÁREA PRINCIPAL DEL FORMULARIO */
         .npn-form-area {
-            padding: 20px 30px;
+            padding: 30px 40px;
             background: #fafbfc;
             overflow-y: auto;
-            max-height: 95vh;
         }
 
         .npn-form-header {
@@ -330,7 +328,7 @@ function navigation_permit_renewal_form_shortcode() {
         /* Páginas del formulario */
         .npn-form-page {
             background: white;
-            padding: 20px;
+            padding: 30px;
             border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
@@ -340,23 +338,23 @@ function navigation_permit_renewal_form_shortcode() {
         }
 
         .npn-form-page h3 {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 600;
             color: rgb(var(--neutral-900));
-            margin: 0 0 12px 0;
+            margin: 0 0 20px 0;
         }
 
         /* Inputs mejorados */
         .npn-input-group {
-            margin-bottom: 12px;
+            margin-bottom: 18px;
         }
 
         .npn-input-group label {
             display: block;
             font-weight: 500;
-            margin-bottom: 4px;
+            margin-bottom: 7px;
             color: rgb(var(--neutral-800));
-            font-size: 12px;
+            font-size: 14px;
         }
 
         .npn-input-group input[type="text"],
@@ -365,10 +363,10 @@ function navigation_permit_renewal_form_shortcode() {
         .npn-input-group input[type="file"],
         .npn-input-group select {
             width: 100%;
-            padding: 8px 12px;
+            padding: 12px 16px;
             border: 2px solid rgb(var(--neutral-300));
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 15px;
             transition: all 0.2s ease;
             background: white;
         }
@@ -384,8 +382,8 @@ function navigation_permit_renewal_form_shortcode() {
         .npn-inputs-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 12px;
+            gap: 20px;
+            margin-bottom: 18px;
         }
 
         /* Upload section */
@@ -441,7 +439,7 @@ function navigation_permit_renewal_form_shortcode() {
 
         /* Firma */
         .npn-signature-container {
-            margin: 10px 0;
+            margin: 20px 0;
             text-align: center;
         }
 
@@ -449,8 +447,8 @@ function navigation_permit_renewal_form_shortcode() {
             border: 3px solid rgb(var(--primary));
             border-radius: 8px;
             width: 100%;
-            max-width: 500px;
-            height: 120px;
+            max-width: 600px;
+            height: 200px;
             cursor: crosshair;
             background: white;
             box-shadow: 0 2px 8px rgba(var(--primary), 0.15);
@@ -458,15 +456,15 @@ function navigation_permit_renewal_form_shortcode() {
         }
 
         .npn-signature-clear {
-            margin-top: 8px;
-            padding: 6px 16px;
+            margin-top: 12px;
+            padding: 10px 20px;
             background: rgb(var(--neutral-500));
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 500;
-            font-size: 12px;
+            font-size: 14px;
             transition: all 0.2s ease;
         }
 
@@ -518,17 +516,17 @@ function navigation_permit_renewal_form_shortcode() {
 
         .npn-btn {
             flex: 1;
-            padding: 10px 20px;
+            padding: 14px 24px;
             border: none;
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 8px;
         }
 
         .npn-btn-prev {
@@ -808,6 +806,10 @@ function navigation_permit_renewal_form_shortcode() {
                         <i class="fa-solid fa-file-alt"></i>
                         <span>Documentación</span>
                     </a>
+                    <a href="#" class="npn-nav-item" data-page-id="page-authorization">
+                        <i class="fa-solid fa-signature"></i>
+                        <span>Autorización</span>
+                    </a>
                     <a href="#" class="npn-nav-item" data-page-id="page-payment">
                         <i class="fa-solid fa-credit-card"></i>
                         <span>Pago</span>
@@ -867,7 +869,7 @@ function navigation_permit_renewal_form_shortcode() {
                 <div id="page-documents" class="npn-form-page hidden">
                     <h3><i class="fa-solid fa-file-alt"></i> Documentación Requerida</h3>
 
-                    <p style="color: rgb(var(--neutral-600)); margin-bottom: 20px;">
+                    <p style="color: rgb(var(--neutral-600)); margin-bottom: 25px;">
                         Por favor, adjunte los siguientes documentos en formato PDF, JPG o PNG.
                     </p>
 
@@ -897,15 +899,28 @@ function navigation_permit_renewal_form_shortcode() {
                         </div>
                     </div>
 
-                    <h3 style="margin-top: 30px;"><i class="fa-solid fa-signature"></i> Autorización y Firma</h3>
-                    
-                    <div id="authorization-document" style="background:#f8f9fa; padding:12px 15px; border-radius:8px; margin:12px 0; font-size:12px; line-height:1.4;">
+                    <div class="npn-button-group">
+                        <button type="button" class="npn-btn npn-btn-prev" data-prev="page-personal-info">
+                            <i class="fa-solid fa-arrow-left"></i> Anterior
+                        </button>
+                        <button type="button" class="npn-btn npn-btn-next" data-next="page-authorization">
+                            Siguiente <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PÁGINA 3: Autorización y Firma -->
+                <div id="page-authorization" class="npn-form-page hidden">
+                    <h3><i class="fa-solid fa-signature"></i> Autorización y Firma</h3>
+
+                    <div id="authorization-document" style="background:#f8f9fa; padding:20px 25px; border-radius:10px; margin:25px 0; font-size:14px; line-height:1.7;">
                         <p><strong>AUTORIZACIÓN PARA TRAMITACIÓN</strong></p>
-                        <p>Mediante la presente, autorizo a TRAMITFY para que, en mi nombre y representación, gestione ante las autoridades competentes la renovación de mi permiso de navegación, comprometiéndome a aportar toda la documentación necesaria y a abonar las tasas correspondientes.</p>
+                        <p>Yo, <strong id="auth-name">[Nombre]</strong>, con DNI <strong id="auth-dni">[DNI]</strong>, autorizo a TRAMITFY para que, en mi nombre y representación, gestione ante las autoridades competentes la renovación de mi permiso de navegación.</p>
+                        <p>Me comprometo a aportar toda la documentación necesaria y a abonar las tasas correspondientes.</p>
                     </div>
 
                     <div class="npn-signature-container">
-                        <canvas id="signature-pad" width="600" height="120"></canvas>
+                        <canvas id="signature-pad" width="600" height="200"></canvas>
                         <button type="button" class="npn-signature-clear" id="clear-signature">
                             <i class="fa-solid fa-eraser"></i> Limpiar Firma
                         </button>
@@ -919,7 +934,7 @@ function navigation_permit_renewal_form_shortcode() {
                     </div>
 
                     <div class="npn-button-group">
-                        <button type="button" class="npn-btn npn-btn-prev" data-prev="page-personal-info">
+                        <button type="button" class="npn-btn npn-btn-prev" data-prev="page-documents">
                             <i class="fa-solid fa-arrow-left"></i> Anterior
                         </button>
                         <button type="button" class="npn-btn npn-btn-next" data-next="page-payment">
@@ -928,7 +943,7 @@ function navigation_permit_renewal_form_shortcode() {
                     </div>
                 </div>
 
-                <!-- PÁGINA 3: Pago -->
+                <!-- PÁGINA 4: Pago -->
                 <div id="page-payment" class="npn-form-page hidden">
                     <h3><i class="fa-solid fa-credit-card"></i> Información de Pago</h3>
 
@@ -973,7 +988,7 @@ function navigation_permit_renewal_form_shortcode() {
                     </div>
 
                     <div class="npn-button-group">
-                        <button type="button" class="npn-btn npn-btn-prev" data-prev="page-documents">
+                        <button type="button" class="npn-btn npn-btn-prev" data-prev="page-authorization">
                             <i class="fa-solid fa-arrow-left"></i> Anterior
                         </button>
                         <button type="submit" class="npn-btn npn-btn-submit" id="submit">
@@ -1021,7 +1036,7 @@ function navigation_permit_renewal_form_shortcode() {
                 }
 
                 // Generar documento de autorización
-                if (pageId === 'page-documents') {
+                if (pageId === 'page-authorization') {
                     generateAuthorizationDocument();
                 }
 
@@ -1086,17 +1101,11 @@ function navigation_permit_renewal_form_shortcode() {
 
             // Generar documento de autorización
             function generateAuthorizationDocument() {
-                const authDoc = document.getElementById('authorization-document');
                 const name = document.getElementById('customer_name').value || '[Nombre]';
                 const dni = document.getElementById('customer_dni').value || '[DNI]';
-                const renewalType = document.getElementById('renewal_type');
-                const renewalText = renewalType.options[renewalType.selectedIndex].text;
 
-                authDoc.innerHTML = `
-                    <p><strong>AUTORIZACIÓN PARA TRAMITACIÓN</strong></p>
-                    <p>Yo, <strong>${name}</strong>, con DNI <strong>${dni}</strong>, autorizo a TRAMITFY para que, en mi nombre y representación, gestione ante las autoridades competentes la renovación de mi permiso de navegación por: <strong>${renewalText}</strong>.</p>
-                    <p>Me comprometo a aportar toda la documentación necesaria y a abonar las tasas correspondientes.</p>
-                `;
+                document.getElementById('auth-name').textContent = name;
+                document.getElementById('auth-dni').textContent = dni;
             }
 
             // Inicializar Stripe
