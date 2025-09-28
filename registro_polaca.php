@@ -872,7 +872,7 @@ function polish_registration_form_shortcode() {
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.9);
-            z-index: 999999;
+            z-index: 9999999;
             display: none;
             align-items: center;
             justify-content: center;
@@ -2198,16 +2198,36 @@ function polish_registration_form_shortcode() {
         // Funciones de firma
         function openSignatureModal() {
             document.getElementById('signature-modal').style.display = 'flex';
-            // Ocultar WhatsApp si existe
-            const whatsapp = document.querySelector('.wp-whatsapp-chat');
-            if (whatsapp) whatsapp.style.display = 'none';
+
+            // Ocultar WhatsApp Ninja (múltiples selectores posibles)
+            const whatsappSelectors = [
+                '.wp-whatsapp-chat',
+                '#whatsapp-chat-widget',
+                '.whatsapp-button',
+                '.wa-chat-box',
+                '.wa-chat-button',
+                '[id*="whatsapp"]',
+                '[class*="whatsapp"]'
+            ];
+
+            whatsappSelectors.forEach(selector => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    element.style.display = 'none';
+                    element.setAttribute('data-hidden-by-modal', 'true');
+                }
+            });
         }
 
         function closeSignatureModal() {
             document.getElementById('signature-modal').style.display = 'none';
-            // Mostrar WhatsApp si existe
-            const whatsapp = document.querySelector('.wp-whatsapp-chat');
-            if (whatsapp) whatsapp.style.display = 'block';
+
+            // Restaurar WhatsApp Ninja
+            const hiddenElements = document.querySelectorAll('[data-hidden-by-modal="true"]');
+            hiddenElements.forEach(element => {
+                element.style.display = '';
+                element.removeAttribute('data-hidden-by-modal');
+            });
         }
 
         function clearSignature() {
