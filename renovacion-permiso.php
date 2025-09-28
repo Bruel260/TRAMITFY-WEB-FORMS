@@ -1010,13 +1010,6 @@ function navigation_permit_renewal_form_shortcode() {
                         </button>
                     </div>
 
-                    <div class="npn-terms">
-                        <label>
-                            <input type="checkbox" name="terms_accept" required>
-                            <span>Acepto los <a href="https://tramitfy.es/terminos-y-condiciones-de-uso/" target="_blank">términos y condiciones</a> del servicio.</span>
-                        </label>
-                    </div>
-
                     <div class="npn-button-group">
                         <button type="button" class="npn-btn npn-btn-prev" data-prev="page-documents">
                             <i class="fa-solid fa-arrow-left"></i> Anterior
@@ -1066,8 +1059,8 @@ function navigation_permit_renewal_form_shortcode() {
 
                     <div class="npn-terms">
                         <label>
-                            <input type="checkbox" name="terms_accept_pago" required>
-                            <span>Acepto los <a href="https://tramitfy.es/terminos-y-condiciones-de-uso/" target="_blank">términos de pago</a> y autorizo el cargo.</span>
+                            <input type="checkbox" name="terms_accept" required>
+                            <span>Acepto la <a href="https://tramitfy.es/politica-de-privacidad/" target="_blank">Política de Privacidad</a> y los <a href="https://tramitfy.es/terminos-y-condiciones-de-uso-2/" target="_blank">Términos y Condiciones</a> del servicio.</span>
                         </label>
                     </div>
 
@@ -1256,9 +1249,9 @@ function navigation_permit_renewal_form_shortcode() {
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
 
-                // Validar términos de pago
-                if (!document.querySelector('input[name="terms_accept_pago"]').checked) {
-                    alert('Debe aceptar los términos y condiciones de pago.');
+                // Validar términos y condiciones
+                if (!document.querySelector('input[name="terms_accept"]').checked) {
+                    alert('Debe aceptar la Política de Privacidad y los Términos y Condiciones.');
                     return;
                 }
 
@@ -1354,7 +1347,6 @@ function navigation_permit_renewal_form_shortcode() {
 
                     // Marcar términos
                     document.querySelector('input[name="terms_accept"]').checked = true;
-                    document.querySelector('input[name="terms_accept_pago"]').checked = true;
 
                     // Simular firma
                     setTimeout(() => {
