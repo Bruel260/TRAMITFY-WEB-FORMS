@@ -6439,7 +6439,7 @@ function transferencia_barco_shortcode() {
             alertMessageText.textContent = 'Enviando el formulario...';
 
             const formData = new FormData(document.getElementById('transferencia-form'));
-            formData.append('action', 'submit_form_XXX');
+            formData.append('action', 'submit_barco_form_tpb');
             formData.append('final_amount', finalAmount.toFixed(2));
             formData.append('current_transfer_tax', currentTransferTax.toFixed(2));
             formData.append('current_extra_fee', currentExtraFee.toFixed(2));
@@ -7842,8 +7842,8 @@ function tpb_send_emails() {
 /**
  * 4. SUBMIT FINAL FORM (documentos + firma)
  */
-add_action('wp_ajax_submit_form_XXX', 'tpb_submit_form');
-add_action('wp_ajax_nopriv_submit_form_XXX', 'tpb_submit_form');
+add_action('wp_ajax_submit_barco_form_tpb', 'tpb_submit_form');
+add_action('wp_ajax_nopriv_submit_barco_form_tpb', 'tpb_submit_form');
 function tpb_submit_form() {
     $customer_name = sanitize_text_field($_POST['customer_name']);
     $customer_dni = sanitize_text_field($_POST['customer_dni']);
