@@ -1936,7 +1936,7 @@ function send_to_tramitfy_app($customer_name, $customer_dni, $customer_email, $c
 
     // URL del endpoint de la API de Tramitfy
     // Webhook para sincronizar con React Dashboard
-    $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/baja/webhook';
+    $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/forms/baja-embarcacion';
 
     // Preparar los datos en el formato que espera Tramitfy
     $tramitfy_data = array(

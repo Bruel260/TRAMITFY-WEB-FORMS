@@ -747,10 +747,10 @@ function transferencia_barco_shortcode() {
         #transferencia-form label {
             font-weight: 500;
             display: block;
-            margin-top: 18px;
-            margin-bottom: 6px;
+            margin-top: 8px;
+            margin-bottom: 3px;
             color: #444444;
-            font-size: 15px;
+            font-size: 14px;
         }
         
         /* Mejoras para los acordeones en página de documentos */
@@ -831,11 +831,11 @@ function transferencia_barco_shortcode() {
         #transferencia-form input[type="tel"],
         #transferencia-form input[type="email"] {
             width: 100%;
-            padding: 14px;
-            margin-top: 6px;
-            border-radius: 8px;
+            padding: 8px 12px;
+            margin-top: 2px;
+            border-radius: 6px;
             border: 1px solid #d0d0d0;
-            font-size: 16px;
+            font-size: 14px;
             background-color: #f9f9f9;
             transition: all 0.2s ease;
         }
@@ -3573,8 +3573,8 @@ function transferencia_barco_shortcode() {
         .form-compact-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
+            gap: 15px;
+            margin-bottom: 12px;
         }
 
         .form-compact-row .form-group {
@@ -3584,16 +3584,17 @@ function transferencia_barco_shortcode() {
         .form-compact-triple {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 12px;
         }
 
         .form-section-compact {
-            padding: 25px 30px;
+            padding: 15px 20px;
         }
 
         .form-section-compact h3 {
-            margin-bottom: 20px;
+            margin-bottom: 12px;
+            font-size: 16px;
         }
 
         .form-group-inline {
@@ -3614,20 +3615,21 @@ function transferencia_barco_shortcode() {
 
         /* Reducir espaciado vertical */
         .form-page {
-            padding: 20px 0;
+            padding: 10px 0;
         }
 
         .section-intro {
-            margin-bottom: 20px;
-            font-size: 14px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            color: #666;
         }
 
         /* Optimizar upload-grid para 2 columnas verdaderas */
         .upload-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin: 20px 0;
+            gap: 12px;
+            margin: 10px 0;
         }
 
         .upload-grid .upload-row {
@@ -4018,21 +4020,47 @@ function transferencia_barco_shortcode() {
                             </div>
                         </div>
                         <div class="sidebar-body">
+                            <!-- Cálculo dinámico del ITP -->
+                            <div class="sidebar-itp-calculator" id="sidebar-itp-display" style="background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #016d86;"><i class="fa-solid fa-receipt"></i> Cálculo del ITP</h4>
+                                <div style="font-size: 13px;">
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+                                        <span>Precio compra:</span>
+                                        <strong id="sidebar-purchase-price">0€</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+                                        <span>Valor fiscal:</span>
+                                        <strong id="sidebar-fiscal-value">-</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px solid #dee2e6; margin-top: 4px;">
+                                        <span>Base imponible:</span>
+                                        <strong id="sidebar-tax-base" style="color: #016d86;">0€</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+                                        <span>Tipo (<span id="sidebar-region-name">-</span>):</span>
+                                        <strong id="sidebar-tax-rate">4%</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px solid #016d86; margin-top: 4px; font-weight: bold; color: #016d86;">
+                                        <span>ITP a pagar:</span>
+                                        <strong id="sidebar-itp-amount" style="font-size: 16px;">0€</strong>
+                                    </div>
+                                </div>
+                                <small style="display: block; margin-top: 8px; color: #6c757d; font-size: 11px;">
+                                    <i class="fa-solid fa-info-circle"></i> Se aplica sobre el mayor valor
+                                </small>
+                            </div>
+
                             <div class="sidebar-price-highlight">
-                                <div class="sidebar-price-label">Tu tramitación completa</div>
+                                <div class="sidebar-price-label">Nuestros servicios</div>
                                 <div class="sidebar-price-amount">134,95€</div>
-                                <div class="sidebar-price-includes">
-                                    ✓ Tasas oficiales de Capitanía<br>
-                                    ✓ Honorarios profesionales<br>
+                                <div class="sidebar-price-includes" style="font-size: 12px;">
+                                    ✓ Tasas de Capitanía<br>
+                                    ✓ Gestión profesional<br>
                                     ✓ IVA incluido
                                 </div>
                                 <div class="sidebar-badge">
-                                    <i class="fa-solid fa-lock"></i> Pago 100% seguro
+                                    <i class="fa-solid fa-lock"></i> Pago seguro
                                 </div>
-                            </div>
-                            <div class="sidebar-info-box">
-                                <p><strong>El ITP se calcula automáticamente</strong> según el valor fiscal y la comunidad autónoma.</p>
-                                <p>Recuerda que el <strong>ITP no está incluido</strong> en el precio y se abona directamente a Hacienda.</p>
                             </div>
                         </div>
                         <div class="sidebar-tips">
@@ -4294,8 +4322,8 @@ function transferencia_barco_shortcode() {
 
         <!-- Página Vehículo -->
         <div id="page-vehiculo" class="form-page form-section-compact">
-            <h2 style="margin-bottom: 10px;">Transferencia de Propiedad</h2>
-            <h3 style="margin-bottom: 25px; font-size: 18px; color: #666;">Información del Barco</h3>
+            <h2 style="margin-bottom: 8px; font-size: 20px;">Transferencia de Propiedad</h2>
+            <h3 style="margin-bottom: 12px; font-size: 16px; color: #666;">Información del Barco</h3>
             <!-- Tipo de vehículo fijo: Barco -->
             <input type="hidden" name="vehicle_type" value="Barco">
 
@@ -4322,14 +4350,13 @@ function transferencia_barco_shortcode() {
             </div>
 
             <!-- "No encuentro mi modelo" -->
-            <div id="no-encuentro-wrapper">
-                <label>
+            <div id="no-encuentro-wrapper" style="margin-top: 8px; margin-bottom: 8px;">
+                <label style="display: flex; align-items: center; gap: 8px; margin-top: 0;">
                     <input type="checkbox" id="no_encuentro_checkbox" name="no_encuentro_checkbox">
-                    No encuentro mi modelo
+                    <span style="font-size: 14px;">No encuentro mi modelo</span>
                 </label>
-                <p style="font-size: 13px; color: #666; margin: 8px 0 15px 0;">
-                    Marque esta casilla si su embarcación o moto de agua no aparece en la lista anterior.
-                    El cálculo del ITP se basará únicamente en el <strong>precio de compra</strong>.
+                <p style="font-size: 12px; color: #666; margin: 4px 0 8px 24px;">
+                    Marque si su embarcación no aparece. El ITP se calculará sobre el <strong>precio de compra</strong>.
                 </p>
                 <!-- Campos de marca/modelo manual en 2 columnas -->
                 <div id="manual-fields" style="display: none;">
@@ -7046,10 +7073,7 @@ function transferencia_barco_shortcode() {
                     couponUsed: couponValue,
                     tramite_id: '<?php echo $tramite_id; ?>' // Añadimos el ID de trámite
                 };
-                
-                // Enviar emails mientras se muestra el segundo paso
-                sendEmails();
-                
+
                 // Activar el tercer paso (complete) después de un momento
                 setTimeout(() => {
                     updateLoadingStep('complete');
@@ -7146,10 +7170,12 @@ function transferencia_barco_shortcode() {
                         }
                     });
                     
-                    // Expand initially
+                    // Expand initially and keep it open
                     setTimeout(() => {
-                        title.click();
-                    }, 100);
+                        title.classList.add('expanded');
+                        content.classList.add('expanded');
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                    }, 300);
                 }
             } else {
                 // Si está usando el estilo de acordeón, asegurar que funcione correctamente

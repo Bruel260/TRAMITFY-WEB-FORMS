@@ -5540,9 +5540,9 @@ console.log('Navegación sin desplazamiento automático');
             modalPaymentElement.innerHTML = '';
             modalMessageElement.className = 'hidden';
 
-            // FORZAR MODO TEST - Hardcodeado temporalmente para evitar problemas de caché
-            const stripeKey = 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE';
-            console.log("Modo de Stripe: TEST (FORZADO)");
+            // Inicializar Stripe con la clave pública correcta según el modo
+            const stripeKey = '<?php echo ($is_test_mode ? $publishable_key_test : $publishable_key_live); ?>';
+            console.log("Modo de Stripe: <?php echo ($is_test_mode ? 'TEST' : 'LIVE'); ?>");
             stripe = Stripe(stripeKey);
 
             try {
@@ -9790,7 +9790,7 @@ function submit_form_hoja_asiento() {
     @unlink($signature_image_path);
 
     // Enviar datos a la API de Tramitfy - Webhook para sincronizar con React Dashboard
-    $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/hoja-asiento/webhook';
+    $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/forms/hoja-asiento';
 
     $tramitfy_data = array(
         'customer_name' => $customer_name,

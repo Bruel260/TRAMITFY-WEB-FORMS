@@ -6942,10 +6942,7 @@ function transferencia_moto_shortcode() {
                     couponUsed: couponValue,
                     tramite_id: '<?php echo $tramite_id; ?>' // Añadimos el ID de trámite
                 };
-                
-                // Enviar emails mientras se muestra el segundo paso
-                sendEmails();
-                
+
                 // Activar el tercer paso (complete) después de un momento
                 setTimeout(() => {
                     updateLoadingStep('complete');
