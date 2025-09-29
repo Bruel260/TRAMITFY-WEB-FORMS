@@ -9,9 +9,14 @@ Author: GPT-4
 // Asegurarse de que el archivo no sea accedido directamente
 defined('ABSPATH') || exit;
 
-// Claves de Stripe (mismas que transferencia-propiedad-definitivo.php)
-define('STRIPE_PUBLIC_KEY', 'pk_live_REPLACE_WITH_YOUR_LIVE_PUBLIC_KEY');
-define('STRIPE_SECRET_KEY', 'sk_live_REPLACE_WITH_YOUR_LIVE_SECRET_KEY');
+// Configuración Stripe para Transferencia Barco - cambiar 'test' a 'live' para producción
+define('BARCO_STRIPE_MODE', 'test'); // 'test' o 'live'
+define('STRIPE_PUBLIC_KEY', BARCO_STRIPE_MODE === 'test'
+    ? 'pk_test_YOUR_STRIPE_TEST_PUBLIC_KEY'
+    : 'pk_live_YOUR_STRIPE_LIVE_PUBLIC_KEY');
+define('STRIPE_SECRET_KEY', BARCO_STRIPE_MODE === 'test'
+    ? 'sk_test_YOUR_STRIPE_TEST_SECRET_KEY'
+    : 'sk_live_YOUR_STRIPE_LIVE_SECRET_KEY');
 
 /**
  * Carga datos desde archivos CSV según el tipo de vehículo
@@ -3318,7 +3323,388 @@ function transferencia_barco_shortcode() {
             font-weight: 600;
             color: rgb(var(--success));
         }
-        
+
+        /* ============================================
+           LAYOUT DE 2 COLUMNAS CON PANEL LATERAL
+           ============================================ */
+
+        .tramitfy-layout-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        .tramitfy-two-column {
+            display: grid;
+            grid-template-columns: 480px 1fr;
+            gap: 35px;
+            align-items: start;
+        }
+
+        /* Panel Lateral Izquierdo */
+        .tramitfy-sidebar {
+            position: sticky;
+            top: 20px;
+            background: linear-gradient(135deg, rgba(1, 109, 134, 0.05) 0%, rgba(1, 109, 134, 0.02) 100%);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(1, 109, 134, 0.08);
+            border: 1px solid rgba(1, 109, 134, 0.1);
+            backdrop-filter: blur(10px);
+            min-height: 500px;
+        }
+
+        .sidebar-content {
+            display: none;
+            animation: fadeInUp 0.4s ease-out;
+        }
+
+        .sidebar-content.active {
+            display: block;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(1, 109, 134, 0.15);
+        }
+
+        .sidebar-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 22px;
+            box-shadow: 0 4px 12px rgba(var(--primary), 0.3);
+        }
+
+        .sidebar-title {
+            flex: 1;
+        }
+
+        .sidebar-title h3 {
+            margin: 0 0 5px 0;
+            color: rgb(var(--primary-dark));
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .sidebar-title p {
+            margin: 0;
+            color: rgb(var(--neutral-600));
+            font-size: 13px;
+        }
+
+        .sidebar-body {
+            margin-bottom: 25px;
+        }
+
+        .sidebar-info-box {
+            background: white;
+            padding: 18px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            border-left: 3px solid rgb(var(--primary));
+        }
+
+        .sidebar-info-box p {
+            margin: 0 0 8px 0;
+            color: rgb(var(--neutral-700));
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .sidebar-info-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        .sidebar-info-box strong {
+            color: rgb(var(--primary-dark));
+        }
+
+        .sidebar-checklist {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .sidebar-checklist-item {
+            display: flex;
+            align-items: start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px dashed rgba(var(--neutral-300), 0.5);
+        }
+
+        .sidebar-checklist-item:last-child {
+            border-bottom: none;
+        }
+
+        .sidebar-check-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(var(--success), 0.1);
+            color: rgb(var(--success));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .sidebar-checklist-text {
+            flex: 1;
+            color: rgb(var(--neutral-700));
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .sidebar-tips {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, rgba(255, 193, 7, 0.03) 100%);
+            padding: 18px;
+            border-radius: 10px;
+            border-left: 3px solid #FFC107;
+        }
+
+        .sidebar-tips h4 {
+            margin: 0 0 12px 0;
+            color: #F57C00;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar-tips h4 i {
+            font-size: 16px;
+        }
+
+        .sidebar-tips ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .sidebar-tips li {
+            color: rgb(var(--neutral-700));
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-tips li:last-child {
+            margin-bottom: 0;
+        }
+
+        .sidebar-price-highlight {
+            background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 6px 20px rgba(var(--primary), 0.25);
+        }
+
+        .sidebar-price-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-price-amount {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 15px;
+        }
+
+        .sidebar-price-includes {
+            font-size: 12px;
+            opacity: 0.85;
+            line-height: 1.5;
+        }
+
+        .sidebar-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        /* Panel Derecho - Formulario */
+        .tramitfy-main-form {
+            background: white;
+            border-radius: 16px;
+            padding: 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        /* ============================================
+           LAYOUTS COMPACTOS PARA FORMULARIO
+           ============================================ */
+
+        .form-compact-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-compact-row .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-compact-triple {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-section-compact {
+            padding: 25px 30px;
+        }
+
+        .form-section-compact h3 {
+            margin-bottom: 20px;
+        }
+
+        .form-group-inline {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .form-group-inline label {
+            min-width: 140px;
+            margin-bottom: 0;
+        }
+
+        .form-group-inline input,
+        .form-group-inline select {
+            flex: 1;
+        }
+
+        /* Reducir espaciado vertical */
+        .form-page {
+            padding: 20px 0;
+        }
+
+        .section-intro {
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        /* Optimizar upload-grid para 2 columnas verdaderas */
+        .upload-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .upload-grid .upload-row {
+            display: contents;
+        }
+
+        .upload-grid .upload-item {
+            margin-bottom: 0;
+        }
+
+        /* Resumen más compacto */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .summary-section {
+            padding: 20px;
+        }
+
+        /* Responsive para layouts compactos */
+        @media (max-width: 768px) {
+            .form-compact-row,
+            .form-compact-triple,
+            .upload-grid,
+            .summary-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .form-group-inline {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .form-group-inline label {
+                min-width: auto;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .tramitfy-two-column {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .tramitfy-sidebar {
+                position: relative;
+                top: auto;
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .tramitfy-layout-wrapper {
+                padding: 0;
+            }
+
+            .tramitfy-sidebar {
+                padding: 20px;
+                min-height: auto;
+            }
+
+            .sidebar-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+
+            .sidebar-price-amount {
+                font-size: 28px;
+            }
+        }
+
         /* Estilos para el modal de pago */
         .payment-modal {
             display: none;
@@ -3586,6 +3972,230 @@ function transferencia_barco_shortcode() {
     <!-- Formulario principal -->
     <form id="transferencia-form" action="" method="POST" enctype="multipart/form-data">
 
+        <!-- Wrapper de Layout de 2 Columnas -->
+        <div class="tramitfy-layout-wrapper">
+            <div class="tramitfy-two-column">
+
+                <!-- Panel Lateral Izquierdo -->
+                <aside class="tramitfy-sidebar">
+
+                    <!-- Contenido: PASO 1 - Vehículo -->
+                    <div class="sidebar-content" data-step="page-vehiculo">
+                        <div class="sidebar-header">
+                            <div class="sidebar-icon">
+                                <i class="fa-solid fa-ship"></i>
+                            </div>
+                            <div class="sidebar-title">
+                                <h3>Datos de tu embarcación</h3>
+                                <p>Paso 1 de 6</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-body">
+                            <div class="sidebar-info-box">
+                                <p><strong>Necesitaremos información básica</strong> de tu embarcación para iniciar el trámite.</p>
+                                <p>Puedes buscar por <strong>fabricante y modelo</strong> en nuestra base de datos, o introducir los datos manualmente si no lo encuentras.</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-tips">
+                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
+                            <ul>
+                                <li>La <strong>fecha de matriculación</strong> es importante para calcular el ITP</li>
+                                <li>La encontrarás en el <strong>Registro Marítimo</strong></li>
+                                <li>Si no encuentras tu modelo, márcalo y rellena manualmente</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Contenido: PASO 2 - Precio -->
+                    <div class="sidebar-content" data-step="page-precio">
+                        <div class="sidebar-header">
+                            <div class="sidebar-icon">
+                                <i class="fa-solid fa-calculator"></i>
+                            </div>
+                            <div class="sidebar-title">
+                                <h3>Impuestos y Servicios</h3>
+                                <p>Paso 2 de 6</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-body">
+                            <div class="sidebar-price-highlight">
+                                <div class="sidebar-price-label">Tu tramitación completa</div>
+                                <div class="sidebar-price-amount">134,95€</div>
+                                <div class="sidebar-price-includes">
+                                    ✓ Tasas oficiales de Capitanía<br>
+                                    ✓ Honorarios profesionales<br>
+                                    ✓ IVA incluido
+                                </div>
+                                <div class="sidebar-badge">
+                                    <i class="fa-solid fa-lock"></i> Pago 100% seguro
+                                </div>
+                            </div>
+                            <div class="sidebar-info-box">
+                                <p><strong>El ITP se calcula automáticamente</strong> según el valor fiscal y la comunidad autónoma.</p>
+                                <p>Recuerda que el <strong>ITP no está incluido</strong> en el precio y se abona directamente a Hacienda.</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-tips">
+                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
+                            <ul>
+                                <li>Puedes aplicar un <strong>cupón de descuento</strong> si lo tienes</li>
+                                <li>El ITP varía según cada <strong>comunidad autónoma</strong></li>
+                                <li>Los servicios opcionales agilizarán tu trámite</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Contenido: PASO 3 - Documentos -->
+                    <div class="sidebar-content" data-step="page-documentos">
+                        <div class="sidebar-header">
+                            <div class="sidebar-icon">
+                                <i class="fa-solid fa-file-circle-check"></i>
+                            </div>
+                            <div class="sidebar-title">
+                                <h3>Tu documentación</h3>
+                                <p>Paso 3 de 6</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-body">
+                            <div class="sidebar-checklist">
+                                <div class="sidebar-checklist-item">
+                                    <div class="sidebar-check-icon">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <div class="sidebar-checklist-text">
+                                        <strong>Hoja de asiento</strong><br>
+                                        Del Registro Marítimo
+                                    </div>
+                                </div>
+                                <div class="sidebar-checklist-item">
+                                    <div class="sidebar-check-icon">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <div class="sidebar-checklist-text">
+                                        <strong>DNI del comprador</strong><br>
+                                        Por ambas caras
+                                    </div>
+                                </div>
+                                <div class="sidebar-checklist-item">
+                                    <div class="sidebar-check-icon">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <div class="sidebar-checklist-text">
+                                        <strong>DNI del vendedor</strong><br>
+                                        Por ambas caras
+                                    </div>
+                                </div>
+                                <div class="sidebar-checklist-item">
+                                    <div class="sidebar-check-icon">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <div class="sidebar-checklist-text">
+                                        <strong>Contrato de compraventa</strong><br>
+                                        Firmado por ambas partes
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sidebar-tips">
+                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
+                            <ul>
+                                <li>Puedes subir <strong>múltiples archivos</strong> en cada campo</li>
+                                <li>Acepta <strong>fotos o PDFs</strong></li>
+                                <li>En móvil puedes usar la <strong>cámara directamente</strong></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Contenido: PASO 4 - Datos Personales -->
+                    <div class="sidebar-content" data-step="page-datos">
+                        <div class="sidebar-header">
+                            <div class="sidebar-icon">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <div class="sidebar-title">
+                                <h3>Tus datos de contacto</h3>
+                                <p>Paso 4 de 6</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-body">
+                            <div class="sidebar-info-box">
+                                <p><strong>Necesitamos tus datos</strong> para la tramitación oficial y para mantenerte informado del progreso.</p>
+                                <p>Toda tu información es <strong>100% confidencial</strong> y segura.</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-tips">
+                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
+                            <ul>
+                                <li>Usaremos tu <strong>email</strong> para enviarte actualizaciones</li>
+                                <li>El DNI debe coincidir con el del <strong>documento subido</strong></li>
+                                <li>Revisa bien el nuevo nombre de tu embarcación</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Contenido: PASO 5 - Firma -->
+                    <div class="sidebar-content" data-step="page-firma">
+                        <div class="sidebar-header">
+                            <div class="sidebar-icon">
+                                <i class="fa-solid fa-pen-nib"></i>
+                            </div>
+                            <div class="sidebar-title">
+                                <h3>Autorización final</h3>
+                                <p>Paso 5 de 6</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-body">
+                            <div class="sidebar-info-box">
+                                <p><strong>Necesitamos tu firma electrónica</strong> para la autorización de transferencia.</p>
+                                <p>Este documento tiene <strong>validez legal</strong> y será incluido en tu tramitación.</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-tips">
+                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
+                            <ul>
+                                <li>Firma con el <strong>ratón</strong> o con el <strong>dedo</strong> en móvil</li>
+                                <li>Si no te gusta, puedes <strong>borrar y firmar de nuevo</strong></li>
+                                <li>Asegúrate de que la firma sea clara y legible</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Contenido: PASO 6 - Resumen y Pago -->
+                    <div class="sidebar-content" data-step="page-resumen">
+                        <div class="sidebar-header">
+                            <div class="sidebar-icon">
+                                <i class="fa-solid fa-credit-card"></i>
+                            </div>
+                            <div class="sidebar-title">
+                                <h3>Confirma y paga</h3>
+                                <p>Paso 6 de 6</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-body">
+                            <div class="sidebar-price-highlight">
+                                <div class="sidebar-price-label">Total a pagar ahora</div>
+                                <div class="sidebar-price-amount" id="sidebar-final-amount">134,95€</div>
+                                <div class="sidebar-price-includes">
+                                    ✓ Gestión completa<br>
+                                    ✓ Tasas + Honorarios + IVA<br>
+                                    ✗ ITP (se paga a Hacienda)
+                                </div>
+                                <div class="sidebar-badge">
+                                    <i class="fa-solid fa-shield-halved"></i> Conexión cifrada SSL
+                                </div>
+                            </div>
+                            <div class="sidebar-info-box">
+                                <p><strong>Revisa todos los datos</strong> antes de proceder al pago.</p>
+                                <p>Recibirás confirmación por <strong>email inmediatamente</strong>.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </aside>
+
+                <!-- Panel Derecho - Formulario -->
+                <div class="tramitfy-main-form">
+
         <?php if (current_user_can('administrator')): ?>
         <!-- Panel de Auto-rellenado para Administradores -->
         <div class="admin-autofill-panel" style="background: #f0f9ff; border: 2px solid #0ea5e9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
@@ -3683,104 +4293,103 @@ function transferencia_barco_shortcode() {
 
 
         <!-- Página Vehículo -->
-        <div id="page-vehiculo" class="form-page">
-            <h2>Transferencia de Propiedad</h2>
-            <h3>Información del Barco</h3>
+        <div id="page-vehiculo" class="form-page form-section-compact">
+            <h2 style="margin-bottom: 10px;">Transferencia de Propiedad</h2>
+            <h3 style="margin-bottom: 25px; font-size: 18px; color: #666;">Información del Barco</h3>
             <!-- Tipo de vehículo fijo: Barco -->
             <input type="hidden" name="vehicle_type" value="Barco">
 
-            <!-- Sección de datos del vehículo en columnas -->
-            <div class="vehicle-grid">
-                <!-- Primera fila: Fabricante y Modelo -->
-                <div id="vehicle-csv-section">
-                    <div class="vehicle-row">
-                        <div class="vehicle-field">
-                            <label for="manufacturer">Fabricante:</label>
-                            <select id="manufacturer" name="manufacturer">
-                                <option value="">Seleccione un fabricante</option>
-                                <?php foreach (array_keys($datos_fabricantes) as $fabricante): ?>
-                                    <option value="<?php echo esc_attr($fabricante); ?>"><?php echo esc_html($fabricante); ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        
-                        <div class="vehicle-field">
-                            <label for="model">Modelo:</label>
-                            <select id="model" name="model">
-                                <option value="">Seleccione un modelo</option>
-                            </select>
-                        </div>
+            <!-- Fabricante y Modelo en fila compacta -->
+            <div id="vehicle-csv-section">
+                <div class="form-compact-row">
+                    <div class="form-group">
+                        <label for="manufacturer">Fabricante</label>
+                        <select id="manufacturer" name="manufacturer">
+                            <option value="">Seleccione un fabricante</option>
+                            <?php foreach (array_keys($datos_fabricantes) as $fabricante): ?>
+                                <option value="<?php echo esc_attr($fabricante); ?>"><?php echo esc_html($fabricante); ?></option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
-                </div>
 
-                <!-- "No encuentro mi modelo" -->
-                <div id="no-encuentro-wrapper">
-                    <label>
-                        <input type="checkbox" id="no_encuentro_checkbox" name="no_encuentro_checkbox">
-                        No encuentro mi modelo
-                    </label>
-                    <p>
-                        Marque esta casilla si su embarcación o moto de agua no aparece en la lista anterior.
-                        El cálculo del ITP se basará únicamente en el <strong>precio de compra</strong>.
-                    </p>
-                    <!-- Campos de marca/modelo manual en 2 columnas -->
-                    <div id="manual-fields" style="display: none;">
-                        <div class="vehicle-row">
-                            <div class="vehicle-field">
-                                <label for="manual_manufacturer">Marca (manual):</label>
-                                <input type="text" id="manual_manufacturer" name="manual_manufacturer" placeholder="Escriba la marca" />
-                            </div>
-                            
-                            <div class="vehicle-field">
-                                <label for="manual_model">Modelo (manual):</label>
-                                <input type="text" id="manual_model" name="manual_model" placeholder="Escriba el modelo" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Segunda fila: Precio y Fecha de matriculación -->
-                <div class="vehicle-row">
-                    <div class="vehicle-field">
-                        <label for="purchase_price">Precio de Compra (€):</label>
-                        <input type="number" id="purchase_price" name="purchase_price" placeholder="Ingresa el precio de compra" required />
-                    </div>
-                    
-                    <div class="vehicle-field">
-                        <label for="matriculation_date" id="matriculation_date_label">Fecha de Matriculación:</label>
-                        <input type="date" id="matriculation_date" name="matriculation_date" max="<?php echo date('Y-m-d'); ?>" required>
+                    <div class="form-group">
+                        <label for="model">Modelo</label>
+                        <select id="model" name="model">
+                            <option value="">Seleccione un modelo</option>
+                        </select>
                     </div>
                 </div>
             </div>
 
-            <!-- Comunidad Autónoma -->
-            <label for="region">Comunidad  del comprador:</label>
-            <select id="region" name="region" required>
-                <option value="">Seleccione una comunidad autónoma</option>
-                <option value="Andalucía">Andalucía</option>
-                <option value="Aragón">Aragón</option>
-                <option value="Asturias">Asturias</option>
-                <option value="Islas Baleares">Islas Baleares</option>
-                <option value="Canarias">Canarias</option>
-                <option value="Cantabria">Cantabria</option>
-                <option value="Castilla-La Mancha">Castilla-La Mancha</option>
-                <option value="Castilla y León">Castilla y León</option>
-                <option value="Cataluña">Cataluña</option>
-                <option value="Comunidad Valenciana">Comunidad Valenciana</option>
-                <option value="Galicia">Galicia</option>
-                <option value="Madrid">Madrid</option>
-                <option value="Murcia">Murcia</option>
-                <option value="Navarra">Navarra</option>
-                <option value="País Vasco">País Vasco</option>
-                <option value="La Rioja">La Rioja</option>
-                <option value="Ceuta">Ceuta</option>
-                <option value="Melilla">Melilla</option>
-            </select>
+            <!-- "No encuentro mi modelo" -->
+            <div id="no-encuentro-wrapper">
+                <label>
+                    <input type="checkbox" id="no_encuentro_checkbox" name="no_encuentro_checkbox">
+                    No encuentro mi modelo
+                </label>
+                <p style="font-size: 13px; color: #666; margin: 8px 0 15px 0;">
+                    Marque esta casilla si su embarcación o moto de agua no aparece en la lista anterior.
+                    El cálculo del ITP se basará únicamente en el <strong>precio de compra</strong>.
+                </p>
+                <!-- Campos de marca/modelo manual en 2 columnas -->
+                <div id="manual-fields" style="display: none;">
+                    <div class="form-compact-row">
+                        <div class="form-group">
+                            <label for="manual_manufacturer">Marca (manual)</label>
+                            <input type="text" id="manual_manufacturer" name="manual_manufacturer" placeholder="Escriba la marca" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="manual_model">Modelo (manual)</label>
+                            <input type="text" id="manual_model" name="manual_model" placeholder="Escriba el modelo" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Precio y Fecha en fila compacta -->
+            <div class="form-compact-row">
+                <div class="form-group">
+                    <label for="purchase_price">Precio de Compra (€)</label>
+                    <input type="number" id="purchase_price" name="purchase_price" placeholder="Precio de compra" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="matriculation_date" id="matriculation_date_label">Fecha de Matriculación</label>
+                    <input type="date" id="matriculation_date" name="matriculation_date" max="<?php echo date('Y-m-d'); ?>" required>
+                </div>
+            </div>
+
+            <!-- Comunidad Autónoma (ancho completo) -->
+            <div class="form-group">
+                <label for="region">Comunidad Autónoma del comprador</label>
+                <select id="region" name="region" required>
+                    <option value="">Seleccione una comunidad autónoma</option>
+                    <option value="Andalucía">Andalucía</option>
+                    <option value="Aragón">Aragón</option>
+                    <option value="Asturias">Asturias</option>
+                    <option value="Islas Baleares">Islas Baleares</option>
+                    <option value="Canarias">Canarias</option>
+                    <option value="Cantabria">Cantabria</option>
+                    <option value="Castilla-La Mancha">Castilla-La Mancha</option>
+                    <option value="Castilla y León">Castilla y León</option>
+                    <option value="Cataluña">Cataluña</option>
+                    <option value="Comunidad Valenciana">Comunidad Valenciana</option>
+                    <option value="Galicia">Galicia</option>
+                    <option value="Madrid">Madrid</option>
+                    <option value="Murcia">Murcia</option>
+                    <option value="Navarra">Navarra</option>
+                    <option value="País Vasco">País Vasco</option>
+                    <option value="La Rioja">La Rioja</option>
+                    <option value="Ceuta">Ceuta</option>
+                    <option value="Melilla">Melilla</option>
+                </select>
+            </div>
 
         </div> <!-- Fin page-vehiculo -->
 
         <!-- Página Precio - REDISEÑADA -->
-        <div id="page-precio" class="form-page hidden">
+        <div id="page-precio" class="form-page form-section-compact hidden">
             <h2>Resumen del Trámite</h2>
             
             <!-- Tarjeta principal mejorada con todos los detalles del trámite -->
@@ -4018,8 +4627,8 @@ function transferencia_barco_shortcode() {
         </div> <!-- Fin page-precio -->
 
         <!-- Página Documentos -->
-        <div id="page-documentos" class="form-page hidden">
-            <h2>Documentos</h2>
+        <div id="page-documentos" class="form-page form-section-compact hidden">
+            <h2 style="margin-bottom: 25px;">Documentos</h2>
             
             <!-- Sección acordeón para datos personales -->
             <div class="accordion-section" id="section-datos">
@@ -4030,31 +4639,29 @@ function transferencia_barco_shortcode() {
                     <span class="accordion-toggle"><i class="fa-solid fa-chevron-down"></i></span>
                 </div>
                 <div class="accordion-content active">
-                    <div class="inputs-grid">
-                        <div class="inputs-row">
-                            <div class="input-group">
-                                <label for="customer_name">Nombre y Apellidos:</label>
-                                <input type="text" id="customer_name" name="customer_name" required />
-                                <span class="input-hint">Tal como aparece en su DNI</span>
-                            </div>
-                            
-                            <div class="input-group">
-                                <label for="customer_dni">DNI:</label>
-                                <input type="text" id="customer_dni" name="customer_dni" required />
-                                <span class="input-hint">Formato: 12345678X</span>
-                            </div>
+                    <div class="form-compact-row">
+                        <div class="form-group">
+                            <label for="customer_name">Nombre y Apellidos</label>
+                            <input type="text" id="customer_name" name="customer_name" required />
+                            <span class="input-hint">Tal como aparece en su DNI</span>
                         </div>
-                        
-                        <div class="inputs-row">
-                            <div class="input-group">
-                                <label for="customer_email">Correo Electrónico:</label>
-                                <input type="email" id="customer_email" name="customer_email" required />
-                            </div>
-                            
-                            <div class="input-group">
-                                <label for="customer_phone">Teléfono:</label>
-                                <input type="tel" id="customer_phone" name="customer_phone" required />
-                            </div>
+
+                        <div class="form-group">
+                            <label for="customer_dni">DNI</label>
+                            <input type="text" id="customer_dni" name="customer_dni" required />
+                            <span class="input-hint">Formato: 12345678X</span>
+                        </div>
+                    </div>
+
+                    <div class="form-compact-row">
+                        <div class="form-group">
+                            <label for="customer_email">Correo Electrónico</label>
+                            <input type="email" id="customer_email" name="customer_email" required />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="customer_phone">Teléfono</label>
+                            <input type="tel" id="customer_phone" name="customer_phone" required />
                         </div>
                     </div>
 
@@ -4179,14 +4786,14 @@ function transferencia_barco_shortcode() {
         </div> <!-- Fin page-documentos -->
 
         <!-- Página Pago -->
-        <div id="page-pago" class="form-page hidden">
-            <h2>Resumen y Pago</h2>
-            
+        <div id="page-pago" class="form-page form-section-compact hidden">
+            <h2 style="margin-bottom: 10px;">Resumen y Pago</h2>
+
             <!-- Panel de resumen completo del trámite -->
             <div class="summary-panel">
-                <h3><i class="fa-solid fa-clipboard-list"></i> Resumen de su trámite</h3>
-                
-                <div class="summary-sections">
+                <h3 style="margin-bottom: 20px;"><i class="fa-solid fa-clipboard-list"></i> Resumen de su trámite</h3>
+
+                <div class="summary-grid">
                     <!-- Columna 1: Datos Personales -->
                     <div class="summary-section">
                         <h4><i class="fa-solid fa-user"></i> Datos Personales</h4>
@@ -4375,6 +4982,11 @@ function transferencia_barco_shortcode() {
         <input type="hidden" name="tasas_hidden" id="tasas_hidden" />
         <input type="hidden" name="iva_hidden" id="iva_hidden" />
         <input type="hidden" name="honorarios_hidden" id="honorarios_hidden" />
+
+                </div> <!-- Fin .tramitfy-main-form -->
+            </div> <!-- Fin .tramitfy-two-column -->
+        </div> <!-- Fin .tramitfy-layout-wrapper -->
+
     </form>
 
     <!-- Popup para ejemplos de documentos -->
@@ -4401,13 +5013,23 @@ function transferencia_barco_shortcode() {
             "La Rioja": 0.04, "Ceuta": 0.02, "Melilla": 0.04
         };
         
+        // Tabla oficial BOE 2024 - Columna "A motor y MN" (Motores y Motos Náuticas)
         const depreciationRates = [
-            { years: 0, rate: 100 }, { years: 1, rate: 84 }, { years: 2, rate: 67 },
-            { years: 3, rate: 56 }, { years: 4, rate: 47 }, { years: 5, rate: 39 },
-            { years: 6, rate: 34 }, { years: 7, rate: 28 }, { years: 8, rate: 24 },
-            { years: 9, rate: 19 }, { years: 10, rate: 17 }, { years: 11, rate: 13 },
-            { years: 12, rate: 12 }, { years: 13, rate: 11 }, { years: 14, rate: 10 },
-            { years: 15, rate: 10 }
+            { years: 1, rate: 100 },  // Hasta 1 año
+            { years: 2, rate: 85 },   // Más de 1, hasta 2
+            { years: 3, rate: 72 },   // Más de 2, hasta 3
+            { years: 4, rate: 61 },   // Más de 3, hasta 4
+            { years: 5, rate: 52 },   // Más de 4, hasta 5
+            { years: 6, rate: 44 },   // Más de 5, hasta 6
+            { years: 7, rate: 37 },   // Más de 6, hasta 7
+            { years: 8, rate: 32 },   // Más de 7, hasta 8
+            { years: 9, rate: 27 },   // Más de 8, hasta 9
+            { years: 10, rate: 23 },  // Más de 9, hasta 10
+            { years: 11, rate: 19 },  // Más de 10, hasta 11
+            { years: 12, rate: 16 },  // Más de 11, hasta 12
+            { years: 13, rate: 14 },  // Más de 12, hasta 13
+            { years: 14, rate: 12 },  // Más de 13, hasta 14
+            { years: 15, rate: 10 }   // Más de 14 años
         ];
         
         const BASE_TRANSFER_PRICE = 134.99;
@@ -4574,11 +5196,29 @@ function transferencia_barco_shortcode() {
             const isPrePage = false; // Ya no hay pre-páginas
 
             document.getElementById('form-navigation').style.display = 'flex';
-            
+
             formPages.forEach((page, index) => {
                 page.classList.toggle('hidden', index !== currentPage);
             });
-            
+
+            // ===== ACTUALIZAR SIDEBAR SEGÚN PASO ACTUAL =====
+            const currentPageElement = formPages[currentPage];
+            if (currentPageElement) {
+                const currentPageId = currentPageElement.id;
+
+                // Ocultar todos los contenidos del sidebar
+                document.querySelectorAll('.sidebar-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+
+                // Mostrar el contenido correspondiente al paso actual
+                const activeSidebarContent = document.querySelector(`.sidebar-content[data-step="${currentPageId}"]`);
+                if (activeSidebarContent) {
+                    activeSidebarContent.classList.add('active');
+                }
+            }
+            // ================================================
+
             // Si estamos pasando a la página de documentos, inicializar el acordeón
             if (formPages[currentPage] && formPages[currentPage].id === 'page-documentos') {
                 console.log("Actualizando a página documentos, inicializando acordeón");
@@ -4593,7 +5233,7 @@ function transferencia_barco_shortcode() {
                     initCouponDropdown();
                 }, 100);
             }
-            
+
             if (!isPrePage) {
                 // Actualizar navegación y barra de progreso
                 const navItems = document.querySelectorAll('.nav-item');
@@ -6913,7 +7553,8 @@ function tpb_process_payment_manual() {
     
     // Guardar la solicitud en la base de datos o enviar notificaciones
     // Este es un enfoque alternativo cuando el API de Stripe no funciona
-    $admin_email = get_option('admin_email');
+    // Email del administrador para recibir notificaciones
+    $admin_email = 'ipmgroup24@gmail.com';
     $customer_email = sanitize_email($purchase_details['customerEmail']);
     
     // Crear el mensaje
@@ -7595,7 +8236,8 @@ function tpb_process_async($async_file) {
 
     // Extraer variables
     extract($data);
-    $admin_email = get_option('admin_email');
+    // Email del administrador para recibir notificaciones
+    $admin_email = 'ipmgroup24@gmail.com';
     $upload_dir = wp_upload_dir();
 
     $headers = [

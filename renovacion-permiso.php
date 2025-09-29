@@ -33,11 +33,11 @@ function navigation_permit_renewal_form_shortcode() {
 
     // Configuración de Stripe - movido dentro de la función para evitar conflictos con Elementor
     if (!defined('NAVIGATION_PERMIT_STRIPE_MODE')) {
-        define('NAVIGATION_PERMIT_STRIPE_MODE', 'live'); // 'test' o 'live'
-        define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
-        define('NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
-        define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
-        define('NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
+        define('NAVIGATION_PERMIT_STRIPE_MODE', 'test'); // 'test' o 'live'
+        define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'pk_test_YOUR_STRIPE_TEST_PUBLIC_KEY');
+        define('NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY', 'sk_test_YOUR_STRIPE_TEST_SECRET_KEY');
+        define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_YOUR_STRIPE_LIVE_PUBLIC_KEY');
+        define('NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY', 'sk_live_YOUR_STRIPE_LIVE_SECRET_KEY');
         define('NAVIGATION_PERMIT_SERVICE_PRICE', 65.00);
     }
 
@@ -2635,7 +2635,7 @@ function send_navigation_permit_to_tramitfy() {
                         </tr>
                         <tr>
                             <td style='color: #666;'>Modo Stripe:</td>
-                            <td style='color: #333; font-weight: 600;'>" . STRIPE_MODE . "</td>
+                            <td style='color: #333; font-weight: 600;'>" . NAVIGATION_PERMIT_STRIPE_MODE . "</td>
                         </tr>
                     </table>
                 </div>

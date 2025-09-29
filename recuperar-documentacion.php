@@ -8,13 +8,13 @@
 defined('ABSPATH') || exit;
 
 // Configuración de Stripe
-define('STRIPE_MODE', 'live'); // test o live
+define('STRIPE_MODE', 'test'); // test o live
 
-define('STRIPE_TEST_PUBLIC_KEY', 'pk_test_REPLACE_WITH_YOUR_TEST_PUBLIC_KEY');
-define('STRIPE_TEST_SECRET_KEY', 'sk_test_REPLACE_WITH_YOUR_TEST_SECRET_KEY');
+define('STRIPE_TEST_PUBLIC_KEY', 'pk_test_YOUR_STRIPE_TEST_PUBLIC_KEY');
+define('STRIPE_TEST_SECRET_KEY', 'sk_test_YOUR_STRIPE_TEST_SECRET_KEY');
 
-define('STRIPE_LIVE_PUBLIC_KEY', 'pk_live_REPLACE_WITH_YOUR_LIVE_PUBLIC_KEY');
-define('STRIPE_LIVE_SECRET_KEY', 'sk_live_REPLACE_WITH_YOUR_LIVE_SECRET_KEY');
+define('STRIPE_LIVE_PUBLIC_KEY', 'pk_live_YOUR_STRIPE_LIVE_PUBLIC_KEY');
+define('STRIPE_LIVE_SECRET_KEY', 'sk_live_YOUR_STRIPE_LIVE_SECRET_KEY');
 
 if (STRIPE_MODE === 'test') {
     $stripe_public_key = STRIPE_TEST_PUBLIC_KEY;
@@ -537,9 +537,8 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
     </html>
     ";
 
+    // Enviar email al administrador
     wp_mail($adminEmail, $adminSubject, $adminMessage, $headers);
-
-    wp_mail(get_option('admin_email'), $adminSubject, $adminMessage, $headers);
 }
 
 if (isset($_POST['action'])) {

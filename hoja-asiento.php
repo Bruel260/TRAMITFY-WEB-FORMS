@@ -7,10 +7,10 @@ defined('ABSPATH') || exit;
  * Cambia a false en producción.
  */
 $is_test_mode = true; // true = usa claves de prueba, false = usa claves en vivo.
-$publishable_key_test = 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE';
-$publishable_key_live = 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE';
-$secret_key_test = 'YOUR_STRIPE_TEST_SECRET_KEY_HERE';
-$secret_key_live = 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE';
+$publishable_key_test = 'pk_test_YOUR_STRIPE_TEST_PUBLIC_KEY';
+$publishable_key_live = 'pk_live_YOUR_STRIPE_LIVE_PUBLIC_KEY';
+$secret_key_test = 'sk_test_YOUR_STRIPE_TEST_SECRET_KEY';
+$secret_key_live = 'sk_live_YOUR_STRIPE_LIVE_SECRET_KEY';
 
 /**
  * Función principal para generar y mostrar el formulario en el frontend
@@ -9789,8 +9789,8 @@ function submit_form_hoja_asiento() {
     // Limpieza
     @unlink($signature_image_path);
 
-    // Enviar datos a la API de Tramitfy
-    $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/forms/hoja-asiento';
+    // Enviar datos a la API de Tramitfy - Webhook para sincronizar con React Dashboard
+    $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/hoja-asiento/webhook';
 
     $tramitfy_data = array(
         'customer_name' => $customer_name,

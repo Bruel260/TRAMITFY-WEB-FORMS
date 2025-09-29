@@ -11,7 +11,7 @@ function generate_invoice_pdf($customer_name, $customer_dni, $customer_email, $c
     $taxes = 21.15;
     $fees = 60.00;
     $vat_rate = 0.21;
-
+    
     // Aplicar descuento si hay cupón
     $discount_percent = 0;
     $discount_amount = 0;
@@ -21,7 +21,7 @@ function generate_invoice_pdf($customer_name, $customer_dni, $customer_email, $c
         'VERANO15'    => 15,
         'BLACK50'     => 50,
     );
-
+    
     if (!empty($coupon_used)) {
         $coupon_upper = strtoupper($coupon_used);
         if (isset($valid_coupons[$coupon_upper])) {
@@ -29,40 +29,40 @@ function generate_invoice_pdf($customer_name, $customer_dni, $customer_email, $c
             $discount_amount = ($base_price * $discount_percent) / 100;
         }
     }
-
+    
     $total_with_discount = $base_price - $discount_amount;
-
+    
     // Calcular honorarios e IVA
     $price_before_vat = ($total_with_discount - $taxes) / (1 + $vat_rate);
     $vat_amount = $price_before_vat * $vat_rate;
-
+    
     // Crear una nueva instancia de FPDF para la factura
     require_once get_template_directory() . '/vendor/fpdf/fpdf.php';
     $pdf = new FPDF();
     $pdf->AddPage();
-
+    
     // Definimos colores corporativos
     $primary_color = array(1, 109, 134); // #016d86
     $secondary_color = array(40, 167, 69); // #28a745
     $text_color = array(51, 51, 51); // #333333
-
+    
     // Configurar fuentes
     $pdf->SetFont('Arial', 'B', 18);
     $pdf->SetTextColor($primary_color[0], $primary_color[1], $primary_color[2]);
-
+    
     // Logo y encabezado
     // Si hay un logo disponible, descomentar y usar la ruta correcta
     // $pdf->Image('ruta_al_logo.png', 10, 10, 40);
-
+    
     // Título de la factura
     $pdf->Cell(0, 15, utf8_decode('FACTURA'), 0, 1, 'R');
-
+    
     // Número de factura y fecha
     $pdf->SetFont('Arial', '', 10);
     $pdf->Cell(0, 8, utf8_decode('Nº Factura: INV-'.date('Ymd').'-'.time()), 0, 1, 'R');
     $pdf->Cell(0, 8, 'Fecha: '.date('d/m/Y'), 0, 1, 'R');
     $pdf->Ln(10);
-
+    
     // Datos de la empresa
     $pdf->SetFont('Arial', 'B', 12);
     $pdf->SetTextColor($text_color[0], $text_color[1], $text_color[2]);
@@ -75,7 +75,7 @@ function generate_invoice_pdf($customer_name, $customer_dni, $customer_email, $c
     $pdf->Cell(0, 6, 'Email: info@tramitfy.es', 0, 1, 'L');
     $pdf->Cell(0, 6, 'Web: www.tramitfy.es', 0, 1, 'L');
     $pdf->Ln(10);
-
+    
     // Datos del cliente
     $pdf->SetFont('Arial', 'B', 12);
     $pdf->Cell(0, 8, 'DATOS DEL CLIENTE:', 0, 1, 'L');
@@ -84,7 +84,7 @@ function generate_invoice_pdf($customer_name, $customer_dni, $customer_email, $c
     $pdf->Cell(0, 6, 'DNI: '.$customer_dni, 0, 1, 'L');
     $pdf->Cell(0, 6, utf8_decode('Teléfono: '.$customer_phone), 0, 1, 'L');
     $pdf->Cell(0, 6, 'Email: '.$customer_email, 0, 1, 'L');
-
+    
     // Dirección de facturación
     if (!empty($billing_address)) {
         $pdf->Cell(0, 6, utf8_decode('Dirección: '.$billing_address), 0, 1, 'L');
@@ -103,101 +103,84 @@ function generate_invoice_pdf($customer_name, $customer_dni, $customer_email, $c
         }
     }
     $pdf->Ln(10);
-
+    
     // Detalles del servicio
     $pdf->SetFont('Arial', 'B', 12);
     $pdf->Cell(0, 8, 'DETALLES DEL SERVICIO:', 0, 1, 'L');
-    $pdf->SetFont('Arial', '', 10);
-
-    // Crear tabla con colores
-    $pdf->SetFillColor($primary_color[0], $primary_color[1], $primary_color[2]);
-    $pdf->SetTextColor(255, 255, 255);
+    $pdf->Ln(2);
+    
+    // Crear tabla
+    $pdf->SetFillColor(240, 240, 240);
     $pdf->SetFont('Arial', 'B', 10);
-    $pdf->Cell(100, 8, utf8_decode('Descripción'), 1, 0, 'C', true);
+    $pdf->Cell(100, 8, utf8_decode('Descripción'), 1, 0, 'L', true);
     $pdf->Cell(40, 8, 'Cantidad', 1, 0, 'C', true);
     $pdf->Cell(50, 8, 'Precio', 1, 1, 'R', true);
-
+    
     // Tipo de servicio
     $deregistration_type_text = ($deregistration_type === 'siniestro') ? 'Baja definitiva por siniestro' : 'Baja definitiva por exportación';
     $pdf->SetFont('Arial', '', 10);
-    $pdf->SetTextColor($text_color[0], $text_color[1], $text_color[2]);
     $pdf->Cell(100, 8, utf8_decode($deregistration_type_text), 1, 0, 'L');
     $pdf->Cell(40, 8, '1', 1, 0, 'C');
-    $pdf->Cell(50, 8, number_format($base_price, 2).' EUR', 1, 1, 'R');
-
-    // Descuento si aplica
-    if ($discount_amount > 0) {
-        $pdf->Cell(100, 8, utf8_decode('Descuento ('.$discount_percent.'%)'), 1, 0, 'L');
+    $pdf->Cell(50, 8, number_format($base_price, 2) . ' EUR', 1, 1, 'R');
+    
+    // Si hay descuento, mostrar línea de descuento
+    if ($discount_percent > 0) {
+        $pdf->SetTextColor(220, 53, 69); // Color rojo para el descuento #dc3545
+        $pdf->Cell(100, 8, utf8_decode('Descuento cupón: '.$coupon_used.' ('.$discount_percent.'%)'), 1, 0, 'L');
         $pdf->Cell(40, 8, '1', 1, 0, 'C');
-        $pdf->Cell(50, 8, '-'.number_format($discount_amount, 2).' EUR', 1, 1, 'R');
+        $pdf->Cell(50, 8, '-'.number_format($discount_amount, 2) . ' EUR', 1, 1, 'R');
+        $pdf->SetTextColor($text_color[0], $text_color[1], $text_color[2]);
     }
-
+    
+    // Desglose
+    $pdf->SetFont('Arial', '', 10);
+    $pdf->Cell(100, 8, 'Tasas', 1, 0, 'L');
+    $pdf->Cell(40, 8, '1', 1, 0, 'C');
+    $pdf->Cell(50, 8, number_format($taxes, 2) . ' EUR', 1, 1, 'R');
+    
+    $pdf->Cell(100, 8, 'Honorarios', 1, 0, 'L');
+    $pdf->Cell(40, 8, '1', 1, 0, 'C');
+    $pdf->Cell(50, 8, number_format($price_before_vat - $taxes, 2) . ' EUR', 1, 1, 'R');
+    
+    // Subtotal, IVA y Total
     $pdf->Ln(5);
-
-    // Resumen financiero
     $pdf->SetFont('Arial', 'B', 10);
-    $pdf->Cell(140, 8, 'Base imponible:', 0, 0, 'R');
-    $pdf->Cell(50, 8, number_format($price_before_vat, 2).' EUR', 1, 1, 'R');
-
-    $pdf->Cell(140, 8, 'IVA (21%):', 0, 0, 'R');
-    $pdf->Cell(50, 8, number_format($vat_amount, 2).' EUR', 1, 1, 'R');
-
-    $pdf->Cell(140, 8, 'Tasas:', 0, 0, 'R');
-    $pdf->Cell(50, 8, number_format($taxes, 2).' EUR', 1, 1, 'R');
-
+    
+    $pdf->Cell(140, 8, 'Subtotal', 0, 0, 'R');
+    $pdf->Cell(50, 8, number_format($price_before_vat, 2) . ' EUR', 0, 1, 'R');
+    
+    $pdf->Cell(140, 8, 'IVA (21%)', 0, 0, 'R');
+    $pdf->Cell(50, 8, number_format($vat_amount, 2) . ' EUR', 0, 1, 'R');
+    
     $pdf->SetFont('Arial', 'B', 12);
     $pdf->SetTextColor($primary_color[0], $primary_color[1], $primary_color[2]);
-    $pdf->Cell(140, 10, 'TOTAL:', 0, 0, 'R');
-    $pdf->Cell(50, 10, number_format($total_with_discount, 2).' EUR', 1, 1, 'R');
-
-    $pdf->Ln(10);
-
-    // Información adicional
-    $pdf->SetFont('Arial', '', 10);
+    $pdf->Cell(140, 10, 'TOTAL', 0, 0, 'R');
+    $pdf->Cell(50, 10, number_format($total_with_discount, 2) . ' EUR', 0, 1, 'R');
+    
+    // Pie de factura
     $pdf->SetTextColor($text_color[0], $text_color[1], $text_color[2]);
-    $pdf->Cell(0, 6, utf8_decode('Forma de pago: Stripe (Tarjeta de crédito/débito)'), 0, 1, 'L');
-    $pdf->Cell(0, 6, utf8_decode('Estado: Pagado'), 0, 1, 'L');
-
-    if (!empty($workshop_data)) {
-        $pdf->Cell(0, 6, utf8_decode('Datos del taller: '.$workshop_data), 0, 1, 'L');
-    }
-
-    $pdf->Ln(10);
-
-    // Mensaje de pie
-    $pdf->SetFont('Arial', 'I', 9);
-    $pdf->Cell(0, 5, utf8_decode('Gracias por confiar en Tramitfy para sus trámites náuticos.'), 0, 1, 'C');
-    $pdf->Cell(0, 5, utf8_decode('Para cualquier consulta, puede contactarnos en info@tramitfy.es'), 0, 1, 'C');
-
-    // Guardar el PDF en el directorio de uploads
-    $invoice_filename = 'factura_baja_embarcacion_' . date('Ymd_His') . '.pdf';
-    $invoice_path = $upload_dir . '/' . $invoice_filename;
-    $pdf->Output('F', $invoice_path);
-
-    return $invoice_filename;
+    $pdf->SetFont('Arial', '', 9);
+    $pdf->Ln(15);
+    $pdf->Cell(0, 6, utf8_decode('Método de pago: Tarjeta de crédito/débito'), 0, 1, 'L');
+    $pdf->Cell(0, 6, utf8_decode('Esta factura sirve como comprobante de pago'), 0, 1, 'L');
+    
+    // Nota legal
+    $pdf->Ln(15);
+    $pdf->SetFont('Arial', 'I', 8);
+    $pdf->MultiCell(0, 5, utf8_decode('Esta factura ha sido generada electrónicamente y es válida sin firma ni sello. Según el Real Decreto 1619/2012, de 30 de noviembre, por el que se aprueba el Reglamento por el que se regulan las obligaciones de facturación.'), 0, 'L');
+    
+    // Guardar el PDF
+    $invoice_pdf_name = 'factura_' . time() . '.pdf';
+    $invoice_pdf_path = $upload_dir['path'] . '/' . $invoice_pdf_name;
+    $pdf->Output('F', $invoice_pdf_path);
+    
+    return $invoice_pdf_path;
 }
 
 /**
- * Shortcode para el formulario de baja de embarcación
+ * Función principal para generar y mostrar el formulario en el frontend
  */
 function boat_deregistration_form_shortcode() {
-    // Configuración de Stripe - movido dentro de la función para evitar conflictos con Elementor
-    if (!defined('BOAT_DEREGISTRATION_STRIPE_MODE')) {
-        define('BOAT_DEREGISTRATION_STRIPE_MODE', 'test'); // 'test' o 'live'
-        define('BOAT_DEREGISTRATION_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
-        define('BOAT_DEREGISTRATION_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
-        define('BOAT_DEREGISTRATION_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
-        define('BOAT_DEREGISTRATION_STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
-        define('BOAT_DEREGISTRATION_SERVICE_PRICE', 95.00);
-    }
-
-    // Seleccionar las claves según el modo
-    $stripe_public_key = (BOAT_DEREGISTRATION_STRIPE_MODE === 'live') ? BOAT_DEREGISTRATION_STRIPE_LIVE_PUBLIC_KEY : BOAT_DEREGISTRATION_STRIPE_TEST_PUBLIC_KEY;
-
-    // Debug - verificar qué clave se está usando
-    error_log('BOAT_DEREGISTRATION: Stripe Mode = ' . BOAT_DEREGISTRATION_STRIPE_MODE);
-    error_log('BOAT_DEREGISTRATION: Public Key = ' . substr($stripe_public_key, 0, 30) . '...');
-
     // Encolar los scripts y estilos necesarios
     wp_enqueue_style('boat-deregistration-form-style', get_template_directory_uri() . '/style.css', array(), filemtime(get_template_directory() . '/style.css'));
     wp_enqueue_script('stripe', 'https://js.stripe.com/v3/', array(), null, false);
@@ -207,867 +190,327 @@ function boat_deregistration_form_shortcode() {
     ob_start();
     ?>
 
-    <!-- Font Awesome para iconos -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    <!-- Estilos personalizados para el formulario -->
     <style>
-        /* Variables de color */
-        :root {
-            --primary: 1, 109, 134;
-            --primary-dark: 0, 86, 106;
-            --primary-light: 0, 125, 156;
-
-            --neutral-50: 248, 249, 250;
-            --neutral-100: 241, 243, 244;
-            --neutral-200: 233, 236, 239;
-            --neutral-300: 222, 226, 230;
-            --neutral-400: 206, 212, 218;
-            --neutral-500: 173, 181, 189;
-            --neutral-600: 108, 117, 125;
-            --neutral-700: 73, 80, 87;
-            --neutral-800: 52, 58, 64;
-            --neutral-900: 33, 37, 41;
-
-            --success: 40, 167, 69;
-            --warning: 243, 156, 18;
-            --error: 231, 76, 60;
-            --info: 0, 123, 255;
-        }
-
-        /* Reset y estilos globales */
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: rgb(var(--neutral-800));
-        }
-
-        /* Container principal - Grid de 2 columnas */
-        .bd-container {
-            max-width: 1400px;
-            margin: 25px auto;
-            background: white;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-            display: grid;
-            grid-template-columns: 380px 1fr;
-            min-height: auto;
-        }
-
-        /* SIDEBAR IZQUIERDO - Moderno con glassmorphism */
-        .bd-sidebar {
-            background: linear-gradient(135deg,
-                rgba(var(--primary), 0.95) 0%,
-                rgba(var(--primary-dark), 0.98) 50%,
-                rgba(0, 86, 106, 1) 100%);
-            color: white;
-            padding: 25px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            position: sticky;
-            top: 0;
-            height: 95vh;
-            overflow-y: auto;
-            backdrop-filter: blur(20px);
-            box-shadow: inset 0 0 20px rgba(255,255,255,0.1);
-        }
-
-        .bd-logo {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .bd-logo i {
-            font-size: 28px;
-        }
-
-        .bd-headline {
-            font-size: 17px;
-            font-weight: 600;
-            line-height: 1.3;
-            margin-bottom: 4px;
-        }
-
-        .bd-subheadline {
-            font-size: 13px;
-            opacity: 0.92;
-            line-height: 1.4;
-        }
-
-        /* Caja de precio destacada */
-        .bd-price-box {
-            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
-            backdrop-filter: blur(20px);
-            border-radius: 16px;
-            padding: 20px;
-            text-align: center;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            margin: 15px 0;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .bd-price-box::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: pulse 3s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-        }
-
-        .bd-price-label {
-            font-size: 11px;
-            opacity: 0.85;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 6px;
-        }
-
-        .bd-price-amount {
-            font-size: 38px;
-            font-weight: 700;
-            margin: 4px 0;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .bd-price-detail {
-            font-size: 12px;
-            opacity: 0.88;
-        }
-
-        /* Lista de beneficios */
-        .bd-benefits {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin: 8px 0;
-        }
-
-        .bd-benefit {
-            display: flex;
-            align-items: start;
-            gap: 10px;
-            font-size: 13px;
-            line-height: 1.5;
-            padding: 8px 12px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .bd-benefit:hover {
-            background: rgba(255,255,255,0.1);
-            transform: translateX(5px);
-        }
-
-        .bd-benefit i {
-            font-size: 14px;
-            color: rgb(var(--success));
-            background: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            margin-top: 1px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        /* Trust badges */
-        .bd-trust-badges {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: auto;
-            padding-top: 10px;
-        }
-
-        .bd-badge {
-            background: rgba(255, 255, 255, 0.18);
-            padding: 5px 10px;
-            border-radius: 16px;
-            font-size: 10px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            font-weight: 500;
-        }
-
-        .bd-badge i {
-            font-size: 11px;
-        }
-
-        /* Sidebar de autorización */
-        .bd-sidebar-auth-doc {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 10px;
-        }
-
-        /* ÁREA PRINCIPAL DEL FORMULARIO */
-        .bd-form-area {
-            padding: 30px 40px;
-            background: #fafbfc;
-            overflow-y: auto;
-        }
-
-        .bd-form-header {
-            margin-bottom: 15px;
-        }
-
-        .bd-form-title {
-            font-size: 22px;
-            font-weight: 700;
-            color: rgb(var(--neutral-900));
-            margin-bottom: 4px;
-        }
-
-        .bd-form-subtitle {
-            font-size: 13px;
-            color: rgb(var(--neutral-600));
-        }
-
-        /* Panel de auto-rellenado para administradores */
-        .bd-admin-panel {
-            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 10px;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
-        }
-
-        .bd-admin-panel-info {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .bd-admin-panel-title {
-            font-size: 12px;
-            font-weight: 600;
-            opacity: 0.95;
-        }
-
-        .bd-admin-panel-subtitle {
-            font-size: 10px;
-            opacity: 0.85;
-        }
-
-        .bd-admin-autofill-btn {
-            padding: 8px 16px;
-            background: white;
-            color: #0ea5e9;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 12px;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .bd-admin-autofill-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Navegación modernizada */
-        .bd-navigation {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            padding: 6px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-
-        .bd-nav-item {
-            flex: 1;
-            padding: 10px 16px;
-            text-align: center;
-            background: #f8f9fa;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            color: rgb(var(--neutral-700));
-            font-weight: 500;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            border: 2px solid transparent;
-        }
-
-        .bd-nav-item i {
-            font-size: 14px;
-        }
-
-        .bd-nav-item.active {
-            background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
-            color: white;
-            border-color: rgb(var(--primary));
-            box-shadow: 0 4px 12px rgba(var(--primary), 0.3);
-        }
-
-        .bd-nav-item:hover:not(.active) {
-            background: #e9ecef;
-            border-color: rgb(var(--primary-light));
-        }
-
-        /* Páginas del formulario */
-        .bd-form-page {
-            background: white;
+        /* Estilos generales para el formulario */
+        #boat-deregistration-form {
+            max-width: 1000px;
+            margin: 40px auto;
             padding: 30px;
+            border: 1px solid #e0e0e0;
             border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        .bd-form-page.hidden {
+        #boat-deregistration-form label {
+            font-weight: normal;
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            color: #555555;
+        }
+
+        #boat-deregistration-form input[type="text"],
+        #boat-deregistration-form input[type="tel"],
+        #boat-deregistration-form input[type="email"],
+        #boat-deregistration-form input[type="file"],
+        #boat-deregistration-form select {
+            width: 100%;
+            padding: 12px;
+            margin-top: 0px;
+            border-radius: 5px;
+            border: 1px solid #cccccc;
+            font-size: 16px;
+            background-color: #f9f9f9;
+        }
+
+        #boat-deregistration-form .button {
+            background-color: #28a745;
+            color: #ffffff;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+
+        #boat-deregistration-form .button:hover {
+            background-color: #218838;
+        }
+
+        #boat-deregistration-form .hidden {
             display: none;
         }
 
-        .bd-form-page h3 {
-            font-size: 18px;
-            font-weight: 600;
-            color: rgb(var(--neutral-900));
-            margin: 0 0 20px 0;
-        }
-
-        /* Inputs mejorados */
-        .bd-input-group {
-            margin-bottom: 18px;
-        }
-
-        .bd-input-group label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 7px;
-            color: rgb(var(--neutral-800));
-            font-size: 14px;
-        }
-
-        .bd-input-group input[type="text"],
-        .bd-input-group input[type="email"],
-        .bd-input-group input[type="tel"],
-        .bd-input-group input[type="file"],
-        .bd-input-group select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid rgb(var(--neutral-300));
-            border-radius: 8px;
-            font-size: 15px;
-            transition: all 0.2s ease;
-            background: white;
-        }
-
-        .bd-input-group input:focus,
-        .bd-input-group select:focus {
-            outline: none;
-            border-color: rgb(var(--primary));
-            box-shadow: 0 0 0 3px rgba(var(--primary), 0.1);
-        }
-
-        /* Grid para inputs en 2 columnas */
-        .bd-inputs-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 18px;
-        }
-
-        /* Upload section - Diseño moderno y compacto */
-        .bd-upload-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 15px;
-            margin: 15px 0;
-        }
-
-        .bd-upload-item {
-            background: white;
+        /* Estilos para el menú de navegación */
+        #form-navigation {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            align-items: center;
+            background-color: #f1f1f1;
             padding: 15px;
-            border-radius: 10px;
-            border: 2px solid rgb(var(--neutral-200));
-            transition: all 0.3s ease;
-        }
-
-        .bd-upload-item:hover {
-            border-color: rgb(var(--primary));
-            box-shadow: 0 4px 12px rgba(var(--primary), 0.1);
-        }
-
-        .bd-upload-item > label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: rgb(var(--neutral-800));
-            font-size: 14px;
-        }
-
-        /* Nuevo diseño de upload de archivos */
-        .bd-file-upload-wrapper {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .bd-file-upload-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 10px 16px;
-            background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
-            color: white;
             border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 13px;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(var(--primary), 0.2);
         }
 
-        .bd-file-upload-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(var(--primary), 0.3);
+        #form-navigation a {
+            color: #016d86;
+            text-decoration: none;
+            font-weight: bold;
+            position: relative;
+            padding: 8px 15px;
+            transition: color 0.3s ease;
         }
 
-        .bd-file-upload-btn i {
+        #form-navigation a.active {
+            color: #016d86;
+            text-decoration: underline;
+        }
+
+        #form-navigation a:not(:last-child)::after {
+            content: '➔';
+            position: absolute;
+            right: -20px;
             font-size: 16px;
+            color: #016d86;
         }
 
-        .bd-file-selected {
-            padding: 8px 12px;
-            background: #f8f9fa;
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            font-size: 12px;
-            color: #6b7280;
-            min-height: 36px;
+        #form-navigation a:hover {
+            color: #016d86;
+        }
+
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        .button-container .button {
+            flex: 1 1 auto;
+            margin: 5px;
+        }
+
+        /* Estilos para la sección de documentos */
+        .upload-section {
+            margin-top: 20px;
+        }
+
+        .upload-item {
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
+            flex-wrap: wrap;
         }
 
-        .bd-file-selected.has-files {
-            color: rgb(var(--success));
-            background: #e6f7ed;
-            border-color: rgb(var(--success));
+        .upload-item label {
+            flex: 0 0 30%;
+            font-weight: normal;
+            color: #555555;
+            margin-bottom: 5px;
         }
 
-        .bd-upload-item .view-example {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            margin-top: 8px;
-            color: rgb(var(--primary));
-            text-decoration: none;
-            font-size: 12px;
-            font-weight: 500;
-            padding: 4px 8px;
-            background: rgba(var(--primary), 0.05);
-            border-radius: 5px;
-            transition: all 0.2s ease;
+        .upload-item input[type="file"] {
+            flex: 1;
+            margin-bottom: 5px;
         }
 
-        .bd-upload-item .view-example:hover {
-            background: rgba(var(--primary), 0.1);
-            transform: translateX(2px);
+        .upload-item .view-example {
+            flex: 0 0 auto;
+            margin-left: 10px;
+            background-color: transparent;
+            color: #007bff;
+            text-decoration: underline;
+            cursor: pointer;
+            margin-bottom: 5px;
         }
 
-        .bd-upload-item .view-example i {
-            font-size: 12px;
+        .upload-item .view-example:hover {
+            color: #0056b3;
         }
 
-        /* Área de firma */
-        .bd-signature-area {
-            margin: 20px 0;
-            text-align: center;
+        /* Popup para ejemplos de documentos */
+        #document-popup {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
         }
 
-        .bd-signature-label {
-            font-size: 14px;
-            font-weight: 600;
-            color: rgb(var(--neutral-700));
-            margin-bottom: 12px;
-        }
-
-        .bd-signature-container {
+        #document-popup .popup-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 20px;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 8px;
             position: relative;
-            margin: 0;
+        }
+
+        #document-popup .close-popup {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 25px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #document-popup .close-popup:hover {
+            color: black;
+        }
+
+        #document-popup h3 {
+            margin-top: 0;
+            color: #333333;
+        }
+
+        #document-popup img {
+            width: 100%;
+            border-radius: 8px;
+        }
+
+        /* Estilos para la firma */
+        #signature-container {
+            margin-top: 20px;
             text-align: center;
             width: 100%;
         }
 
         #signature-pad {
-            border: 3px solid rgb(var(--primary));
-            border-radius: 8px;
+            border: 1px solid #ccc;
             width: 100%;
-            max-width: 600px;  /* Aumentado de 400px a 600px */
-            height: 250px;  /* Aumentado de 180px a 250px */
-            cursor: crosshair;
-            background: white;
-            box-shadow: 0 2px 8px rgba(var(--primary), 0.15);
-            display: block;
-            margin: 0 auto;
+            max-width: 600px;
+            height: 200px;
+            box-sizing: border-box;
         }
 
-        /* Ocultar línea y texto FIRME AQUÍ en desktop, solo mostrar en móvil */
-        .bd-signature-line {
-            display: none;  /* Oculto por defecto en desktop */
-            position: absolute;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80%;
-            height: 2px;
-            background: rgba(var(--neutral-400), 0.5);
-            pointer-events: none;
-        }
-
-        .bd-signature-text {
-            display: none;  /* Oculto por defecto en desktop */
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 12px;
-            color: rgb(var(--neutral-500));
-            pointer-events: none;
-        }
-
-        /* Textos adaptables para ubicación del documento */
-        .desktop-text, .sidebar-desktop-text {
-            display: inline;
-        }
-
-        .mobile-text, .sidebar-mobile-text {
-            display: none;
-        }
-
-        .bd-signature-controls {
-            margin-top: 15px;
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-
-        .bd-signature-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 13px;
-            transition: all 0.2s ease;
-        }
-
-        .bd-signature-btn.clear {
-            background: #f8f9fa;
-            color: rgb(var(--neutral-700));
-            border: 1px solid rgb(var(--neutral-300));
-        }
-
-        .bd-signature-btn.clear:hover {
-            background: #e9ecef;
-        }
-
-        .bd-signature-btn.mobile-expand {
-            background: rgb(var(--primary));
-            color: white;
-            display: none;
-        }
-
-        /* Cupón de descuento - sin contenedor amarillo */
-        .bd-coupon-section {
-            margin: 15px 0;
-        }
-
-        .bd-coupon-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #856404;
+        /* Mejora de la firma */
+        #signature-instructions {
+            font-size: 14px;
+            color: #555;
             margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            text-align: center;
         }
 
-        .bd-coupon-row {
-            display: flex;
-            gap: 10px;
-            align-items: end;
-        }
-
-        .bd-coupon-input {
-            flex: 1;
-        }
-
-        .bd-coupon-btn {
-            padding: 12px 20px;
-            background: #ffc107;
-            color: #212529;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .bd-coupon-btn:hover {
-            background: #e0a800;
-        }
-
-        .bd-coupon-message {
-            margin-top: 10px;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 500;
-        }
-
-        .bd-coupon-message.success {
-            background: #d1edff;
-            color: #0c5460;
-            border: 1px solid #b3d7ff;
-        }
-
-        .bd-coupon-message.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        /* Dirección de facturación */
-        .bd-billing-section {
-            background: #f8f9fa;
+        /* Estilos para el elemento de pago */
+        #payment-element {
+            margin-top: 15px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
             padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-            border: 2px solid rgb(var(--neutral-200));
-        }
-
-        .bd-billing-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: rgb(var(--neutral-800));
-            margin-bottom: 15px;
-        }
-
-        .bd-checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-
-        .bd-checkbox-group input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: rgb(var(--primary));
-        }
-
-        .bd-checkbox-group label {
-            font-size: 14px;
-            color: rgb(var(--neutral-700));
-            margin: 0;
-        }
-
-        /* Botones de navegación */
-        .bd-nav-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: space-between;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 2px solid rgb(var(--neutral-200));
-        }
-
-        .bd-btn {
-            padding: 12px 24px;
-            border: none;
             border-radius: 8px;
-            font-weight: 600;
+            border: 1px solid #e0e0e0;
+        }
+
+        /* Estilos para el botón de pago */
+        #submit {
+            background-color: #016d86;
+            color: #ffffff;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            font-size: 20px;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            max-width: 300px;
+            margin: 20px auto 0;
+            display: block;
         }
 
-        .bd-btn.primary {
-            background: rgb(var(--primary));
-            color: white;
+        #submit:hover {
+            background-color: #014f63;
         }
 
-        .bd-btn.primary:hover {
-            background: rgb(var(--primary-dark));
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(var(--primary), 0.3);
+        /* Mensajes de éxito y error */
+        #payment-message {
+            margin-top: 15px;
+            font-size: 16px;
+            text-align: center;
         }
 
-        .bd-btn.secondary {
-            background: #f8f9fa;
-            color: rgb(var(--neutral-700));
-            border: 2px solid rgb(var(--neutral-300));
+        #payment-message.success {
+            color: #28a745;
         }
 
-        .bd-btn.secondary:hover {
-            background: #e9ecef;
-            border-color: rgb(var(--neutral-400));
+        #payment-message.error {
+            color: #dc3545;
         }
 
-        /* Modal de firma fullscreen */
-        .bd-signature-modal {
-            display: none;
+        /* Estilos para mensajes de error de Stripe Elements */
+        .StripeElement--invalid {
+            border-color: #dc3545;
+        }
+
+        /* Personalización de Stripe Elements */
+        .StripeElement {
+            background-color: #ffffff;
+            padding: 12px;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        /* Mensajes de éxito y error */
+        #card-errors {
+            color: #dc3545;
+            margin-top: 10px;
+        }
+
+        #payment-message {
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        #payment-message.success {
+            color: #28a745;
+        }
+
+        #payment-message.error {
+            color: #dc3545;
+        }
+
+        /* Overlay de carga */
+        #loading-overlay {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 9999;
-            justify-content: center;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: none;
+            flex-direction: column;
             align-items: center;
-        }
-
-        .bd-signature-modal-content {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            width: 90%;
-            max-width: 800px;
-            max-height: 90%;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        .bd-signature-modal-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: rgb(var(--neutral-900));
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        #signature-pad-large {
-            width: 100%;
-            height: 300px;
-            border: 3px solid rgb(var(--primary));
-            border-radius: 8px;
-            background: white;
-            cursor: crosshair;
-        }
-
-        .bd-modal-controls {
-            display: flex;
-            gap: 15px;
             justify-content: center;
-            margin-top: 20px;
+            z-index: 1000;
         }
 
-        /* Modal de pago */
-        .bd-payment-modal {
-            display: none;
-            position: fixed;
-            top: 125px;
-            left: 0;
-            width: 100%;
-            height: calc(100% - 125px);
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 9998;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 20px;
-            overflow-y: auto;
-        }
-
-        .bd-payment-modal-content {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            width: 100%;
-            max-width: 500px;
-            margin-top: 20px;
-        }
-
-        .bd-payment-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: rgb(var(--neutral-900));
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        #payment-element {
-            margin-bottom: 20px;
-        }
-
-        .bd-payment-button {
-            width: 100%;
-            padding: 15px;
-            background: rgb(var(--primary));
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .bd-payment-button:hover {
-            background: rgb(var(--primary-dark));
-        }
-
-        .bd-payment-button:disabled {
-            background: rgb(var(--neutral-400));
-            cursor: not-allowed;
-        }
-
-        .bd-loading-spinner {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .bd-spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid rgb(var(--primary));
+        #loading-overlay .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #007bff;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
+            width: 70px;
+            height: 70px;
+            animation: spin 1.5s linear infinite;
+        }
+
+        #loading-overlay p {
+            margin-top: 25px;
+            font-size: 20px;
+            color: #007bff;
         }
 
         @keyframes spin {
@@ -1075,1650 +518,1074 @@ function boat_deregistration_form_shortcode() {
             100% { transform: rotate(360deg); }
         }
 
-        /* Resumen de compra */
-        /* Resumen de compra - Más compacto */
-        .bd-summary-box {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            border: 2px solid rgb(var(--neutral-200));
-            margin: 10px 0;
+        /* Estilos adicionales para los botones */
+        .button[disabled],
+        .button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
         }
 
-        .bd-summary-title {
-            font-size: 15px;
-            font-weight: 600;
-            color: rgb(var(--neutral-800));
-            margin-bottom: 10px;
+        /* Estilos para el checkbox de términos y condiciones */
+        .terms-container {
+            margin-top: 25px;
+            text-align: left;
         }
 
-        .bd-summary-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 6px;
-            font-size: 13px;
-            padding: 4px 0;
+        .terms-container label {
+            font-weight: normal;
+            color: #555555;
         }
 
-        .bd-summary-row.total {
-            font-weight: 600;
+        .terms-container a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .terms-container a:hover {
+            text-decoration: underline;
+        }
+
+        /* Estilos para el recuadro de precio */
+        .price-details {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            background-color: #fafafa;
+        }
+
+        .price-details p {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+            color: #333333;
+        }
+
+        .price-details ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 15px 0;
+        }
+
+        .price-details ul li {
+            margin-bottom: 8px;
+            color: #555555;
+        }
+
+        .error-message {
+            color: #dc3545;
+            margin-bottom: 20px;
             font-size: 16px;
-            color: rgb(var(--primary));
-            border-top: 2px solid rgb(var(--neutral-300));
-            padding-top: 8px;
-            margin-top: 10px;
+            font-weight: bold;
         }
 
-        /* Responsive design */
+        .field-error {
+            border-color: #dc3545 !important;
+        }
+
+        /* [NUEVO - CUPÓN] Clases para el campo del cupón */
+        .coupon-valid {
+            background-color: #d4edda !important; /* verde claro */
+            border-color: #28a745 !important;
+        }
+        .coupon-error {
+            background-color: #f8d7da !important; /* rojo claro */
+            border-color: #dc3545 !important;
+        }
+        .coupon-loading {
+            background-color: #fff3cd !important; /* amarillo claro */
+            border-color: #ffeeba !important;
+        }
+        /* [/NUEVO - CUPÓN] */
+
+        /* Responsividad */
         @media (max-width: 768px) {
-            /* Navegación móvil - 2 arriba, 2 abajo */
-            .bd-navigation {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                grid-template-rows: auto auto;
-                gap: 8px;
-                padding: 10px;
-                background: white;
-                border-radius: 10px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-                margin-bottom: 20px;
-            }
-
-            .bd-nav-item {
-                padding: 12px 10px;
-                font-size: 13px;
-            }
-
-            .bd-nav-item:nth-child(1),
-            .bd-nav-item:nth-child(2) {
-                grid-row: 1;
-            }
-
-            .bd-nav-item:nth-child(3) {
-                grid-row: 2;
-                grid-column: 1 / 3;
-            }
-            /* Mostrar línea y texto FIRME AQUÍ solo en móvil */
-            .bd-signature-line {
-                display: block;
-            }
-
-            .bd-signature-text {
-                display: block;
-            }
-
-            /* Cambiar textos de ubicación en móvil */
-            .desktop-text, .sidebar-desktop-text {
-                display: none;
-            }
-
-            .mobile-text, .sidebar-mobile-text {
-                display: inline;
-            }
-
-            .bd-container {
-                grid-template-columns: 1fr;
-                margin: 10px;
-            }
-
-            .bd-sidebar {
-                height: auto;
-                position: static;
-            }
-
-            .bd-form-area {
-                padding: 20px;
-            }
-
-            .bd-inputs-row {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-
-            .bd-upload-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .bd-nav-buttons {
+            #form-navigation {
                 flex-direction: column;
+                align-items: flex-start;
             }
 
-            .bd-coupon-row {
+            #form-navigation a {
+                margin-bottom: 10px;
+            }
+
+            .button-container {
                 flex-direction: column;
-                gap: 10px;
+                align-items: stretch;
             }
 
-            /* Botón único de firmar en móvil */
-            .bd-signature-btn.clear {
-                display: none;  /* Ocultar botón borrar en móvil */
-            }
-
-            .bd-signature-btn.mobile-expand {
-                display: inline-block;
+            .button-container .button {
                 width: 100%;
-                max-width: 300px;
-                padding: 14px 24px;
-                font-size: 16px;
-                font-weight: 600;
+                margin: 5px 0;
             }
 
             #signature-pad {
-                display: none;  /* Ocultar canvas principal en móvil */
+                height: 150px;
             }
 
-            /* Indicador de firma completada */
-            .bd-signature-status {
-                display: none;
-                padding: 12px;
-                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-                color: white;
-                border-radius: 8px;
-                text-align: center;
-                margin: 10px auto;
-                max-width: 300px;
-                font-size: 14px;
-                font-weight: 600;
-                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            .upload-item {
+                flex-direction: column;
+                align-items: flex-start;
             }
 
-            .bd-signature-status.active {
-                display: block;
-                animation: slideIn 0.3s ease;
+            .upload-item label, .upload-item input[type="file"], .upload-item .view-example {
+                flex: 1 1 100%;
+                margin-bottom: 5px;
             }
 
-            @keyframes slideIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(-10px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            /* Mostrar mensaje info solo en móvil */
-            .bd-info-message.mobile-only {
-                display: flex !important;
-            }
-
-            .bd-payment-modal {
-                top: 0;
-                height: 100%;
-            }
-
-            .bd-payment-modal-content {
-                margin-top: 0;
+            .upload-item .view-example {
+                margin-left: 0;
             }
         }
 
-        /* Ocultar WhatsApp Ninja durante firma */
-        .bd-signature-modal.active ~ .wpfront-notification-bar,
-        .bd-signature-modal.active ~ #wpfront-notification-bar,
-        .bd-signature-modal.active ~ [class*="whatsapp"],
-        .bd-signature-modal.active ~ [id*="whatsapp"] {
-            display: none !important;
+        @media (max-width: 480px) {
+            #boat-deregistration-form {
+                padding: 20px;
+            }
+
+            #form-navigation {
+                padding: 10px;
+            }
+
+            .button {
+                font-size: 16px;
+                padding: 10px;
+            }
+
+            #signature-pad {
+                height: 120px;
+            }
         }
     </style>
 
-    <?php if (current_user_can('administrator')): ?>
-    <!-- Panel de auto-rellenado para administradores -->
-    <div class="bd-admin-panel">
-        <div class="bd-admin-panel-info">
-            <div class="bd-admin-panel-title">🔧 MODO ADMINISTRADOR</div>
-            <div class="bd-admin-panel-subtitle">Rellena automáticamente todos los campos y llega hasta el resumen</div>
+    <!-- Formulario principal -->
+    <form id="boat-deregistration-form" action="" method="POST" enctype="multipart/form-data">
+        <!-- Mensajes de error -->
+        <div id="error-messages"></div>
+
+        <!-- Navegación del formulario -->
+        <div id="form-navigation">
+            <a href="#" class="nav-link" data-page-id="page-personal-info">Datos</a>
+            <a href="#" class="nav-link" data-page-id="page-documents">Documentación</a>
+            <a href="#" class="nav-link" data-page-id="page-payment">Pago</a>
         </div>
-        <button type="button" id="admin-autofill-btn" class="bd-admin-autofill-btn">
-            ⚡ Auto-rellenar Formulario
-        </button>
-    </div>
-    <?php endif; ?>
 
-    <div class="bd-container">
-        <!-- SIDEBAR IZQUIERDO -->
-        <div class="bd-sidebar">
-            <div class="bd-logo">
-                <i class="fas fa-anchor"></i>
-                Tramitfy
+        <!-- Overlay de carga -->
+        <div id="loading-overlay">
+            <div class="spinner"></div>
+            <p>Procesando, por favor espera...</p>
+        </div>
+
+        <!-- Página de Datos Personales -->
+        <div id="page-personal-info" class="form-page">
+            <label for="customer_name">Nombre y Apellidos:</label>
+            <input type="text" id="customer_name" name="customer_name" placeholder="Ingresa tu nombre y apellidos" required />
+
+            <label for="customer_dni">DNI:</label>
+            <input type="text" id="customer_dni" name="customer_dni" placeholder="Ingresa tu DNI" required />
+
+            <label for="customer_email">Correo Electrónico:</label>
+            <input type="email" id="customer_email" name="customer_email" placeholder="Ingresa tu correo electrónico" required />
+
+            <label for="customer_phone">Teléfono:</label>
+            <input type="tel" id="customer_phone" name="customer_phone" placeholder="Ingresa tu teléfono" required />
+
+            <!-- Selector de tipo de baja -->
+            <label for="deregistration_type">Tipo de Baja:</label>
+            <select id="deregistration_type" name="deregistration_type" required>
+                <option value="">Seleccione una opción</option>
+                <option value="siniestro">Baja definitiva por siniestro</option>
+                <option value="exportacion">Baja definitiva por exportación</option>
+            </select>
+
+            <!-- Campo para Datos del Taller (solo si es siniestro) -->
+            <div id="workshop-data-section" style="display: none;">
+                <label for="workshop_data">Nombre del Taller o enlace de Google:</label>
+                <input type="text" id="workshop_data" name="workshop_data" placeholder="Ingresa el nombre del taller o enlace" />
             </div>
-
-            <!-- Contenido por defecto del sidebar -->
-            <div id="sidebar-default">
-                <div class="bd-headline">Baja de Embarcación</div>
-                <div class="bd-subheadline">Gestiona la baja definitiva de tu embarcación de recreo de forma rápida y segura</div>
-
-                <div class="bd-price-box">
-                    <div class="bd-price-label">Precio Total</div>
-                    <div class="bd-price-amount">95€</div>
-                    <div class="bd-price-detail">Tasas y honorarios incluidos</div>
+            
+            <!-- Campos de dirección de facturación -->
+            <div id="billing-address-section">
+                <h3 style="margin-top: 25px; color: #016d86;">Dirección de Facturación</h3>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: inline-flex; align-items: center; cursor: pointer; margin-top: 0;">
+                        <input type="checkbox" id="same_address" name="same_address" style="margin-right: 10px;"> 
+                        Usar datos personales para la facturación
+                    </label>
                 </div>
-
-                <div class="bd-benefits">
-                    <div class="bd-benefit">
-                        <i class="fas fa-check"></i>
-                        <span>Tramitación completa ante las autoridades</span>
-                    </div>
-                    <div class="bd-benefit">
-                        <i class="fas fa-check"></i>
-                        <span>Documentación oficial de baja</span>
-                    </div>
-                    <div class="bd-benefit">
-                        <i class="fas fa-check"></i>
-                        <span>Gestión de tasas oficiales</span>
-                    </div>
-                    <div class="bd-benefit">
-                        <i class="fas fa-check"></i>
-                        <span>Seguimiento en tiempo real</span>
-                    </div>
-                    <div class="bd-benefit">
-                        <i class="fas fa-check"></i>
-                        <span>Soporte especializado</span>
-                    </div>
-                </div>
-
-                <div class="bd-trust-badges">
-                    <div class="bd-badge">
-                        <i class="fas fa-shield-alt"></i>
-                        Seguro
-                    </div>
-                    <div class="bd-badge">
-                        <i class="fas fa-clock"></i>
-                        Rápido
-                    </div>
-                    <div class="bd-badge">
-                        <i class="fas fa-certificate"></i>
-                        Oficial
-                    </div>
-                </div>
-            </div>
-
-            <!-- Contenido para página de documentación -->
-            <div id="sidebar-authorization" style="display: none;">
-                <div class="bd-logo">
-                    <i class="fa-solid fa-file-signature"></i>
-                    <span>Autorización</span>
-                </div>
-
-                <div class="bd-sidebar-auth-doc">
-                    <h4 style="font-size: 18px; font-weight: 700; color: white; margin-bottom: 15px;">
-                        DOCUMENTO DE AUTORIZACIÓN
-                    </h4>
-                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 20px; backdrop-filter: blur(10px);">
-                        <p style="font-size: 14px; line-height: 1.8; margin-bottom: 15px; color: white;">
-                            Yo, <strong id="sidebar-customer-name" style="color: #fff; font-size: 16px;">[Nombre]</strong>, con DNI/NIE <strong id="sidebar-customer-dni" style="color: #fff;">[DNI]</strong>, autorizo a <strong>TRAMITFY</strong> para que, en mi nombre y representación, gestione ante las autoridades competentes la baja definitiva de mi embarcación.
-                        </p>
-                        <p style="font-size: 14px; line-height: 1.8; color: white; margin: 0;">
-                            Me comprometo a aportar toda la documentación necesaria y a abonar las tasas correspondientes.
-                        </p>
-                    </div>
-
+                
+                <div id="billing-fields">
+                    <label for="billing_address">Dirección:</label>
+                    <input type="text" id="billing_address" name="billing_address" placeholder="Calle, número, piso, puerta" required />
+                    
+                    <label for="billing_city">Población:</label>
+                    <input type="text" id="billing_city" name="billing_city" placeholder="Ciudad o población" required />
+                    
+                    <label for="billing_postal_code">Código Postal:</label>
+                    <input type="text" id="billing_postal_code" name="billing_postal_code" placeholder="Código postal" required />
+                    
+                    <label for="billing_province">Provincia:</label>
+                    <input type="text" id="billing_province" name="billing_province" placeholder="Provincia" required />
                 </div>
             </div>
         </div>
 
-        <!-- ÁREA PRINCIPAL DEL FORMULARIO -->
-        <div class="bd-form-area">
-            <div class="bd-form-header">
-                <h2 class="bd-form-title">Baja de Embarcación de Recreo</h2>
-                <p class="bd-form-subtitle">Complete el formulario para iniciar el proceso de baja definitiva</p>
+        <!-- Página de Documentación -->
+        <div id="page-documents" class="form-page hidden">
+            <h3>Adjuntar Documentación</h3>
+            <p>Por favor, sube los siguientes documentos. Puedes ver un ejemplo haciendo clic en "Ver ejemplo"...</p>
+            <div class="upload-section">
+                <div class="upload-item">
+                    <label for="upload-dni-propietario">Copia del DNI del propietario</label>
+                    <input type="file" id="upload-dni-propietario" name="upload_dni_propietario" required>
+                    <a href="#" class="view-example" data-doc="dni-propietario">Ver ejemplo</a>
+                </div>
+                <div class="upload-item">
+                    <label for="upload-hoja-asiento">Copia del Registro marítmo</label>
+                    <input type="file" id="upload-hoja-asiento" name="upload_hoja_asiento" required>
+                    <a href="#" class="view-example" data-doc="hoja-asiento">Ver ejemplo</a>
+                </div>
             </div>
 
-            <!-- Navegación entre páginas -->
-            <div class="bd-navigation">
-                <a href="#" class="bd-nav-item active" data-page="page-personal">
-                    <i class="fas fa-user"></i>
-                    Datos Personales
-                </a>
-                <a href="#" class="bd-nav-item" data-page="page-documents">
-                    <i class="fas fa-file-alt"></i>
-                    Documentación
-                </a>
-                <a href="#" class="bd-nav-item" data-page="page-payment">
-                    <i class="fas fa-credit-card"></i>
-                    Pago
-                </a>
+            <h3>Autorización</h3>
+            <div class="document-sign-section">
+                <p>Por favor, lee el siguiente documento y firma en el espacio proporcionado.</p>
+                <div id="authorization-document" style="background-color:#f9f9f9; padding:20px; border:1px solid #e0e0e0;">
+                    <!-- Se generará dinámicamente -->
+                </div>
+                <div id="signature-container" style="margin-top:20px; text-align:center;">
+                    <canvas id="signature-pad" width="500" height="200" style="border:1px solid #ccc;"></canvas>
+                </div>
+                <button type="button" class="button" id="clear-signature">Limpiar Firma</button>
             </div>
 
-            <form id="boat-deregistration-form" method="post" enctype="multipart/form-data">
-                <!-- PÁGINA 1: DATOS PERSONALES -->
-                <div id="page-personal" class="bd-form-page">
-                    <h3>Datos del Propietario</h3>
+            <div class="terms-container">
+                <label>
+                    <input type="checkbox" name="terms_accept" required> 
+                    Acepto los <a href="https://tramitfy.es/terminos-y-condiciones-de-uso/" target="_blank">términos y condiciones</a>.
+                </label>
+            </div>
 
-                    <div class="bd-inputs-row">
-                        <div class="bd-input-group">
-                            <label for="customer_name">Nombre Completo *</label>
-                            <input type="text" id="customer_name" name="customer_name" required>
-                        </div>
-                        <div class="bd-input-group">
-                            <label for="customer_dni">DNI/NIE *</label>
-                            <input type="text" id="customer_dni" name="customer_dni" required>
-                        </div>
-                    </div>
-
-                    <div class="bd-inputs-row">
-                        <div class="bd-input-group">
-                            <label for="customer_email">Email *</label>
-                            <input type="email" id="customer_email" name="customer_email" required>
-                        </div>
-                        <div class="bd-input-group">
-                            <label for="customer_phone">Teléfono *</label>
-                            <input type="tel" id="customer_phone" name="customer_phone" required>
-                        </div>
-                    </div>
-
-                    <!-- Campo oculto para tipo de baja (siempre será siniestro) -->
-                    <input type="hidden" id="deregistration_type" name="deregistration_type" value="siniestro">
-
-                    <input type="hidden" id="workshop_data" name="workshop_data" value="">
-
-
-                    <!-- Dirección de facturación -->
-                    <div class="bd-billing-section">
-                        <div class="bd-billing-title">Dirección de Facturación</div>
-
-                        <div class="bd-checkbox-group">
-                            <input type="checkbox" id="same_address" name="same_address" checked>
-                            <label for="same_address">Usar mis datos personales para la facturación</label>
-                        </div>
-
-                        <div id="billing-fields" style="display: none;">
-                            <div class="bd-input-group">
-                                <label for="billing_address">Dirección</label>
-                                <input type="text" id="billing_address" name="billing_address">
-                            </div>
-                            <div class="bd-inputs-row">
-                                <div class="bd-input-group">
-                                    <label for="billing_postal_code">Código Postal</label>
-                                    <input type="text" id="billing_postal_code" name="billing_postal_code">
-                                </div>
-                                <div class="bd-input-group">
-                                    <label for="billing_city">Ciudad</label>
-                                    <input type="text" id="billing_city" name="billing_city">
-                                </div>
-                            </div>
-                            <div class="bd-input-group">
-                                <label for="billing_province">Provincia</label>
-                                <input type="text" id="billing_province" name="billing_province">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Cupón de descuento desplegable movido después de dirección de facturación -->
-                    <div class="bd-discount-collapsible" style="margin: 15px 0;">
-                        <button type="button" class="bd-discount-toggle" onclick="toggleDiscount()" style="background: none; border: none; padding: 10px 14px; color: #6b7280; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; width: 100%; text-align: left; border: 1px solid #e5e7eb; border-radius: 8px; background: #fafafa;"
-                                onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='#fafafa'">
-                            <i class="fas fa-tag" style="color: #016d86;"></i>
-                            <span>¿Tienes un código de descuento?</span>
-                            <i class="fas fa-chevron-down" id="discount-arrow" style="transition: transform 0.3s; margin-left: auto;"></i>
-                        </button>
-                        <div id="discount-content" style="display: none; margin-top: 10px; padding: 15px; background: #f0f9ff; border-radius: 8px; border: 1px solid #0ea5e9;">
-                            <div style="display: flex; gap: 10px; align-items: center;">
-                                <input type="text" id="early-coupon-code" placeholder="Introduce tu código de descuento"
-                                       style="flex: 1; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;"
-                                       oninput="validateAndApplyCoupon(this.value)">
-                                <div id="coupon-status-icon" style="display: none; font-size: 20px;"></div>
-                            </div>
-                            <div id="early-coupon-message" style="margin-top: 10px; display: none;"></div>
-                        </div>
-                    </div>
-
-                    <div class="bd-nav-buttons">
-                        <div></div>
-                        <button type="button" class="bd-btn primary" onclick="showPage('page-documents')">
-                            Continuar <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- PÁGINA 2: DOCUMENTACIÓN -->
-                <div id="page-documents" class="bd-form-page hidden">
-                    <h3>Documentación Requerida</h3>
-
-                    <div class="bd-upload-grid">
-                        <div class="bd-upload-item">
-                            <label for="dni_file">DNI/NIE del Propietario *</label>
-                            <div class="bd-file-upload-wrapper">
-                                <label for="dni_file" class="bd-file-upload-btn">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                    <span>Seleccionar archivos</span>
-                                </label>
-                                <input type="file" id="dni_file" name="dni_file[]" accept=".jpg,.jpeg,.png,.pdf" multiple required style="display: none;">
-                                <div class="bd-file-selected" id="dni_file_selected">No hay archivos seleccionados</div>
-                            </div>
-                            <a href="https://tramitfy.es/wp-content/uploads/2024/12/ejemplo-dni.jpg" target="_blank" class="view-example">
-                                <i class="fas fa-eye"></i> Ver ejemplo
-                            </a>
-                        </div>
-
-                        <div class="bd-upload-item">
-                            <label for="registration_file">Registro Marítimo de la Embarcación *</label>
-                            <div class="bd-file-upload-wrapper">
-                                <label for="registration_file" class="bd-file-upload-btn">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                    <span>Seleccionar archivos</span>
-                                </label>
-                                <input type="file" id="registration_file" name="registration_file[]" accept=".jpg,.jpeg,.png,.pdf" multiple required style="display: none;">
-                                <div class="bd-file-selected" id="registration_file_selected">No hay archivos seleccionados</div>
-                            </div>
-                            <a href="https://tramitfy.es/wp-content/uploads/2024/12/ejemplo-registro-maritimo.jpg" target="_blank" class="view-example">
-                                <i class="fas fa-eye"></i> Ver ejemplo
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Área de firma -->
-                    <div class="bd-signature-area">
-                        <div class="bd-signature-label">Firma Digital *</div>
-
-                        <!-- Indicación de firma movida aquí -->
-                        <div style="background: #f0f9ff; padding: 12px; border-radius: 8px; margin: 10px auto 15px; max-width: 600px; border-left: 4px solid #0ea5e9;">
-                            <p style="font-size: 13px; line-height: 1.5; color: #0c5460; margin: 0; text-align: center;">
-                                <i class="fa-solid fa-info-circle" style="margin-right: 6px; color: #0ea5e9;"></i>
-                                <span class="desktop-text">Por favor, firme el documento de autorización de la izquierda</span>
-                                <span class="mobile-text" style="display: none;">Por favor, firme el documento de autorización de arriba</span>
-                            </p>
-                        </div>
-                        <!-- Info sobre documento en sección superior (solo móvil) -->
-                        <div class="bd-info-message mobile-only" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1px solid #0284c7; border-radius: 8px; padding: 12px; margin-bottom: 20px; display: none; align-items: center; gap: 10px;">
-                            <i class="fas fa-info-circle" style="color: #0284c7; font-size: 18px;"></i>
-                            <span style="color: #0369a1; font-size: 14px;">El documento de autorización completo lo encontrará en la sección superior de esta página.</span>
-                        </div>
-
-                        <div class="bd-signature-container">
-                            <canvas id="signature-pad" width="600" height="250"></canvas>
-                            <div class="bd-signature-line"></div>
-                            <div class="bd-signature-text">FIRME AQUÍ</div>
-                        </div>
-
-                        <!-- Indicador de firma completada (solo móvil) -->
-                        <div class="bd-signature-status" id="signature-status">
-                            <i class="fas fa-check-circle"></i> Firma digital registrada correctamente
-                        </div>
-
-                        <div class="bd-signature-controls">
-                            <button type="button" class="bd-signature-btn clear" onclick="clearSignature()">
-                                <i class="fas fa-eraser"></i> Borrar
-                            </button>
-                            <button type="button" class="bd-signature-btn mobile-expand" onclick="openSignatureModal()">
-                                <i class="fas fa-pen-fancy"></i> Firmar Digitalmente
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="bd-nav-buttons">
-                        <button type="button" class="bd-btn secondary" onclick="showPage('page-personal')">
-                            <i class="fas fa-arrow-left"></i> Anterior
-                        </button>
-                        <button type="button" class="bd-btn primary" onclick="showPage('page-payment')">
-                            Continuar <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- PÁGINA 3: PAGO -->
-                <div id="page-payment" class="bd-form-page hidden">
-                    <h3 style="margin-bottom: 15px; font-size: 20px;">Resumen y Pago</h3>
-
-                    <div class="bd-summary-box" style="padding: 15px; margin: 15px 0;">
-                        <div class="bd-summary-title">Resumen del Servicio</div>
-
-                        <div class="bd-summary-row" style="font-weight: 600; background: #f0f9ff; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
-                            <span style="color: #016d86;">Baja definitiva de embarcación</span>
-                            <span style="color: #016d86; font-size: 18px;">95,00 €</span>
-                        </div>
-
-                        <div style="padding: 12px; background: #fafafa; border-radius: 6px; margin-bottom: 15px;">
-                            <div style="font-size: 14px; color: #374151; margin-bottom: 10px; font-weight: 600;">El servicio incluye:</div>
-                            <div style="font-size: 13px; padding: 5px 0; color: #4b5563;">
-                                <i class="fas fa-check" style="color: #16a34a; margin-right: 8px;"></i>
-                                Tasas de Capitanía Marítima
-                            </div>
-                            <div style="font-size: 13px; padding: 5px 0; color: #4b5563;">
-                                <i class="fas fa-check" style="color: #16a34a; margin-right: 8px;"></i>
-                                Nota del Registro de Propiedad
-                            </div>
-                            <div style="font-size: 13px; padding: 5px 0; color: #4b5563;">
-                                <i class="fas fa-check" style="color: #16a34a; margin-right: 8px;"></i>
-                                Gestión completa del trámite
-                            </div>
-                            <div style="font-size: 13px; padding: 5px 0; color: #4b5563;">
-                                <i class="fas fa-check" style="color: #16a34a; margin-right: 8px;"></i>
-                                IVA incluido
-                            </div>
-                            <div style="font-size: 13px; padding: 5px 0; color: #4b5563;">
-                                <i class="fas fa-check" style="color: #16a34a; margin-right: 8px;"></i>
-                                Pago único
-                            </div>
-                        </div>
-
-                        <div class="bd-summary-row" id="discount-row" style="display: none; color: #16a34a; font-weight: 600; padding: 8px 0;">
-                            <span><i class="fas fa-tag" style="margin-right: 5px;"></i>Descuento aplicado</span>
-                            <span id="discount-amount">-0,00 €</span>
-                        </div>
-
-                        <div class="bd-summary-row total" style="border-top: 2px solid #016d86; padding-top: 15px; margin-top: 15px;">
-                            <span style="font-size: 16px; font-weight: 700; color: #016d86;">Total a pagar</span>
-                            <span id="total-amount" style="font-size: 22px; font-weight: 700; color: #016d86;">95,00 €</span>
-                        </div>
-                    </div>
-
-                    <!-- Cupón oculto que se sincroniza con el de la primera página -->
-                    <input type="hidden" id="coupon_code" name="coupon_code">
-
-                    <div class="bd-nav-buttons">
-                        <button type="button" class="bd-btn secondary" onclick="showPage('page-documents')">
-                            <i class="fas fa-arrow-left"></i> Anterior
-                        </button>
-                        <button type="button" id="pay-button" class="bd-btn primary">
-                            <i class="fas fa-lock"></i> Realizar Pago Seguro
-                        </button>
-                    </div>
-                </div>
-            </form>
+            <div class="button-container">
+                <button type="button" class="button" id="prevButton">Anterior</button>
+                <button type="button" class="button" id="nextButton">Siguiente</button>
+            </div>
         </div>
-    </div>
 
-    <!-- Modal de firma avanzado (idéntico a renovación-permiso) -->
-    <div id="signature-modal-advanced" class="bd-signature-modal">
-        <div class="bd-modal-content">
-            <div class="bd-modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #e5e7eb;">
-                <h3 style="margin: 0; font-size: 20px; color: #016d86; display: flex; align-items: center; gap: 10px;">
-                    <i class="fas fa-pen-fancy"></i> Firma Digital
-                </h3>
-                <button class="bd-modal-close" id="close-modal" style="background: none; border: none; font-size: 24px; color: #6b7280; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
+        <!-- Página de Pago -->
+        <div id="page-payment" class="form-page hidden">
+            <h2 style="text-align: center; color: #016d86;">Información de Pago</h2>
+            <div class="price-details">
+                <p><strong>Baja de embarcación de recreo:</strong> <span style="float:right;">95.00 €</span></p>
+                <p><strong>Incluye:</strong></p>
+                <ul>
+                    <li>Tasas y Honorarios - 81.15 €</li>
+                    <li>IVA (21%) - 12.60 €</li>
+                </ul>
 
-            <div class="bd-enhanced-signature-container" style="position: relative; padding: 20px; background: white;">
-                <canvas id="enhanced-signature-canvas" style="width: 100%; height: 250px; border: 2px solid #016d86; border-radius: 8px; background: white;"></canvas>
-                <div class="bd-signature-guide" style="position: absolute; bottom: 40px; left: 20px; right: 20px; pointer-events: none; z-index: 1;">
-                    <div class="bd-signature-line" style="border-bottom: 2px solid #e5e7eb; width: 100%;"></div>
-                    <div class="bd-signature-instruction" style="text-align: center; color: #9ca3af; font-size: 14px; margin-top: 5px; letter-spacing: 2px; font-weight: 600;">FIRME AQUÍ</div>
-                </div>
-            </div>
-
-            <div class="bd-modal-footer" style="padding: 20px; border-top: 1px solid #e5e7eb; background: #f9fafb;">
-                <p class="bd-modal-instructions" style="text-align: center; color: #6b7280; font-size: 14px; margin-bottom: 15px;">
-                    <i class="fas fa-hand-pointer"></i> Use el dedo o el ratón para firmar en el área indicada
+                <!-- [NUEVO - CUPÓN] Añadimos visualización de descuento y total con descuento -->
+                <p id="discount-line" style="display:none;">
+                    <strong>Descuento:</strong>
+                    <span style="float:right;" id="discount-amount"></span>
                 </p>
-                <div class="bd-modal-button-container" style="display: flex; gap: 10px; justify-content: center;">
-                    <button class="bd-modal-clear-btn" id="modal-clear-btn" style="padding: 10px 24px; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
-                        <i class="fas fa-eraser"></i> Borrar
-                    </button>
-                    <button class="bd-modal-accept-btn" id="modal-accept-btn" disabled style="padding: 10px 24px; background: #016d86; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; opacity: 0.5;" onmouseover="if(!this.disabled) this.style.background='#014d61'" onmouseout="if(!this.disabled) this.style.background='#016d86'">
-                        <i class="fas fa-check"></i> Confirmar firma
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de pago -->
-    <div id="payment-modal" class="bd-payment-modal">
-        <div class="bd-payment-modal-content">
-            <div class="bd-loading-spinner" id="loading-spinner">
-                <div class="bd-spinner"></div>
-                <p>Cargando pasarela de pago...</p>
+                <p><strong>Total a pagar:</strong>
+                    <span style="float:right;" id="final-amount">95.00 €</span>
+                </p>
+                <!-- [/NUEVO - CUPÓN] -->
             </div>
 
-            <div id="payment-content" style="display: none;">
-                <div class="bd-payment-title">Pago Seguro</div>
-                <?php if (BOAT_DEREGISTRATION_STRIPE_MODE === 'test'): ?>
-                <div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 10px; margin-bottom: 15px; border-radius: 6px; font-size: 14px; text-align: center;">
-                    ⚠️ <strong>MODO PRUEBA</strong> - Usa tarjeta: 4242 4242 4242 4242
-                </div>
-                <?php endif; ?>
+            <!-- [NUEVO - CUPÓN] Campo cupón y mensaje -->
+            <div class="coupon-container" style="margin-top: 20px;">
+                <label for="coupon_code">Cupón de descuento (opcional):</label>
+                <input type="text" id="coupon_code" name="coupon_code" placeholder="Ingresa tu cupón" />
+                <p id="coupon-message" class="hidden" style="margin-top:10px;"></p>
+            </div>
+            <!-- [/NUEVO - CUPÓN] -->
+
+            <div id="payment-form">
                 <div id="payment-element"></div>
-                <button id="submit-payment" class="bd-payment-button">
-                    Confirmar Pago
-                </button>
-                <div id="payment-messages"></div>
+                <div id="payment-message" class="hidden"></div>
+                <div class="terms-container">
+                    <label>
+                        <input type="checkbox" name="terms_accept_pago" required> 
+                        Acepto los <a href="https://tramitfy.es/terminos-y-condiciones-de-uso/" target="_blank">términos y condiciones de pago</a>.
+                    </label>
+                </div>
+                <button id="submit" class="button">Pagar</button>
             </div>
+        </div>
+
+        <div class="button-container" id="main-button-container">
+            <button type="button" class="button" id="prevButtonMain">Anterior</button>
+            <button type="button" class="button" id="nextButtonMain">Siguiente</button>
+        </div>
+        
+        <!-- Botón para prueba de factura (solo visible para administradores) -->
+        <?php if (current_user_can('administrator')): ?>
+        <div style="margin-top: 30px; padding: 15px; background-color: #f8f9fa; border: 1px dashed #6c757d; border-radius: 5px;">
+            <h4 style="color: #6c757d;">Herramientas de prueba (Solo administradores)</h4>
+            <button id="test-invoice-btn" type="button" class="button" style="background-color: #6c757d;">Generar factura de prueba</button>
+            <span id="test-invoice-result" style="margin-left: 10px; display: none; font-style: italic;"></span>
+        </div>
+        <?php endif; ?>
+    </form>
+
+    <!-- Popup para ejemplos de documentos -->
+    <div id="document-popup">
+        <div class="popup-content">
+            <span class="close-popup">&times;</span>
+            <h3>Ejemplo de documento</h3>
+            <img id="document-example-image" src="" alt="Ejemplo de documento">
         </div>
     </div>
 
+    <!-- JavaScript para manejar la lógica del formulario -->
     <script>
-        // Variables globales (fuera del DOMContentLoaded para acceso global)
-        let stripe = null;
-        let elements = null;
-        let signaturePad = null;
-        let signaturePadLarge = null;
-        let enhancedSignaturePad = null;
-        let currentDiscount = 0;
-        let currentTotal = 95.00;
-
-        // Funciones que necesitan estar disponibles globalmente (antes del DOMContentLoaded)
-
-        // Función para el cupón desplegable
-        function toggleDiscount() {
-            console.log('toggleDiscount llamada');
-            const content = document.getElementById('discount-content');
-            const arrow = document.getElementById('discount-arrow');
-            const input = document.getElementById('early-coupon-code');
-
-            if (content && arrow) {
-                if (content.style.display === 'none' || !content.style.display) {
-                    content.style.display = 'block';
-                    arrow.style.transform = 'rotate(180deg)';
-                    if (input) input.focus();
-                } else {
-                    content.style.display = 'none';
-                    arrow.style.transform = 'rotate(0deg)';
-                }
-            }
-        }
-
-        // Validar y aplicar cupón
-        function validateAndApplyCoupon(value) {
-            const code = value.trim().toUpperCase();
-            const messageDiv = document.getElementById('early-coupon-message');
-            const statusIcon = document.getElementById('coupon-status-icon');
-            const hiddenInput = document.getElementById('coupon_code');
-
-            if (hiddenInput) hiddenInput.value = code;
-
-            const validCoupons = {
-                'DESCUENTO10': 10,
-                'DESCUENTO20': 20,
-                'VERANO15': 15,
-                'BLACK50': 50
-            };
-
-            if (code.length >= 3) {
-                if (validCoupons[code]) {
-                    currentDiscount = validCoupons[code];
-                    if (statusIcon) {
-                        statusIcon.style.display = 'block';
-                        statusIcon.style.color = '#16a34a';
-                        statusIcon.innerHTML = '<i class="fas fa-check-circle"></i>';
-                    }
-
-                    if (messageDiv) {
-                        messageDiv.style.display = 'block';
-                        messageDiv.style.background = '#dcfce7';
-                        messageDiv.style.color = '#166534';
-                        messageDiv.style.padding = '10px';
-                        messageDiv.style.borderRadius = '6px';
-                        messageDiv.innerHTML = `<i class="fas fa-check-circle"></i> ¡Cupón aplicado! ${currentDiscount}% de descuento`;
-                    }
-
-                    if (typeof updateSummary === 'function') updateSummary();
-                    const discountRow = document.getElementById('discount-row');
-                    if (discountRow) discountRow.style.display = 'flex';
-                } else if (code.length >= 6) {
-                    currentDiscount = 0;
-                    if (statusIcon) {
-                        statusIcon.style.display = 'block';
-                        statusIcon.style.color = '#dc2626';
-                        statusIcon.innerHTML = '<i class="fas fa-times-circle"></i>';
-                    }
-
-                    if (messageDiv) {
-                        messageDiv.style.display = 'block';
-                        messageDiv.style.background = '#fee2e2';
-                        messageDiv.style.color = '#991b1b';
-                        messageDiv.style.padding = '10px';
-                        messageDiv.style.borderRadius = '6px';
-                        messageDiv.textContent = 'Código de descuento no válido';
-                    }
-                } else {
-                    if (statusIcon) statusIcon.style.display = 'none';
-                    if (messageDiv) messageDiv.style.display = 'none';
-                }
-            } else {
-                currentDiscount = 0;
-                if (statusIcon) statusIcon.style.display = 'none';
-                if (messageDiv) messageDiv.style.display = 'none';
-                const discountRow = document.getElementById('discount-row');
-                if (discountRow) discountRow.style.display = 'none';
-                if (typeof updateSummary === 'function') updateSummary();
-            }
-        }
-
-        // Funciones de firma
-        function clearSignature() {
-            console.log('clearSignature llamada', signaturePad);
-            if (signaturePad) {
-                signaturePad.clear();
-            }
-        }
-
-        function openSignatureModal() {
-            console.log('openSignatureModal llamada');
-            const modal = document.getElementById('signature-modal-advanced');
-            if (modal) {
-                modal.style.display = 'flex';
-                setTimeout(() => {
-                    setupEnhancedSignature();
-                }, 100);
-            }
-        }
-
-        // Función para configurar la firma mejorada del modal
-        function setupEnhancedSignature() {
-            const enhancedCanvas = document.getElementById('enhanced-signature-canvas');
-            if (enhancedCanvas && typeof SignaturePad !== 'undefined') {
-                const rect = enhancedCanvas.getBoundingClientRect();
-                enhancedCanvas.width = rect.width;
-                enhancedCanvas.height = rect.height;
-
-                enhancedSignaturePad = new SignaturePad(enhancedCanvas, {
-                    backgroundColor: 'rgb(255, 255, 255)',
-                    penColor: 'rgb(0, 0, 0)',
-                    minWidth: 1.0,  // Aumentado para mejor visibilidad con ratón
-                    maxWidth: 3.0,  // Aumentado para mejor trazo
-                    velocityFilterWeight: 0.3,  // Reducido para mayor sensibilidad
-                    throttle: 0,  // Sin delay para respuesta inmediata
-                    minDistance: 0  // Sin distancia mínima
-                });
-
-                // Habilitar botón cuando se empiece a firmar
-                enhancedSignaturePad.addEventListener('beginStroke', () => {
-                    const acceptBtn = document.getElementById('modal-accept-btn');
-                    if (acceptBtn) {
-                        acceptBtn.disabled = false;
-                        acceptBtn.style.opacity = '1';
-                    }
-                });
-            }
-        }
-
-        // Función para actualizar sidebar
-        function updateSidebar(pageId) {
-            const defaultSidebar = document.getElementById('sidebar-default');
-            const authSidebar = document.getElementById('sidebar-authorization');
-
-            if (pageId === 'page-documents') {
-                // Mostrar sidebar de autorización
-                if (defaultSidebar) defaultSidebar.style.display = 'none';
-                if (authSidebar) authSidebar.style.display = 'block';
-
-                // Actualizar datos dinámicos
-                const customerName = document.getElementById('customer_name');
-                const customerDni = document.getElementById('customer_dni');
-
-                if (customerName && customerDni) {
-                    const nameElement = document.getElementById('sidebar-customer-name');
-                    const dniElement = document.getElementById('sidebar-customer-dni');
-
-                    if (nameElement) nameElement.textContent = customerName.value || '[Nombre]';
-                    if (dniElement) dniElement.textContent = customerDni.value || '[DNI]';
-                }
-            } else {
-                // Mostrar sidebar por defecto
-                if (defaultSidebar) defaultSidebar.style.display = 'block';
-                if (authSidebar) authSidebar.style.display = 'none';
-            }
-
-            // Actualizar navegación
-            const navItems = document.querySelectorAll('.bd-nav-item');
-            navItems.forEach(item => {
-                item.classList.remove('active');
-                if (item.getAttribute('data-page') === pageId) {
-                    item.classList.add('active');
-                }
-            });
-        }
-
-        // Función para actualizar resumen
-        function updateSummary() {
-            const basePrice = 95.00;
-            const discountAmount = (basePrice * currentDiscount) / 100;
-            currentTotal = basePrice - discountAmount;
-
-            const discountRow = document.getElementById('discount-row');
-            const discountAmountElement = document.getElementById('discount-amount');
-            const totalAmountElement = document.getElementById('total-amount');
-
-            if (currentDiscount > 0 && discountRow) {
-                discountRow.style.display = 'flex';
-                if (discountAmountElement) {
-                    discountAmountElement.textContent = `-${discountAmount.toFixed(2)} €`;
-                }
-            } else if (discountRow) {
-                discountRow.style.display = 'none';
-            }
-
-            if (totalAmountElement) {
-                totalAmountElement.textContent = `${currentTotal.toFixed(2)} €`;
-            }
-        }
-
-        // Función para mostrar página
-        function showPage(pageId) {
-            const pages = document.querySelectorAll('.bd-form-page');
-            pages.forEach(page => page.classList.add('hidden'));
-
-            const targetPage = document.getElementById(pageId);
-            if (targetPage) {
-                targetPage.classList.remove('hidden');
-                updateSidebar(pageId);
-
-                // Re-inicializar firma cuando se muestra la página de documentos
-                if (pageId === 'page-documents') {
-                    setTimeout(() => {
-                        if (typeof initializeSignaturePads === 'function') {
-                            initializeSignaturePads();
-                        }
-                    }, 300);
-                }
-            }
-        }
-
-        // Función para inicializar Stripe - FORZADO A TEST
-        function initializeStripe() {
-            // HARDCODED TEST KEY para evitar problemas de caché
-            stripe = Stripe('YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
-            console.log('Stripe inicializado en modo TEST (FORZADO)');
-        }
-
-        // Función para inicializar signature pads (disponible globalmente)
-        function initializeSignaturePads() {
-                console.log('Inicializando firma...');
-                const canvas = document.getElementById('signature-pad');
-                if (canvas && typeof SignaturePad !== 'undefined') {
-                    // Configurar dimensiones del canvas correctamente
-                    const rect = canvas.getBoundingClientRect();
-                    const ratio = Math.max(window.devicePixelRatio || 1, 1);
-
-                    // Establecer dimensiones reales del canvas
-                    canvas.width = 600 * ratio;  // Aumentado a 600px
-                    canvas.height = 250 * ratio;  // Aumentado a 250px
-
-                    // Escalar el contexto para alta resolución
-                    const ctx = canvas.getContext('2d');
-                    ctx.scale(ratio, ratio);
-
-                    // Estilo CSS para visualización
-                    canvas.style.width = '100%';
-                    canvas.style.maxWidth = '600px';  // Aumentado a 600px
-                    canvas.style.height = '250px';  // Aumentado a 250px
-
-                    // Destruir el pad anterior si existe
-                    if (window.signaturePad) {
-                        try {
-                            window.signaturePad.off();
-                        } catch(e) {
-                            console.log('No se pudo destruir el pad anterior');
-                        }
-                    }
-
-                    // Crear nuevo SignaturePad con mejor sensibilidad para ratón
-                    window.signaturePad = new SignaturePad(canvas, {
-                        backgroundColor: 'rgb(255, 255, 255)',
-                        penColor: 'rgb(0, 0, 0)',
-                        minWidth: 1.0,  // Línea más gruesa para ratón
-                        maxWidth: 3.0,  // Mayor grosor máximo
-                        throttle: 0,  // Sin throttle = respuesta inmediata
-                        minDistance: 0,  // Sin distancia mínima = detecta todos los movimientos
-                        velocityFilterWeight: 0.3,  // Menos filtro = más sensible
-                        dotSize: function() {
-                            return (this.minWidth + this.maxWidth) / 2;
-                        }
-                    });
-
-                    // Arreglar problema de offset restaurando el canvas al tamaño correcto
-                    window.addEventListener('resize', function() {
-                        const data = window.signaturePad.toData();
-                        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-
-                        canvas.width = 600 * ratio;
-                        canvas.height = 250 * ratio;
-                        canvas.getContext('2d').scale(ratio, ratio);
-
-                        window.signaturePad.clear();
-                        window.signaturePad.fromData(data);
-                    });
-
-                    console.log('SignaturePad creado exitosamente');
-
-                    // Hacer que la variable sea global
-                    signaturePad = window.signaturePad;
-                }
-        }
-
-        // INICIALIZACIÓN DEL DOM
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM cargado - Inicializando formulario de baja...');
+            // Variables para Stripe
+            let stripe;
+            let elements;
+            let clientSecret;
 
-            // Inicializar Stripe
-            initializeStripe();
+            // [NUEVO - CUPÓN] Manejo de precio base y descuento
+            let basePrice = 95.00;         // Precio base (aumentado a 95€)
+            let currentPrice = basePrice;  // Precio actual (puede bajar con cupón)
+            let discountApplied = 0;       // %
+            let discountAmount = 0;        // €
+            let couponTimeout = null;      // Debounce
+            // Componentes del precio
+            const taxes = 21.15;           // Tasas fijas
+            const fees = 60.00;            // Honorarios
+            const vatRate = 0.21;          // IVA 21%
 
-            // Inicializar firma con delay para asegurar que el DOM esté listo
-            setTimeout(() => {
-                initializeSignaturePads();
-            }, 100);
+            /**
+             * Inicializar Stripe con un precio "customAmount" si se aplica descuento
+             */
+            async function initializeStripe(customAmount = null) {
+                const amountToCharge = (customAmount !== null) ? customAmount : currentPrice;
+                const totalAmountCents = Math.round(amountToCharge * 100);
 
-                // Signature pad del modal mejorado
-                const enhancedCanvas = document.getElementById('enhanced-signature-canvas');
-                if (enhancedCanvas) {
-                    // Configurar canvas del modal
-                    function setupModalCanvas() {
-                        const rect = enhancedCanvas.getBoundingClientRect();
-                        enhancedCanvas.width = rect.width;
-                        enhancedCanvas.height = rect.height;
+                // Configuración Stripe - cambiar 'test' a 'live' para producción
+                <?php
+                $baja_stripe_mode = 'test'; // 'test' o 'live'
+                $baja_stripe_key = ($baja_stripe_mode === 'test')
+                    ? 'pk_test_YOUR_STRIPE_TEST_PUBLIC_KEY'
+                    : 'pk_live_YOUR_STRIPE_LIVE_PUBLIC_KEY';
+                ?>
+                stripe = Stripe('<?php echo $baja_stripe_key; ?>');
 
-                        signaturePadLarge = new SignaturePad(enhancedCanvas, {
-                            backgroundColor: 'rgb(255, 255, 255)',
-                            penColor: 'rgb(0, 0, 0)',
-                            minWidth: 1.0,  // Mayor grosor mínimo para ratón
-                            maxWidth: 3.0,  // Mayor grosor máximo
-                            velocityFilterWeight: 0.3,  // Mayor sensibilidad
-                            throttle: 0,  // Sin delay
-                            minDistance: 0  // Detecta todos los movimientos
-                        });
+                const response = await fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `action=create_payment_intent_boat_deregistration&amount=${totalAmountCents}`
+                });
+                const result = await response.json();
 
-                        // Habilitar botón cuando se empiece a firmar
-                        signaturePadLarge.addEventListener('beginStroke', () => {
-                            const acceptBtn = document.getElementById('modal-accept-btn');
-                            if (acceptBtn) {
-                                acceptBtn.disabled = false;
-                                acceptBtn.style.opacity = '1';
-                            }
-                        });
-                    }
-
-                    // Esperar un momento para que el DOM esté listo
-                    setTimeout(setupModalCanvas, 200);
+                if (result.error) {
+                    throw new Error(result.error);
                 }
 
-            // Función updateSidebar eliminada - ya está definida globalmente arriba
+                clientSecret = result.clientSecret;
 
-            // Navegación con clicks
-            document.querySelectorAll('.bd-nav-item').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const pageId = this.getAttribute('data-page');
-                    showPage(pageId);
-                });
-            });
-
-            // Sistema de cupón mejorado
-            const couponInput = document.getElementById('coupon_code');
-            const applyCouponBtn = document.getElementById('apply-coupon-btn');
-
-            // Aplicar cupón al presionar Enter
-            if (couponInput) {
-                couponInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        applyCouponBtn.click();
+                const appearance = {
+                    theme: 'flat',
+                    variables: {
+                        colorPrimary: '#016d86',
+                        colorBackground: '#ffffff',
+                        colorText: '#333333',
+                        colorDanger: '#dc3545',
+                        fontFamily: 'Arial, sans-serif',
+                        spacingUnit: '4px',
+                        borderRadius: '4px',
+                    },
+                    rules: {
+                        '.Label': {
+                            color: '#555555',
+                            fontSize: '14px',
+                            marginBottom: '4px',
+                        },
+                        '.Input': {
+                            padding: '12px',
+                            border: '1px solid #cccccc',
+                            borderRadius: '4px',
+                        },
+                        '.Input:focus': {
+                            borderColor: '#016d86',
+                        },
+                        '.Input--invalid': {
+                            borderColor: '#dc3545',
+                        },
                     }
-                });
-            }
-
-            // Mostrar/ocultar dirección de facturación
-            const sameAddressCheckbox = document.getElementById('same_address');
-            if (sameAddressCheckbox) {
-                sameAddressCheckbox.addEventListener('change', function() {
-                    const billingFields = document.getElementById('billing-fields');
-                    if (billingFields) {
-                        billingFields.style.display = this.checked ? 'none' : 'block';
-                    }
-                });
-            }
-
-            // Sistema de cupones
-            const applyCouponButton = document.getElementById('apply-coupon-btn');
-            if (applyCouponButton) {
-                applyCouponButton.addEventListener('click', function() {
-                    const couponCode = document.getElementById('coupon_code').value.trim().toUpperCase();
-                    const messageDiv = document.getElementById('coupon-message');
-
-                const validCoupons = {
-                    'DESCUENTO10': 10,
-                    'DESCUENTO20': 20,
-                    'VERANO15': 15,
-                    'BLACK50': 50
                 };
 
-                if (validCoupons[couponCode]) {
-                    const discountPercent = validCoupons[couponCode];
-                    currentDiscount = (95.00 * discountPercent) / 100;
-                    currentTotal = 95.00 - currentDiscount;
+                elements = stripe.elements({ appearance, clientSecret });
+                const paymentElementOptions = {
+                    paymentMethodOrder: ['card'],
+                };
+                const paymentElement = elements.create('payment', paymentElementOptions);
+                paymentElement.mount('#payment-element');
+            }
 
-                    messageDiv.className = 'bd-coupon-message success';
-                    messageDiv.textContent = `¡Cupón aplicado! Descuento del ${discountPercent}% (${currentDiscount.toFixed(2)}€)`;
-                    messageDiv.style.display = 'block';
+            // Navegación entre páginas
+            const formPages = document.querySelectorAll('.form-page');
+            const navLinks = document.querySelectorAll('.nav-link');
+            let currentPage = 0;
 
-                    // Actualizar resumen
-                    updateSummary();
-                } else {
-                    messageDiv.className = 'bd-coupon-message error';
-                    messageDiv.textContent = 'Cupón no válido o expirado';
-                    messageDiv.style.display = 'block';
-                }
+            function updateForm() {
+                formPages.forEach((page, index) => {
+                    page.classList.toggle('hidden', index !== currentPage);
                 });
+                navLinks.forEach((link, index) => {
+                    link.classList.toggle('active', index === currentPage);
+                });
+
+                // Manejar botones
+                if (formPages[currentPage].id === 'page-documents') {
+                    document.getElementById('main-button-container').style.display = 'none';
+                    document.querySelector('#page-documents .button-container').style.display = 'flex';
+                } else {
+                    document.getElementById('main-button-container').style.display = 'flex';
+                    if (document.querySelector('#page-documents .button-container')) {
+                        document.querySelector('#page-documents .button-container').style.display = 'none';
+                    }
+                }
+                // Hide 'Previous' button on first page and last page (payment)
+                document.getElementById('prevButtonMain').style.display = (currentPage === 0 || currentPage === formPages.length - 1) ? 'none' : 'inline-block';
+
+                const nextButton = document.getElementById('nextButtonMain');
+                if (currentPage === formPages.length - 1) {
+                    nextButton.style.display = 'none';
+                } else {
+                    nextButton.textContent = 'Siguiente';
+                    nextButton.style.display = 'inline-block';
+                }
+
+                // Iniciar Stripe en la página de pago
+                if (formPages[currentPage].id === 'page-payment' && !stripe) {
+                    initializeStripe().catch(error => {
+                        alert('Error al inicializar el pago: ' + error.message);
+                    });
+                    handlePayment();
+                }
+
+                // Generar documento en la página de Documentos
+                if (formPages[currentPage].id === 'page-documents') {
+                    generateAuthorizationDocument();
+                }
+
+                // Mostrar/ocultar taller segun tipo de baja
+                const deregistrationType = document.getElementById('deregistration_type').value;
+                const workshopSection = document.getElementById('workshop-data-section');
+                const workshopInput = document.getElementById('workshop_data');
+                if (deregistrationType === 'siniestro') {
+                    workshopSection.style.display = 'block';
+                    workshopInput.required = true;
+                } else {
+                    workshopSection.style.display = 'none';
+                    workshopInput.required = false;
+                }
             }
 
-            // Actualizar resumen
-            function updateSummary() {
-                // Siempre será baja definitiva
-                document.getElementById('summary-service').textContent = 'Baja definitiva de embarcación';
+            function generateAuthorizationDocument() {
+                const authorizationDiv = document.getElementById('authorization-document');
+                const customerName = document.getElementById('customer_name').value.trim();
+                const customerDNI = document.getElementById('customer_dni').value.trim();
+                const deregTypeText = document.getElementById('deregistration_type').selectedOptions[0].text;
+                const workshopData = document.getElementById('workshop_data').value.trim();
 
-                if (currentDiscount > 0) {
-                    document.getElementById('discount-row').style.display = 'flex';
-                    document.getElementById('discount-amount').textContent = `-${currentDiscount.toFixed(2)} €`;
-                } else {
-                    document.getElementById('discount-row').style.display = 'none';
+                let workshopText = '';
+                if (workshopData) {
+                    workshopText = `, en el taller: ${workshopData}`;
                 }
 
-                document.getElementById('total-amount').textContent = `${currentTotal.toFixed(2)} €`;
+                let authorizationHTML = `
+                    <p>Yo, <strong>${customerName}</strong>, con DNI <strong>${customerDNI}</strong>, autorizo a Tramitfy S.L. (CIF B55388557) a realizar en mi nombre los trámites necesarios para la ${deregTypeText}${workshopText}.</p>
+                    <p>Firmo a continuación en señal de conformidad.</p>
+                `;
+                authorizationDiv.innerHTML = authorizationHTML;
             }
 
-            // Función openSignatureModal movida arriba (eliminada duplicada)
+            function handlePayment() {
+                const submitButton = document.getElementById('submit');
+                submitButton.addEventListener('click', async (e) => {
+                    e.preventDefault();
 
-            // Funciones adicionales del modal
-            window.openSignatureModalOld = function() {
-                const modal = document.getElementById('signature-modal');
-                modal.style.display = 'flex';
-                modal.classList.add('active');
-
-                // Configurar canvas del modal
-                setTimeout(() => {
-                    const enhancedCanvas = document.getElementById('enhanced-signature-canvas');
-                    if (enhancedCanvas && signaturePadLarge) {
-                        // Transferir firma existente si hay
-                        if (signaturePad && !signaturePad.isEmpty()) {
-                            const dataUrl = signaturePad.toDataURL();
-                            signaturePadLarge.fromDataURL(dataUrl);
-                            // Habilitar botón si hay firma
-                            const acceptBtn = document.getElementById('modal-accept-btn');
-                            if (acceptBtn) {
-                                acceptBtn.disabled = false;
-                                acceptBtn.style.opacity = '1';
-                            }
-                        } else {
-                            signaturePadLarge.clear();
-                        }
-                    }
-                }, 150);
-            };
-
-            // Función no necesaria - manejada por event listener del botón
-
-            // Función no necesaria - manejada por event listener del botón
-
-            // Event listeners para el modal de firma avanzado
-            document.getElementById('close-modal')?.addEventListener('click', function() {
-                const modal = document.getElementById('signature-modal-advanced');
-                modal.style.display = 'none';
-
-                // Restaurar WhatsApp Ninja si existe
-                const whatsappNinja = document.querySelector('.whatsapp-ninja-container');
-                if (whatsappNinja) {
-                    whatsappNinja.style.display = 'block';
-                }
-            });
-
-            // Botón de borrar en el modal
-            document.getElementById('modal-clear-btn')?.addEventListener('click', function() {
-                if (signaturePadLarge) {
-                    signaturePadLarge.clear();
-                    const acceptBtn = document.getElementById('modal-accept-btn');
-                    if (acceptBtn) {
-                        acceptBtn.disabled = true;
-                        acceptBtn.style.opacity = '0.5';
-                    }
-                }
-            });
-
-            // Botón de aceptar firma del modal
-            document.getElementById('modal-accept-btn')?.addEventListener('click', function() {
-                if (signaturePadLarge && !signaturePadLarge.isEmpty()) {
-                    // Transferir firma al canvas principal
-                    if (signaturePad) {
-                        const dataUrl = signaturePadLarge.toDataURL();
-                        signaturePad.fromDataURL(dataUrl);
-
-                        // Mantener firma visible en desktop
-                        const mainCanvas = document.getElementById('signature-pad');
-                        if (mainCanvas && window.innerWidth > 768) {
-                            mainCanvas.style.display = 'block';
-                        }
-                    }
-
-                    // Mostrar indicador de firma completada en móvil SOLO si hay firma
-                    if (window.innerWidth <= 768 && signaturePadLarge && !signaturePadLarge.isEmpty()) {
-                        const statusIndicator = document.getElementById('signature-status');
-                        if (statusIndicator) {
-                            statusIndicator.classList.add('active');
-                            // Cambiar texto del botón a "Modificar Firma"
-                            const mobileBtn = document.querySelector('.bd-signature-btn.mobile-expand');
-                            if (mobileBtn) {
-                                mobileBtn.innerHTML = '<i class="fas fa-edit"></i> Modificar Firma';
-                                mobileBtn.style.background = '#059669';
-                            }
-                        }
-                    }
-
-                    // Cerrar modal
-                    const modal = document.getElementById('signature-modal-advanced');
-                    modal.style.display = 'none';
-
-                    // Restaurar WhatsApp Ninja
-                    const whatsappNinja = document.querySelector('.whatsapp-ninja-container');
-                    if (whatsappNinja) {
-                        whatsappNinja.style.display = 'block';
-                    }
-                } else {
-                    alert('Por favor, realice su firma antes de confirmar.');
-                }
-            });
-
-            // Cerrar modal con click fuera
-            document.getElementById('signature-modal-advanced')?.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    this.style.display = 'none';
-
-                    // Restaurar WhatsApp Ninja
-                    const whatsappNinja = document.querySelector('.whatsapp-ninja-container');
-                    if (whatsappNinja) {
-                        whatsappNinja.style.display = 'block';
-                    }
-                }
-            });
-
-            // Sistema de pago
-            const payButton = document.getElementById('pay-button');
-            if (payButton) {
-                payButton.addEventListener('click', function() {
-                // Validaciones básicas
-                const requiredFields = ['customer_name', 'customer_dni', 'customer_email', 'customer_phone'];
-                let isValid = true;
-
-                for (const fieldId of requiredFields) {
-                    const field = document.getElementById(fieldId);
-                    if (!field.value.trim()) {
-                        alert(`Por favor, complete el campo: ${field.previousElementSibling.textContent}`);
-                        showPage('page-personal');
-                        field.focus();
+                    if (!document.querySelector('input[name="terms_accept_pago"]').checked) {
+                        alert('Debe aceptar los términos y condiciones de pago para continuar.');
                         return;
                     }
-                }
 
-                // Validar archivos
-                const dniFile = document.getElementById('dni_file');
-                const registrationFile = document.getElementById('registration_file');
+                    submitButton.disabled = true;
+                    document.getElementById('loading-overlay').style.display = 'flex';
 
-                if (!dniFile.files.length) {
-                    alert('Por favor, suba el archivo del DNI/NIE');
-                    showPage('page-documents');
-                    return;
-                }
-
-                if (!registrationFile.files.length) {
-                    alert('Por favor, suba el archivo del Registro Marítimo');
-                    showPage('page-documents');
-                    return;
-                }
-
-                // Validar firma
-                if (!signaturePad || signaturePad.isEmpty()) {
-                    alert('Por favor, proporcione su firma digital');
-                    showPage('page-documents');
-                    return;
-                }
-
-                // Abrir modal de pago
-                openPaymentModal();
-                });
-            }
-
-            async function openPaymentModal() {
-                const modal = document.getElementById('payment-modal');
-                const loadingSpinner = document.getElementById('loading-spinner');
-                const paymentContent = document.getElementById('payment-content');
-
-                modal.style.display = 'flex';
-                loadingSpinner.style.display = 'block';
-                paymentContent.style.display = 'none';
-
-                try {
-                    // Crear Payment Intent
-                    const response = await fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: new URLSearchParams({
-                            action: 'create_payment_intent_boat_deregistration',
-                            amount: Math.round(currentTotal * 100), // Convertir a centavos
-                            customer_email: document.getElementById('customer_email').value,
-                            customer_name: document.getElementById('customer_name').value
-                        })
-                    });
-
-                    const data = await response.json();
-
-                    if (data.success) {
-                        const clientSecret = data.client_secret;
-
-                        // Configurar Stripe Elements
-                        elements = stripe.elements({
-                            clientSecret: clientSecret,
-                            appearance: {
-                                theme: 'stripe',
-                                variables: {
-                                    colorPrimary: '#016d86',
-                                }
-                            }
+                    try {
+                        const { error } = await stripe.confirmPayment({
+                            elements,
+                            confirmParams: {
+                                payment_method_data: {
+                                    billing_details: {
+                                        name: document.getElementById('customer_name').value,
+                                        email: document.getElementById('customer_email').value,
+                                        phone: document.getElementById('customer_phone').value
+                                    }
+                                },
+                                return_url: window.location.href
+                            },
+                            redirect: 'if_required'
                         });
 
-                        const paymentElement = elements.create('payment');
-                        paymentElement.mount('#payment-element');
-
-                        loadingSpinner.style.display = 'none';
-                        paymentContent.style.display = 'block';
-
-                        // Manejar envío del pago
-                        document.getElementById('submit-payment').addEventListener('click', handlePaymentSubmit);
-
-                    } else {
-                        throw new Error(data.message || 'Error al crear el pago');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('Error al inicializar el pago: ' + error.message);
-                    modal.style.display = 'none';
-                }
-            }
-
-            async function handlePaymentSubmit() {
-                const submitButton = document.getElementById('submit-payment');
-                const messagesDiv = document.getElementById('payment-messages');
-
-                submitButton.disabled = true;
-                submitButton.textContent = 'Procesando...';
-
-                try {
-                    const { error } = await stripe.confirmPayment({
-                        elements,
-                        confirmParams: {
-                            return_url: window.location.href + '?payment=success'
-                        },
-                        redirect: 'if_required'
-                    });
-
-                    if (error) {
-                        // Mostrar error
-                        messagesDiv.innerHTML = `<div style="color: #e74c3c; margin-top: 10px;">${error.message}</div>`;
+                        if (error) {
+                            throw new Error(error.message);
+                        } else {
+                            document.getElementById('payment-message').textContent = 'Pago realizado con éxito.';
+                            document.getElementById('payment-message').classList.add('success');
+                            document.getElementById('payment-message').classList.remove('hidden');
+                            handleFinalSubmission();
+                        }
+                    } catch (error) {
+                        document.getElementById('payment-message').textContent = 'Error al procesar el pago: ' + error.message;
+                        document.getElementById('payment-message').classList.add('error');
+                        document.getElementById('payment-message').classList.remove('hidden');
                         submitButton.disabled = false;
-                        submitButton.textContent = 'Confirmar Pago';
-                    } else {
-                        // Pago exitoso, enviar formulario
-                        await submitForm();
+                        document.getElementById('loading-overlay').style.display = 'none';
                     }
-                } catch (error) {
-                    console.error('Error en el pago:', error);
-                    messagesDiv.innerHTML = `<div style="color: #e74c3c; margin-top: 10px;">Error inesperado. Inténtelo de nuevo.</div>`;
-                    submitButton.disabled = false;
-                    submitButton.textContent = 'Confirmar Pago';
+                });
+            }
+
+            function handleFinalSubmission() {
+                const signaturePad = window.signaturePad;
+                if (signaturePad && signaturePad.isEmpty()) {
+                    alert('Por favor, firme antes de enviar el formulario.');
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    return;
+                }
+
+                let formData = new FormData(document.getElementById('boat-deregistration-form'));
+                formData.append('action', 'submit_form_boat_deregistration');
+
+                // Añadir la firma
+                formData.append('signature', signaturePad.toDataURL());
+
+                // [NUEVO - CUPÓN] Enviar el cupón
+                formData.append('coupon_used', document.getElementById('coupon_code').value.trim());
+
+                fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    if (data.success) {
+                        alert('Formulario enviado con éxito.');
+                        window.location.href = '<?php echo site_url('/pago-realizado-con-exito'); ?>';
+                    } else {
+                        alert('Error al enviar el formulario: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    alert('Hubo un error al enviar el formulario.');
+                });
+            }
+
+            document.getElementById('nextButtonMain').addEventListener('click', () => {
+                if (!validateCurrentPage()) return;
+                currentPage++;
+                updateForm();
+            });
+
+            document.getElementById('prevButtonMain').addEventListener('click', () => {
+                currentPage--;
+                updateForm();
+            });
+
+            const prevButton = document.getElementById('prevButton');
+            const nextButton = document.getElementById('nextButton');
+            if (prevButton && nextButton) {
+                prevButton.addEventListener('click', () => {
+                    currentPage--;
+                    updateForm();
+                });
+                nextButton.addEventListener('click', () => {
+                    if (!validateCurrentPage()) return;
+                    currentPage++;
+                    updateForm();
+                });
+            }
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageId = link.getAttribute('data-page-id');
+                    const pageIndex = Array.from(formPages).findIndex(page => page.id === pageId);
+                    if (pageIndex !== -1) {
+                        currentPage = pageIndex;
+                        updateForm();
+                    }
+                });
+            });
+
+            updateForm();
+            window.signaturePad = new SignaturePad(document.getElementById('signature-pad'));
+
+            document.getElementById('clear-signature').addEventListener('click', function() {
+                window.signaturePad.clear();
+            });
+
+            function validateCurrentPage() {
+                let valid = true;
+                const currentForm = formPages[currentPage];
+                const requiredFields = currentForm.querySelectorAll('input[required], select[required]');
+                const errorMessages = [];
+                requiredFields.forEach(field => {
+                    if (!field.value || (field.type === 'checkbox' && !field.checked)) {
+                        valid = false;
+                        field.classList.add('field-error');
+                        const labelText = field.previousElementSibling ? field.previousElementSibling.textContent : field.name;
+                        errorMessages.push(`El campo "${labelText}" es obligatorio.`);
+                    } else {
+                        field.classList.remove('field-error');
+                    }
+                });
+
+                if (!valid) {
+                    const errorDiv = document.getElementById('error-messages');
+                    errorDiv.innerHTML = '';
+                    errorMessages.forEach(msg => {
+                        const p = document.createElement('p');
+                        p.textContent = msg;
+                        p.classList.add('error-message');
+                        errorDiv.appendChild(p);
+                    });
+                } else {
+                    document.getElementById('error-messages').innerHTML = '';
+                }
+                return valid;
+            }
+
+            // Manejo del popup para ejemplos
+            const popup = document.getElementById('document-popup');
+            const closePopup = document.querySelector('.close-popup');
+            const exampleImage = document.getElementById('document-example-image');
+
+            document.querySelectorAll('.view-example').forEach(link => {
+                link.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const docType = this.getAttribute('data-doc');
+                    exampleImage.src = '/wp-content/uploads/exampledocs/' + docType + '.jpg';
+                    popup.style.display = 'block';
+                });
+            });
+
+            closePopup.addEventListener('click', () => {
+                popup.style.display = 'none';
+            });
+            window.addEventListener('click', function(event) {
+                if (event.target == popup) {
+                    popup.style.display = 'none';
+                }
+            });
+
+            // Al cambiar tipo de baja
+            document.getElementById('deregistration_type').addEventListener('change', updateForm);
+            
+            // Gestionar el checkbox de misma dirección para la facturación
+            document.getElementById('same_address').addEventListener('change', function() {
+                const billingFields = document.getElementById('billing-fields');
+                const billingInputs = billingFields.querySelectorAll('input');
+                
+                if (this.checked) {
+                    // Ocultar campos de dirección de facturación
+                    billingFields.style.display = 'none';
+                    // Hacer los campos no requeridos
+                    billingInputs.forEach(input => {
+                        input.required = false;
+                    });
+                } else {
+                    // Mostrar campos de dirección de facturación
+                    billingFields.style.display = 'block';
+                    // Hacer los campos requeridos de nuevo
+                    billingInputs.forEach(input => {
+                        input.required = true;
+                    });
+                }
+            });
+
+            // [NUEVO - CUPÓN] Lógica para validar el cupón con debounce
+            const couponInput = document.getElementById('coupon_code');
+            const couponMessage = document.getElementById('coupon-message');
+            const discountLine = document.getElementById('discount-line');
+            const discountSpan = document.getElementById('discount-amount');
+            const finalAmountSpan = document.getElementById('final-amount');
+
+            couponInput.addEventListener('input', () => {
+                if (couponTimeout) clearTimeout(couponTimeout);
+                if (couponInput.value.trim() === '') {
+                    resetCoupon();
+                    return;
+                }
+                couponInput.classList.remove('coupon-error', 'coupon-valid');
+                couponInput.classList.add('coupon-loading');
+                couponMessage.classList.remove('success', 'error-message', 'hidden');
+                couponMessage.textContent = 'Verificando cupón...';
+
+                couponTimeout = setTimeout(() => {
+                    validateCouponCode(couponInput.value.trim());
+                }, 1000);
+            });
+
+            function resetCoupon() {
+                couponInput.classList.remove('coupon-error', 'coupon-valid', 'coupon-loading');
+                couponMessage.textContent = '';
+                couponMessage.classList.add('hidden');
+                discountLine.style.display = 'none';
+                discountSpan.textContent = '';
+                currentPrice = basePrice;
+                finalAmountSpan.textContent = basePrice.toFixed(2) + ' €';
+                if (stripe) {
+                    stripe = null;
+                    document.getElementById('payment-element').innerHTML = '';
+                    initializeStripe(basePrice).catch(error => {
+                        console.error(error);
+                    });
                 }
             }
 
-            async function submitForm() {
+            // Función para calcular el precio con IVA aplicado correctamente
+            function calculatePriceComponents(baseAmount, discountPercent = 0) {
+                // Aplicar descuento al precio base si existe
+                const discountAmount = (baseAmount * discountPercent) / 100;
+                const discountedTotal = baseAmount - discountAmount;
+
+                // Componentes fijos
+                const taxesAmount = taxes; // Las tasas son fijas
+
+                // Calcular los honorarios (precio total - tasas - IVA)
+                // El IVA solo se aplica sobre (precio total - tasas)
+                const priceBeforeVAT = (discountedTotal - taxesAmount) / (1 + vatRate);
+                const vatAmount = priceBeforeVAT * vatRate;
+
+                return {
+                    total: discountedTotal,
+                    taxes: taxesAmount,
+                    fees: priceBeforeVAT,
+                    vat: vatAmount,
+                    discount: discountAmount
+                };
+            }
+
+            async function validateCouponCode(code) {
                 try {
-                    const formData = new FormData();
-
-                    // Datos del formulario
-                    formData.append('customer_name', document.getElementById('customer_name').value);
-                    formData.append('customer_dni', document.getElementById('customer_dni').value);
-                    formData.append('customer_email', document.getElementById('customer_email').value);
-                    formData.append('customer_phone', document.getElementById('customer_phone').value);
-                    formData.append('deregistration_type', 'siniestro'); // Siempre será siniestro
-                    formData.append('workshop_data', ''); // Campo eliminado
-                    formData.append('coupon_code', document.getElementById('coupon_code').value);
-                    formData.append('finalAmount', currentTotal);
-                    formData.append('discountAmount', currentDiscount);
-
-                    // Dirección de facturación
-                    formData.append('same_address', document.getElementById('same_address').checked ? '1' : '0');
-                    formData.append('billing_address', document.getElementById('billing_address').value);
-                    formData.append('billing_city', document.getElementById('billing_city').value);
-                    formData.append('billing_postal_code', document.getElementById('billing_postal_code').value);
-                    formData.append('billing_province', document.getElementById('billing_province').value);
-
-                    // Archivos
-                    const dniFiles = document.getElementById('dni_file').files;
-                    for (let i = 0; i < dniFiles.length; i++) {
-                        formData.append('dni_file[]', dniFiles[i]);
-                    }
-
-                    const registrationFiles = document.getElementById('registration_file').files;
-                    for (let i = 0; i < registrationFiles.length; i++) {
-                        formData.append('registration_file[]', registrationFiles[i]);
-                    }
-
-                    // Firma
-                    if (signaturePad && !signaturePad.isEmpty()) {
-                        const signatureData = signaturePad.toDataURL();
-                        formData.append('signature', signatureData);
-                    }
-
-                    // Enviar a la API de Tramitfy
-                    const response = await fetch('https://46-202-128-35.sslip.io/api/herramientas/forms/baja-embarcacion', {
+                    const response = await fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
                         method: 'POST',
-                        body: formData
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `action=validate_coupon_code_boat_deregistration&coupon=${encodeURIComponent(code)}`
                     });
-
                     const result = await response.json();
+                    if (couponInput.value.trim() !== code) return;
 
                     if (result.success) {
-                        alert('¡Formulario enviado exitosamente! Se le enviará un email de confirmación.');
-                        window.location.href = `https://46-202-128-35.sslip.io/seguimiento/${result.id}`;
+                        discountApplied = result.data.discount_percent;
+
+                        // Calcular todos los componentes del precio con la nueva función
+                        const priceComponents = calculatePriceComponents(basePrice, discountApplied);
+
+                        // Actualizar valores
+                        discountAmount = priceComponents.discount;
+                        currentPrice = priceComponents.total;
+
+                        couponMessage.textContent = 'Cupón aplicado correctamente';
+                        couponMessage.classList.remove('hidden', 'error-message');
+                        couponMessage.classList.add('success');
+
+                        couponInput.classList.remove('coupon-loading', 'coupon-error');
+                        couponInput.classList.add('coupon-valid');
+
+                        discountLine.style.display = 'block';
+                        discountSpan.textContent = '- ' + discountAmount.toFixed(2) + ' €';
+                        finalAmountSpan.textContent = currentPrice.toFixed(2) + ' €';
+
+                        if (stripe) {
+                            stripe = null;
+                            document.getElementById('payment-element').innerHTML = '';
+                        }
+                        await initializeStripe(currentPrice);
                     } else {
-                        throw new Error(result.message || 'Error al enviar el formulario');
-                    }
+                        couponMessage.textContent = 'Cupón inválido';
+                        couponMessage.classList.remove('hidden', 'success');
+                        couponMessage.classList.add('error-message');
 
+                        couponInput.classList.remove('coupon-loading', 'coupon-valid');
+                        couponInput.classList.add('coupon-error');
+
+                        discountLine.style.display = 'none';
+                        discountSpan.textContent = '';
+                        currentPrice = basePrice;
+                        finalAmountSpan.textContent = basePrice.toFixed(2) + ' €';
+
+                        if (stripe) {
+                            stripe = null;
+                            document.getElementById('payment-element').innerHTML = '';
+                        }
+                        await initializeStripe(basePrice);
+                    }
                 } catch (error) {
-                    console.error('Error al enviar:', error);
-                    alert('Error al enviar el formulario: ' + error.message);
-                }
-            }
+                    console.error('Error al validar el cupón:', error);
+                    couponMessage.textContent = 'Error al validar el cupón.';
+                    couponMessage.classList.remove('hidden', 'success');
+                    couponMessage.classList.add('error-message');
 
-            // Cerrar modal de pago
-            const paymentModal = document.getElementById('payment-modal');
-            if (paymentModal) {
-                paymentModal.addEventListener('click', function(e) {
-                    if (e.target === this) {
-                        this.style.display = 'none';
+                    couponInput.classList.remove('coupon-loading', 'coupon-valid');
+                    couponInput.classList.add('coupon-error');
+
+                    discountLine.style.display = 'none';
+                    discountSpan.textContent = '';
+                    currentPrice = basePrice;
+                    finalAmountSpan.textContent = basePrice.toFixed(2) + ' €';
+
+                    if (stripe) {
+                        stripe = null;
+                        document.getElementById('payment-element').innerHTML = '';
                     }
-                });
-            }
-
-            // Auto-rellenado para administradores
-            <?php if (current_user_can('administrator')): ?>
-            const adminAutofillBtn = document.getElementById('admin-autofill-btn');
-            if (adminAutofillBtn) {
-                adminAutofillBtn.addEventListener('click', function() {
-                    alert('Iniciando auto-rellenado del formulario...');
-
-                    // Rellenar datos personales
-                    document.getElementById('customer_name').value = 'Juan Pérez Administrador';
-                    document.getElementById('customer_dni').value = '12345678Z';
-                    document.getElementById('customer_email').value = 'joanpinyol@hotmail.es';
-                    document.getElementById('customer_phone').value = '682246937';
-
-                    // Simular firma después de un delay
-                    setTimeout(() => {
-                        if (signaturePad) {
-                            signaturePad.clear();
-                            const ctx = signaturePad._ctx;
-                            ctx.font = '24px cursive';
-                            ctx.fillStyle = '#000000';
-                            ctx.fillText('Juan Pérez', 50, 90);
-                        }
-                    }, 500);
-
-                    // Navegar automáticamente
-                    setTimeout(() => {
-                        showPage('page-documents');
-                        setTimeout(() => {
-                            showPage('page-payment');
-                            alert('Formulario auto-rellenado. Los archivos deben subirse manualmente y el pago se procesa con Stripe.');
-                        }, 1000);
-                    }, 1000);
-                });
-            }
-            <?php endif; ?>
-
-            // Inicialización
-            initializeStripe();
-
-            // Funciones del cupón ya están definidas globalmente arriba
-
-            // Manejar cambios en los campos de archivo con el nuevo diseño
-            function setupFileInputs() {
-                // DNI File Input
-                const dniInput = document.getElementById('dni_file');
-                const dniSelected = document.getElementById('dni_file_selected');
-
-                if (dniInput && dniSelected) {
-                    dniInput.addEventListener('change', function() {
-                        const fileCount = this.files.length;
-                        if (fileCount > 0) {
-                            const fileNames = Array.from(this.files).map(f => f.name).join(', ');
-                            dniSelected.textContent = fileCount === 1
-                                ? fileNames
-                                : `${fileCount} archivos seleccionados`;
-                            dniSelected.classList.add('has-files');
-                        } else {
-                            dniSelected.textContent = 'No hay archivos seleccionados';
-                            dniSelected.classList.remove('has-files');
-                        }
-                    });
-                }
-
-                // Registration File Input
-                const regInput = document.getElementById('registration_file');
-                const regSelected = document.getElementById('registration_file_selected');
-
-                if (regInput && regSelected) {
-                    regInput.addEventListener('change', function() {
-                        const fileCount = this.files.length;
-                        if (fileCount > 0) {
-                            const fileNames = Array.from(this.files).map(f => f.name).join(', ');
-                            regSelected.textContent = fileCount === 1
-                                ? fileNames
-                                : `${fileCount} archivos seleccionados`;
-                            regSelected.classList.add('has-files');
-                        } else {
-                            regSelected.textContent = 'No hay archivos seleccionados';
-                            regSelected.classList.remove('has-files');
-                        }
-                    });
+                    await initializeStripe(basePrice);
                 }
             }
-
-            // Esperar a que el DOM esté completamente cargado y visible
-            setTimeout(() => {
-                initializeSignaturePads();
-                updateSummary();
-                setupFileInputs(); // Inicializar nueva funcionalidad de upload
-
-                // Re-inicializar cuando se muestra la página de documentos por primera vez
-                const observer = new MutationObserver((mutations) => {
-                    mutations.forEach((mutation) => {
-                        if (mutation.target.id === 'page-documents' && !mutation.target.classList.contains('hidden')) {
-                            setTimeout(initializeSignaturePads, 100);
-                            observer.disconnect();
-                        }
+            // [/NUEVO - CUPÓN]
+            
+            // Código para el botón de prueba de factura
+            document.getElementById('test-invoice-btn')?.addEventListener('click', async function() {
+                const resultSpan = document.getElementById('test-invoice-result');
+                resultSpan.textContent = 'Generando factura de prueba...';
+                resultSpan.style.display = 'inline';
+                
+                try {
+                    // Recoger datos del formulario para la prueba
+                    const testData = {
+                        customer_name: document.getElementById('customer_name').value || 'Cliente de Prueba',
+                        customer_dni: document.getElementById('customer_dni').value || '12345678Z',
+                        customer_email: document.getElementById('customer_email').value || 'prueba@ejemplo.com',
+                        customer_phone: document.getElementById('customer_phone').value || '600123456',
+                        deregistration_type: document.getElementById('deregistration_type').value || 'siniestro',
+                        workshop_data: document.getElementById('workshop_data').value || '',
+                        coupon_code: document.getElementById('coupon_code').value || '',
+                        same_address: document.getElementById('same_address').checked,
+                        billing_address: document.getElementById('billing_address').value || 'Calle Ejemplo, 123',
+                        billing_city: document.getElementById('billing_city').value || 'Madrid',
+                        billing_postal_code: document.getElementById('billing_postal_code').value || '28001',
+                        billing_province: document.getElementById('billing_province').value || 'Madrid'
+                    };
+                    
+                    const response = await fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `action=test_invoice_boat_deregistration&data=${encodeURIComponent(JSON.stringify(testData))}`
                     });
-                });
-
-                const docsPage = document.getElementById('page-documents');
-                if (docsPage) {
-                    observer.observe(docsPage, { attributes: true, attributeFilter: ['class'] });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        resultSpan.textContent = 'Factura generada. Abriendo...';
+                        resultSpan.style.color = '#28a745';
+                        
+                        // Abrir la factura en una nueva ventana
+                        window.open(result.data.pdf_url, '_blank');
+                    } else {
+                        throw new Error(result.data?.message || 'Error desconocido');
+                    }
+                } catch (error) {
+                    console.error('Error al generar la factura de prueba:', error);
+                    resultSpan.textContent = 'Error: ' + error.message;
+                    resultSpan.style.color = '#dc3545';
                 }
-            }, 500);
+            });
         });
     </script>
 
     <?php
     return ob_get_clean();
 }
+add_shortcode('boat_deregistration_form', 'boat_deregistration_form_shortcode');
 
-// Registrar shortcodes y AJAX handlers en init para evitar conflictos con Elementor
-add_action('init', 'boat_deregistration_init');
-
-function boat_deregistration_init() {
-    add_shortcode('boat_deregistration_form', 'boat_deregistration_form_shortcode');
-    add_action('wp_ajax_create_payment_intent_boat_deregistration', 'create_payment_intent_boat_deregistration');
-    add_action('wp_ajax_nopriv_create_payment_intent_boat_deregistration', 'create_payment_intent_boat_deregistration');
-}
+/**
+ * Endpoint para crear el Payment Intent
+ */
+add_action('wp_ajax_create_payment_intent_boat_deregistration', 'create_payment_intent_boat_deregistration');
+add_action('wp_ajax_nopriv_create_payment_intent_boat_deregistration', 'create_payment_intent_boat_deregistration');
 
 function create_payment_intent_boat_deregistration() {
-    // Configurar Stripe dentro de la función
-    $stripe_secret_key = (BOAT_DEREGISTRATION_STRIPE_MODE === 'live') ? BOAT_DEREGISTRATION_STRIPE_LIVE_SECRET_KEY : BOAT_DEREGISTRATION_STRIPE_TEST_SECRET_KEY;
+    // Incluir la librería de Stripe
+    require_once __DIR__ . '/vendor/stripe/stripe-php/init.php';
 
-    // Debug - verificar qué clave secreta se está usando
-    error_log('PAYMENT_INTENT: Stripe Mode = ' . BOAT_DEREGISTRATION_STRIPE_MODE);
-    error_log('PAYMENT_INTENT: Secret Key = ' . substr($stripe_secret_key, 0, 30) . '...');
+    // Configuración de claves secretas Stripe - debe coincidir con el modo del frontend
+    $baja_stripe_mode = 'test'; // 'test' o 'live' - DEBE coincidir con el modo del frontend
+    $baja_secret_key = ($baja_stripe_mode === 'test')
+        ? 'sk_test_YOUR_STRIPE_TEST_SECRET_KEY'
+        : 'sk_live_YOUR_STRIPE_LIVE_SECRET_KEY';
+
+    \Stripe\Stripe::setApiKey($baja_secret_key);
+
+    $amount = isset($_POST['amount']) ? intval($_POST['amount']) : 0;
 
     try {
-        require_once get_template_directory() . '/vendor/stripe/init.php';
-
-        \Stripe\Stripe::setApiKey($stripe_secret_key);
-
-        $amount = intval($_POST['amount']); // En centavos
-        $customer_email = sanitize_email($_POST['customer_email']);
-        $customer_name = sanitize_text_field($_POST['customer_name']);
-
-        $intent = \Stripe\PaymentIntent::create([
+        $paymentIntent = \Stripe\PaymentIntent::create([
             'amount' => $amount,
             'currency' => 'eur',
-            'description' => 'Baja de Embarcación de Recreo - ' . $customer_name,
-            'receipt_email' => $customer_email,
-            'metadata' => [
-                'customer_name' => $customer_name,
-                'service_type' => 'boat_deregistration'
-            ]
+            'payment_method_types' => ['card'], // Solo aceptar pagos con tarjeta
         ]);
 
-        wp_send_json_success([
-            'client_secret' => $intent->client_secret,
-            'payment_intent_id' => $intent->id
+        echo json_encode([
+            'clientSecret' => $paymentIntent->client_secret,
         ]);
-
     } catch (Exception $e) {
-        wp_send_json_error(['message' => $e->getMessage()]);
+        echo json_encode([
+            'error' => $e->getMessage(),
+        ]);
     }
+
+    wp_die();
 }
 
-// Procesar el formulario cuando se envía - SOLO si es específicamente el formulario de baja
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['customer_name']) && isset($_POST['deregistration_type'])) {
+/**
+ * [NUEVO - CUPÓN] Endpoint para validar el cupón
+ */
+add_action('wp_ajax_validate_coupon_code_boat_deregistration', 'validate_coupon_code_boat_deregistration');
+add_action('wp_ajax_nopriv_validate_coupon_code_boat_deregistration', 'validate_coupon_code_boat_deregistration');
 
-    // Obtener datos del formulario
+function validate_coupon_code_boat_deregistration() {
+    $valid_coupons = array(
+        'DESCUENTO10' => 10,
+        'DESCUENTO20' => 20,
+        'VERANO15'    => 15,
+        'BLACK50'     => 50,
+    );
+
+    $coupon = isset($_POST['coupon']) ? sanitize_text_field($_POST['coupon']) : '';
+    $coupon_upper = strtoupper($coupon);
+
+    if (isset($valid_coupons[$coupon_upper])) {
+        $discount_percent = $valid_coupons[$coupon_upper];
+        wp_send_json_success(['discount_percent' => $discount_percent]);
+    } else {
+        wp_send_json_error('Cupón inválido');
+    }
+    wp_die();
+}
+/* [/NUEVO - CUPÓN] */
+
+/**
+ * Endpoint para generar una factura de prueba
+ */
+add_action('wp_ajax_test_invoice_boat_deregistration', 'test_invoice_boat_deregistration');
+
+function test_invoice_boat_deregistration() {
+    // Verificar si el usuario es administrador
+    if (!current_user_can('administrator')) {
+        wp_send_json_error(['message' => 'Permiso denegado']);
+        return;
+    }
+    
+    $data = json_decode(stripslashes($_POST['data']), true);
+    
+    if (empty($data)) {
+        wp_send_json_error(['message' => 'Datos no válidos']);
+        return;
+    }
+    
+    // Asignar valores de prueba
+    $customer_name = sanitize_text_field($data['customer_name']);
+    $customer_dni = sanitize_text_field($data['customer_dni']);
+    $customer_email = sanitize_email($data['customer_email']);
+    $customer_phone = sanitize_text_field($data['customer_phone']);
+    $deregistration_type = sanitize_text_field($data['deregistration_type']);
+    $workshop_data = sanitize_text_field($data['workshop_data']);
+    $coupon_used = sanitize_text_field($data['coupon_code']);
+    
+    $upload_dir = wp_upload_dir();
+    
+    // Verificar si se usa la misma dirección personal
+    $same_address = isset($data['same_address']) ? (bool)$data['same_address'] : false;
+    
+    if ($same_address) {
+        // Si se marcó la casilla, utilizar el nombre como dirección de facturación (simplificado)
+        $billing_address = $customer_name;
+        $billing_city = '';
+        $billing_postal_code = '';
+        $billing_province = '';
+    } else {
+        // Obtener datos de dirección para la factura
+        $billing_address = isset($data['billing_address']) ? sanitize_text_field($data['billing_address']) : '';
+        $billing_city = isset($data['billing_city']) ? sanitize_text_field($data['billing_city']) : '';
+        $billing_postal_code = isset($data['billing_postal_code']) ? sanitize_text_field($data['billing_postal_code']) : '';
+        $billing_province = isset($data['billing_province']) ? sanitize_text_field($data['billing_province']) : '';
+    }
+    
+    // Generar la factura usando la función existente
+    $invoice_pdf_path = generate_invoice_pdf(
+        $customer_name, 
+        $customer_dni, 
+        $customer_email, 
+        $customer_phone, 
+        $deregistration_type, 
+        $workshop_data, 
+        $coupon_used, 
+        $upload_dir,
+        $billing_address,
+        $billing_city,
+        $billing_postal_code,
+        $billing_province
+    );
+    
+    // Obtener la URL del archivo
+    $invoice_pdf_url = str_replace($upload_dir['basedir'], $upload_dir['baseurl'], $invoice_pdf_path);
+    
+    wp_send_json_success([
+        'message' => 'Factura generada correctamente',
+        'pdf_url' => $invoice_pdf_url
+    ]);
+}
+
+/**
+ * Función para manejar el envío final del formulario
+ */
+add_action('wp_ajax_submit_form_boat_deregistration', 'submit_form_boat_deregistration');
+add_action('wp_ajax_nopriv_submit_form_boat_deregistration', 'submit_form_boat_deregistration');
+
+function submit_form_boat_deregistration() {
+    // Validar y procesar los datos enviados
     $customer_name = sanitize_text_field($_POST['customer_name']);
     $customer_dni = sanitize_text_field($_POST['customer_dni']);
     $customer_email = sanitize_email($_POST['customer_email']);
     $customer_phone = sanitize_text_field($_POST['customer_phone']);
     $deregistration_type = sanitize_text_field($_POST['deregistration_type']);
     $workshop_data = sanitize_text_field($_POST['workshop_data']);
-    $coupon_used = sanitize_text_field($_POST['coupon_code']);
 
-    // Dirección de facturación
-    $same_address = isset($_POST['same_address']) && $_POST['same_address'] === '1';
-    $billing_address = $same_address ? '' : sanitize_text_field($_POST['billing_address']);
-    $billing_city = $same_address ? '' : sanitize_text_field($_POST['billing_city']);
-    $billing_postal_code = $same_address ? '' : sanitize_text_field($_POST['billing_postal_code']);
-    $billing_province = $same_address ? '' : sanitize_text_field($_POST['billing_province']);
+    // [NUEVO - CUPÓN] Capturamos el cupón utilizado
+    $coupon_used = isset($_POST['coupon_used']) ? sanitize_text_field($_POST['coupon_used']) : '';
 
-    // Crear directorio de uploads
+    $signature = $_POST['signature'];
+
+    // Procesar la firma
+    $signature_data = str_replace('data:image/png;base64,', '', $signature);
+    $signature_data = base64_decode($signature_data);
+
     $upload_dir = wp_upload_dir();
-    $boat_deregistration_dir = $upload_dir['basedir'] . '/boat-deregistration-forms';
-    if (!file_exists($boat_deregistration_dir)) {
-        wp_mkdir_p($boat_deregistration_dir);
-    }
+    $signature_image_name = 'signature_' . time() . '.png';
+    $signature_image_path = $upload_dir['path'] . '/' . $signature_image_name;
+    file_put_contents($signature_image_path, $signature_data);
 
-    $customer_dir = $boat_deregistration_dir . '/' . sanitize_file_name($customer_name . '_' . $customer_dni . '_' . date('Ymd_His'));
-    if (!file_exists($customer_dir)) {
-        wp_mkdir_p($customer_dir);
-    }
-
-    // Procesar archivos subidos
-    $uploaded_files = array();
-
-    $file_fields = array(
-        'dni_file' => 'DNI/NIE',
-        'registration_file' => 'Registro Marítimo'
-    );
-
-    foreach ($file_fields as $field => $description) {
-        if (isset($_FILES[$field]) && !empty($_FILES[$field]['name'][0])) {
-            $files = $_FILES[$field];
-            $uploaded_files[$field] = array();
-
-            for ($i = 0; $i < count($files['name']); $i++) {
-                if ($files['error'][$i] === UPLOAD_ERR_OK) {
-                    $filename = sanitize_file_name($files['name'][$i]);
-                    $tmp_name = $files['tmp_name'][$i];
-                    $destination = $customer_dir . '/' . $description . '_' . $filename;
-
-                    if (move_uploaded_file($tmp_name, $destination)) {
-                        $uploaded_files[$field][] = $destination;
-                    }
-                }
-            }
-        }
-    }
-
-    // Procesar firma digital
-    if (isset($_POST['signature']) && !empty($_POST['signature'])) {
-        $signature_data = $_POST['signature'];
-
-        // Remover el prefijo data:image/png;base64,
-        $signature_data = str_replace('data:image/png;base64,', '', $signature_data);
-        $signature_data = str_replace(' ', '+', $signature_data);
-        $signature_binary = base64_decode($signature_data);
-
-        $signature_filename = $customer_dir . '/firma_digital.png';
-        file_put_contents($signature_filename, $signature_binary);
-        $uploaded_files['signature'] = $signature_filename;
-    }
-
-    // Generar factura en PDF
-    $invoice_filename = generate_invoice_pdf(
-        $customer_name,
-        $customer_dni,
-        $customer_email,
-        $customer_phone,
-        $deregistration_type,
-        $workshop_data,
-        $coupon_used,
-        $customer_dir,
-        $billing_address,
-        $billing_city,
-        $billing_postal_code,
-        $billing_province
-    );
-
-    // Generar documento de autorización
-    $authorization_filename = generate_authorization_pdf($customer_name, $customer_dni, $deregistration_type, $workshop_data, $customer_dir);
-
-    // Enviar emails
-    send_confirmation_emails($customer_name, $customer_dni, $customer_email, $customer_phone, $deregistration_type, $workshop_data, $coupon_used, $uploaded_files, $invoice_filename, $authorization_filename, $billing_address, $billing_city, $billing_postal_code, $billing_province);
-
-    // NOTA: La llamada a la API de Tramitfy se hace desde JavaScript en el frontend
-    // para evitar duplicación de trámites y emails
-
-    // Mostrar mensaje de éxito
-    echo '<div style="max-width: 600px; margin: 40px auto; padding: 30px; background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border: 2px solid #28a745; border-radius: 15px; text-align: center; font-family: Arial, sans-serif;">';
-    echo '<div style="font-size: 48px; color: #28a745; margin-bottom: 20px;"><i class="fas fa-check-circle"></i></div>';
-    echo '<h2 style="color: #155724; margin-bottom: 15px; font-size: 24px;">¡Formulario Enviado Exitosamente!</h2>';
-    echo '<p style="color: #155724; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">Su solicitud de baja de embarcación ha sido recibida y procesada correctamente. En breve recibirá un email de confirmación con todos los detalles.</p>';
-    echo '<div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0; border: 1px solid #c3e6cb;">';
-    echo '<h3 style="color: #016d86; margin-bottom: 15px;">Próximos Pasos:</h3>';
-    echo '<ul style="text-align: left; color: #155724; line-height: 1.8;">';
-    echo '<li>Revisaremos su documentación</li>';
-    echo '<li>Procesaremos la baja ante las autoridades competentes</li>';
-    echo '<li>Le mantendremos informado del progreso</li>';
-    echo '<li>Recibirá la documentación oficial una vez completado</li>';
-    echo '</ul>';
-    echo '</div>';
-    echo '<p style="color: #155724; font-size: 14px; margin-top: 25px;"><strong>¿Preguntas?</strong> Contacte con nosotros en <a href="mailto:info@tramitfy.es" style="color: #016d86;">info@tramitfy.es</a></p>';
-    echo '</div>';
-
-    return;
-}
-
-/**
- * Función para generar el documento de autorización como PDF
- */
-function generate_authorization_pdf($customer_name, $customer_dni, $deregistration_type, $workshop_data, $upload_dir) {
+    // Generar PDF de autorización
     require_once get_template_directory() . '/vendor/fpdf/fpdf.php';
     $pdf = new FPDF();
     $pdf->AddPage();
+    $pdf->SetFont('Arial', '', 12);
 
-    // Colores corporativos
-    $primary_color = array(1, 109, 134);
-    $text_color = array(51, 51, 51);
+    // Agregar fecha en esquina superior
+    $pdf->Cell(0, 10, 'Fecha: ' . date('d/m/Y'), 0, 0, 'R');
+    $pdf->Ln(10);
 
-    // Encabezado
-    $pdf->SetFont('Arial', 'B', 16);
-    $pdf->SetTextColor($primary_color[0], $primary_color[1], $primary_color[2]);
     $pdf->Cell(0, 10, utf8_decode('Autorización para Baja de Embarcación de Recreo'), 0, 1, 'C');
     $pdf->Ln(10);
 
@@ -2727,256 +1594,415 @@ function generate_authorization_pdf($customer_name, $customer_dni, $deregistrati
     if ($workshop_data) {
         $texto .= " En el taller: $workshop_data.";
     }
-
-    $pdf->SetFont('Arial', '', 11);
-    $pdf->SetTextColor($text_color[0], $text_color[1], $text_color[2]);
-    $pdf->MultiCell(0, 6, utf8_decode($texto), 0, 'J');
-
+    $pdf->MultiCell(0, 10, utf8_decode($texto), 0, 'J');
     $pdf->Ln(10);
-    $pdf->Cell(0, 6, 'Fecha: ' . date('d/m/Y'), 0, 1, 'L');
-    $pdf->Ln(20);
-    $pdf->Cell(0, 6, 'Firma: ____________________', 0, 1, 'R');
 
-    // Guardar el PDF
-    $auth_filename = 'autorizacion_baja_embarcacion_' . date('Ymd_His') . '.pdf';
-    $auth_path = $upload_dir . '/' . $auth_filename;
-    $pdf->Output('F', $auth_path);
+    $pdf->Cell(0, 10, utf8_decode('Firma:'), 0, 1);
+    $pdf->Image($signature_image_path, null, null, 50, 30);
 
-    return $auth_filename;
-}
+    $authorization_pdf_name = 'autorizacion_' . time() . '.pdf';
+    $authorization_pdf_path = $upload_dir['path'] . '/' . $authorization_pdf_name;
+    $pdf->Output('F', $authorization_pdf_path);
+    
+    // Generar PDF de factura con dirección de facturación
+    $same_address = isset($_POST['same_address']);
+    
+    if ($same_address) {
+        // Si se marcó la casilla, utilizar el nombre como dirección de facturación (simplificado)
+        $billing_address = $customer_name;
+        $billing_city = '';
+        $billing_postal_code = '';
+        $billing_province = '';
+    } else {
+        // Usar los campos de dirección de facturación proporcionados
+        $billing_address = sanitize_text_field($_POST['billing_address']);
+        $billing_city = sanitize_text_field($_POST['billing_city']);
+        $billing_postal_code = sanitize_text_field($_POST['billing_postal_code']);
+        $billing_province = sanitize_text_field($_POST['billing_province']);
+    }
+    
+    $invoice_pdf_path = generate_invoice_pdf(
+        $customer_name, 
+        $customer_dni, 
+        $customer_email, 
+        $customer_phone, 
+        $deregistration_type, 
+        $workshop_data, 
+        $coupon_used, 
+        $upload_dir,
+        $billing_address,
+        $billing_city,
+        $billing_postal_code,
+        $billing_province
+    );
 
-/**
- * Función para enviar emails de confirmación
- */
-function send_confirmation_emails($customer_name, $customer_dni, $customer_email, $customer_phone, $deregistration_type, $workshop_data, $coupon_used, $uploaded_files, $invoice_filename, $authorization_filename, $billing_address, $billing_city, $billing_postal_code, $billing_province) {
+    unlink($signature_image_path);
 
-    // Email al cliente
-    $subject_client = 'Confirmación de solicitud de baja de embarcación - Tramitfy';
-
-    $deregistration_type_text = ($deregistration_type === 'siniestro') ? 'Baja definitiva por siniestro' : 'Baja definitiva por exportación';
-
-    $message_client = '<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Confirmación de solicitud</title>
-</head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-
-    <div style="background: linear-gradient(135deg, #016d86 0%, #014d61 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-        <h1 style="margin: 0; font-size: 28px;">¡Solicitud Recibida!</h1>
-        <p style="margin: 10px 0 0; font-size: 16px; opacity: 0.9;">Su trámite está en proceso</p>
-    </div>
-
-    <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e9ecef;">
-
-        <h2 style="color: #016d86; margin-bottom: 20px;">Estimado/a ' . $customer_name . ',</h2>
-
-        <p>Hemos recibido correctamente su solicitud de <strong>' . $deregistration_type_text . '</strong>.</p>
-
-        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #016d86;">
-            <h3 style="color: #016d86; margin-top: 0;">Datos de la solicitud:</h3>
-            <ul style="list-style: none; padding: 0;">
-                <li style="margin-bottom: 8px;"><strong>Nombre:</strong> ' . $customer_name . '</li>
-                <li style="margin-bottom: 8px;"><strong>DNI:</strong> ' . $customer_dni . '</li>
-                <li style="margin-bottom: 8px;"><strong>Email:</strong> ' . $customer_email . '</li>
-                <li style="margin-bottom: 8px;"><strong>Teléfono:</strong> ' . $customer_phone . '</li>
-                <li style="margin-bottom: 8px;"><strong>Tipo de baja:</strong> ' . $deregistration_type_text . '</li>';
-
-    if (!empty($workshop_data)) {
-        $message_client .= '<li style="margin-bottom: 8px;"><strong>Datos del taller:</strong> ' . $workshop_data . '</li>';
+    // Procesar archivos subidos
+    $attachments = [$authorization_pdf_path, $invoice_pdf_path];
+    foreach ($_FILES as $key => $file) {
+        if ($file['error'] === UPLOAD_ERR_OK) {
+            $uploaded_file = wp_handle_upload($file, ['test_form' => false]);
+            if (isset($uploaded_file['file'])) {
+                $attachments[] = $uploaded_file['file'];
+            }
+        }
     }
 
-    if (!empty($coupon_used)) {
-        $message_client .= '<li style="margin-bottom: 8px;"><strong>Cupón utilizado:</strong> ' . $coupon_used . '</li>';
-    }
-
-    $message_client .= '
-            </ul>
-        </div>
-
-        <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="color: #0277bd; margin-top: 0; margin-bottom: 15px;">¿Qué sucede ahora?</h3>
-            <ol style="color: #0277bd; padding-left: 20px;">
-                <li style="margin-bottom: 10px;">Revisaremos toda su documentación</li>
-                <li style="margin-bottom: 10px;">Iniciaremos los trámites ante las autoridades competentes</li>
-                <li style="margin-bottom: 10px;">Le mantendremos informado del progreso</li>
-                <li style="margin-bottom: 10px;">Recibirá la documentación oficial una vez completado</li>
-            </ol>
-        </div>
-
-        <div style="text-align: center; margin: 30px 0;">
-            <p style="color: #666; margin-bottom: 15px;">Para cualquier consulta, no dude en contactarnos:</p>
-            <div style="background: #016d86; color: white; padding: 15px; border-radius: 8px; display: inline-block;">
-                <p style="margin: 0;"><strong>📧 info@tramitfy.es</strong></p>
-                <p style="margin: 5px 0 0;"><strong>📞 +34 689 170 273</strong></p>
-            </div>
-        </div>
-
-        <hr style="border: none; border-top: 1px solid #dee2e6; margin: 30px 0;">
-
-        <div style="text-align: center; color: #6c757d; font-size: 14px;">
-            <p style="margin: 0;">Tramitfy S.L. - CIF: B55388557</p>
-            <p style="margin: 5px 0 0;">Paseo de la Castellana 194 puerta B, Madrid</p>
-            <p style="margin: 5px 0 0;"><a href="https://tramitfy.es" style="color: #016d86; text-decoration: none;">www.tramitfy.es</a></p>
-        </div>
-
-    </div>
-
-</body>
-</html>';
-
-    // Enviar email al cliente
-    $headers_client = array('Content-Type: text/html; charset=UTF-8');
-    wp_mail($customer_email, $subject_client, $message_client, $headers_client);
-
-    // Email al administrador
-    $admin_email = get_option('admin_email');
+    // Email del administrador para recibir notificaciones
+    $admin_email = 'ipmgroup24@gmail.com';
     $subject_admin = 'Nuevo formulario de baja de embarcación de recreo enviado';
 
     $deregistration_type_text_2 = ($deregistration_type === 'siniestro') ? 'Baja definitiva por siniestro' : 'Baja definitiva por exportación';
 
     // [NUEVO - CUPÓN] Agregamos la fila del cupón al correo del admin
     $message_admin = '<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Nuevo formulario de baja de embarcación</title>
-</head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px;">
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                color: #333333;
+            }
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f9f9f9;
+                border: 1px solid #e0e0e0;
+                border-radius: 10px;
+            }
+            .header {
+                text-align: center;
+                margin-bottom: 20px;
+            }
+            .header img {
+                max-width: 200px;
+                height: auto;
+                margin-bottom: 10px;
+            }
+            .content {
+                padding: 20px;
+                background-color: #ffffff;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .footer {
+                margin-top: 30px;
+                padding: 10px 20px;
+                background-color: #016d86;
+                color: #ffffff;
+                text-align: left;
+                font-size: 12px;
+                border-radius: 8px;
+            }
+            a {
+                color: #FFFFFF;
+                text-decoration: none;
+            }
+            a:hover {
+                text-decoration: underline;
+            }
+            .details-table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .details-table th, .details-table td {
+                text-align: left;
+                padding: 8px;
+                border-bottom: 1px solid #dddddd;
+            }
+            .details-table th {
+                background-color: #f2f2f2;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <img src="https://www.tramitfy.es/wp-content/uploads/LOGO.png" alt="Tramitfy Logo">
+                <h2 style="color: #016d86;">Nuevo Formulario de Baja de Embarcación de Recreo Enviado</h2>
+            </div>
+            <div class="content">
+                <p>Se ha recibido un nuevo formulario con los siguientes detalles:</p>
+                <h3>Datos del Cliente:</h3>
+                <table class="details-table">
+                    <tr>
+                        <th>Nombre:</th>
+                        <td>' . htmlspecialchars($customer_name) . '</td>
+                    </tr>
+                    <tr>
+                        <th>DNI:</th>
+                        <td>' . htmlspecialchars($customer_dni) . '</td>
+                    </tr>
+                    <tr>
+                        <th>Email:</th>
+                        <td>' . htmlspecialchars($customer_email) . '</td>
+                    </tr>
+                    <tr>
+                        <th>Teléfono:</th>
+                        <td>' . htmlspecialchars($customer_phone) . '</td>
+                    </tr>
+                    <tr>
+                        <th>Tipo de Baja:</th>
+                        <td>' . htmlspecialchars($deregistration_type_text_2) . '</td>
+                    </tr>
+                    <!-- [NUEVO - CUPÓN] Mostramos el cupón usado -->
+                    <tr>
+                        <th>Cupón utilizado:</th>
+                        <td>' . htmlspecialchars($coupon_used) . '</td>
+                    </tr>
+                </table>
+                
+                <h3>Dirección de Facturación:</h3>
+                <table class="details-table">
+                    <tr>
+                        <th>Dirección:</th>
+                        <td>' . htmlspecialchars($billing_address) . '</td>
+                    </tr>
+                    <tr>
+                        <th>Población:</th>
+                        <td>' . htmlspecialchars($billing_city) . '</td>
+                    </tr>
+                    <tr>
+                        <th>Código Postal:</th>
+                        <td>' . htmlspecialchars($billing_postal_code) . '</td>
+                    </tr>
+                    <tr>
+                        <th>Provincia:</th>
+                        <td>' . htmlspecialchars($billing_province) . '</td>
+                    </tr>
+                </table>';
 
-    <div style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; padding: 25px; text-align: center; border-radius: 10px 10px 0 0;">
-        <h1 style="margin: 0; font-size: 24px;">🚨 Nuevo Formulario de Baja de Embarcación</h1>
-        <p style="margin: 10px 0 0; font-size: 14px; opacity: 0.9;">Recibido el ' . date('d/m/Y H:i:s') . '</p>
-    </div>
-
-    <div style="background: #f8f9fa; padding: 25px; border-radius: 0 0 10px 10px; border: 1px solid #e9ecef;">
-
-        <h2 style="color: #dc3545; margin-bottom: 20px;">Detalles del Cliente:</h2>
-
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
-            <tr style="background: #e9ecef;">
-                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Nombre:</td>
-                <td style="padding: 12px; border: 1px solid #dee2e6;">' . $customer_name . '</td>
-            </tr>
-            <tr>
-                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">DNI:</td>
-                <td style="padding: 12px; border: 1px solid #dee2e6;">' . $customer_dni . '</td>
-            </tr>
-            <tr style="background: #e9ecef;">
-                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Email:</td>
-                <td style="padding: 12px; border: 1px solid #dee2e6;"><a href="mailto:' . $customer_email . '">' . $customer_email . '</a></td>
-            </tr>
-            <tr>
-                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Teléfono:</td>
-                <td style="padding: 12px; border: 1px solid #dee2e6;"><a href="tel:' . $customer_phone . '">' . $customer_phone . '</a></td>
-            </tr>
-            <tr style="background: #e9ecef;">
-                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Tipo de baja:</td>
-                <td style="padding: 12px; border: 1px solid #dee2e6;">' . $deregistration_type_text_2 . '</td>
-            </tr>';
-
-    if (!empty($workshop_data)) {
+    if ($workshop_data) {
         $message_admin .= '
-            <tr>
-                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Datos del taller:</td>
-                <td style="padding: 12px; border: 1px solid #dee2e6;">' . $workshop_data . '</td>
-            </tr>';
-    }
-
-    // [NUEVO - CUPÓN] Agregamos la fila del cupón
-    if (!empty($coupon_used)) {
-        $message_admin .= '
-            <tr style="background: #fff3cd;">
-                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">🎟️ Cupón usado:</td>
-                <td style="padding: 12px; border: 1px solid #dee2e6; color: #856404; font-weight: bold;">' . $coupon_used . '</td>
-            </tr>';
+                <h3>Datos del Taller:</h3>
+                <p>' . htmlspecialchars($workshop_data) . '</p>';
     }
 
     $message_admin .= '
-        </table>';
-
-    // Dirección de facturación si es diferente
-    if (!empty($billing_address)) {
-        $message_admin .= '
-        <h3 style="color: #dc3545; margin-bottom: 15px;">Dirección de Facturación:</h3>
-        <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #dee2e6;">
-            <p style="margin: 0;"><strong>Dirección:</strong> ' . $billing_address . '</p>';
-
-        if (!empty($billing_postal_code) || !empty($billing_city)) {
-            $location = '';
-            if (!empty($billing_postal_code)) {
-                $location .= $billing_postal_code;
-            }
-            if (!empty($billing_city)) {
-                $location .= (!empty($location) ? ' ' : '') . $billing_city;
-            }
-            $message_admin .= '<p style="margin: 5px 0 0;"><strong>Población:</strong> ' . $location . '</p>';
-        }
-
-        if (!empty($billing_province)) {
-            $message_admin .= '<p style="margin: 5px 0 0;"><strong>Provincia:</strong> ' . $billing_province . '</p>';
-        }
-
-        $message_admin .= '</div>';
-    }
-
-    $message_admin .= '
-        <h3 style="color: #dc3545; margin-bottom: 15px;">Archivos Adjuntos:</h3>
-        <ul style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #dee2e6;">';
-
-    foreach ($uploaded_files as $field => $files) {
-        if (!empty($files)) {
-            $field_names = array(
-                'dni_file' => 'DNI/NIE',
-                'registration_file' => 'Registro Marítimo',
-                'signature' => 'Firma Digital'
-            );
-
-            $field_name = isset($field_names[$field]) ? $field_names[$field] : $field;
-
-            if (is_array($files)) {
-                foreach ($files as $file) {
-                    $message_admin .= '<li><strong>' . $field_name . ':</strong> ' . basename($file) . '</li>';
-                }
-            } else {
-                $message_admin .= '<li><strong>' . $field_name . ':</strong> ' . basename($files) . '</li>';
-            }
-        }
-    }
-
-    $message_admin .= '</ul>
-
-        <div style="background: #d4edda; padding: 20px; border-radius: 8px; margin: 25px 0; border: 1px solid #c3e6cb;">
-            <h3 style="color: #155724; margin-top: 0; margin-bottom: 15px;">📋 Próximos pasos:</h3>
-            <ol style="color: #155724; margin: 0; padding-left: 20px;">
-                <li>Revisar toda la documentación adjunta</li>
-                <li>Verificar los datos del cliente</li>
-                <li>Iniciar los trámites correspondientes ante las autoridades</li>
-                <li>Mantener informado al cliente del progreso</li>
-            </ol>
-        </div>
-
-        <div style="text-align: center; margin: 25px 0;">
-            <p style="color: #666; margin-bottom: 10px;">Los archivos están guardados en el servidor para su revisión</p>
-            <div style="background: #dc3545; color: white; padding: 15px; border-radius: 8px; display: inline-block;">
-                <p style="margin: 0;"><strong>📁 Carpeta del cliente en el servidor</strong></p>
+                <p>Se adjuntan los siguientes documentos:</p>
+                <ul>
+                    <li>Autorización firmada por el cliente</li>
+                    <li>Factura generada</li>
+                    <li>Documentos proporcionados por el cliente</li>
+                </ul>
+            </div>
+            <div class="footer">
+                <p><strong>Tramitfy S.L.</strong><br>
+                Correo: <a href="mailto:info@tramitfy.es">info@tramitfy.es</a><br>
+                Teléfono: <a href="tel:+34689170273">+34 689 170 273</a><br>
+                Dirección: Paseo Castellana 194 puerta B, Madrid, España<br>
+                Web: <a href="https://www.tramitfy.es">www.tramitfy.es</a></p>
             </div>
         </div>
+    </body>
+    </html>';
 
-        <hr style="border: none; border-top: 1px solid #dee2e6; margin: 25px 0;">
+    $headers = [];
+    $headers[] = 'Content-Type: text/html; charset=UTF-8';
+    $headers[] = 'From: info@tramitfy.es';
 
-        <div style="text-align: center; color: #6c757d; font-size: 12px;">
-            <p style="margin: 0;">Este email se generó automáticamente desde el formulario de baja de embarcación</p>
-            <p style="margin: 5px 0 0;">Tramitfy - Sistema de gestión de trámites náuticos</p>
+    wp_mail($admin_email, $subject_admin, $message_admin, $headers, $attachments);
+
+    // Correo al cliente
+    $subject_client = 'Confirmación de su solicitud de baja de embarcación de recreo';
+    $message_client = '<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                color: #333333;
+            }
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f9f9f9;
+                border: 1px solid #e0e0e0;
+                border-radius: 10px;
+            }
+            .header {
+                text-align: center;
+                margin-bottom: 20px;
+            }
+            .header img {
+                max-width: 200px;
+                height: auto;
+                margin-bottom: 10px;
+            }
+            .content {
+                padding: 20px;
+                background-color: #ffffff;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .footer {
+                margin-top: 30px;
+                padding: 10px 20px;
+                background-color: #016d86;
+                color: #ffffff;
+                text-align: left;
+                font-size: 12px;
+                border-radius: 8px;
+            }
+            a {
+                color: #FFFFFF;
+                text-decoration: none;
+            }
+            a:hover {
+                text-decoration: underline;
+            }
+            .invoice-box {
+                margin-top: 20px;
+                padding: 15px;
+                border: 1px solid #28a745;
+                background-color: #d4edda;
+                border-radius: 5px;
+                color: #155724;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <img src="https://www.tramitfy.es/wp-content/uploads/LOGO.png" alt="Tramitfy Logo">
+                <h2 style="color: #016d86;">Confirmación de su solicitud de baja de embarcación de recreo</h2>
+            </div>
+            <div class="content">
+                <p>Estimado/a ' . htmlspecialchars($customer_name) . ',</p>
+                <p>Hemos recibido su solicitud para la ' . htmlspecialchars($deregistration_type_text_2) . '.</p>
+                <p>Le facilitaremos la documentación por correo electrónico tan pronto la recibamos.</p>
+                
+                <div class="invoice-box">
+                    <p><strong>Factura adjunta</strong></p>
+                    <p>Se adjunta a este correo la factura correspondiente a su pago. Por favor, conserve este documento para sus registros.</p>
+                </div>
+                
+                <p>Gracias por confiar en nosotros.</p>
+                <p>Atentamente,<br>El equipo de Tramitfy</p>
+            </div>
+            <div class="footer">
+                <p><strong>Tramitfy S.L.</strong><br>
+                Correo: <a href="mailto:info@tramitfy.es">info@tramitfy.es</a><br>
+                Teléfono: <a href="tel:+34689170273">+34 689 170 273</a><br>
+                Dirección: Paseo Castellana 194 puerta B, Madrid, España<br>
+                Web: <a href="https://www.tramitfy.es">www.tramitfy.es</a></p>
+            </div>
         </div>
+    </body>
+    </html>';
 
-    </div>
+    $headers_client = [];
+    $headers_client[] = 'Content-Type: text/html; charset=UTF-8';
+    $headers_client[] = 'From: info@tramitfy.es';
 
-</body>
-</html>';
+    wp_mail($customer_email, $subject_client, $message_client, $headers_client);
 
-    // Enviar email al administrador
-    $headers_admin = array('Content-Type: text/html; charset=UTF-8');
-    wp_mail($admin_email, $subject_admin, $message_admin, $headers_admin);
+    // [NUEVO - INTEGRACIÓN TRAMITFY] Enviar datos también a la app React
+    send_to_tramitfy_app(
+        $customer_name,
+        $customer_dni,
+        $customer_email,
+        $customer_phone,
+        $deregistration_type,
+        $workshop_data,
+        $coupon_used,
+        $signature,
+        $same_address,
+        $billing_address,
+        $billing_city,
+        $billing_postal_code,
+        $billing_province,
+        $attachments
+    );
+
+    wp_send_json_success('Formulario procesado correctamente.');
+    wp_die();
 }
+
+/**
+ * [NUEVO - INTEGRACIÓN TRAMITFY] Función para enviar datos a la app React de Tramitfy
+ */
+function send_to_tramitfy_app($customer_name, $customer_dni, $customer_email, $customer_phone,
+                              $deregistration_type, $workshop_data, $coupon_used, $signature,
+                              $same_address, $billing_address, $billing_city, $billing_postal_code,
+                              $billing_province, $attachments) {
+
+    // URL del endpoint de la API de Tramitfy
+    // Webhook para sincronizar con React Dashboard
+    $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/baja/webhook';
+
+    // Preparar los datos en el formato que espera Tramitfy
+    $tramitfy_data = array(
+        'customer_name' => $customer_name,
+        'customer_dni' => $customer_dni,
+        'customer_email' => $customer_email,
+        'customer_phone' => $customer_phone,
+        'deregistration_type' => $deregistration_type,
+        'workshop_data' => $workshop_data,
+        'coupon_used' => $coupon_used,
+        'signature' => $signature,
+        'same_address' => $same_address ? 'true' : 'false',
+        'billing_address' => $billing_address,
+        'billing_city' => $billing_city,
+        'billing_postal_code' => $billing_postal_code,
+        'billing_province' => $billing_province,
+        'payment_completed' => 'true', // Stripe payment was successful
+        // Crear referencias a los documentos (sin enviar archivos grandes)
+        'document_references' => json_encode(array(
+            'authorization_pdf' => 'Generated authorization PDF',
+            'invoice_pdf' => 'Generated invoice PDF',
+            'uploaded_files' => array_map(function($path) {
+                return basename($path);
+            }, $attachments)
+        ))
+    );
+
+    // Configurar la solicitud HTTP
+    $args = array(
+        'method' => 'POST',
+        'timeout' => 30,
+        'redirection' => 5,
+        'httpversion' => '1.0',
+        'blocking' => true,
+        'headers' => array(
+            'Content-Type' => 'application/x-www-form-urlencoded',
+            'User-Agent' => 'WordPress/Tramitfy-PHP-Form'
+        ),
+        'body' => $tramitfy_data
+    );
+
+    // Enviar la solicitud
+    $response = wp_remote_post($tramitfy_api_url, $args);
+
+    // Verificar si hubo error en la solicitud
+    if (is_wp_error($response)) {
+        error_log('Error enviando datos a Tramitfy: ' . $response->get_error_message());
+        return false;
+    }
+
+    $response_code = wp_remote_retrieve_response_code($response);
+    $response_body = wp_remote_retrieve_body($response);
+
+    // Log del resultado
+    if ($response_code == 200) {
+        $result = json_decode($response_body, true);
+        if ($result && isset($result['success']) && $result['success']) {
+            error_log('Datos enviados exitosamente a Tramitfy. Procedure ID: ' . $result['procedureId']);
+            return true;
+        } else {
+            error_log('Tramitfy respondió con error: ' . $response_body);
+            return false;
+        }
+    } else {
+        error_log('Error HTTP al enviar a Tramitfy. Código: ' . $response_code . ' Respuesta: ' . $response_body);
+        return false;
+    }
+}
+?>
