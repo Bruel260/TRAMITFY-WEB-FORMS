@@ -8067,6 +8067,51 @@ function tpm_submit_form() {
     ];
     wp_mail($customer_email_quick, $subject_customer_quick, $message_customer_quick, $headers_quick);
 
+    // Enviar email al ADMIN con detalles completos
+    $admin_email = 'ipmgroup24@gmail.com';
+    $subject_admin = "Nuevo trámite de transferencia - $tramite_id";
+    $message_admin = "
+    <html>
+    <head><meta charset='UTF-8'></head>
+    <body style='font-family: Arial, sans-serif;'>
+        <div style='max-width:600px;margin:auto;padding:20px;background:#f9f9f9;'>
+            <div style='text-align:center;'>
+                <img src='https://www.tramitfy.es/wp-content/uploads/LOGO.png' alt='Tramitfy Logo' style='max-width:200px;'>
+                <h2 style='color:#016d86;'>Nuevo Trámite Recibido</h2>
+            </div>
+            <div style='background:#fff;padding:20px;border-radius:8px;'>
+                <h3>Trámite ID: $tramite_id</h3>
+                <h4>Datos del Cliente:</h4>
+                <table style='width:100%;border-collapse:collapse;'>
+                    <tr><th style='text-align:left;padding:8px;'>Nombre:</th><td style='padding:8px;'>$customer_name</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>DNI:</th><td style='padding:8px;'>$customer_dni</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>Email:</th><td style='padding:8px;'>$customer_email</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>Teléfono:</th><td style='padding:8px;'>$customer_phone</td></tr>
+                </table>
+                <h4>Datos del Vehículo:</h4>
+                <table style='width:100%;border-collapse:collapse;'>
+                    <tr><th style='text-align:left;padding:8px;'>Tipo:</th><td style='padding:8px;'>$vehicle_type</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>Fabricante:</th><td style='padding:8px;'>" . ($no_encuentro ? $manual_manufacturer : $manufacturer) . "</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>Modelo:</th><td style='padding:8px;'>" . ($no_encuentro ? $manual_model : $model) . "</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>Precio Compra:</th><td style='padding:8px;'>" . number_format($purchase_price, 2) . " €</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>Región:</th><td style='padding:8px;'>$region</td></tr>
+                </table>
+                <h4>Desglose Económico:</h4>
+                <table style='width:100%;border-collapse:collapse;'>
+                    <tr><th style='text-align:left;padding:8px;'>Precio Total:</th><td style='padding:8px;'>" . number_format($final_amount, 2) . " €</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>ITP:</th><td style='padding:8px;'>" . number_format($current_transfer_tax, 2) . " €</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>Tasas:</th><td style='padding:8px;'>" . number_format($tasas_hidden, 2) . " €</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>Honorarios:</th><td style='padding:8px;'>" . number_format($honorarios_hidden, 2) . " €</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>IVA:</th><td style='padding:8px;'>" . number_format($iva_hidden, 2) . " €</td></tr>
+                </table>
+                <p><a href='https://46-202-128-35.sslip.io/tramites' style='background:#016d86;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;display:inline-block;margin-top:20px;'>Ver en Dashboard</a></p>
+            </div>
+        </div>
+    </body>
+    </html>
+    ";
+    wp_mail($admin_email, $subject_admin, $message_admin, $headers_quick);
+
     // Enviar a TRAMITFY API inmediatamente (solo datos, sin archivos pesados)
     $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/motos/webhook';
     $tramitfy_quick_data = array(
