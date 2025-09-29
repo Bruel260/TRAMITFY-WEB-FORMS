@@ -6,7 +6,7 @@ defined('ABSPATH') || exit;
  * [MODO TEST/PRODUCCIÓN]
  * Cambia a false en producción.
  */
-$is_test_mode = false; // true = usa claves de prueba, false = usa claves en vivo.
+$is_test_mode = true; // true = usa claves de prueba, false = usa claves en vivo.
 $publishable_key_test = 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE';
 $publishable_key_live = 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE';
 $secret_key_test = 'YOUR_STRIPE_TEST_SECRET_KEY_HERE';
@@ -5539,10 +5539,10 @@ console.log('Navegación sin desplazamiento automático');
             modalLoadingElement.style.display = 'block';
             modalPaymentElement.innerHTML = '';
             modalMessageElement.className = 'hidden';
-            
-            // Inicializar Stripe forzando el modo producción
-            const stripeKey = '<?php echo $publishable_key_live; ?>';
-            console.log("Modo de Stripe: LIVE");
+
+            // FORZAR MODO TEST - Hardcodeado temporalmente para evitar problemas de caché
+            const stripeKey = 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE';
+            console.log("Modo de Stripe: TEST (FORZADO)");
             stripe = Stripe(stripeKey);
 
             try {
@@ -9091,9 +9091,16 @@ function toggleHeaderVisibility(isFormVisible) {
                     <p>Cargando sistema de pago...</p>
                 </div>
                 
+                <!-- Modo de prueba indicador -->
+                <?php if ($is_test_mode): ?>
+                <div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 10px; margin-bottom: 15px; border-radius: 6px; font-size: 14px; text-align: center;">
+                    ⚠️ <strong>MODO PRUEBA</strong> - Usa tarjeta: 4242 4242 4242 4242
+                </div>
+                <?php endif; ?>
+
                 <!-- Contenedor donde se montará el elemento de pago -->
                 <div id="payment-element" class="payment-element-container"></div>
-                
+
                 <!-- Indicadores de seguridad -->
                 <div class="payment-security">
                     <div class="security-badges">
@@ -9161,14 +9168,19 @@ function toggleHeaderVisibility(isFormVisible) {
 add_action('wp_ajax_create_payment_intent_hoja_asiento', 'create_payment_intent_hoja_asiento');
 add_action('wp_ajax_nopriv_create_payment_intent_hoja_asiento', 'create_payment_intent_hoja_asiento');
 function create_payment_intent_hoja_asiento() {
-    // Asegurarse de que siempre se usen las claves de producción
-    global $secret_key_live;
+    // Usar las claves según el modo configurado
+    global $is_test_mode, $secret_key_test, $secret_key_live;
 
     // Incluir Stripe PHP
     require_once __DIR__ . '/vendor/stripe/stripe-php/init.php';
 
-    // IMPORTANTE: Forzar el modo de producción
-    \Stripe\Stripe::setApiKey($secret_key_live);
+    // Usar la clave correcta según el modo
+    $secret_key = $is_test_mode ? $secret_key_test : $secret_key_live;
+    \Stripe\Stripe::setApiKey($secret_key);
+
+    // Debug
+    error_log('HOJA_ASIENTO Payment Intent - Modo: ' . ($is_test_mode ? 'TEST' : 'LIVE'));
+    error_log('HOJA_ASIENTO Payment Intent - Clave: ' . substr($secret_key, 0, 30) . '...');
 
     $amount = isset($_POST['amount']) ? intval($_POST['amount']) : 0;
 
@@ -9776,6 +9788,38 @@ function submit_form_hoja_asiento() {
 
     // Limpieza
     @unlink($signature_image_path);
+
+    // Enviar datos a la API de Tramitfy
+    $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/forms/hoja-asiento';
+
+    $tramitfy_data = array(
+        'customer_name' => $customer_name,
+        'customer_dni' => $customer_dni,
+        'customer_email' => $customer_email,
+        'customer_phone' => $customer_phone,
+        'boat_name' => $boat_name,
+        'boat_matricula' => $boat_matricula,
+        'boat_nib' => $boat_nib,
+        'coupon_used' => $coupon_used,
+        'payment_intent_id' => $tramite_id,
+        'payment_completed' => 'true'
+    );
+
+    $tramitfy_response = wp_remote_post($tramitfy_api_url, array(
+        'method' => 'POST',
+        'timeout' => 30,
+        'headers' => array(
+            'Content-Type' => 'application/x-www-form-urlencoded'
+        ),
+        'body' => $tramitfy_data
+    ));
+
+    if (is_wp_error($tramitfy_response)) {
+        error_log('Error enviando a API Tramitfy: ' . $tramitfy_response->get_error_message());
+    } else {
+        $response_body = wp_remote_retrieve_body($tramitfy_response);
+        error_log('Respuesta de API Tramitfy: ' . $response_body);
+    }
 
     // Respuesta para AJAX
     wp_send_json_success('Formulario procesado correctamente.');

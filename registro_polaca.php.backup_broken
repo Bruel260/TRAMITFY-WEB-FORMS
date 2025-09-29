@@ -1,5 +1,5 @@
+<!-- Versión formulario polaca: 2.1.0-1759083869 - Mejoras táctiles + WhatsApp ocultado -->
 <?php
-// Versión formulario polaca: 2.1.0-1759083869 - Mejoras táctiles + WhatsApp ocultado
 // Asegurarse de que el archivo no sea accedido directamente
 defined('ABSPATH') || exit;
 

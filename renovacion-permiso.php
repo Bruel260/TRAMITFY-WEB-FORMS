@@ -2,25 +2,48 @@
 // Asegurarse de que el archivo no sea accedido directamente
 defined('ABSPATH') || exit;
 
-// Configuración de Stripe
-define('STRIPE_MODE', 'live'); // 'test' o 'live'
-define('STRIPE_TEST_PUBLIC_KEY', 'pk_test_REPLACE_WITH_YOUR_TEST_PUBLIC_KEY');
-define('STRIPE_TEST_SECRET_KEY', 'sk_test_REPLACE_WITH_YOUR_TEST_SECRET_KEY');
-define('STRIPE_LIVE_PUBLIC_KEY', 'pk_live_REPLACE_WITH_YOUR_LIVE_PUBLIC_KEY');
-define('STRIPE_LIVE_SECRET_KEY', 'sk_live_REPLACE_WITH_YOUR_LIVE_SECRET_KEY');
+// Envolver todo en el hook init para evitar conflictos con Elementor
+add_action('init', 'navigation_permit_init', 999);
 
-// Seleccionar las claves según el modo
-$stripe_public_key = (STRIPE_MODE === 'live') ? STRIPE_LIVE_PUBLIC_KEY : STRIPE_TEST_PUBLIC_KEY;
-$stripe_secret_key = (STRIPE_MODE === 'live') ? STRIPE_LIVE_SECRET_KEY : STRIPE_TEST_SECRET_KEY;
+function navigation_permit_init() {
+    // Registrar shortcode - siempre necesario para que aparezca en Elementor
+    add_shortcode('navigation_permit_renewal_form', 'navigation_permit_renewal_form_shortcode');
 
-// Precio del servicio (en euros)
-define('SERVICE_PRICE', 65.00);
+    // Registrar AJAX handlers - siempre necesarios
+    add_action('wp_ajax_send_navigation_permit_to_tramitfy', 'send_navigation_permit_to_tramitfy');
+    add_action('wp_ajax_nopriv_send_navigation_permit_to_tramitfy', 'send_navigation_permit_to_tramitfy');
+    add_action('wp_ajax_create_payment_intent_navigation_permit_renewal', 'create_payment_intent_navigation_permit_renewal');
+    add_action('wp_ajax_nopriv_create_payment_intent_navigation_permit_renewal', 'create_payment_intent_navigation_permit_renewal');
+}
 
 /**
  * Shortcode para el formulario de renovación de permiso de navegación
  */
 function navigation_permit_renewal_form_shortcode() {
-    global $stripe_public_key;
+    // Si estamos en el editor de Elementor, devolver un placeholder
+    if (defined('ELEMENTOR_VERSION') &&
+        class_exists('\Elementor\Plugin') &&
+        \Elementor\Plugin::$instance->editor &&
+        \Elementor\Plugin::$instance->editor->is_edit_mode()) {
+        return '<div style="padding: 20px; background: #f0f0f0; text-align: center;">
+                    <h3>Formulario de Renovación de Permiso de Navegación</h3>
+                    <p>El formulario se mostrará aquí en el frontend.</p>
+                </div>';
+    }
+
+    // Configuración de Stripe - movido dentro de la función para evitar conflictos con Elementor
+    if (!defined('NAVIGATION_PERMIT_STRIPE_MODE')) {
+        define('NAVIGATION_PERMIT_STRIPE_MODE', 'live'); // 'test' o 'live'
+        define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
+        define('NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
+        define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
+        define('NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
+        define('NAVIGATION_PERMIT_SERVICE_PRICE', 65.00);
+    }
+
+    // Seleccionar las claves según el modo
+    $stripe_public_key = (NAVIGATION_PERMIT_STRIPE_MODE === 'live') ? NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY : NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY;
+    $stripe_secret_key = (NAVIGATION_PERMIT_STRIPE_MODE === 'live') ? NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY : NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY;
     
     // Encolar los scripts y estilos necesarios
     wp_enqueue_style('navigation-permit-renewal-form-style', get_template_directory_uri() . '/style.css', array(), filemtime(get_template_directory() . '/style.css'));
@@ -487,6 +510,7 @@ function navigation_permit_renewal_form_shortcode() {
         .npn-signature-container {
             margin: 0;
             text-align: center;
+            position: relative;
         }
 
         #signature-pad {
@@ -515,6 +539,371 @@ function navigation_permit_renewal_form_shortcode() {
         .npn-signature-clear:hover {
             background: rgb(var(--neutral-600));
             transform: translateY(-1px);
+        }
+
+        .npn-zoom-btn {
+            display: none;
+            margin-top: 12px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(var(--primary), 0.3);
+        }
+
+        .npn-zoom-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(var(--primary), 0.4);
+        }
+
+        /* Modal de firma avanzado */
+        .npn-signature-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            z-index: 999999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .npn-signature-modal.active {
+            display: flex;
+        }
+
+        .npn-signature-modal.active ~ * .wa__popup_chat_box,
+        .npn-signature-modal.active ~ * #whatsapp-button,
+        .npn-signature-modal.active ~ * .wa__btn_popup {
+            display: none !important;
+            visibility: hidden !important;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .npn-modal-content {
+            position: relative;
+            width: 95%;
+            height: 92%;
+            max-width: 95%;
+            max-height: 90vh;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .npn-modal-header {
+            background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .npn-modal-header h3 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .npn-modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .npn-modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .npn-enhanced-signature-container {
+            position: relative;
+            flex: 1;
+            width: 100%;
+            background-color: white;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #enhanced-signature-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        .npn-signature-guide {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            right: 10px;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .npn-signature-line {
+            height: 2px;
+            background-color: rgb(var(--primary));
+            opacity: 0.5;
+        }
+
+        .npn-signature-instruction {
+            position: absolute;
+            color: rgb(var(--primary));
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            opacity: 0.3;
+            left: 50%;
+            top: -15px;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+
+        .npn-modal-footer {
+            background: #f8f9fa;
+            padding: 20px;
+            border-top: 2px solid rgb(var(--neutral-200));
+        }
+
+        .npn-modal-instructions {
+            text-align: center;
+            color: rgb(var(--neutral-600));
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .npn-modal-button-container {
+            display: flex;
+            gap: 12px;
+        }
+
+        .npn-modal-clear-btn {
+            flex: 1;
+            padding: 14px 24px;
+            background: rgb(var(--neutral-500));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .npn-modal-clear-btn:hover {
+            background: rgb(var(--neutral-600));
+            transform: translateY(-2px);
+        }
+
+        .npn-modal-accept-btn {
+            flex: 2;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, rgb(var(--success)) 0%, rgba(var(--success), 0.8) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(var(--success), 0.3);
+        }
+
+        .npn-modal-accept-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(var(--success), 0.4);
+        }
+
+        .npn-modal-accept-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Modal de pago */
+        .npn-payment-modal {
+            display: none;
+            position: fixed;
+            z-index: 999998;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .npn-payment-modal.show {
+            display: block;
+            opacity: 1;
+        }
+
+        .npn-payment-modal-content {
+            background-color: #fff;
+            margin: 125px auto 5% auto;
+            max-width: 600px;
+            width: 90%;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            padding: 25px;
+            position: relative;
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: all 0.4s ease;
+        }
+
+        .npn-payment-modal.show .npn-payment-modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .npn-close-payment-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .npn-close-payment-modal:hover {
+            color: #333;
+            background-color: #f0f0f0;
+        }
+
+        #npn-stripe-container {
+            margin: 0 auto;
+            width: 100%;
+            padding: 0;
+        }
+
+        #npn-stripe-loading {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .npn-stripe-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(var(--primary), 0.3);
+            border-radius: 50%;
+            border-top-color: rgb(var(--primary));
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+
+        .npn-confirm-payment-btn {
+            width: 100%;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(var(--primary), 0.3);
+            margin-top: 20px;
+        }
+
+        .npn-confirm-payment-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(var(--primary), 0.4);
+        }
+
+        .npn-confirm-payment-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #npn-payment-message {
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        #npn-payment-message.error {
+            background: rgba(var(--error), 0.1);
+            color: rgb(var(--error));
+            border: 1px solid rgba(var(--error), 0.3);
+        }
+
+        #npn-payment-message.success {
+            background: rgba(var(--success), 0.1);
+            color: rgb(var(--success));
+            border: 1px solid rgba(var(--success), 0.3);
+        }
+
+        #npn-payment-message.processing {
+            background: rgba(var(--info), 0.1);
+            color: rgb(var(--info));
+            border: 1px solid rgba(var(--info), 0.3);
+        }
+
+        #npn-payment-message.hidden {
+            display: none;
         }
 
         /* Términos y condiciones */
@@ -730,6 +1119,144 @@ function navigation_permit_renewal_form_shortcode() {
             }
         }
 
+        /* File previews */
+        .npn-file-preview-container {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .npn-file-preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: rgb(var(--neutral-100));
+            border: 2px solid rgb(var(--neutral-200));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .npn-file-preview-item:hover {
+            border-color: rgb(var(--primary));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(var(--primary), 0.15);
+        }
+
+        .npn-file-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .npn-file-preview-item i {
+            font-size: 32px;
+            color: rgb(var(--neutral-400));
+        }
+
+        .npn-file-remove-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(220, 38, 38, 0.95);
+            border: 2px solid white;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 11px;
+            opacity: 0;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .npn-file-preview-item:hover .npn-file-remove-btn {
+            opacity: 1;
+        }
+
+        .npn-file-remove-btn:hover {
+            background: rgba(185, 28, 28, 1);
+            transform: scale(1.1);
+        }
+
+        .npn-file-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 6px 4px;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            color: white;
+            font-size: 10px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+        }
+
+        /* Hide default file input */
+        .npn-upload-item input[type="file"] {
+            opacity: 0;
+            position: absolute;
+            z-index: -1;
+        }
+
+        .npn-upload-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(var(--primary), 0.2);
+        }
+
+        .npn-upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(var(--primary), 0.35);
+        }
+
+        .npn-upload-btn i {
+            font-size: 16px;
+        }
+
         @media (max-width: 768px) {
             .npn-container {
                 margin: 10px;
@@ -744,6 +1271,15 @@ function navigation_permit_renewal_form_shortcode() {
                 grid-template-columns: 1fr;
             }
 
+            .npn-file-preview-item {
+                width: 85px;
+                height: 85px;
+            }
+
+            .npn-file-remove-btn {
+                opacity: 1;
+            }
+
             .npn-auth-layout {
                 grid-template-columns: 1fr;
                 gap: 20px;
@@ -754,9 +1290,11 @@ function navigation_permit_renewal_form_shortcode() {
             }
 
             #signature-pad {
-                height: 250px;
-                width: 100% !important;
-                max-width: 100%;
+                display: none;
+            }
+
+            .npn-signature-clear {
+                display: none;
             }
 
             .npn-signature-container {
@@ -765,6 +1303,13 @@ function navigation_permit_renewal_form_shortcode() {
 
             .npn-form-page {
                 padding: 20px !important;
+            }
+
+            .npn-zoom-btn {
+                display: block;
+                width: 100%;
+                padding: 16px 24px;
+                font-size: 16px;
             }
         }
     </style>
@@ -942,14 +1487,6 @@ function navigation_permit_renewal_form_shortcode() {
                         </div>
                     </div>
 
-                    <div class="npn-input-group">
-                        <label for="renewal_type">Tipo de Renovación *</label>
-                        <select id="renewal_type" name="renewal_type" required>
-                            <option value="">Seleccione una opción</option>
-                            <option value="caducidad">Renovación por caducidad</option>
-                            <option value="perdida">Renovación por pérdida/extravío</option>
-                        </select>
-                    </div>
 
                     <div class="npn-button-group">
                         <button type="button" class="npn-btn npn-btn-next" data-next="page-documents">
@@ -971,24 +1508,27 @@ function navigation_permit_renewal_form_shortcode() {
                             <label for="upload-dni-propietario">
                                 <i class="fa-solid fa-id-card"></i> DNI del Propietario *
                             </label>
-                            <input type="file" id="upload-dni-propietario" name="upload_dni_propietario" accept="image/*,.pdf" required>
-                            <a href="#" class="view-example" data-doc="dni">Ver ejemplo</a>
+                            <input type="file" id="upload-dni-propietario" name="upload_dni_propietario[]" accept="image/*,.pdf" multiple>
+                            <button type="button" class="npn-upload-btn" onclick="document.getElementById('upload-dni-propietario').click()">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> Seleccionar archivos
+                            </button>
+                            <div id="preview-dni-propietario" class="npn-file-preview-container"></div>
+                            <a href="#" class="view-example" data-doc="dni" style="margin-top: 10px; display: inline-block;">Ver ejemplo</a>
                         </div>
 
                         <div class="npn-upload-item">
-                            <label for="upload-hoja-asiento">
-                                <i class="fa-solid fa-file-lines"></i> Registro Marítimo *
+                            <label for="upload-documento-barco" style="margin-bottom: 15px;">
+                                <i class="fa-solid fa-file-lines"></i> Documento de la Embarcación *<br>
+                                <small style="font-weight: normal; font-size: 12px; opacity: 0.8; display: block; margin-top: 5px;">
+                                    Suba <strong>uno o más</strong> de los siguientes: Registro Marítimo (Hoja de Asiento) <strong>O</strong> Permiso de Navegación a Renovar
+                                </small>
                             </label>
-                            <input type="file" id="upload-hoja-asiento" name="upload_hoja_asiento" accept="image/*,.pdf" required>
-                            <a href="#" class="view-example" data-doc="registro">Ver ejemplo</a>
-                        </div>
-
-                        <div class="npn-upload-item" id="permiso-caducado-section">
-                            <label for="upload-permiso-caducado">
-                                <i class="fa-solid fa-file-circle-xmark"></i> Permiso a Renovar *
-                            </label>
-                            <input type="file" id="upload-permiso-caducado" name="upload_permiso_caducado" accept="image/*,.pdf" required>
-                            <a href="#" class="view-example" data-doc="permiso">Ver ejemplo</a>
+                            <input type="file" id="upload-documento-barco" name="upload_documento_barco[]" accept="image/*,.pdf" multiple>
+                            <button type="button" class="npn-upload-btn" onclick="document.getElementById('upload-documento-barco').click()">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> Seleccionar archivos
+                            </button>
+                            <div id="preview-documento-barco" class="npn-file-preview-container"></div>
+                            <a href="#" class="view-example" data-doc="registro" style="margin-top: 10px; display: inline-block;">Ver ejemplo</a>
                         </div>
                     </div>
 
@@ -1019,6 +1559,9 @@ function navigation_permit_renewal_form_shortcode() {
                         <canvas id="signature-pad" width="800" height="200"></canvas>
                         <button type="button" class="npn-signature-clear" id="clear-signature">
                             <i class="fa-solid fa-eraser"></i> Limpiar Firma
+                        </button>
+                        <button type="button" class="npn-zoom-btn" id="zoom-signature">
+                            <i class="fa-solid fa-search-plus"></i> Ampliar
                         </button>
                     </div>
 
@@ -1067,8 +1610,6 @@ function navigation_permit_renewal_form_shortcode() {
                         <div id="coupon-message" class="npn-coupon-message hidden"></div>
                     </div>
 
-                    <div id="payment-element"></div>
-
                     <div class="npn-terms">
                         <label>
                             <input type="checkbox" name="terms_accept" required>
@@ -1080,8 +1621,8 @@ function navigation_permit_renewal_form_shortcode() {
                         <button type="button" class="npn-btn npn-btn-prev" data-prev="page-authorization">
                             <i class="fa-solid fa-arrow-left"></i> Anterior
                         </button>
-                        <button type="submit" class="npn-btn npn-btn-submit" id="submit">
-                            <i class="fa-solid fa-lock"></i> Pagar 65,00 €
+                        <button type="button" class="npn-btn npn-btn-submit" id="show-payment-modal">
+                            <i class="fa-solid fa-lock"></i> Realizar Pago Seguro
                         </button>
                     </div>
                 </div>
@@ -1090,9 +1631,74 @@ function navigation_permit_renewal_form_shortcode() {
         </div>
     </div>
 
+    <!-- Modal de pago -->
+    <div id="npn-payment-modal" class="npn-payment-modal">
+        <div class="npn-payment-modal-content">
+            <span class="npn-close-payment-modal">&times;</span>
+
+            <div id="npn-stripe-container">
+                <!-- Spinner de carga mientras se inicializa -->
+                <div id="npn-stripe-loading">
+                    <div class="npn-stripe-spinner"></div>
+                    <p>Cargando sistema de pago...</p>
+                </div>
+
+                <!-- Contenedor donde se montará el elemento de pago -->
+                <div id="payment-element" class="payment-element-container"></div>
+
+                <!-- Mensajes de estado del pago -->
+                <div id="npn-payment-message" class="hidden"></div>
+            </div>
+
+            <button type="button" id="npn-confirm-payment-btn" class="npn-confirm-payment-btn">
+                <i class="fa-solid fa-check-circle"></i> Confirmar Pago
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de firma avanzado -->
+    <div id="signature-modal-advanced" class="npn-signature-modal">
+        <div class="npn-modal-content">
+            <div class="npn-modal-header">
+                <h3><i class="fa-solid fa-pen-fancy"></i> Firma Digital</h3>
+                <button class="npn-modal-close" id="close-modal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+
+            <div class="npn-enhanced-signature-container">
+                <div class="npn-signature-guide">
+                    <div class="npn-signature-line"></div>
+                    <div class="npn-signature-instruction">FIRME AQUÍ</div>
+                </div>
+                <canvas id="enhanced-signature-canvas"></canvas>
+            </div>
+
+            <div class="npn-modal-footer">
+                <p class="npn-modal-instructions">
+                    <i class="fa-solid fa-hand-pointer"></i> Use el dedo para firmar en el área indicada
+                </p>
+                <div class="npn-modal-button-container">
+                    <button class="npn-modal-clear-btn" id="modal-clear-btn">
+                        <i class="fa-solid fa-eraser"></i> Borrar
+                    </button>
+                    <button class="npn-modal-accept-btn" id="modal-accept-btn" disabled>
+                        <i class="fa-solid fa-check"></i> Confirmar firma
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
     (function() {
         'use strict';
+
+        // Evitar ejecución en el editor de Elementor
+        if (window.elementor || (typeof elementorFrontend !== 'undefined' && elementorFrontend.isEditMode && elementorFrontend.isEditMode())) {
+            console.log('[Navigation Permit Form] Skipping initialization - Elementor editor detected');
+            return;
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             // Variables globales
@@ -1100,12 +1706,94 @@ function navigation_permit_renewal_form_shortcode() {
             let currentPrice = 65.00;
             const basePrice = 65.00;
 
+            // Almacenamiento de archivos
+            const fileStorage = {
+                'upload-dni-propietario': [],
+                'upload-documento-barco': []
+            };
+
+            // Sistema de múltiples archivos
+            function initFileUpload(inputId, previewId) {
+                const input = document.getElementById(inputId);
+                const preview = document.getElementById(previewId);
+
+                input.addEventListener('change', function(e) {
+                    const files = Array.from(e.target.files);
+
+                    files.forEach(file => {
+                        // Agregar archivo al storage
+                        fileStorage[inputId].push(file);
+
+                        // Crear preview
+                        const previewItem = document.createElement('div');
+                        previewItem.className = 'npn-file-preview-item';
+                        previewItem.dataset.fileName = file.name;
+
+                        // Crear contenido según tipo de archivo
+                        if (file.type.startsWith('image/')) {
+                            const img = document.createElement('img');
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                img.src = e.target.result;
+                            };
+                            reader.readAsDataURL(file);
+                            previewItem.appendChild(img);
+                        } else if (file.type === 'application/pdf') {
+                            const icon = document.createElement('i');
+                            icon.className = 'fa-solid fa-file-pdf';
+                            icon.style.color = '#dc2626';
+                            previewItem.appendChild(icon);
+                        } else {
+                            const icon = document.createElement('i');
+                            icon.className = 'fa-solid fa-file';
+                            previewItem.appendChild(icon);
+                        }
+
+                        // Nombre del archivo
+                        const fileName = document.createElement('div');
+                        fileName.className = 'npn-file-name';
+                        fileName.textContent = file.name.length > 12 ? file.name.substring(0, 12) + '...' : file.name;
+                        previewItem.appendChild(fileName);
+
+                        // Botón de eliminar
+                        const removeBtn = document.createElement('div');
+                        removeBtn.className = 'npn-file-remove-btn';
+                        removeBtn.innerHTML = '<i class="fa-solid fa-times"></i>';
+                        removeBtn.onclick = function(e) {
+                            e.stopPropagation();
+                            removeFile(inputId, file.name, previewItem);
+                        };
+                        previewItem.appendChild(removeBtn);
+
+                        preview.appendChild(previewItem);
+                    });
+
+                    // Limpiar el input para poder seleccionar los mismos archivos de nuevo
+                    e.target.value = '';
+                });
+            }
+
+            function removeFile(inputId, fileName, previewElement) {
+                // Remover del storage
+                fileStorage[inputId] = fileStorage[inputId].filter(f => f.name !== fileName);
+
+                // Animar y eliminar preview
+                previewElement.style.animation = 'fadeOut 0.2s ease';
+                setTimeout(() => {
+                    previewElement.remove();
+                }, 200);
+            }
+
+            // Inicializar inputs de archivo
+            initFileUpload('upload-dni-propietario', 'preview-dni-propietario');
+            initFileUpload('upload-documento-barco', 'preview-documento-barco');
+
             // Navegación entre páginas
             const formPages = document.querySelectorAll('.npn-form-page');
             const navItems = document.querySelectorAll('.npn-nav-item');
             let currentPageIndex = 0;
 
-            function showPage(pageId) {
+            function navigationPermitShowPage(pageId) {
                 formPages.forEach((page, index) => {
                     if (page.id === pageId) {
                         page.classList.remove('hidden');
@@ -1127,34 +1815,23 @@ function navigation_permit_renewal_form_shortcode() {
                     sidebarDefault.style.display = 'none';
                     sidebarAuthorization.style.display = 'block';
                     generateAuthorizationDocument();
+
+                    // Redimensionar canvas cuando se muestra la página
+                    setTimeout(() => {
+                        resizeCanvas();
+                    }, 100);
                 } else {
                     sidebarDefault.style.display = 'block';
                     sidebarAuthorization.style.display = 'none';
-                }
-
-                // Inicializar Stripe en página de pago
-                if (pageId === 'page-payment' && !stripe) {
-                    initializeStripe();
-                }
-
-                // Manejar visibilidad del campo "permiso caducado"
-                const renewalType = document.getElementById('renewal_type').value;
-                const permisoCaducadoSection = document.getElementById('permiso-caducado-section');
-                if (renewalType === 'perdida') {
-                    permisoCaducadoSection.style.display = 'none';
-                    document.getElementById('upload-permiso-caducado').required = false;
-                } else {
-                    permisoCaducadoSection.style.display = 'block';
-                    document.getElementById('upload-permiso-caducado').required = true;
                 }
             }
 
             // Event listeners para navegación
             document.querySelectorAll('.npn-btn-next').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    if (validateCurrentPage()) {
+                    if (navigationPermitValidateCurrentPage()) {
                         const nextPage = this.getAttribute('data-next');
-                        showPage(nextPage);
+                        navigationPermitShowPage(nextPage);
                     }
                 });
             });
@@ -1162,7 +1839,7 @@ function navigation_permit_renewal_form_shortcode() {
             document.querySelectorAll('.npn-btn-prev').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const prevPage = this.getAttribute('data-prev');
-                    showPage(prevPage);
+                    navigationPermitShowPage(prevPage);
                 });
             });
 
@@ -1170,17 +1847,34 @@ function navigation_permit_renewal_form_shortcode() {
                 nav.addEventListener('click', function(e) {
                     e.preventDefault();
                     const pageId = this.getAttribute('data-page-id');
-                    showPage(pageId);
+                    navigationPermitShowPage(pageId);
                 });
             });
 
             // Validación de página actual
-            function validateCurrentPage() {
+            function navigationPermitValidateCurrentPage() {
                 const currentPage = document.querySelector('.npn-form-page:not(.hidden)');
+
+                // Validación especial para página de documentos
+                if (currentPage.id === 'page-documents') {
+                    if (fileStorage['upload-dni-propietario'].length === 0) {
+                        alert('Por favor, suba al menos un archivo de DNI del Propietario.');
+                        return false;
+                    }
+                    if (fileStorage['upload-documento-barco'].length === 0) {
+                        alert('Por favor, suba al menos un documento de la embarcación (Registro Marítimo o Permiso de Navegación).');
+                        return false;
+                    }
+                    return true;
+                }
+
                 const requiredFields = currentPage.querySelectorAll('[required]');
                 let isValid = true;
 
                 requiredFields.forEach(field => {
+                    // Saltar inputs de archivo porque ahora se validan con fileStorage
+                    if (field.type === 'file') return;
+
                     if (!field.value || (field.type === 'checkbox' && !field.checked)) {
                         field.style.borderColor = 'rgb(var(--error))';
                         isValid = false;
@@ -1206,10 +1900,14 @@ function navigation_permit_renewal_form_shortcode() {
                 document.getElementById('sidebar-auth-dni').textContent = dni;
             }
 
-            // Inicializar Stripe
+            // Inicializar Stripe en el modal
             async function initializeStripe() {
                 const totalAmountCents = Math.round(currentPrice * 100);
-                
+
+                // Mostrar loading
+                document.getElementById('npn-stripe-loading').style.display = 'block';
+                document.getElementById('payment-element').style.display = 'none';
+
                 stripe = Stripe('<?php echo $stripe_public_key; ?>');
 
                 try {
@@ -1220,7 +1918,7 @@ function navigation_permit_renewal_form_shortcode() {
                     });
 
                     const result = await response.json();
-                    
+
                     if (result.error) {
                         throw new Error(result.error);
                     }
@@ -1239,18 +1937,26 @@ function navigation_permit_renewal_form_shortcode() {
 
                     elements = stripe.elements({ appearance, clientSecret });
                     const paymentElement = elements.create('payment', {
-                        paymentMethodOrder: ['card']
+                        paymentMethodOrder: ['card', 'ideal', 'bancontact']
                     });
                     paymentElement.mount('#payment-element');
 
+                    // Ocultar loading y mostrar payment element
+                    document.getElementById('npn-stripe-loading').style.display = 'none';
+                    document.getElementById('payment-element').style.display = 'block';
+
                 } catch (error) {
                     console.error('Error initializing Stripe:', error);
-                    alert('Error al cargar el sistema de pago. Por favor, recargue la página.');
+                    document.getElementById('npn-stripe-loading').style.display = 'none';
+                    document.getElementById('npn-payment-message').textContent = 'Error al cargar el sistema de pago: ' + error.message;
+                    document.getElementById('npn-payment-message').className = 'error';
                 }
             }
 
-            // Inicializar firma con opciones mejoradas para móvil
+            // Inicializar firma con opciones mejoradas
             const canvas = document.getElementById('signature-pad');
+
+            // Inicializar SignaturePad principal (para desktop)
             signaturePad = new SignaturePad(canvas, {
                 minWidth: 0.5,
                 maxWidth: 2.5,
@@ -1259,14 +1965,137 @@ function navigation_permit_renewal_form_shortcode() {
                 penColor: '#000000'
             });
 
-            // Ajustar tamaño del canvas en móvil
+            // Modal avanzado de firma
+            const enhancedModal = document.getElementById('signature-modal-advanced');
+            const enhancedCanvas = document.getElementById('enhanced-signature-canvas');
+            let enhancedSignaturePad = null;
+            let mainSignatureData = null;
+
+            // Ajustar tamaño del canvas principal
             function resizeCanvas() {
+                if (!canvas || canvas.offsetWidth === 0) return;
+
                 const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                canvas.width = canvas.offsetWidth * ratio;
-                canvas.height = canvas.offsetHeight * ratio;
-                canvas.getContext('2d').scale(ratio, ratio);
-                signaturePad.clear();
+                const width = canvas.offsetWidth;
+                const height = canvas.offsetHeight;
+
+                canvas.width = width * ratio;
+                canvas.height = height * ratio;
+                canvas.style.width = width + 'px';
+                canvas.style.height = height + 'px';
+
+                const context = canvas.getContext('2d');
+                context.scale(ratio, ratio);
+
+                // Restaurar firma si existe
+                if (mainSignatureData && signaturePad) {
+                    signaturePad.fromDataURL(mainSignatureData);
+                }
             }
+
+            // Redimensionar canvas del modal
+            function resizeEnhancedCanvas() {
+                const container = enhancedCanvas.parentElement;
+                const rect = container.getBoundingClientRect();
+                const ratio = window.devicePixelRatio || 1;
+
+                enhancedCanvas.width = rect.width * ratio;
+                enhancedCanvas.height = rect.height * ratio;
+                enhancedCanvas.getContext('2d').scale(ratio, ratio);
+            }
+
+            // Inicializar SignaturePad del modal
+            function initializeEnhancedSignaturePad() {
+                if (enhancedSignaturePad) {
+                    enhancedSignaturePad.off();
+                }
+
+                enhancedSignaturePad = new SignaturePad(enhancedCanvas, {
+                    minWidth: 0.8,
+                    maxWidth: 3.5,
+                    throttle: 0,
+                    velocityFilterWeight: 0.7,
+                    penColor: '#000000'
+                });
+
+                enhancedSignaturePad.addEventListener('beginStroke', function() {
+                    document.getElementById('modal-accept-btn').disabled = false;
+                });
+            }
+
+            // Abrir modal avanzado
+            function openEnhancedModal() {
+                enhancedModal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+
+                // Ocultar WhatsApp Ninja
+                const waElements = document.querySelectorAll('.wa__popup_chat_box, #whatsapp-button, .wa__btn_popup, .wa__stt, [class*="wa__"], [id*="whatsapp"]');
+                waElements.forEach(el => {
+                    el.style.display = 'none';
+                    el.style.visibility = 'hidden';
+                });
+
+                requestAnimationFrame(() => {
+                    resizeEnhancedCanvas();
+                    initializeEnhancedSignaturePad();
+
+                    if (mainSignatureData) {
+                        setTimeout(() => {
+                            restoreSignatureToEnhancedCanvas();
+                        }, 200);
+                    }
+                });
+            }
+
+            // Cerrar modal avanzado
+            function closeEnhancedModal() {
+                enhancedModal.style.opacity = '0';
+
+                setTimeout(() => {
+                    enhancedModal.classList.remove('active');
+                    enhancedModal.style.opacity = '1';
+                    document.body.style.overflow = '';
+
+                    // Restaurar WhatsApp Ninja
+                    const waElements = document.querySelectorAll('.wa__popup_chat_box, #whatsapp-button, .wa__btn_popup, .wa__stt, [class*="wa__"], [id*="whatsapp"]');
+                    waElements.forEach(el => {
+                        el.style.display = '';
+                        el.style.visibility = '';
+                    });
+                }, 300);
+            }
+
+            // Restaurar firma en canvas del modal
+            function restoreSignatureToEnhancedCanvas() {
+                if (mainSignatureData && enhancedSignaturePad) {
+                    enhancedSignaturePad.fromDataURL(mainSignatureData);
+                    document.getElementById('modal-accept-btn').disabled = false;
+                }
+            }
+
+            // Transferir firma del modal al canvas principal
+            function transferSignatureToMain() {
+                if (!enhancedSignaturePad.isEmpty()) {
+                    mainSignatureData = enhancedSignaturePad.toDataURL();
+                    signaturePad.fromDataURL(mainSignatureData);
+                }
+            }
+
+            // Event listeners para modal
+            document.getElementById('zoom-signature').addEventListener('click', openEnhancedModal);
+            document.getElementById('close-modal').addEventListener('click', closeEnhancedModal);
+
+            document.getElementById('modal-clear-btn').addEventListener('click', function() {
+                if (enhancedSignaturePad) {
+                    enhancedSignaturePad.clear();
+                    document.getElementById('modal-accept-btn').disabled = true;
+                }
+            });
+
+            document.getElementById('modal-accept-btn').addEventListener('click', function() {
+                transferSignatureToMain();
+                closeEnhancedModal();
+            });
 
             // Cambiar texto según viewport
             function updateAuthText() {
@@ -1291,20 +2120,38 @@ function navigation_permit_renewal_form_shortcode() {
             window.addEventListener('resize', function() {
                 resizeCanvas();
                 updateAuthText();
+                if (enhancedModal.classList.contains('active')) {
+                    resizeEnhancedCanvas();
+                    if (enhancedSignaturePad && mainSignatureData) {
+                        restoreSignatureToEnhancedCanvas();
+                    }
+                }
             });
 
-            resizeCanvas();
-            updateAuthText();
+            window.addEventListener('orientationchange', function() {
+                setTimeout(() => {
+                    if (enhancedModal.classList.contains('active')) {
+                        resizeEnhancedCanvas();
+                        if (enhancedSignaturePad && mainSignatureData) {
+                            restoreSignatureToEnhancedCanvas();
+                        }
+                    }
+                }, 300);
+            });
+
+            // Inicializar canvas en carga
+            setTimeout(() => {
+                resizeCanvas();
+                updateAuthText();
+            }, 100);
 
             document.getElementById('clear-signature').addEventListener('click', function() {
                 signaturePad.clear();
+                mainSignatureData = null;
             });
 
-            // Manejar envío del formulario
-            const form = document.getElementById('navigation-permit-renewal-form');
-            form.addEventListener('submit', async function(e) {
-                e.preventDefault();
-
+            // Abrir modal de pago
+            document.getElementById('show-payment-modal').addEventListener('click', function() {
                 // Validar términos y condiciones
                 if (!document.querySelector('input[name="terms_accept"]').checked) {
                     alert('Debe aceptar la Política de Privacidad y los Términos y Condiciones.');
@@ -1312,19 +2159,66 @@ function navigation_permit_renewal_form_shortcode() {
                 }
 
                 // Validar firma
-                if (signaturePad.isEmpty()) {
+                if (signaturePad.isEmpty() && (!mainSignatureData || mainSignatureData === null)) {
                     alert('Por favor, firme el documento de autorización.');
-                    showPage('page-documents');
+                    navigationPermitShowPage('page-authorization');
                     return;
                 }
+
+                // Validar email
+                const customerEmail = document.getElementById('customer_email').value.trim();
+                if (!customerEmail) {
+                    alert('Debe ingresar su correo electrónico en la sección de datos personales.');
+                    navigationPermitShowPage('page-personal-info');
+                    return;
+                }
+
+                // Mostrar el modal
+                document.getElementById('npn-payment-modal').classList.add('show');
+
+                // Inicializar Stripe si aún no se ha hecho
+                if (!stripe || !elements) {
+                    setTimeout(() => {
+                        initializeStripe();
+                    }, 300);
+                }
+            });
+
+            // Cerrar modal de pago
+            document.querySelector('.npn-close-payment-modal').addEventListener('click', function() {
+                document.getElementById('npn-payment-modal').classList.remove('show');
+            });
+
+            document.getElementById('npn-payment-modal').addEventListener('click', function(event) {
+                if (event.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+
+            // Confirmar pago desde el modal
+            document.getElementById('npn-confirm-payment-btn').addEventListener('click', async function() {
+                const paymentMessage = document.getElementById('npn-payment-message');
+                paymentMessage.className = 'hidden';
+                paymentMessage.textContent = '';
+
+                // Deshabilitar botón
+                this.disabled = true;
 
                 // Mostrar overlay de carga
                 const loadingOverlay = document.getElementById('loading-overlay');
                 loadingOverlay.classList.add('active');
 
                 try {
+                    // Verificar que Stripe esté inicializado
+                    if (!stripe || !elements) {
+                        throw new Error('El sistema de pago no está inicializado correctamente.');
+                    }
+
+                    paymentMessage.textContent = 'Procesando su pago...';
+                    paymentMessage.className = 'processing';
+
                     // Confirmar pago con Stripe
-                    const { error } = await stripe.confirmPayment({
+                    const { error, paymentIntent } = await stripe.confirmPayment({
                         elements,
                         confirmParams: {
                             payment_method_data: {
@@ -1343,32 +2237,49 @@ function navigation_permit_renewal_form_shortcode() {
                         throw new Error(error.message);
                     }
 
+                    // Guardar payment intent ID
+                    window.paymentIntentId = paymentIntent.id;
+
                     // Pago exitoso, enviar formulario
                     await submitFormData();
 
                 } catch (error) {
                     console.error('Error:', error);
-                    alert('Error al procesar el pago: ' + error.message);
+                    paymentMessage.textContent = 'Error al procesar el pago: ' + error.message;
+                    paymentMessage.className = 'error';
                     loadingOverlay.classList.remove('active');
+                    this.disabled = false;
                 }
             });
 
             // Enviar datos del formulario
             async function submitFormData() {
+                const form = document.getElementById('navigation-permit-renewal-form');
                 const formData = new FormData(form);
-                
-                // Añadir firma
-                formData.append('signature', signaturePad.toDataURL());
-                
+
+                // Añadir firma (priorizar mainSignatureData si existe)
+                const signatureData = mainSignatureData || signaturePad.toDataURL();
+                formData.append('signature', signatureData);
+
+                // Añadir archivos desde fileStorage
+                fileStorage['upload-dni-propietario'].forEach((file, index) => {
+                    formData.append('upload_dni_propietario[]', file);
+                });
+                fileStorage['upload-documento-barco'].forEach((file, index) => {
+                    formData.append('upload_documento_barco[]', file);
+                });
+
                 // Añadir datos adicionales
-                formData.append('finalAmount', currentPrice);
-                formData.append('hasSignature', 'true');
-                formData.append('renewalType', document.getElementById('renewal_type').value);
-                formData.append('couponCode', document.getElementById('coupon_code').value || '');
-                formData.append('termsAccept', 'true');
+                formData.append('final_amount', currentPrice);
+                formData.append('has_signature', 'true');
+                formData.append('renewal_type', 'renovacion');
+                formData.append('coupon_code', document.getElementById('coupon_code').value || '');
+                formData.append('terms_accept', 'true');
+                formData.append('payment_intent_id', paymentIntentId || '');
+                formData.append('action', 'send_navigation_permit_to_tramitfy');
 
                 try {
-                    const response = await fetch('https://46-202-128-35.sslip.io/api/herramientas/permiso-navegacion/webhook', {
+                    const response = await fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
                         method: 'POST',
                         body: formData
                     });
@@ -1376,16 +2287,21 @@ function navigation_permit_renewal_form_shortcode() {
                     const result = await response.json();
 
                     if (result.success) {
+                        // Cerrar modal
+                        document.getElementById('npn-payment-modal').classList.remove('show');
                         alert(`✅ Formulario enviado con éxito. ID del trámite: ${result.tramiteId}`);
-                        window.location.href = `https://46-202-128-35.sslip.io/seguimiento/${result.id}`;
+                        window.location.href = result.trackingUrl;
                     } else {
                         throw new Error(result.error || 'Error al procesar el formulario');
                     }
 
                 } catch (error) {
                     console.error('Error:', error);
-                    alert('Error al enviar el formulario: ' + error.message);
+                    const paymentMessage = document.getElementById('npn-payment-message');
+                    paymentMessage.textContent = 'Error al enviar el formulario: ' + error.message;
+                    paymentMessage.className = 'error';
                     document.getElementById('loading-overlay').classList.remove('active');
+                    document.getElementById('npn-confirm-payment-btn').disabled = false;
                 }
             }
 
@@ -1399,7 +2315,6 @@ function navigation_permit_renewal_form_shortcode() {
                     document.getElementById('customer_dni').value = '12345678Z';
                     document.getElementById('customer_email').value = 'joanpinyol@hotmail.es';
                     document.getElementById('customer_phone').value = '682246937';
-                    document.getElementById('renewal_type').value = 'caducidad';
 
                     // Marcar términos
                     document.querySelector('input[name="terms_accept"]').checked = true;
@@ -1419,7 +2334,7 @@ function navigation_permit_renewal_form_shortcode() {
             <?php endif; ?>
 
             // Inicializar la primera página
-            showPage('page-personal-info');
+            navigationPermitShowPage('page-personal-info');
         });
     })();
     </script>
@@ -1428,18 +2343,357 @@ function navigation_permit_renewal_form_shortcode() {
     return ob_get_clean();
 }
 
-// Registrar el shortcode
-add_shortcode('navigation_permit_renewal_form', 'navigation_permit_renewal_form_shortcode');
+// ==========================================
+// FUNCIÓN: Enviar formulario a TRAMITFY y emails
+// ==========================================
+function send_navigation_permit_to_tramitfy() {
+    // Preparar datos del formulario
+    $formData = array(
+        'customerName' => sanitize_text_field($_POST['customer_name']),
+        'customerDni' => sanitize_text_field($_POST['customer_dni']),
+        'customerEmail' => sanitize_email($_POST['customer_email']),
+        'customerPhone' => sanitize_text_field($_POST['customer_phone']),
+        'renewalType' => sanitize_text_field($_POST['renewal_type']),
+        'finalAmount' => floatval($_POST['final_amount']),
+        'paymentIntentId' => sanitize_text_field($_POST['payment_intent_id']),
+        'hasSignature' => sanitize_text_field($_POST['has_signature']),
+        'couponCode' => sanitize_text_field($_POST['coupon_code']),
+        'termsAccept' => sanitize_text_field($_POST['terms_accept'])
+    );
 
-// AJAX handler para crear Payment Intent
-add_action('wp_ajax_create_payment_intent_navigation_permit_renewal', 'create_payment_intent_navigation_permit_renewal');
-add_action('wp_ajax_nopriv_create_payment_intent_navigation_permit_renewal', 'create_payment_intent_navigation_permit_renewal');
+    // Preparar archivos
+    $uploadedFiles = array();
+    if (!empty($_FILES)) {
+        foreach ($_FILES as $fieldName => $file) {
+            if (is_array($file['name'])) {
+                for ($i = 0; $i < count($file['name']); $i++) {
+                    if ($file['error'][$i] === UPLOAD_ERR_OK) {
+                        $uploadedFiles[] = array(
+                            'fieldname' => $fieldName,
+                            'name' => $file['name'][$i],
+                            'tmp_name' => $file['tmp_name'][$i],
+                            'type' => $file['type'][$i],
+                            'size' => $file['size'][$i]
+                        );
+                    }
+                }
+            } else {
+                if ($file['error'] === UPLOAD_ERR_OK) {
+                    $uploadedFiles[] = array(
+                        'fieldname' => $fieldName,
+                        'name' => $file['name'],
+                        'tmp_name' => $file['tmp_name'],
+                        'type' => $file['type'],
+                        'size' => $file['size']
+                    );
+                }
+            }
+        }
+    }
 
+    // Enviar al webhook de Node.js
+    $webhookUrl = 'https://46-202-128-35.sslip.io/api/herramientas/permiso-navegacion/webhook';
+
+    $boundary = '----WebKitFormBoundary' . uniqid();
+    $postData = '';
+
+    // Agregar campos de formulario
+    foreach ($formData as $key => $value) {
+        $postData .= "--{$boundary}\r\n";
+        $postData .= "Content-Disposition: form-data; name=\"{$key}\"\r\n\r\n";
+        $postData .= "{$value}\r\n";
+    }
+
+    // Agregar archivos
+    foreach ($uploadedFiles as $file) {
+        $postData .= "--{$boundary}\r\n";
+        $postData .= "Content-Disposition: form-data; name=\"{$file['fieldname']}\"; filename=\"{$file['name']}\"\r\n";
+        $postData .= "Content-Type: {$file['type']}\r\n\r\n";
+        $postData .= file_get_contents($file['tmp_name']) . "\r\n";
+    }
+
+    $postData .= "--{$boundary}--\r\n";
+
+    $response = wp_remote_post($webhookUrl, array(
+        'body' => $postData,
+        'headers' => array(
+            'Content-Type' => 'multipart/form-data; boundary=' . $boundary
+        ),
+        'timeout' => 60
+    ));
+
+    if (is_wp_error($response)) {
+        wp_send_json(['success' => false, 'error' => $response->get_error_message()], 500);
+        return;
+    }
+
+    $responseBody = json_decode(wp_remote_retrieve_body($response), true);
+
+    if (!$responseBody || !isset($responseBody['success']) || !$responseBody['success']) {
+        wp_send_json(['success' => false, 'error' => 'Error al procesar el formulario'], 500);
+        return;
+    }
+
+    // Obtener datos del webhook
+    $tramiteId = $responseBody['tramiteId'];
+    $tramiteDbId = $responseBody['id'];
+    $trackingUrl = "https://46-202-128-35.sslip.io/seguimiento/{$tramiteDbId}";
+    $dashboardUrl = "https://46-202-128-35.sslip.io/tramites/{$tramiteDbId}";
+
+    // Calcular contabilidad
+    $precioTotal = $formData['finalAmount'];
+    $certificado = 15.00;
+    $emision = 8.00;
+    $totalTasas = $certificado + $emision;
+    $honorariosBrutos = $precioTotal - $totalTasas;
+    $honorariosNetos = round($honorariosBrutos / 1.21, 2);
+    $iva = round($honorariosBrutos - $honorariosNetos, 2);
+
+    // Texto del tipo de renovación
+    $renewalTypes = array(
+        'renovacion' => 'Renovación estándar',
+        'perdida' => 'Renovación por pérdida',
+        'deterioro' => 'Renovación por deterioro',
+        'robo' => 'Renovación por robo'
+    );
+    $renewalTypeText = isset($renewalTypes[$formData['renewalType']]) ? $renewalTypes[$formData['renewalType']] : 'Renovación estándar';
+
+    // ============================================
+    // EMAIL AL CLIENTE
+    // ============================================
+    $headers = array('Content-Type: text/html; charset=UTF-8');
+
+    $customerSubject = '✅ Confirmación - Renovación Permiso de Navegación - ' . $tramiteId;
+    $customerMessage = "
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset='UTF-8'>
+    </head>
+    <body style='margin: 0; padding: 20px; font-family: Arial, sans-serif; background-color: #f5f5f5;'>
+        <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
+
+            <div style='background: linear-gradient(135deg, #0066cc 0%, #004a99 100%); padding: 30px; text-align: center; color: white;'>
+                <h1 style='margin: 0; font-size: 26px; font-weight: 600;'>✅ ¡Solicitud Recibida!</h1>
+                <p style='margin: 10px 0 0; font-size: 14px; opacity: 0.95;'>Renovación de Permiso de Navegación</p>
+                <p style='margin: 12px 0 0; font-size: 18px; font-weight: 700; background: rgba(255,255,255,0.2); padding: 10px 16px; border-radius: 6px; display: inline-block;'>📋 {$tramiteId}</p>
+            </div>
+
+            <div style='padding: 30px;'>
+                <p style='margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.6;'>
+                    Estimado/a <strong>{$formData['customerName']}</strong>,
+                </p>
+                <p style='margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.6;'>
+                    Hemos recibido correctamente su solicitud de <strong>{$renewalTypeText}</strong>. Su trámite ha sido registrado y procesaremos su documentación a la mayor brevedad posible.
+                </p>
+
+                <div style='background-color: #e3f2fd; padding: 18px 20px; border-radius: 6px; margin: 25px 0; border-left: 4px solid #0066cc;'>
+                    <p style='margin: 0 0 8px; color: #555; font-size: 14px;'>
+                        <strong>Número de trámite:</strong> <span style='color: #0066cc;'>{$tramiteId}</span>
+                    </p>
+                    <p style='margin: 0 0 8px; color: #555; font-size: 14px;'>
+                        <strong>Estado:</strong> <span style='color: #f57f17;'>Pendiente de revisión</span>
+                    </p>
+                    <p style='margin: 0; color: #555; font-size: 14px;'>
+                        <strong>Tipo:</strong> {$renewalTypeText}
+                    </p>
+                </div>
+
+                <p style='margin: 20px 0; color: #333; font-size: 15px; line-height: 1.6;'>
+                    Puede consultar el estado de su trámite en cualquier momento a través del siguiente enlace:
+                </p>
+
+                <div style='text-align: center; margin: 25px 0;'>
+                    <a href='{$trackingUrl}' style='display: inline-block; background: linear-gradient(135deg, #0066cc 0%, #004a99 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; box-shadow: 0 3px 8px rgba(0,102,204,0.3);'>
+                        🔍 Ver Estado del Trámite
+                    </a>
+                </div>
+
+                <p style='margin: 25px 0 0; color: #333; font-size: 15px; line-height: 1.6;'>
+                    Le mantendremos informado sobre el progreso de su solicitud.
+                </p>
+
+                <p style='margin: 25px 0 0; color: #333; font-size: 15px;'>
+                    Atentamente,<br>
+                    <strong>Equipo Tramitfy</strong>
+                </p>
+            </div>
+
+            <div style='background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #e0e0e0;'>
+                <p style='margin: 0 0 6px; color: #666; font-size: 13px;'>
+                    Tramitfy S.L. | info@tramitfy.es | +34 689 170 273
+                </p>
+                <p style='margin: 0; color: #999; font-size: 12px;'>
+                    Paseo Castellana 194 puerta B, Madrid, España
+                </p>
+            </div>
+
+        </div>
+    </body>
+    </html>
+    ";
+
+    wp_mail($formData['customerEmail'], $customerSubject, $customerMessage, $headers);
+
+    // ============================================
+    // EMAIL AL ADMIN
+    // ============================================
+    $adminEmail = 'ipmgroup24@gmail.com';
+    $adminSubject = '🔔 Nueva Solicitud - ' . $tramiteId . ' - Renovación Permiso Navegación';
+    $adminMessage = "
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset='UTF-8'>
+    </head>
+    <body style='margin: 0; padding: 20px; font-family: Arial, sans-serif; background-color: #f5f5f5;'>
+        <div style='max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
+
+            <div style='background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%); padding: 25px 30px; color: white;'>
+                <h2 style='margin: 0; font-size: 22px; font-weight: 600;'>🔔 NUEVA SOLICITUD</h2>
+                <p style='margin: 6px 0 0; font-size: 14px; opacity: 0.95;'>Renovación Permiso de Navegación</p>
+                <p style='margin: 10px 0 0; font-size: 16px; font-weight: 700; background: rgba(255,255,255,0.2); padding: 8px 12px; border-radius: 4px; display: inline-block;'>📋 {$tramiteId}</p>
+            </div>
+
+            <div style='padding: 30px;'>
+
+                <div style='margin-bottom: 25px; background-color: #e3f2fd; padding: 16px 20px; border-radius: 6px; text-align: center;'>
+                    <a href='{$dashboardUrl}' style='display: inline-block; background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; padding: 10px 24px; text-decoration: none; border-radius: 5px; font-weight: 600; font-size: 14px; box-shadow: 0 3px 8px rgba(25,118,210,0.3);'>
+                        🔍 Ver Detalle Completo del Trámite
+                    </a>
+                </div>
+
+                <div style='margin-bottom: 25px;'>
+                    <h3 style='margin: 0 0 15px; color: #d32f2f; font-size: 16px; border-bottom: 2px solid #d32f2f; padding-bottom: 8px;'>👤 DATOS DEL CLIENTE</h3>
+                    <table width='100%' cellpadding='6' cellspacing='0' style='font-size: 14px;'>
+                        <tr>
+                            <td style='color: #666; width: 35%;'>Nombre completo:</td>
+                            <td style='color: #333; font-weight: 600;'>{$formData['customerName']}</td>
+                        </tr>
+                        <tr>
+                            <td style='color: #666;'>DNI/NIE:</td>
+                            <td style='color: #333; font-weight: 600;'>{$formData['customerDni']}</td>
+                        </tr>
+                        <tr>
+                            <td style='color: #666;'>Email:</td>
+                            <td style='color: #0066cc; font-weight: 600;'>{$formData['customerEmail']}</td>
+                        </tr>
+                        <tr>
+                            <td style='color: #666;'>Teléfono:</td>
+                            <td style='color: #333; font-weight: 600;'>{$formData['customerPhone']}</td>
+                        </tr>
+                        <tr>
+                            <td style='color: #666;'>Tipo renovación:</td>
+                            <td style='color: #333; font-weight: 600;'>{$renewalTypeText}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div style='margin-bottom: 25px; background-color: #fff8e1; padding: 18px; border-radius: 6px; border-left: 4px solid #ffa000;'>
+                    <h3 style='margin: 0 0 15px; color: #f57f17; font-size: 16px;'>💰 CONTABILIDAD</h3>
+                    <table width='100%' cellpadding='6' cellspacing='0' style='font-size: 14px;'>
+                        <tr>
+                            <td style='color: #666;'>Precio total cobrado:</td>
+                            <td align='right' style='color: #333; font-weight: 700; font-size: 16px;'>" . number_format($precioTotal, 2) . " €</td>
+                        </tr>
+                        <tr style='border-top: 1px solid #ffe082;'>
+                            <td colspan='2' style='padding-top: 12px; padding-bottom: 6px; color: #888; font-size: 13px; font-weight: 600;'>DESGLOSE:</td>
+                        </tr>
+                        <tr>
+                            <td style='color: #666; padding-left: 15px;'>Certificado navegabilidad:</td>
+                            <td align='right' style='color: #666;'>15.00 €</td>
+                        </tr>
+                        <tr>
+                            <td style='color: #666; padding-left: 15px;'>Emisión permiso:</td>
+                            <td align='right' style='color: #666;'>8.00 €</td>
+                        </tr>
+                        <tr>
+                            <td style='color: #666; padding-left: 15px; border-bottom: 1px solid #ffe082; padding-bottom: 8px;'>Total tasas:</td>
+                            <td align='right' style='color: #666; border-bottom: 1px solid #ffe082; padding-bottom: 8px;'>- " . number_format($totalTasas, 2) . " €</td>
+                        </tr>
+                        <tr>
+                            <td style='color: #f57f17; font-weight: 700; padding-top: 8px;'>Honorarios brutos (con IVA):</td>
+                            <td align='right' style='color: #f57f17; font-weight: 700; font-size: 16px; padding-top: 8px;'>" . number_format($honorariosBrutos, 2) . " €</td>
+                        </tr>
+                        <tr>
+                            <td style='color: #666; padding-left: 15px; font-size: 13px;'>IVA (21%):</td>
+                            <td align='right' style='color: #666; font-size: 13px;'>- " . number_format($iva, 2) . " €</td>
+                        </tr>
+                        <tr style='background-color: #fff3cd;'>
+                            <td style='color: #d84315; font-weight: 700; padding: 8px; padding-left: 15px;'>Honorarios netos (sin IVA):</td>
+                            <td align='right' style='color: #d84315; font-weight: 700; font-size: 17px; padding: 8px;'>" . number_format($honorariosNetos, 2) . " €</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div style='margin-bottom: 25px;'>
+                    <h3 style='margin: 0 0 15px; color: #333; font-size: 16px;'>💳 PAGO STRIPE</h3>
+                    <table width='100%' cellpadding='5' cellspacing='0' style='font-size: 13px; background-color: #f9f9f9; padding: 12px; border-radius: 4px;'>
+                        <tr>
+                            <td style='color: #666;'>Payment Intent ID:</td>
+                            <td style='color: #333; font-family: monospace; font-size: 12px;'>{$formData['paymentIntentId']}</td>
+                        </tr>
+                        <tr>
+                            <td style='color: #666;'>Modo Stripe:</td>
+                            <td style='color: #333; font-weight: 600;'>" . STRIPE_MODE . "</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div style='margin-bottom: 25px;'>
+                    <h3 style='margin: 0 0 15px; color: #333; font-size: 16px;'>📎 DOCUMENTOS ADJUNTOS (" . count($uploadedFiles) . ")</h3>
+                    <ul style='margin: 0; padding: 0; list-style: none;'>";
+
+    foreach ($uploadedFiles as $file) {
+        $fileIcon = (strpos($file['name'], 'signature') !== false) ? '✍️' : '📄';
+        $adminMessage .= "
+                        <li style='padding: 8px 12px; margin-bottom: 6px; background-color: #f5f5f5; border-radius: 4px; font-size: 13px;'>
+                            {$fileIcon} <strong>{$file['name']}</strong> <span style='color: #999;'>(" . round($file['size']/1024, 2) . " KB)</span>
+                        </li>";
+    }
+
+    $adminMessage .= "
+                    </ul>
+                </div>
+
+                <div style='text-align: center; margin-top: 30px;'>
+                    <a href='https://46-202-128-35.sslip.io' style='display: inline-block; background: linear-gradient(135deg, #0066cc 0%, #004a99 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 10px rgba(0,102,204,0.3);'>
+                        🖥 Ver en Dashboard TRAMITFY
+                    </a>
+                </div>
+
+            </div>
+
+            <div style='background-color: #f5f5f5; padding: 20px; text-align: center; border-top: 1px solid #e0e0e0;'>
+                <p style='margin: 0; color: #999; font-size: 12px;'>
+                    Email automático generado por TRAMITFY<br>
+                    Fecha: " . date('d/m/Y H:i:s') . "
+                </p>
+            </div>
+
+        </div>
+    </body>
+    </html>
+    ";
+
+    wp_mail($adminEmail, $adminSubject, $adminMessage, $headers);
+
+    // Responder con éxito
+    wp_send_json([
+        'success' => true,
+        'id' => $tramiteDbId,
+        'tramiteId' => $tramiteId,
+        'trackingUrl' => $trackingUrl
+    ]);
+}
+
+// Función para crear Payment Intent de Stripe
 function create_payment_intent_navigation_permit_renewal() {
-    global $stripe_secret_key;
-    
+    // Configurar Stripe dentro de la función para evitar conflictos
+    $stripe_secret_key = (NAVIGATION_PERMIT_STRIPE_MODE === 'live') ? NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY : NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY;
+
     require_once get_template_directory() . '/vendor/autoload.php';
-    
+
     \Stripe\Stripe::setApiKey($stripe_secret_key);
     
     $amount = isset($_POST['amount']) ? intval($_POST['amount']) : 6500;

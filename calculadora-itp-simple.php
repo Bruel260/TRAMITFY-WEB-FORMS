@@ -16,13 +16,23 @@ function calc_itp_v2_shortcode() {
         "La Rioja" => 0.04, "Ceuta" => 0.02, "Melilla" => 0.04
     ]);
 
+    // Tabla oficial BOE 2024 - Columna "A motor y MN" (Motores y Motos Náuticas)
     $depreciation_rates = json_encode([
-        ["years" => 0, "rate" => 100], ["years" => 1, "rate" => 84], ["years" => 2, "rate" => 67],
-        ["years" => 3, "rate" => 56], ["years" => 4, "rate" => 47], ["years" => 5, "rate" => 39],
-        ["years" => 6, "rate" => 34], ["years" => 7, "rate" => 28], ["years" => 8, "rate" => 24],
-        ["years" => 9, "rate" => 19], ["years" => 10, "rate" => 17], ["years" => 11, "rate" => 13],
-        ["years" => 12, "rate" => 12], ["years" => 13, "rate" => 11], ["years" => 14, "rate" => 10],
-        ["years" => 15, "rate" => 10]
+        ["years" => 1, "rate" => 100],  // Hasta 1 año
+        ["years" => 2, "rate" => 85],   // Más de 1, hasta 2
+        ["years" => 3, "rate" => 72],   // Más de 2, hasta 3
+        ["years" => 4, "rate" => 61],   // Más de 3, hasta 4
+        ["years" => 5, "rate" => 52],   // Más de 4, hasta 5
+        ["years" => 6, "rate" => 44],   // Más de 5, hasta 6
+        ["years" => 7, "rate" => 37],   // Más de 6, hasta 7
+        ["years" => 8, "rate" => 32],   // Más de 7, hasta 8
+        ["years" => 9, "rate" => 27],   // Más de 8, hasta 9
+        ["years" => 10, "rate" => 23],  // Más de 9, hasta 10
+        ["years" => 11, "rate" => 19],  // Más de 10, hasta 11
+        ["years" => 12, "rate" => 16],  // Más de 11, hasta 12
+        ["years" => 13, "rate" => 14],  // Más de 12, hasta 13
+        ["years" => 14, "rate" => 12],  // Más de 13, hasta 14
+        ["years" => 15, "rate" => 10]   // Más de 14 años
     ]);
 
     ob_start();
@@ -1257,13 +1267,23 @@ function enviar_email_itp_v2() {
         "La Rioja" => 0.04, "Ceuta" => 0.02, "Melilla" => 0.04
     ];
 
+    // Tabla oficial BOE 2024 - Columna "A motor y MN" (Motores y Motos Náuticas)
     $depreciation_rates = [
-        ["years" => 0, "rate" => 100], ["years" => 1, "rate" => 84], ["years" => 2, "rate" => 67],
-        ["years" => 3, "rate" => 56], ["years" => 4, "rate" => 47], ["years" => 5, "rate" => 39],
-        ["years" => 6, "rate" => 34], ["years" => 7, "rate" => 28], ["years" => 8, "rate" => 24],
-        ["years" => 9, "rate" => 19], ["years" => 10, "rate" => 17], ["years" => 11, "rate" => 13],
-        ["years" => 12, "rate" => 12], ["years" => 13, "rate" => 11], ["years" => 14, "rate" => 14],
-        ["years" => 15, "rate" => 10]
+        ["years" => 1, "rate" => 100],  // Hasta 1 año
+        ["years" => 2, "rate" => 85],   // Más de 1, hasta 2
+        ["years" => 3, "rate" => 72],   // Más de 2, hasta 3
+        ["years" => 4, "rate" => 61],   // Más de 3, hasta 4
+        ["years" => 5, "rate" => 52],   // Más de 4, hasta 5
+        ["years" => 6, "rate" => 44],   // Más de 5, hasta 6
+        ["years" => 7, "rate" => 37],   // Más de 6, hasta 7
+        ["years" => 8, "rate" => 32],   // Más de 7, hasta 8
+        ["years" => 9, "rate" => 27],   // Más de 8, hasta 9
+        ["years" => 10, "rate" => 23],  // Más de 9, hasta 10
+        ["years" => 11, "rate" => 19],  // Más de 10, hasta 11
+        ["years" => 12, "rate" => 16],  // Más de 11, hasta 12
+        ["years" => 13, "rate" => 14],  // Más de 12, hasta 13
+        ["years" => 14, "rate" => 12],  // Más de 13, hasta 14
+        ["years" => 15, "rate" => 10]   // Más de 14 años
     ];
 
     // Calcular antigüedad y depreciación
@@ -1286,13 +1306,15 @@ function enviar_email_itp_v2() {
         $fiscal_value = $purchase_price * ($depreciation_rate / 100);
     }
 
-    // Calcular ITP
+    // Calcular ITP - usar el MAYOR valor entre precio de compra y valor fiscal
     $itp_rate = isset($itp_rates[$region]) ? $itp_rates[$region] : 0.04;
-    $itp_amount = $fiscal_value * $itp_rate;
+    $base_imponible = max($purchase_price, $fiscal_value); // Usar el MAYOR valor
+    $itp_amount = $base_imponible * $itp_rate;
 
     // Formatear moneda
     $purchase_price_formatted = number_format($purchase_price, 0, ',', '.') . ' €';
     $fiscal_value_formatted = number_format($fiscal_value, 0, ',', '.') . ' €';
+    $base_imponible_formatted = number_format($base_imponible, 0, ',', '.') . ' €';
     $itp_amount_formatted = number_format($itp_amount, 0, ',', '.') . ' €';
 
     // Calcular precio total del servicio
@@ -1610,6 +1632,13 @@ function enviar_email_itp_v2() {
                                                     <td style='color: #666666; padding: 4px 0;'>Valor fiscal:</td>
                                                     <td style='color: #333333; font-weight: bold; padding: 4px 0;'>$fiscal_value_formatted</td>
                                                 </tr>
+                                                <tr style='background-color: #f0f9ff;'>
+                                                    <td style='color: #016d86; padding: 8px 4px; font-weight: bold;'>Base imponible ITP:</td>
+                                                    <td style='color: #016d86; font-weight: bold; padding: 8px 4px; font-size: 15px;'>$base_imponible_formatted</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style='color: #666666; padding: 4px 0; font-size: 11px; font-style: italic;' colspan='2'>(Se usa el mayor entre precio de compra y valor fiscal)</td>
+                                                </tr>
                                                 <tr>
                                                     <td style='color: #666666; padding: 4px 0;'>Tipo ITP:</td>
                                                     <td style='color: #333333; font-weight: bold; padding: 4px 0;'>" . ($itp_rate * 100) . "%</td>
@@ -1865,6 +1894,13 @@ function enviar_email_itp_v2() {
                     <tr>
                         <td class='label'>Valor fiscal resultante:</td>
                         <td class='value'>$fiscal_value_formatted</td>
+                    </tr>
+                    <tr style='background-color: #f0f9ff;'>
+                        <td class='label' style='font-weight: bold; color: #016d86;'>Base imponible ITP:</td>
+                        <td class='value' style='font-weight: bold; color: #016d86;'>$base_imponible_formatted</td>
+                    </tr>
+                    <tr>
+                        <td colspan='2' style='font-size: 11px; font-style: italic; color: #666666; padding: 4px 0;'>(Se usa el mayor entre precio de compra y valor fiscal)</td>
                     </tr>
                     <tr>
                         <td class='label'>Tipo ITP en $region:</td>
