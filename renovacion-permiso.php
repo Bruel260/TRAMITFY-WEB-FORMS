@@ -1901,28 +1901,59 @@ function navigation_permit_renewal_form_shortcode() {
 
             // Inicializar Stripe en el modal
             async function initializeStripe() {
-                const totalAmountCents = Math.round(currentPrice * 100);
+                console.log('💳 Inicializando Stripe...');
+
+                const loadingIndicator = document.getElementById('npn-stripe-loading');
+                const stripeContainer = document.getElementById('payment-element');
+                const paymentMessage = document.getElementById('npn-payment-message');
 
                 // Mostrar loading
-                document.getElementById('npn-stripe-loading').style.display = 'block';
-                document.getElementById('payment-element').style.display = 'none';
+                if (loadingIndicator) loadingIndicator.style.display = 'flex';
+                if (stripeContainer) stripeContainer.style.display = 'none';
 
+                // Verificar que Stripe esté cargado
+                if (typeof Stripe === 'undefined') {
+                    console.error('❌ Stripe library no está cargada');
+                    if (loadingIndicator) loadingIndicator.style.display = 'none';
+                    if (paymentMessage) {
+                        paymentMessage.textContent = 'Error: Sistema de pagos no disponible. Recarga la página.';
+                        paymentMessage.className = 'error';
+                        paymentMessage.style.display = 'block';
+                    }
+                    return false;
+                }
+
+                // Inicializar Stripe con la clave pública
+                console.log('💳 Inicializando Stripe con clave pública...');
                 stripe = Stripe('<?php echo $stripe_public_key; ?>');
+                console.log('✅ Stripe object creado:', stripe);
 
                 try {
+                    console.log('💳 Creando Payment Intent...');
+                    const totalAmountCents = Math.round(currentPrice * 100);
+
                     const response = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: `action=create_payment_intent_navigation_permit_renewal&amount=${totalAmountCents}`
                     });
 
-                    const result = await response.json();
-
-                    if (result.error) {
-                        throw new Error(result.error);
+                    if (!response.ok) {
+                        throw new Error('Error en la conexión con el servidor');
                     }
 
+                    const result = await response.json();
+                    console.log('💳 Respuesta del servidor:', result);
+
+                    if (result.error) throw new Error(result.error);
+                    if (!result.clientSecret) throw new Error('No se recibió el client secret del servidor');
+
                     clientSecret = result.clientSecret;
+                    console.log('💳 Client Secret recibido:', clientSecret.substring(0, 20) + '...');
+
+                    if (!stripeContainer) {
+                        throw new Error('Contenedor de Stripe no encontrado');
+                    }
 
                     const appearance = {
                         theme: 'stripe',
@@ -1936,19 +1967,34 @@ function navigation_permit_renewal_form_shortcode() {
 
                     elements = stripe.elements({ appearance, clientSecret });
                     const paymentElement = elements.create('payment', {
-                        paymentMethodOrder: ['card', 'ideal', 'bancontact']
+                        layout: { type: 'tabs', defaultCollapsed: false }
                     });
-                    paymentElement.mount('#payment-element');
+
+                    console.log('💳 Montando Stripe Elements en DOM...');
+                    await paymentElement.mount('#payment-element');
+                    console.log('✅ Stripe Elements montado correctamente');
 
                     // Ocultar loading y mostrar payment element
-                    document.getElementById('npn-stripe-loading').style.display = 'none';
-                    document.getElementById('payment-element').style.display = 'block';
+                    if (loadingIndicator) loadingIndicator.style.display = 'none';
+                    if (stripeContainer) stripeContainer.style.display = 'block';
+
+                    console.log('✅ Stripe inicializado completamente');
+                    return true;
 
                 } catch (error) {
-                    console.error('Error initializing Stripe:', error);
-                    document.getElementById('npn-stripe-loading').style.display = 'none';
-                    document.getElementById('npn-payment-message').textContent = 'Error al cargar el sistema de pago: ' + error.message;
-                    document.getElementById('npn-payment-message').className = 'error';
+                    console.error('❌ Error inicializando Stripe:', error);
+                    console.error('❌ Error stack:', error.stack);
+
+                    // Ocultar loading
+                    if (loadingIndicator) loadingIndicator.style.display = 'none';
+
+                    if (paymentMessage) {
+                        paymentMessage.textContent = 'Error al cargar el sistema de pago: ' + error.message;
+                        paymentMessage.className = 'error';
+                        paymentMessage.style.display = 'block';
+                    }
+
+                    return false;
                 }
             }
 
