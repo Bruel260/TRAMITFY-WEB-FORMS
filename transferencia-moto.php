@@ -139,7 +139,37 @@ function transferencia_moto_shortcode() {
             margin: 0;
             padding: 0;
         }
-        
+
+        /* LAYOUTS COMPACTOS PARA FORMULARIO */
+        .form-compact-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 18px;
+        }
+
+        .form-compact-row .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-compact-triple {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .form-compact-triple .form-group {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 768px) {
+            .form-compact-triple {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+        }
+
         /* Estilos para la pantalla de marketing inicial */
         .marketing-container {
             display: flex;
@@ -711,19 +741,16 @@ function transferencia_moto_shortcode() {
 
         /* Estilos generales mejorados para el formulario */
         #transferencia-form {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 35px;
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
+            max-width: 100%;
+            width: 100%;
+            margin: 20px auto;
+            padding: 0;
+            border: none;
+            border-radius: 16px;
             font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            background-color: #ffffff;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-            transition: box-shadow 0.3s ease;
-        }
-        
-        #transferencia-form:hover {
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+            background-color: transparent;
+            box-shadow: none;
+            transition: none;
         }
         
         #transferencia-form h2 {
@@ -880,146 +907,131 @@ function transferencia_moto_shortcode() {
         #form-navigation {
             position: relative;
             padding: 0;
-            margin-bottom: 40px;
-            border-radius: 0;
-            background: none;
-            box-shadow: none;
-            border: none;
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e5e7eb;
         }
-        
+
         .nav-progress-bar {
             position: absolute;
-            top: 30px;
-            left: 12%;
-            right: 12%;
-            height: 4px;
-            background-color: rgba(var(--neutral-300), 0.5);
-            border-radius: 4px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background-color: #e5e7eb;
+            border-radius: 0 0 8px 8px;
             z-index: 1;
         }
-        
+
         .nav-progress-indicator {
             position: absolute;
             top: 0;
             left: 0;
             height: 100%;
-            width: 0%; /* Se actualiza con JS */
-            background: linear-gradient(90deg, rgb(var(--primary)) 0%, rgb(var(--primary-light)) 100%);
-            border-radius: 4px;
+            width: 0%;
+            background: linear-gradient(90deg, #016d86 0%, #01829e 100%);
+            border-radius: 0 0 8px 8px;
             transition: width 0.6s cubic-bezier(0.65, 0, 0.35, 1);
-            box-shadow: 0 0 10px rgba(var(--primary), 0.3);
         }
-        
+
         .nav-items-container {
             display: flex;
             justify-content: space-between;
             position: relative;
             z-index: 2;
-            width: 90%;
-            max-width: 800px;
-            margin: 0 auto;
+            padding: 0;
         }
-        
+
         .nav-item {
             display: flex;
-            flex-direction: column;
             align-items: center;
+            gap: 10px;
             text-decoration: none;
-            color: rgb(var(--neutral-600));
+            color: #6b7280;
             font-weight: 500;
             position: relative;
-            transition: all 0.3s ease;
-            min-width: 80px;
+            transition: all 0.2s ease;
+            flex: 1;
+            padding: 14px 16px;
+            border-right: 1px solid #e5e7eb;
         }
-        
+
+        .nav-item:last-child {
+            border-right: none;
+        }
+
         .nav-item-circle {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background-color: white;
-            border: 2px solid rgba(var(--neutral-300), 0.6);
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            border-radius: 6px;
+            background-color: #f3f4f6;
+            border: 2px solid #e5e7eb;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 10px;
             position: relative;
-            transition: all 0.4s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+            transition: all 0.2s ease;
         }
-        
+
         .nav-item-icon {
-            position: absolute;
-            font-size: 22px;
-            color: rgb(var(--neutral-500));
-            transition: all 0.3s ease;
-            transform: translateY(0);
-            opacity: 1;
+            font-size: 16px;
+            color: #6b7280;
+            transition: all 0.2s ease;
         }
-        
+
         .nav-item-number {
-            position: absolute;
-            font-size: 18px;
-            font-weight: 600;
-            color: rgb(var(--neutral-500));
-            transition: all 0.3s ease;
-            transform: translateY(30px);
-            opacity: 0;
+            font-size: 14px;
+            font-weight: 700;
+            color: #6b7280;
+            display: none;
         }
-        
+
         .nav-item-text {
             font-size: 14px;
-            transition: all 0.3s ease;
-            text-align: center;
+            transition: all 0.2s ease;
+            white-space: nowrap;
         }
-        
+
         /* Estilos para el ítem activo */
         .nav-item.active {
-            color: rgb(var(--primary));
+            color: #016d86;
+            background: #f0f9fb;
         }
-        
+
         .nav-item.active .nav-item-circle {
-            border-color: rgb(var(--primary));
-            background-color: rgba(var(--primary), 0.05);
-            box-shadow: 0 0 0 4px rgba(var(--primary), 0.1);
-            transform: scale(1.1);
+            background: linear-gradient(135deg, #016d86, #01829e);
+            border-color: #016d86;
         }
-        
+
         .nav-item.active .nav-item-icon {
-            color: rgb(var(--primary));
-            transform: translateY(-30px);
-            opacity: 0;
+            color: white;
         }
-        
-        .nav-item.active .nav-item-number {
-            color: rgb(var(--primary));
-            transform: translateY(0);
-            opacity: 1;
-        }
-        
+
         .nav-item.active .nav-item-text {
             font-weight: 600;
         }
-        
+
         /* Estilos para ítems completados */
         .nav-item.completed .nav-item-circle {
-            background-color: rgb(var(--primary));
-            border-color: rgb(var(--primary));
+            background: #10b981;
+            border-color: #10b981;
         }
-        
-        .nav-item.completed .nav-item-icon, 
-        .nav-item.completed .nav-item-number {
+
+        .nav-item.completed .nav-item-icon {
             color: white;
         }
-        
+
         /* Efecto hover */
-        .nav-item:hover .nav-item-circle {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        .nav-item:hover {
+            background: #f9fafb;
         }
-        
-        .nav-item:not(.active):hover .nav-item-icon {
-            transform: scale(1.1);
+
+        .nav-item:not(.active):hover .nav-item-circle {
+            transform: scale(1.05);
+            border-color: #016d86;
         }
         
         /* Estilos responsivos */
@@ -2551,104 +2563,85 @@ function transferencia_moto_shortcode() {
         
         /* Estilos mejorados para el popup del ITP */
         .calculation-section {
-            background-color: rgba(var(--neutral-50), 0.7);
-            border-radius: var(--radius-md);
-            padding: 18px 20px;
-            border: 1px solid rgba(var(--neutral-300), 0.3);
+            background-color: #f9fafb;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
             position: relative;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
-        
+
         .calculation-section h4 {
-            margin: 0 0 15px 0;
-            font-size: 17px;
-            color: rgb(var(--primary));
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(var(--primary), 0.15);
+            margin: 0 0 16px 0;
+            font-size: 16px;
+            color: #016d86;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e6f7fa;
             font-weight: 600;
         }
-        
+
+        .calculation-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            color: #4b5563;
+            font-size: 14px;
+        }
+
         .calculation-item.highlight-item {
-            background-color: rgba(var(--primary), 0.03);
-            margin: 15px -10px 0;
-            padding: 12px 10px;
-            border-radius: var(--radius-md);
-            border-left: 3px solid rgba(var(--primary), 0.4);
+            background-color: #e6f7fa;
+            margin: 12px -12px 0;
+            padding: 14px 12px;
+            border-radius: 6px;
+            border-left: 4px solid #016d86;
         }
-        
+
         .calculation-item.highlight-item span:last-child {
-            background-color: rgba(var(--primary), 0.1);
+            background-color: white;
             font-weight: 700;
+            color: #016d86;
         }
-        
+
+        .calculation-item span:first-child {
+            font-weight: 500;
+        }
+
         .calculation-item span:last-child {
             font-weight: 600;
-            color: rgb(var(--primary-dark));
-            background-color: rgba(var(--primary), 0.05);
-            padding: 6px 14px;
+            color: #1f2937;
+            background-color: white;
+            padding: 6px 12px;
             border-radius: 6px;
             min-width: 90px;
             text-align: right;
-            transition: all 0.2s ease;
-        }
-        
-        .calculation-item:hover span:last-child {
-            background-color: rgba(var(--primary), 0.1);
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
         }
         
         .calculation-result {
             display: flex;
             justify-content: space-between;
-            font-size: 20px;
-            font-weight: 700;
-            color: rgb(var(--primary));
-            background-color: rgba(var(--primary), 0.1);
-            padding: 18px 24px;
-            border-radius: var(--radius-md);
-            margin-top: 20px;
-            box-shadow: 0 4px 8px rgba(var(--primary-dark), 0.1);
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .calculation-result:before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 6px;
-            height: 100%;
-            background: linear-gradient(to bottom, rgb(var(--primary)), rgb(var(--primary-light)));
-        }
-        
-        .calculation-result:after {
-            content: '';
-            position: absolute;
-            right: -25px;
-            top: -25px;
-            width: 80px;
-            height: 80px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            z-index: 1;
-        }
-        
-        .calculation-result span:first-child {
             font-size: 18px;
-            position: relative;
-            z-index: 2;
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(135deg, #016d86 0%, #014d5e 100%);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(1, 109, 134, 0.3);
+            align-items: center;
         }
-        
+
+        .calculation-result span:first-child {
+            font-size: 16px;
+        }
+
         .calculation-result span:last-child {
-            font-size: 24px;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-            position: relative;
-            z-index: 2;
-            background: none;
-            padding: 0;
+            font-size: 22px;
+            background-color: white;
+            color: #016d86;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: 700;
         }
         
         #selected-services-summary {
@@ -2767,20 +2760,20 @@ function transferencia_moto_shortcode() {
             font-family: 'Roboto', sans-serif;
         }
         
-        /* Tarjeta principal mejorada */
+        /* Tarjeta principal mejorada - coherente con form sections */
         .price-summary-card {
             background-color: #ffffff;
-            border-radius: var(--radius-lg);
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
             margin-bottom: 30px;
-            border: 1px solid rgba(var(--neutral-300), 0.5);
+            border: 1px solid #e0e0e0;
             overflow: hidden;
             transition: all 0.3s ease;
         }
-        
+
         .price-summary-card:hover {
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-color: #016d86;
         }
         
         .price-summary-header {
@@ -2820,168 +2813,189 @@ function transferencia_moto_shortcode() {
             padding: 0;
         }
         
-        /* Sección principal de gestión */
+        /* Sección principal de gestión - más limpia y coherente */
         .price-summary-main {
-            padding: 25px 28px;
-            border-bottom: 1px solid rgba(var(--neutral-300), 0.3);
+            padding: 28px;
+            border-bottom: 1px solid #e8e8e8;
+            background-color: #fafafa;
         }
-        
+
         .price-summary-title {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px dashed rgba(var(--neutral-400), 0.3);
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e0e0e0;
         }
-        
+
         .price-summary-title span {
-            font-size: 18px;
+            font-size: 17px;
             font-weight: 600;
-            color: rgb(var(--primary-dark));
+            color: #1f2937;
         }
-        
+
         .price-summary-amount {
-            font-size: 20px;
+            font-size: 19px;
             font-weight: 700;
-            color: rgb(var(--primary));
-            background-color: rgba(var(--primary), 0.08);
-            padding: 8px 16px;
-            border-radius: 30px;
+            color: #016d86;
+            background-color: #e6f7fa;
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: 1px solid #b3e5ef;
         }
         
         .price-summary-details {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
-        
+
         .price-summary-row {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
-            color: rgb(var(--neutral-700));
+            padding: 10px 12px;
+            color: #4b5563;
+            background-color: white;
+            border-radius: 6px;
+            font-size: 14px;
         }
-        
+
         .price-summary-row i {
-            color: rgb(var(--success));
+            color: #10b981;
             margin-right: 8px;
         }
-        
-        .price-summary-row:not(:last-child) {
-            border-bottom: 1px dotted rgba(var(--neutral-400), 0.2);
+
+        .price-summary-row span:first-child {
+            font-weight: 500;
         }
-        
-        /* Sección de impuestos */
+
+        .price-summary-row span:last-child {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        /* Sección de impuestos - estilo coherente */
         .price-summary-tax {
-            padding: 25px 28px;
-            border-bottom: 1px solid rgba(var(--neutral-300), 0.3);
-            background-color: rgba(var(--primary), 0.02);
+            padding: 28px;
+            border-bottom: 1px solid #e8e8e8;
+            background-color: #f9fafb;
         }
         
         .price-summary-help {
-            margin-top: 15px;
+            margin-top: 16px;
             text-align: center;
         }
-        
+
         .info-button-sm {
-            background-color: transparent;
-            color: rgb(var(--primary));
-            border: 1px solid rgb(var(--primary));
-            padding: 8px 15px;
-            border-radius: 20px;
+            background-color: white;
+            color: #016d86;
+            border: 2px solid #016d86;
+            padding: 10px 18px;
+            border-radius: 8px;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
             display: inline-flex;
             align-items: center;
             gap: 8px;
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        
+
         .info-button-sm:hover {
-            background-color: rgba(var(--primary), 0.08);
-            transform: translateY(-1px);
+            background-color: #016d86;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(1, 109, 134, 0.2);
         }
         
-        /* Acordeón para secciones opcionales */
+        /* Acordeón para secciones opcionales - estilo mejorado */
         .price-summary-accordion {
-            border-bottom: 1px solid rgba(var(--neutral-300), 0.3);
+            border-bottom: 1px solid #e8e8e8;
         }
-        
+
         .accordion-toggle-header {
-            padding: 20px 28px;
+            padding: 22px 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
-            background-color: rgba(var(--neutral-100), 0.5);
+            background-color: #f5f5f5;
             transition: all 0.2s ease;
+            border-top: 1px solid #e8e8e8;
         }
-        
+
         .accordion-toggle-header:hover {
-            background-color: rgba(var(--primary), 0.05);
+            background-color: #e6f7fa;
         }
-        
+
         .accordion-toggle-header span {
             font-weight: 600;
-            color: rgb(var(--neutral-700));
+            color: #374151;
             display: flex;
             align-items: center;
             gap: 10px;
+            font-size: 15px;
         }
-        
+
         .accordion-toggle-header span i {
-            color: rgb(var(--primary));
+            color: #016d86;
+            font-size: 16px;
         }
-        
+
         .accordion-icon {
-            color: rgb(var(--primary));
+            color: #016d86;
             transition: transform 0.3s ease;
+            font-size: 18px;
         }
-        
+
+        .accordion-toggle-header.active {
+            background-color: #e6f7fa;
+        }
+
         .accordion-toggle-header.active .accordion-icon {
             transform: rotate(180deg);
         }
-        
+
         .accordion-content-section {
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease-out;
             background-color: white;
         }
-        
+
         .accordion-content-section.active {
             max-height: 500px;
-            padding: 20px 28px;
+            padding: 24px 28px;
+            border-top: 2px solid #016d86;
         }
         
-        /* Servicios adicionales dentro del acordeón */
+        /* Servicios adicionales dentro del acordeón - mejorado */
         .additional-service-item {
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px dashed rgba(var(--neutral-300), 0.4);
+            margin-bottom: 16px;
+            padding: 14px;
+            border-radius: 8px;
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
         }
-        
+
         .additional-service-item:last-child {
             margin-bottom: 0;
-            padding-bottom: 0;
-            border-bottom: none;
         }
-        
+
+        .additional-service-item:hover {
+            border-color: #016d86;
+            background-color: #f0f9fa;
+        }
+
         .service-checkbox {
             display: flex;
             align-items: center;
             cursor: pointer;
-            padding: 8px;
-            border-radius: var(--radius-md);
-            transition: background-color 0.2s ease;
+            padding: 0;
         }
-        
-        .service-checkbox:hover {
-            background-color: rgba(var(--primary), 0.05);
-        }
-        
+
         .service-info {
             display: flex;
             justify-content: space-between;
@@ -2989,83 +3003,89 @@ function transferencia_moto_shortcode() {
             flex: 1;
             margin-left: 12px;
         }
-        
+
         .service-name {
             font-weight: 500;
-            color: rgb(var(--neutral-800));
-        }
-        
-        .service-price {
-            font-weight: 600;
-            color: rgb(var(--primary));
-            background-color: rgba(var(--primary), 0.08);
-            padding: 5px 12px;
-            border-radius: 20px;
+            color: #1f2937;
             font-size: 14px;
         }
-        
+
+        .service-price {
+            font-weight: 700;
+            color: #016d86;
+            background-color: #e6f7fa;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+            border: 1px solid #b3e5ef;
+        }
+
         .additional-input {
-            margin: 15px 0 5px 35px;
+            margin: 12px 0 0 28px;
             animation: fadeIn 0.3s ease;
         }
+
+        .additional-input input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            background-color: white;
+            transition: all 0.2s ease;
+        }
+
+        .additional-input input:focus {
+            border-color: #016d86;
+            box-shadow: 0 0 0 3px rgba(1, 109, 134, 0.1);
+            outline: none;
+        }
         
-        /* Cupón dentro del acordeón - Rediseño */
+        /* Cupón dentro del acordeón - Rediseño coherente */
         .coupon-container {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            background-color: white;
+            gap: 16px;
+            background-color: #fafafa;
             padding: 20px;
-            border-radius: var(--radius-lg);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(var(--primary), 0.12);
+            border-radius: 8px;
+            border: 2px dashed #d1d5db;
             position: relative;
-            overflow: hidden;
         }
-        
-        .coupon-container:before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 5px;
-            height: 100%;
-            background: linear-gradient(to bottom, rgb(var(--primary)), rgb(var(--primary-light)));
-        }
-        
+
         .coupon-title {
-            color: rgb(var(--primary));
+            color: #016d86;
             font-weight: 600;
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 16px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(var(--neutral-300), 0.4);
-            margin-bottom: 5px;
+            font-size: 15px;
+            padding-bottom: 0;
+            border-bottom: none;
+            margin-bottom: 0;
         }
-        
+
         .coupon-input-wrapper {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             position: relative;
         }
-        
+
         .coupon-input-wrapper input {
             flex: 1;
-            padding: 14px 16px;
-            border: 2px solid rgba(var(--neutral-300), 0.8);
-            border-radius: var(--radius-md);
-            font-size: 15px;
+            padding: 12px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
             background-color: white;
-            transition: all 0.25s ease;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
         }
-        
+
         .coupon-input-wrapper input:focus {
-            border-color: rgb(var(--primary));
-            box-shadow: 0 0 0 3px rgba(var(--primary), 0.15);
+            border-color: #016d86;
+            box-shadow: 0 0 0 3px rgba(1, 109, 134, 0.1);
             outline: none;
+            background-color: white;
         }
         
         /* Estado de validación del cupón */
@@ -3093,131 +3113,129 @@ function transferencia_moto_shortcode() {
         }
         
         .coupon-button {
-            background-color: rgb(var(--primary));
+            background-color: #016d86;
             color: white;
             border: none;
-            padding: 0 24px;
-            border-radius: var(--radius-md);
+            padding: 12px 24px;
+            border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 3px 6px rgba(var(--primary-dark), 0.3);
+            font-size: 14px;
         }
-        
+
         .coupon-button:hover {
-            background-color: rgb(var(--primary-dark));
+            background-color: #014d5e;
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(var(--primary-dark), 0.4);
+            box-shadow: 0 4px 8px rgba(1, 109, 134, 0.3);
         }
-        
+
         .coupon-button:active {
             transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(var(--primary-dark), 0.3);
+            box-shadow: 0 2px 4px rgba(1, 109, 134, 0.2);
         }
         
         .coupon-message {
-            padding: 12px 15px;
-            border-radius: var(--radius-md);
+            padding: 10px 14px;
+            border-radius: 6px;
             font-weight: 500;
-            font-size: 14px;
+            font-size: 13px;
             line-height: 1.4;
             display: flex;
             align-items: center;
             gap: 8px;
         }
-        
+
         .coupon-message.hidden {
             display: none;
         }
-        
+
         .coupon-message.success {
-            background-color: rgba(var(--success), 0.1);
-            color: rgb(var(--success));
-            border: 1px solid rgba(var(--success), 0.3);
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
         }
-        
+
         .coupon-message.success:before {
             content: '✓';
             font-weight: bold;
             font-size: 16px;
         }
-        
+
         .coupon-message.error-message {
-            background-color: rgba(var(--error), 0.1);
-            color: rgb(var(--error));
-            border: 1px solid rgba(var(--error), 0.3);
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
         }
-        
+
         .coupon-message.error-message:before {
             content: '!';
             font-weight: bold;
-            font-size: 16px;
+            font-size: 14px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             width: 18px;
             height: 18px;
             border-radius: 50%;
-            background-color: rgb(var(--error));
+            background-color: #dc2626;
             color: white;
         }
-            border: 1px solid rgba(var(--error), 0.3);
-        }
-        
+
         .coupon-message.loading {
-            background-color: rgba(var(--neutral-500), 0.1);
-            color: rgb(var(--neutral-600));
-            border: 1px solid rgba(var(--neutral-500), 0.3);
+            background-color: #f3f4f6;
+            color: #6b7280;
+            border: 1px solid #d1d5db;
         }
         
-        /* Total a pagar mejorado */
+        /* Total a pagar - diseño prominente y profesional */
         .price-summary-total {
-            padding: 28px;
-            background: linear-gradient(to right, rgba(var(--primary), 0.02), rgba(var(--primary), 0.08));
+            padding: 32px 28px;
+            background: linear-gradient(135deg, #016d86 0%, #014d5e 100%);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .price-summary-total-label {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
-        
+
         .price-summary-total-label span {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
-            color: rgb(var(--neutral-800));
+            color: white;
         }
-        
+
         .price-summary-guarantees {
             display: flex;
-            gap: 15px;
+            gap: 18px;
             font-size: 13px;
-            color: rgb(var(--neutral-600));
+            color: rgba(255, 255, 255, 0.9);
         }
-        
+
         .price-summary-guarantees span {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
             font-size: 13px;
-            font-weight: normal;
+            font-weight: 500;
         }
-        
+
         .price-summary-guarantees i {
-            color: rgb(var(--primary));
+            color: #b3e5ef;
         }
-        
+
         .price-summary-total-amount {
-            font-size: 32px;
+            font-size: 36px;
             font-weight: 700;
-            color: rgb(var(--primary));
+            color: #016d86;
             background-color: white;
-            padding: 12px 24px;
-            border-radius: var(--radius-md);
-            box-shadow: 0 4px 15px rgba(var(--primary), 0.15);
+            padding: 16px 28px;
+            border-radius: 8px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
         }
         
         /* Beneficios del servicio */
@@ -3329,39 +3347,54 @@ function transferencia_moto_shortcode() {
            ============================================ */
 
         .tramitfy-layout-wrapper {
-            max-width: 1400px;
+            max-width: 98%;
+            width: 98%;
             margin: 0 auto;
             padding: 0;
         }
 
         .tramitfy-two-column {
-            display: grid;
-            grid-template-columns: 400px 1fr;
-            gap: 30px;
-            align-items: start;
+            display: grid !important;
+            grid-template-columns: 1fr 3fr !important;
+            grid-template-areas: "sidebar content" !important;
+            gap: 0;
+            align-items: stretch;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            min-height: 100vh;
         }
 
-        /* Panel Lateral Izquierdo */
+        /* Panel Lateral Izquierdo - 1/4 del ancho, azul hasta abajo */
         .tramitfy-sidebar {
-            position: sticky;
-            top: 20px;
-            background: linear-gradient(135deg, #016d86 0%, #014d5f 100%);
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(1, 109, 134, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            min-height: 500px;
+            grid-area: sidebar;
+            position: relative;
+            background: linear-gradient(180deg, #016d86 0%, #014d5f 100%);
+            border-radius: 16px 0 0 16px;
+            padding: 22px 18px;
+            box-shadow: none;
+            border: none;
+            backdrop-filter: none;
+            min-height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
             color: #ffffff;
+            display: flex;
+            flex-direction: column;
         }
 
         .sidebar-content {
             display: none;
             animation: fadeInUp 0.4s ease-out;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         .sidebar-content.active {
-            display: block;
+            display: flex;
+            flex-direction: column;
         }
 
         @keyframes fadeInUp {
@@ -3378,23 +3411,24 @@ function transferencia_moto_shortcode() {
         .sidebar-header {
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin-bottom: 25px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            gap: 10px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+            flex-shrink: 0;
         }
 
         .sidebar-icon {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
-            border-radius: 12px;
+            width: 38px;
+            height: 38px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 22px;
-            box-shadow: 0 4px 12px rgba(var(--primary), 0.3);
+            font-size: 19px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .sidebar-title {
@@ -3402,37 +3436,40 @@ function transferencia_moto_shortcode() {
         }
 
         .sidebar-title h3 {
-            margin: 0 0 5px 0;
+            margin: 0 0 3px 0;
             color: #ffffff;
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 700;
+            line-height: 1.2;
         }
 
         .sidebar-title p {
             margin: 0;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 13px;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 11px;
+            line-height: 1.2;
         }
 
         .sidebar-body {
-            margin-bottom: 25px;
+            margin-bottom: 12px;
+            flex: 1;
+            min-height: 0;
         }
 
         .sidebar-info-box {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 18px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            border-left: 3px solid rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.12);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 3px solid rgba(255, 255, 255, 0.4);
         }
 
         .sidebar-info-box p {
-            margin: 0 0 8px 0;
+            margin: 0 0 4px 0;
             color: rgba(255, 255, 255, 0.95);
-            font-size: 14px;
-            line-height: 1.6;
+            font-size: 12px;
+            line-height: 1.4;
         }
 
         .sidebar-info-box p:last-child {
@@ -3441,21 +3478,21 @@ function transferencia_moto_shortcode() {
 
         .sidebar-info-box strong {
             color: #ffffff;
-            font-weight: 700;
+            font-weight: 600;
         }
 
         .sidebar-checklist {
             background: white;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 12px;
+            border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
 
         .sidebar-checklist-item {
             display: flex;
             align-items: start;
-            gap: 12px;
-            padding: 12px 0;
+            gap: 8px;
+            padding: 6px 0;
             border-bottom: 1px dashed rgba(var(--neutral-300), 0.5);
         }
 
@@ -3464,15 +3501,15 @@ function transferencia_moto_shortcode() {
         }
 
         .sidebar-check-icon {
-            width: 24px;
-            height: 24px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             background: rgba(var(--success), 0.1);
             color: rgb(var(--success));
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 10px;
             flex-shrink: 0;
             margin-top: 2px;
         }
@@ -3480,20 +3517,19 @@ function transferencia_moto_shortcode() {
         .sidebar-checklist-text {
             flex: 1;
             color: rgb(var(--neutral-700));
-            font-size: 14px;
-            line-height: 1.5;
+            font-size: 11px;
+            line-height: 1.3;
         }
 
         .sidebar-tips {
-            background: rgba(255, 193, 7, 0.2);
-            padding: 18px;
-            border-radius: 10px;
+            background: rgba(255, 193, 7, 0.15);
+            padding: 10px;
+            border-radius: 8px;
             border-left: 3px solid #FFC107;
-            backdrop-filter: blur(10px);
         }
 
         .sidebar-tips h4 {
-            margin: 0 0 12px 0;
+            margin: 0 0 6px 0;
             color: #FFC107;
             font-size: 14px;
             font-weight: 700;
@@ -3564,31 +3600,63 @@ function transferencia_moto_shortcode() {
             margin-top: 12px;
         }
 
-        /* Panel Derecho - Formulario */
+        /* Panel Derecho - Formulario - maximizado al 100% */
         .tramitfy-main-form {
+            grid-area: content;
             background: white;
-            border-radius: 16px;
-            padding: 0;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            border-radius: 0 16px 16px 0;
+            padding: 35px 70px;
+            box-shadow: none;
+            max-width: none !important;
+            width: auto !important;
+            overflow-x: visible;
+            overflow-y: auto;
+            min-width: 0;
+        }
+
+        /* Páginas del formulario sin restricciones de ancho */
+        .form-page {
+            width: 100%;
+            max-width: 100% !important;
+        }
+
+        #page-pago {
+            width: 100%;
+            max-width: 100% !important;
+        }
+
+        #page-pago > * {
+            max-width: 100% !important;
         }
 
         /* Responsive */
         @media (max-width: 1024px) {
             .tramitfy-two-column {
-                grid-template-columns: 1fr;
-                gap: 20px;
+                grid-template-columns: 1fr !important;
+                grid-template-areas: "sidebar" "content" !important;
+                gap: 0;
             }
 
             .tramitfy-sidebar {
                 position: relative;
                 top: auto;
-                order: -1;
+                min-height: auto;
+                height: auto;
+            }
+
+            .tramitfy-main-form {
+                padding: 30px 25px;
             }
         }
 
         @media (max-width: 768px) {
             .tramitfy-layout-wrapper {
                 padding: 0;
+                margin: 15px;
+            }
+
+            .tramitfy-two-column {
+                border-radius: 12px;
             }
 
             .tramitfy-sidebar {
@@ -3754,7 +3822,377 @@ function transferencia_moto_shortcode() {
             color: rgb(var(--primary));
             border: 1px solid rgba(var(--primary), 0.3);
         }
-        
+
+        /* Estilos para formulario en sidebar */
+        .sidebar-form-section {
+            margin-bottom: 15px;
+        }
+
+        .sidebar-form-group {
+            margin-bottom: 10px;
+        }
+
+        .sidebar-form-group label {
+            display: block;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .sidebar-input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            font-size: 12px;
+            font-family: 'Roboto', sans-serif;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .sidebar-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .sidebar-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-doc-preview {
+            margin-top: 15px;
+        }
+
+        .sidebar-doc-card {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            margin-top: 8px;
+        }
+
+        /* Nuevos estilos simplificados para página de precio */
+        .price-section-simple {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+        }
+
+        .price-section-header {
+            padding: 20px 24px;
+            background: linear-gradient(135deg, #016d86 0%, #014d5f 100%);
+            color: white;
+        }
+
+        .price-section-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+        }
+
+        .price-section-header h3 i {
+            color: white;
+            font-size: 16px;
+        }
+
+        .price-section-collapsible {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .price-section-collapsible:hover {
+            background: linear-gradient(135deg, #01829e 0%, #015770 100%);
+        }
+
+        .price-section-collapsible .accordion-icon {
+            transition: transform 0.3s;
+        }
+
+        .price-section-content {
+            padding: 24px;
+        }
+
+        .price-explanation {
+            color: #6b7280;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0 0 20px 0;
+            padding: 12px;
+            background: #f9fafb;
+            border-left: 3px solid #016d86;
+            border-radius: 4px;
+        }
+
+        .price-item-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .price-item-left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .price-item-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .price-item-desc {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .price-item-right {
+            font-size: 20px;
+            font-weight: 700;
+            color: #016d86;
+        }
+
+        .price-item-secondary {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 16px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .price-section-highlight {
+            border: 2px solid #016d86;
+            box-shadow: 0 4px 12px rgba(1, 109, 134, 0.1);
+        }
+
+        .btn-link-simple {
+            background: transparent;
+            border: none;
+            color: #016d86;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 8px 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-link-simple:hover {
+            color: #014d5f;
+            gap: 8px;
+        }
+
+        .checkbox-option-simple {
+            margin-top: 16px;
+            padding: 12px;
+            background: #fef3c7;
+            border-radius: 6px;
+            border: 1px solid #fcd34d;
+        }
+
+        .checkbox-option-simple label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .checkbox-option-simple input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-label {
+            font-size: 14px;
+            color: #92400e;
+            font-weight: 500;
+        }
+
+        .service-option-simple {
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+
+        .service-option-simple:hover {
+            border-color: #016d86;
+            background: #f9fafb;
+        }
+
+        .service-option-simple label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .service-option-simple input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .service-option-content {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .service-option-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .service-option-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .service-option-desc {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .service-option-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: #016d86;
+        }
+
+        .coupon-input-simple {
+            display: flex;
+            gap: 10px;
+        }
+
+        .coupon-input-simple input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+
+        .coupon-input-simple input:focus {
+            outline: none;
+            border-color: #016d86;
+        }
+
+        .btn-apply-coupon {
+            padding: 12px 24px;
+            background: #016d86;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-apply-coupon:hover {
+            background: #014d5f;
+        }
+
+        .price-total-simple {
+            background: linear-gradient(135deg, #016d86 0%, #014d5f 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 20px rgba(1, 109, 134, 0.3);
+        }
+
+        .price-total-label {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .price-total-label > span {
+            font-size: 16px;
+            font-weight: 600;
+            opacity: 0.95;
+        }
+
+        .price-total-badges {
+            display: flex;
+            gap: 12px;
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .price-total-badges i {
+            margin-right: 4px;
+        }
+
+        .price-total-amount {
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .price-section-header h3 {
+                font-size: 16px;
+            }
+
+            .price-item-name {
+                font-size: 14px;
+            }
+
+            .price-item-right {
+                font-size: 18px;
+            }
+
+            .price-total-simple {
+                flex-direction: column;
+                text-align: center;
+                gap: 16px;
+            }
+
+            .price-total-amount {
+                font-size: 28px;
+            }
+
+            .service-option-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+        }
+
         .payment-modal h3 {
             color: rgb(var(--primary));
             font-size: 24px;
@@ -3974,122 +4412,92 @@ function transferencia_moto_shortcode() {
                         </div>
                     </div>
 
-                    <!-- Contenido: PASO 3 - Documentos -->
-                    <div class="sidebar-content" data-step="page-documentos">
+                    <!-- Contenido: PASO 3 - Datos -->
+                    <div class="sidebar-content" data-step="page-datos">
                         <div class="sidebar-header">
                             <div class="sidebar-icon">
-                                <i class="fa-solid fa-file-circle-check"></i>
+                                <i class="fa-solid fa-user-circle"></i>
                             </div>
                             <div class="sidebar-title">
-                                <h3>Tu documentación</h3>
+                                <h3>Información Personal</h3>
                                 <p>Paso 3 de 6</p>
                             </div>
                         </div>
                         <div class="sidebar-body">
-                            <div class="sidebar-checklist">
-                                <div class="sidebar-checklist-item">
-                                    <div class="sidebar-check-icon">
-                                        <i class="fa-solid fa-check"></i>
+                            <div class="sidebar-info-box">
+                                <p><strong>📋 Resumen de tu vehículo</strong></p>
+                                <div style="background: rgba(255, 255, 255, 0.15); padding: 12px; border-radius: 8px; margin-top: 10px;">
+                                    <div style="display: flex; justify-content: space-between; padding: 5px 0; font-size: 12px;">
+                                        <span style="opacity: 0.9;">Fabricante:</span>
+                                        <strong id="sidebar-datos-fabricante" style="color: #ffffff;">-</strong>
                                     </div>
-                                    <div class="sidebar-checklist-text">
-                                        <strong>Hoja de asiento</strong><br>
-                                        Del Tarjeta de la Moto
+                                    <div style="display: flex; justify-content: space-between; padding: 5px 0; font-size: 12px;">
+                                        <span style="opacity: 0.9;">Modelo:</span>
+                                        <strong id="sidebar-datos-modelo" style="color: #ffffff;">-</strong>
                                     </div>
-                                </div>
-                                <div class="sidebar-checklist-item">
-                                    <div class="sidebar-check-icon">
-                                        <i class="fa-solid fa-check"></i>
+                                    <div style="display: flex; justify-content: space-between; padding: 5px 0; font-size: 12px;">
+                                        <span style="opacity: 0.9;">Fecha matriculación:</span>
+                                        <strong id="sidebar-datos-fecha" style="color: #ffffff;">-</strong>
                                     </div>
-                                    <div class="sidebar-checklist-text">
-                                        <strong>DNI del comprador</strong><br>
-                                        Por ambas caras
-                                    </div>
-                                </div>
-                                <div class="sidebar-checklist-item">
-                                    <div class="sidebar-check-icon">
-                                        <i class="fa-solid fa-check"></i>
-                                    </div>
-                                    <div class="sidebar-checklist-text">
-                                        <strong>DNI del vendedor</strong><br>
-                                        Por ambas caras
-                                    </div>
-                                </div>
-                                <div class="sidebar-checklist-item">
-                                    <div class="sidebar-check-icon">
-                                        <i class="fa-solid fa-check"></i>
-                                    </div>
-                                    <div class="sidebar-checklist-text">
-                                        <strong>Contrato de compraventa</strong><br>
-                                        Firmado por ambas partes
+                                    <div style="display: flex; justify-content: space-between; padding: 5px 0; font-size: 12px;">
+                                        <span style="opacity: 0.9;">Precio compra:</span>
+                                        <strong id="sidebar-datos-precio" style="color: #ffffff;">-</strong>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="sidebar-tips">
-                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
+                            <h4><i class="fa-solid fa-lightbulb"></i> Importante</h4>
                             <ul>
-                                <li>Puedes subir <strong>múltiples archivos</strong> en cada campo</li>
-                                <li>Acepta <strong>fotos o PDFs</strong></li>
-                                <li>En móvil puedes usar la <strong>cámara directamente</strong></li>
+                                <li>Estos datos se usarán en el <strong>documento de autorización</strong></li>
+                                <li>Asegúrate de que coincidan con tu <strong>DNI</strong></li>
+                                <li>El email recibirá todas las <strong>notificaciones</strong></li>
                             </ul>
                         </div>
                     </div>
 
-                    <!-- Contenido: PASO 4 - Datos Personales -->
-                    <div class="sidebar-content" data-step="page-datos">
+                    <!-- Contenido: PASO 4 - Documentos -->
+                    <div class="sidebar-content" data-step="page-documentos">
                         <div class="sidebar-header">
                             <div class="sidebar-icon">
-                                <i class="fa-solid fa-user"></i>
+                                <i class="fa-solid fa-file-signature"></i>
                             </div>
                             <div class="sidebar-title">
-                                <h3>Tus datos de contacto</h3>
+                                <h3>Documentación</h3>
                                 <p>Paso 4 de 6</p>
                             </div>
                         </div>
                         <div class="sidebar-body">
-                            <div class="sidebar-info-box">
-                                <p><strong>Necesitamos tus datos</strong> para la tramitación oficial y para mantenerte informado del progreso.</p>
-                                <p>Toda tu información es <strong>100% confidencial</strong> y segura.</p>
+                            <!-- Vista previa del documento de autorización -->
+                            <div class="sidebar-doc-preview">
+                                <h4 style="color: white; font-size: 13px; margin: 0 0 10px 0; font-weight: 600;">
+                                    <i class="fa-solid fa-scroll"></i> Documento de Autorización
+                                </h4>
+                                <div class="sidebar-doc-card">
+                                    <div style="padding: 4px 0; border-bottom: 1px solid #e5e7eb; margin-bottom: 8px;">
+                                        <p style="font-size: 9px; font-weight: 700; color: #016d86; text-transform: uppercase; margin: 0;">Tramitfy S.L.</p>
+                                    </div>
+                                    <p style="font-size: 11px; color: #1f2937; margin: 0 0 8px 0; line-height: 1.5; text-align: justify;">
+                                        Yo, <strong><span id="preview-name-sidebar" style="color: #016d86;">_____________</span></strong>, con DNI <strong><span id="preview-dni-sidebar" style="color: #016d86;">_____________</span></strong>, autorizo expresamente a <strong>TRAMITFY S.L.</strong> para que realice todas las gestiones necesarias para la transferencia de propiedad de la moto de agua.
+                                    </p>
+                                    <p style="font-size: 10px; color: #6b7280; margin: 0; text-align: center; padding-top: 8px; border-top: 1px dashed #d1d5db; font-style: italic;">
+                                        📝 Firmarás este documento digitalmente
+                                    </p>
+                                </div>
                             </div>
                         </div>
                         <div class="sidebar-tips">
-                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
-                            <ul>
-                                <li>Usaremos tu <strong>email</strong> para enviarte actualizaciones</li>
-                                <li>El DNI debe coincidir con el del <strong>documento subido</strong></li>
-                                <li>Revisa bien el nuevo nombre de tu moto de agua</li>
+                            <h4><i class="fa-solid fa-lightbulb"></i> Requisitos</h4>
+                            <ul style="font-size: 11px; line-height: 1.5;">
+                                <li><strong>DNI</strong> del comprador y vendedor (ambas caras)</li>
+                                <li><strong>Tarjeta</strong> de la moto de agua</li>
+                                <li><strong>Contrato</strong> de compraventa firmado</li>
+                                <li><strong>Firma digital</strong> del documento</li>
                             </ul>
                         </div>
                     </div>
 
-                    <!-- Contenido: PASO 5 - Firma -->
-                    <div class="sidebar-content" data-step="page-firma">
-                        <div class="sidebar-header">
-                            <div class="sidebar-icon">
-                                <i class="fa-solid fa-pen-nib"></i>
-                            </div>
-                            <div class="sidebar-title">
-                                <h3>Autorización final</h3>
-                                <p>Paso 5 de 6</p>
-                            </div>
-                        </div>
-                        <div class="sidebar-body">
-                            <div class="sidebar-info-box">
-                                <p><strong>Necesitamos tu firma electrónica</strong> para la autorización de transferencia.</p>
-                                <p>Este documento tiene <strong>validez legal</strong> y será incluido en tu tramitación.</p>
-                            </div>
-                        </div>
-                        <div class="sidebar-tips">
-                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
-                            <ul>
-                                <li>Firma con el <strong>ratón</strong> o con el <strong>dedo</strong> en móvil</li>
-                                <li>Si no te gusta, puedes <strong>borrar y firmar de nuevo</strong></li>
-                                <li>Asegúrate de que la firma sea clara y legible</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Contenido: PASO 6 - Resumen y Pago -->
+                    <!-- Contenido: PASO 5 - Pago -->
                     <div class="sidebar-content" data-step="page-pago">
                         <div class="sidebar-body">
                             <h3 style="margin-bottom: 20px; color: #ffffff; font-size: 18px;"><i class="fa-solid fa-clipboard-list"></i> Resumen de su trámite</h3>
@@ -4182,39 +4590,49 @@ function transferencia_moto_shortcode() {
                 <a href="#" class="nav-item" data-page-id="page-vehiculo">
                     <div class="nav-item-circle">
                         <div class="nav-item-icon">
-                            <i class="fa-solid fa-car-side"></i>
+                            <i class="fa-solid fa-water"></i>
                         </div>
                         <div class="nav-item-number">1</div>
                     </div>
                     <span class="nav-item-text">Vehículo</span>
                 </a>
-                
+
+                <a href="#" class="nav-item" data-page-id="page-datos">
+                    <div class="nav-item-circle">
+                        <div class="nav-item-icon">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div class="nav-item-number">2</div>
+                    </div>
+                    <span class="nav-item-text">Datos</span>
+                </a>
+
                 <a href="#" class="nav-item" data-page-id="page-precio">
                     <div class="nav-item-circle">
                         <div class="nav-item-icon">
                             <i class="fa-solid fa-tag"></i>
                         </div>
-                        <div class="nav-item-number">2</div>
+                        <div class="nav-item-number">3</div>
                     </div>
                     <span class="nav-item-text">Precio</span>
                 </a>
-                
+
                 <a href="#" class="nav-item" data-page-id="page-documentos">
                     <div class="nav-item-circle">
                         <div class="nav-item-icon">
-                            <i class="fa-solid fa-file-alt"></i>
+                            <i class="fa-solid fa-file-signature"></i>
                         </div>
-                        <div class="nav-item-number">3</div>
+                        <div class="nav-item-number">4</div>
                     </div>
                     <span class="nav-item-text">Documentos</span>
                 </a>
-                
+
                 <a href="#" class="nav-item" data-page-id="page-pago">
                     <div class="nav-item-circle">
                         <div class="nav-item-icon">
                             <i class="fa-solid fa-credit-card"></i>
                         </div>
-                        <div class="nav-item-number">4</div>
+                        <div class="nav-item-number">5</div>
                     </div>
                     <span class="nav-item-text">Pago</span>
                 </a>
@@ -4258,13 +4676,13 @@ function transferencia_moto_shortcode() {
             <!-- Tipo de vehículo fijo: Barco -->
             <input type="hidden" name="vehicle_type" value="Barco">
 
-            <!-- Fabricante y Modelo en fila compacta -->
+            <!-- Fabricante y Modelo en fila -->
             <div id="vehicle-csv-section">
                 <div class="form-compact-row">
                     <div class="form-group">
                         <label for="manufacturer">Fabricante</label>
                         <select id="manufacturer" name="manufacturer">
-                            <option value="">Seleccione un fabricante</option>
+                            <option value="">Seleccione fabricante</option>
                             <?php foreach (array_keys($datos_fabricantes) as $fabricante): ?>
                                 <option value="<?php echo esc_attr($fabricante); ?>"><?php echo esc_html($fabricante); ?></option>
                             <?php endforeach; ?>
@@ -4274,24 +4692,21 @@ function transferencia_moto_shortcode() {
                     <div class="form-group">
                         <label for="model">Modelo</label>
                         <select id="model" name="model">
-                            <option value="">Seleccione un modelo</option>
+                            <option value="">Seleccione modelo</option>
                         </select>
                     </div>
                 </div>
             </div>
 
-            <!-- "No encuentro mi modelo" -->
-            <div id="no-encuentro-wrapper">
-                <label>
+            <!-- "No encuentro mi modelo" - compacto -->
+            <div id="no-encuentro-wrapper" style="margin: 12px 0;">
+                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
                     <input type="checkbox" id="no_encuentro_checkbox" name="no_encuentro_checkbox">
-                    No encuentro mi modelo
+                    <span>No encuentro mi modelo</span>
                 </label>
-                <p style="font-size: 13px; color: #666; margin: 8px 0 15px 0;">
-                    Marque esta casilla si su moto de agua no aparece en la lista anterior.
-                    El cálculo del ITP se basará únicamente en el <strong>precio de compra</strong>.
-                </p>
+
                 <!-- Campos de marca/modelo manual en 2 columnas -->
-                <div id="manual-fields" style="display: none;">
+                <div id="manual-fields" style="display: none; margin-top: 10px;">
                     <div class="form-compact-row">
                         <div class="form-group">
                             <label for="manual_manufacturer">Marca (manual)</label>
@@ -4306,216 +4721,232 @@ function transferencia_moto_shortcode() {
                 </div>
             </div>
 
-            <!-- Precio y Fecha en fila compacta -->
-            <div class="form-compact-row">
+            <!-- Fecha, Precio y Comunidad Autónoma en fila de 3 -->
+            <div class="form-compact-triple">
                 <div class="form-group">
-                    <label for="purchase_price">Precio de Compra (€)</label>
-                    <input type="number" id="purchase_price" name="purchase_price" placeholder="Precio de compra" required />
-                </div>
-
-                <div class="form-group">
-                    <label for="matriculation_date" id="matriculation_date_label">Fecha de Matriculación</label>
+                    <label for="matriculation_date" id="matriculation_date_label">Fecha Matriculación</label>
                     <input type="date" id="matriculation_date" name="matriculation_date" max="<?php echo date('Y-m-d'); ?>" required>
                 </div>
-            </div>
 
-            <!-- Comunidad Autónoma (ancho completo) -->
-            <div class="form-group">
-                <label for="region">Comunidad Autónoma del comprador</label>
-                <select id="region" name="region" required>
-                    <option value="">Seleccione una comunidad autónoma</option>
-                    <option value="Andalucía">Andalucía</option>
-                    <option value="Aragón">Aragón</option>
-                    <option value="Asturias">Asturias</option>
-                    <option value="Islas Baleares">Islas Baleares</option>
-                    <option value="Canarias">Canarias</option>
-                    <option value="Cantabria">Cantabria</option>
-                    <option value="Castilla-La Mancha">Castilla-La Mancha</option>
-                    <option value="Castilla y León">Castilla y León</option>
-                    <option value="Cataluña">Cataluña</option>
-                    <option value="Comunidad Valenciana">Comunidad Valenciana</option>
-                    <option value="Galicia">Galicia</option>
-                    <option value="Madrid">Madrid</option>
-                    <option value="Murcia">Murcia</option>
-                    <option value="Navarra">Navarra</option>
-                    <option value="País Vasco">País Vasco</option>
-                    <option value="La Rioja">La Rioja</option>
-                    <option value="Ceuta">Ceuta</option>
-                    <option value="Melilla">Melilla</option>
-                </select>
+                <div class="form-group">
+                    <label for="purchase_price">Precio de Compra (€)</label>
+                    <input type="number" id="purchase_price" name="purchase_price" placeholder="Ej: 12000" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="region">Comunidad Autónoma</label>
+                    <select id="region" name="region" required>
+                        <option value="">Seleccione comunidad</option>
+                        <option value="Andalucía">Andalucía</option>
+                        <option value="Aragón">Aragón</option>
+                        <option value="Asturias">Asturias</option>
+                        <option value="Islas Baleares">Islas Baleares</option>
+                        <option value="Canarias">Canarias</option>
+                        <option value="Cantabria">Cantabria</option>
+                        <option value="Castilla-La Mancha">Castilla-La Mancha</option>
+                        <option value="Castilla y León">Castilla y León</option>
+                        <option value="Cataluña">Cataluña</option>
+                        <option value="Comunidad Valenciana">Comunidad Valenciana</option>
+                        <option value="Galicia">Galicia</option>
+                        <option value="Madrid">Madrid</option>
+                        <option value="Murcia">Murcia</option>
+                        <option value="Navarra">Navarra</option>
+                        <option value="País Vasco">País Vasco</option>
+                        <option value="La Rioja">La Rioja</option>
+                        <option value="Ceuta">Ceuta</option>
+                        <option value="Melilla">Melilla</option>
+                    </select>
+                </div>
             </div>
 
         </div> <!-- Fin page-vehiculo -->
 
-        <!-- Página Precio - REDISEÑADA -->
+        <!-- Página Datos -->
+        <div id="page-datos" class="form-page form-section-compact hidden">
+            <h2>Tus Datos Personales</h2>
+            <p class="section-intro">Introduce tus datos personales para la gestión del trámite. Estos datos aparecerán en el documento de autorización.</p>
+
+            <div class="form-compact-row">
+                <div class="form-group">
+                    <label for="customer_name">Nombre y Apellidos</label>
+                    <input type="text" id="customer_name" name="customer_name" required />
+                    <span class="input-hint">Tal como aparece en su DNI</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="customer_dni">DNI</label>
+                    <input type="text" id="customer_dni" name="customer_dni" required />
+                    <span class="input-hint">Formato: 12345678X</span>
+                </div>
+            </div>
+
+            <div class="form-compact-row">
+                <div class="form-group">
+                    <label for="customer_email">Correo Electrónico</label>
+                    <input type="email" id="customer_email" name="customer_email" required />
+                    <span class="input-hint">Recibirás notificaciones del trámite</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="customer_phone">Teléfono</label>
+                    <input type="tel" id="customer_phone" name="customer_phone" required />
+                    <span class="input-hint">Para contactarte si es necesario</span>
+                </div>
+            </div>
+
+        </div> <!-- Fin page-datos -->
+
+        <!-- Página Precio - ULTRA SIMPLIFICADA -->
         <div id="page-precio" class="form-page form-section-compact hidden">
-            <h2>Resumen del Trámite</h2>
+            <h2>¿Cuánto cuesta?</h2>
+            <p style="color: #6b7280; margin-bottom: 30px;">Todo incluido, sin sorpresas.</p>
 
-            <!-- Tarjeta simplificada con solo Cambio de Titularidad -->
-            <div class="price-summary-card">
-                <div class="price-summary-body">
-                    <!-- Servicio principal -->
-                    <div class="price-summary-main">
-                        <div class="price-summary-title">
-                            <span>Cambio de Titularidad</span>
-                            <div class="price-summary-amount" id="cambio_nombre_price">134.99 €</div>
-                        </div>
-                        <div class="price-summary-details">
-                            <div class="price-summary-row">
-                                <span>Comisión bancaria (1.5% del ITP)</span>
-                                <span id="extra_fee_includes_display">0 €</span>
-                            </div>
-                        </div>
+            <!-- Precio Base -->
+            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div>
+                        <div style="font-size: 18px; font-weight: 600; color: #1f2937;">Tramitación Completa</div>
+                        <div style="font-size: 14px; color: #6b7280; margin-top: 4px;">Tasas, gestión ITP y honorarios</div>
                     </div>
+                    <div style="font-size: 24px; font-weight: 700; color: #016d86;" id="cambio_nombre_price">134.99 €</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; color: #6b7280; font-size: 14px;">
+                    <span>+ Comisión bancaria (1.5%)</span>
+                    <span id="extra_fee_includes_display">0 €</span>
+                </div>
+            </div>
 
-                    <!-- Impuesto de transmisiones -->
-                    <div class="price-summary-tax">
-                        <div class="price-summary-title">
-                            <span>Impuesto de Transmisiones Patrimoniales</span>
-                            <div class="price-summary-amount" id="transfer_tax_display">0 €</div>
-                        </div>
-                        <div class="price-summary-help">
-                            <button type="button" id="info-link" class="info-button-sm">
-                                <i class="fa-solid fa-info-circle"></i> <span id="info-button-text">Ver detalle del cálculo del ITP</span>
-                            </button>
-                        </div>
-                        <!-- Opción para ITP ya pagado -->
-                        <div class="itp-paid-option">
-                            <label class="service-checkbox">
-                                <input type="checkbox" id="itp_already_paid" name="itp_already_paid">
-                                <span class="checkbox-custom"></span>
-                                <div class="service-info">
-                                    <span class="service-name">Ya tengo pagado el ITP</span>
-                                </div>
-                            </label>
-                        </div>
-                        
-                        <!-- Detalle del ITP (inline ahora, no modal) - Diseño mejorado -->
-                        <div id="itp-detail-container" class="itp-detail-section" style="display:none;">
-                            <h3>Cálculo del Impuesto de Transmisiones</h3>
-                            
-                            <p class="info-description">El <strong>Impuesto sobre Transmisiones Patrimoniales (ITP)</strong> es un tributo que el comprador debe abonar a Hacienda en los cambios de titularidad de un vehículo entre particulares. Se calcula en base al mayor valor entre el precio de compra y el valor fiscal con depreciación.</p>
-                            
-                            <div class="calculation-detail">
-                                <div class="calculation-section">
-                                    <h4>Datos del vehículo</h4>
-                                    <div class="calculation-item">
-                                        <span>Valor fiscal base:</span>
-                                        <span id="base_value_display">0 €</span>
-                                    </div>
-                                    <div class="calculation-item">
-                                        <span>Antigüedad del vehículo:</span>
-                                        <span id="vehicle_age_display">0 años</span>
-                                    </div>
-                                    <div class="calculation-item">
-                                        <span>Porcentaje de depreciación:</span>
-                                        <span id="depreciation_percentage_display">0 %</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="calculation-section">
-                                    <h4>Cálculo de la base imponible</h4>
-                                    <div class="calculation-item">
-                                        <span>Valor fiscal con depreciación:</span>
-                                        <span id="fiscal_value_display">0 €</span>
-                                    </div>
-                                    <div class="calculation-item">
-                                        <span>Precio de compra declarado:</span>
-                                        <span id="purchase_price_display">0 €</span>
-                                    </div>
-                                    <div class="calculation-item highlight-item">
-                                        <span>Base imponible (mayor valor):</span>
-                                        <span id="tax_base_display">0 €</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="calculation-section">
-                                    <h4>Impuesto aplicable</h4>
-                                    <div class="calculation-item">
-                                        <span>Tipo impositivo aplicado:</span>
-                                        <span id="tax_rate_display">0 %</span>
-                                    </div>
-                                    
-                                    <div class="calculation-result">
-                                        <span>ITP a pagar:</span>
-                                        <span id="calculated_itp_display">0 €</span>
-                                    </div>
-                                </div>
-                                
-                                <!-- Elemento adicional para mostrar servicios seleccionados -->
-                                <div id="selected-services-summary" style="display:none; margin-top:15px; padding:12px; background-color:rgba(var(--primary), 0.05); border-radius:var(--radius-md); text-align:center; color:rgb(var(--primary-dark));"></div>
-                            </div>
-                        </div>
+            <!-- ITP -->
+            <div style="background: #fef3c7; border: 2px solid #fbbf24; border-radius: 8px; padding: 24px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div>
+                        <div style="font-size: 18px; font-weight: 600; color: #92400e;">Impuesto (ITP)</div>
+                        <div style="font-size: 14px; color: #92400e; margin-top: 4px;">Impuesto obligatorio de Hacienda</div>
                     </div>
-                    
-                    <!-- Desplegables para secciones opcionales -->
-                    <!-- Servicios adicionales - ahora como acordeón -->
-                    <div class="price-summary-accordion" id="services-accordion">
-                        <div class="accordion-toggle-header">
-                            <span><i class="fa-solid fa-plus-circle"></i> Servicios Adicionales Opcionales</span>
-                            <i class="fa-solid fa-chevron-down accordion-icon"></i>
-                        </div>
-                        <div class="accordion-content-section">
-                            <div class="additional-service-item">
-                                <label class="service-checkbox">
-                                    <input type="checkbox" class="extra-option" data-price="40" value="Cambio de nombre">
-                                    <span class="checkbox-custom"></span>
-                                    <div class="service-info">
-                                        <span class="service-name">Cambiar el nombre de la moto de agua</span>
-                                        <span class="service-price">40 €</span>
-                                    </div>
-                                </label>
-                                <div class="additional-input" id="nombre-input" style="display: none;">
-                                    <input type="text" id="nuevo_nombre" name="nuevo_nombre" placeholder="Ingrese el nuevo nombre de la moto de agua" />
-                                </div>
+                    <div style="font-size: 24px; font-weight: 700; color: #92400e;" id="transfer_tax_display">0 €</div>
+                </div>
+
+                <button type="button" id="info-link" style="background: none; border: none; color: #92400e; font-size: 14px; cursor: pointer; padding: 0; text-decoration: underline; margin-bottom: 12px;">
+                    <i class="fa-solid fa-calculator"></i> <span id="info-button-text">Ver cómo se calcula</span>
+                </button>
+
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; background: #fffbeb; padding: 10px; border-radius: 4px;">
+                    <input type="checkbox" id="itp_already_paid" name="itp_already_paid" style="width: 18px; height: 18px;">
+                    <span style="font-size: 14px; color: #92400e;">Ya lo pagué</span>
+                </label>
+
+                <!-- Detalle del ITP -->
+                <div id="itp-detail-container" class="itp-detail-section" style="display:none; margin-top: 16px;">
+                    <h3>Cálculo del Impuesto de Transmisiones</h3>
+                    <p class="info-description">El <strong>Impuesto sobre Transmisiones Patrimoniales (ITP)</strong> es un tributo que el comprador debe abonar a Hacienda en los cambios de titularidad de un vehículo entre particulares. Se calcula en base al mayor valor entre el precio de compra y el valor fiscal con depreciación.</p>
+
+                    <div class="calculation-detail">
+                        <div class="calculation-section">
+                            <h4>Datos del vehículo</h4>
+                            <div class="calculation-item">
+                                <span>Valor fiscal base:</span>
+                                <span id="base_value_display">0 €</span>
                             </div>
-                            
-                            <div class="additional-service-item">
-                                <label class="service-checkbox">
-                                    <input type="checkbox" class="extra-option" data-price="40" value="Cambio de puerto base">
-                                    <span class="checkbox-custom"></span>
-                                    <div class="service-info">
-                                        <span class="service-name">Cambio de puerto base</span>
-                                        <span class="service-price">40 €</span>
-                                    </div>
-                                </label>
-                                <div class="additional-input" id="puerto-input" style="display: none;">
-                                    <input type="text" id="nuevo_puerto" name="nuevo_puerto" placeholder="Ingrese el nuevo puerto" />
-                                </div>
+                            <div class="calculation-item">
+                                <span>Antigüedad del vehículo:</span>
+                                <span id="vehicle_age_display">0 años</span>
+                            </div>
+                            <div class="calculation-item">
+                                <span>Porcentaje de depreciación:</span>
+                                <span id="depreciation_percentage_display">0 %</span>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- Cupón - ahora como acordeón -->
-                    <div class="price-summary-accordion" id="coupon-accordion">
-                        <div class="accordion-toggle-header">
-                            <span><i class="fa-solid fa-tag"></i> ¿Tienes un cupón de descuento?</span>
-                            <i class="fa-solid fa-chevron-down accordion-icon"></i>
-                        </div>
-                        <div class="accordion-content-section">
-                            <div class="coupon-container">
-                                <div class="coupon-input-wrapper">
-                                    <input type="text" id="coupon_code" name="coupon_code" placeholder="Introduce tu código de descuento" />
-                                    <button type="button" id="apply-coupon" class="coupon-button">Aplicar</button>
-                                </div>
-                                <p id="coupon-message" class="coupon-message"></p>
+
+                        <div class="calculation-section">
+                            <h4>Cálculo de la base imponible</h4>
+                            <div class="calculation-item">
+                                <span>Valor fiscal con depreciación:</span>
+                                <span id="fiscal_value_display">0 €</span>
+                            </div>
+                            <div class="calculation-item">
+                                <span>Precio de compra declarado:</span>
+                                <span id="purchase_price_display">0 €</span>
+                            </div>
+                            <div class="calculation-item highlight-item">
+                                <span>Base imponible (mayor valor):</span>
+                                <span id="tax_base_display">0 €</span>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- Total con distintivo visual -->
-                    <div class="price-summary-total">
-                        <div class="price-summary-total-label">
-                            <span>Total a Pagar</span>
-                            <div class="price-summary-guarantees">
-                                <span><i class="fa-solid fa-lock"></i> Pago seguro</span>
-                                <span><i class="fa-solid fa-shield-alt"></i> Garantía de servicio</span>
+
+                        <div class="calculation-section">
+                            <h4>Impuesto aplicable</h4>
+                            <div class="calculation-item">
+                                <span>Tipo impositivo aplicado:</span>
+                                <span id="tax_rate_display">0 %</span>
+                            </div>
+
+                            <div class="calculation-result">
+                                <span>ITP a pagar:</span>
+                                <span id="calculated_itp_display">0 €</span>
                             </div>
                         </div>
-                        <div class="price-summary-total-amount" id="final-amount">134.99 €</div>
+
+                        <div id="selected-services-summary" style="display:none; margin-top:15px; padding:12px; background-color:rgba(var(--primary), 0.05); border-radius:var(--radius-md); text-align:center; color:rgb(var(--primary-dark));"></div>
                     </div>
                 </div>
             </div>
+
+            <!-- Servicios Extra -->
+            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 16px; overflow: hidden;">
+                <div id="services-accordion" class="accordion-toggle-header" style="cursor: pointer; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 16px; font-weight: 600; color: #1f2937;">➕ Servicios Extra (Opcionales)</span>
+                    <i class="fa-solid fa-chevron-down accordion-icon" style="color: #6b7280; font-size: 14px;"></i>
+                </div>
+                <div class="accordion-content-section" style="display: none; padding: 16px; border-top: 1px solid #e5e7eb;">
+                    <label style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" class="extra-option" data-price="40" value="Cambio de nombre" style="width: 18px; height: 18px;">
+                            <span style="font-size: 15px; color: #1f2937;">Cambiar nombre de la moto</span>
+                        </div>
+                        <span style="font-weight: 600; color: #016d86;">+40 €</span>
+                    </label>
+                    <div class="additional-input" id="nombre-input" style="display: none; margin-bottom: 12px;">
+                        <input type="text" id="nuevo_nombre" name="nuevo_nombre" placeholder="Nuevo nombre" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px;">
+                    </div>
+
+                    <label style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" class="extra-option" data-price="40" value="Cambio de puerto base" style="width: 18px; height: 18px;">
+                            <span style="font-size: 15px; color: #1f2937;">Cambiar puerto base</span>
+                        </div>
+                        <span style="font-weight: 600; color: #016d86;">+40 €</span>
+                    </label>
+                    <div class="additional-input" id="puerto-input" style="display: none; margin-top: 8px;">
+                        <input type="text" id="nuevo_puerto" name="nuevo_puerto" placeholder="Nuevo puerto" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cupón -->
+            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 16px; overflow: hidden;">
+                <div id="coupon-accordion" class="accordion-toggle-header" style="cursor: pointer; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 16px; font-weight: 600; color: #1f2937;">🎟️ ¿Tienes cupón?</span>
+                    <i class="fa-solid fa-chevron-down accordion-icon" style="color: #6b7280; font-size: 14px;"></i>
+                </div>
+                <div class="accordion-content-section" style="display: none; padding: 16px; border-top: 1px solid #e5e7eb;">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="coupon_code" name="coupon_code" placeholder="Tu código" style="flex: 1; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 15px;">
+                        <button type="button" id="apply-coupon" style="padding: 10px 20px; background: #016d86; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Aplicar</button>
+                    </div>
+                    <p id="coupon-message" class="coupon-message" style="margin: 8px 0 0 0; font-size: 14px;"></p>
+                </div>
+            </div>
+
+            <!-- Total -->
+            <div style="background: linear-gradient(135deg, #016d86, #014d5f); color: white; border-radius: 8px; padding: 24px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 18px; opacity: 0.9;">Total a Pagar</div>
+                    <div style="font-size: 13px; opacity: 0.8; margin-top: 4px;"><i class="fa-solid fa-lock"></i> Pago seguro</div>
+                </div>
+                <div style="font-size: 36px; font-weight: 700;" id="final-amount">134.99 €</div>
+            </div>
+
+        </div> <!-- Fin page-precio -->
             <!-- Ya no necesitamos el modal, ahora es inline -->
             <!-- 
             <div id="info-popup" class="info-modal">
@@ -4570,56 +5001,18 @@ function transferencia_moto_shortcode() {
 
         <!-- Página Documentos -->
         <div id="page-documentos" class="form-page form-section-compact hidden">
-            <h2>Documentos</h2>
-            
-            <!-- Sección acordeón para datos personales -->
-            <div class="accordion-section" id="section-datos">
-                <div class="accordion-header active">
-                    <span class="accordion-number">1</span>
-                    <h3>Introduce tus datos</h3>
-                    <span class="accordion-status">Pendiente</span>
-                    <span class="accordion-toggle"><i class="fa-solid fa-chevron-down"></i></span>
-                </div>
-                <div class="accordion-content active">
-                    <div class="form-compact-row">
-                        <div class="form-group">
-                            <label for="customer_name">Nombre y Apellidos</label>
-                            <input type="text" id="customer_name" name="customer_name" required />
-                            <span class="input-hint">Tal como aparece en su DNI</span>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="customer_dni">DNI</label>
-                            <input type="text" id="customer_dni" name="customer_dni" required />
-                            <span class="input-hint">Formato: 12345678X</span>
-                        </div>
-                    </div>
-
-                    <div class="form-compact-row">
-                        <div class="form-group">
-                            <label for="customer_email">Correo Electrónico</label>
-                            <input type="email" id="customer_email" name="customer_email" required />
-                        </div>
-
-                        <div class="form-group">
-                            <label for="customer_phone">Teléfono</label>
-                            <input type="tel" id="customer_phone" name="customer_phone" required />
-                        </div>
-                    </div>
-
-                    <button type="button" class="section-next-btn">Continuar</button>
-                </div>
-            </div>
+            <h2>Documentación y Firma</h2>
+            <p class="section-intro">Adjunta los documentos necesarios y firma digitalmente el documento de autorización.</p>
 
             <!-- Sección acordeón para documentación -->
             <div class="accordion-section" id="section-documentos">
-                <div class="accordion-header">
-                    <span class="accordion-number">2</span>
+                <div class="accordion-header active">
+                    <span class="accordion-number">1</span>
                     <h3>Adjunta tu documentación</h3>
                     <span class="accordion-status">Pendiente</span>
                     <span class="accordion-toggle"><i class="fa-solid fa-chevron-down"></i></span>
                 </div>
-                <div class="accordion-content">
+                <div class="accordion-content active">
                     <p class="section-intro">Por favor, sube los siguientes documentos. Puedes ver un ejemplo haciendo clic en "Ver ejemplo" junto a cada uno.</p>
                     
                     <div class="upload-grid">
@@ -4698,7 +5091,7 @@ function transferencia_moto_shortcode() {
             <!-- Sección acordeón para firma -->
             <div class="accordion-section" id="section-firma">
                 <div class="accordion-header">
-                    <span class="accordion-number">3</span>
+                    <span class="accordion-number">2</span>
                     <h3>Firma</h3>
                     <span class="accordion-status">Pendiente</span>
                     <span class="accordion-toggle"><i class="fa-solid fa-chevron-down"></i></span>
@@ -4732,7 +5125,7 @@ function transferencia_moto_shortcode() {
             <h2 style="margin-bottom: 20px;"><i class="fa-solid fa-credit-card"></i> Método de Pago</h2>
 
             <!-- Elemento de pago de Stripe directamente en el formulario -->
-            <div id="stripe-container" style="max-width: 600px; margin: 0 auto;">
+            <div id="stripe-container" style="max-width: 100%; margin: 0 auto;">
                 <!-- Spinner de carga mientras se inicializa -->
                 <div id="stripe-loading" style="text-align: center; padding: 40px;">
                     <div class="stripe-spinner" style="margin: 0 auto 20px;"></div>
@@ -6904,6 +7297,60 @@ function transferencia_moto_shortcode() {
         customerDniInput.addEventListener('input', onDocumentFieldsInput);
         customerEmailInput.addEventListener('input', onDocumentFieldsInput);
         customerPhoneInput.addEventListener('input', onDocumentFieldsInput);
+
+        // Actualizar vista previa del documento en sidebar cuando cambian los datos
+        customerNameInput.addEventListener('input', function() {
+            const previewNameEl = document.getElementById('preview-name-sidebar');
+            if (previewNameEl) {
+                previewNameEl.textContent = this.value || '_____________';
+            }
+        });
+
+        customerDniInput.addEventListener('input', function() {
+            const previewDniEl = document.getElementById('preview-dni-sidebar');
+            if (previewDniEl) {
+                previewDniEl.textContent = this.value || '_____________';
+            }
+        });
+
+        // Actualizar resumen de vehículo en sidebar de página Datos
+        function updateVehicleSummary() {
+            const sidebarFabricanteEl = document.getElementById('sidebar-datos-fabricante');
+            const sidebarModeloEl = document.getElementById('sidebar-datos-modelo');
+            const sidebarFechaEl = document.getElementById('sidebar-datos-fecha');
+            const sidebarPrecioEl = document.getElementById('sidebar-datos-precio');
+
+            if (sidebarFabricanteEl) {
+                const fabricante = noEncuentroCheckbox.checked
+                    ? document.getElementById('manual_manufacturer').value
+                    : manufacturerSelect.value;
+                sidebarFabricanteEl.textContent = fabricante || '-';
+            }
+
+            if (sidebarModeloEl) {
+                const modelo = noEncuentroCheckbox.checked
+                    ? document.getElementById('manual_model').value
+                    : modelSelect.value;
+                sidebarModeloEl.textContent = modelo || '-';
+            }
+
+            if (sidebarFechaEl) {
+                const fecha = matriculationDateInput.value;
+                sidebarFechaEl.textContent = fecha ? new Date(fecha).toLocaleDateString('es-ES') : '-';
+            }
+
+            if (sidebarPrecioEl) {
+                const precio = purchasePriceInput.value;
+                sidebarPrecioEl.textContent = precio ? precio + ' €' : '-';
+            }
+        }
+
+        manufacturerSelect.addEventListener('change', updateVehicleSummary);
+        modelSelect.addEventListener('change', updateVehicleSummary);
+        matriculationDateInput.addEventListener('change', updateVehicleSummary);
+        purchasePriceInput.addEventListener('input', updateVehicleSummary);
+        document.getElementById('manual_manufacturer').addEventListener('input', updateVehicleSummary);
+        document.getElementById('manual_model').addEventListener('input', updateVehicleSummary);
 
         document.getElementById('clear-signature').addEventListener('click', function() {
             if (signaturePad) {
