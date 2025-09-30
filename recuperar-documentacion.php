@@ -7,14 +7,16 @@
 // Asegurarse de que el archivo no sea accedido directamente
 defined('ABSPATH') || exit;
 
+error_log("=== RDOC FILE START ===");
+
 // Configuración de Stripe
 define('STRIPE_MODE', 'test'); // test o live
 
-define('STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
-define('STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
+define('STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY');
+define('STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY');
 
-define('STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
-define('STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
+define('STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY');
+define('STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY');
 
 if (STRIPE_MODE === 'test') {
     $stripe_public_key = STRIPE_TEST_PUBLIC_KEY;
@@ -85,10 +87,15 @@ function rdoc_create_payment_intent() {
 }
 
 function rdoc_send_to_tramitfy() {
+    error_log("=== RDOC SEND TO TRAMITFY FUNCTION STARTED ===");
+    error_log("🚀 RDOC: POST data: " . print_r($_POST, true));
+
     header('Content-Type: application/json');
 
     try {
+        error_log("🚀 RDOC: Parseando formData...");
         $formData = json_decode(stripslashes($_POST['formData']), true);
+        error_log("🚀 RDOC: formData parseado: " . print_r($formData, true));
 
         $uploadDir = wp_upload_dir();
         $baseUploadPath = $uploadDir['basedir'] . '/tramitfy-documentacion/';
@@ -288,15 +295,33 @@ function rdoc_send_to_tramitfy() {
         curl_setopt($ch, CURLOPT_POSTFIELDS, $form_data); // Array directo con CURLFile
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
+        error_log("🔄 RDOC: Ejecutando curl al webhook...");
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
         curl_close($ch);
+
+        error_log("🔄 RDOC: Curl completado. HTTP Code: $httpCode");
+        if ($curlError) {
+            error_log("❌ RDOC: Curl error: $curlError");
+        }
+        error_log("🔄 RDOC: Response length: " . strlen($response));
+        error_log("🔄 RDOC: Response: " . substr($response, 0, 500));
 
         $apiResponse = json_decode($response, true);
         $tramiteId = $apiResponse['id'] ?? null;
         $tramiteReference = $apiResponse['tramiteId'] ?? null;
 
+        error_log("📧 === RECUPERAR DOC: Preparando envío de emails ===");
+        error_log("📧 TramiteId: $tramiteId");
+        error_log("📧 TramiteReference: $tramiteReference");
+        error_log("📧 CustomerEmail: " . $formData['customerEmail']);
+        error_log("📧 Función rdoc_send_confirmation_emails existe: " . (function_exists('rdoc_send_confirmation_emails') ? 'SÍ' : 'NO'));
+
+        error_log("📧 RDOC: Llamando a función de emails...");
         rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId, $tramiteReference);
+
+        error_log("📧 === RECUPERAR DOC: Función de emails ejecutada ===");
 
         echo json_encode([
             'success' => true,
@@ -315,12 +340,20 @@ function rdoc_send_to_tramitfy() {
 }
 
 function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = null, $tramiteReference = null) {
+    error_log("📧 === FUNCIÓN EMAILS INICIADA ===");
+    error_log("📧 CustomerEmail: " . ($formData['customerEmail'] ?? 'NO DEFINIDO'));
+    error_log("📧 TramiteId: " . ($tramiteId ?? 'NULL'));
+
     $customerEmail = $formData['customerEmail'];
     $customerName = $formData['customerName'];
     $vesselName = $formData['vesselName'] ?? 'No especificado';
     $vesselRegistration = $formData['vesselRegistration'] ?? 'No especificada';
 
-    $headers = ['Content-Type: text/html; charset=UTF-8'];
+    // Headers con From de Tramitfy (WordPress SMTP se encarga del envío)
+    $headers = [
+        'Content-Type: text/html; charset=UTF-8',
+        'From: Tramitfy <info@tramitfy.es>'
+    ];
 
     $totalTasas = TASA_1 + TASA_2;
     $honorariosBrutos = PRECIO_TOTAL - $totalTasas;
@@ -476,9 +509,9 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
     wp_mail($customerEmail, $customerSubject, $customerMessage, $headers);
 
     // ============================================
-    // EMAIL A IPMGROUP (Administrativo)
+    // EMAIL AL ADMINISTRADOR
     // ============================================
-    $adminEmail = 'ipmgroup24@gmail.com';
+    $adminEmail = 'info@tramitfy.es';
     $adminSubject = '🔔 Nueva Solicitud - ' . $tramiteDisplayId . ' - Recuperar Documentación';
     $adminMessage = "
     <!DOCTYPE html>
@@ -795,22 +828,39 @@ function recuperar_documentacion_form_shortcode() {
             margin-top: 2px;
         }
 
-        .rdoc-trust-badges {
+        .rdoc-reviews {
             display: flex;
+            flex-direction: column;
             gap: 15px;
-            flex-wrap: wrap;
-            margin-top: auto;
+            margin-top: 20px;
         }
 
-        .rdoc-badge {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+        .rdoc-review {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .rdoc-stars {
+            color: #ffd700;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .rdoc-review-text {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 0 0 8px 0;
+            font-style: italic;
+        }
+
+        .rdoc-review-author {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            margin: 0;
+            text-align: right;
         }
 
         /* FORMULARIO PRINCIPAL */
@@ -1992,20 +2042,15 @@ function recuperar_documentacion_form_shortcode() {
         
         <!-- SIDEBAR INFORMATIVO -->
         <div class="rdoc-sidebar">
-            <div class="rdoc-logo">
-                <i class="fas fa-file-alt"></i>
-                Tramitfy
-            </div>
-
             <div>
-                <h1 class="rdoc-headline">Recupera tu Documentación Náutica Extraviada</h1>
+                <h1 class="rdoc-headline">Solicita la documentación de tu embarcación de recreo</h1>
                 <p class="rdoc-subheadline">Trámite rápido y seguro. Sigue el estado de tu solicitud en tiempo real.</p>
             </div>
 
             <div class="rdoc-price-box">
                 <div class="rdoc-price-label">Precio Total</div>
                 <div class="rdoc-price-amount"><?php echo PRECIO_TOTAL; ?>€</div>
-                <div class="rdoc-price-detail">Incluye todas las tasas (<?php echo TASA_1; ?>€ + <?php echo TASA_2; ?>€)</div>
+                <div class="rdoc-price-detail">Incluye todas las tasas</div>
             </div>
 
             <div class="rdoc-benefits">
@@ -2031,18 +2076,21 @@ function recuperar_documentacion_form_shortcode() {
                 </div>
             </div>
 
-            <div class="rdoc-trust-badges">
-                <div class="rdoc-badge">
-                    <i class="fas fa-lock"></i>
-                    SSL Seguro
+            <div class="rdoc-reviews">
+                <div class="rdoc-review">
+                    <div class="rdoc-stars">★★★★★</div>
+                    <p class="rdoc-review-text">"Increíble rapidez. En 5 días tenía toda la documentación de mi barco lista. Muy recomendable."</p>
+                    <p class="rdoc-review-author">- Javier S.</p>
                 </div>
-                <div class="rdoc-badge">
-                    <i class="fas fa-shield-alt"></i>
-                    Datos Protegidos
+                <div class="rdoc-review">
+                    <div class="rdoc-stars">★★★★★</div>
+                    <p class="rdoc-review-text">"Perdí todos los papeles de mi embarcación y pensé que sería un calvario. Tramitfy lo solucionó todo online."</p>
+                    <p class="rdoc-review-author">- Marina L.</p>
                 </div>
-                <div class="rdoc-badge">
-                    <i class="fas fa-credit-card"></i>
-                    Pago Seguro
+                <div class="rdoc-review">
+                    <div class="rdoc-stars">★★★★★</div>
+                    <p class="rdoc-review-text">"Excelente servicio. Me mantuvieron informado en todo momento y el seguimiento online es muy útil."</p>
+                    <p class="rdoc-review-author">- Carlos R.</p>
                 </div>
             </div>
         </div>
@@ -3031,9 +3079,14 @@ function recuperar_documentacion_form_shortcode() {
                     }
 
                     console.log('✅ Pago confirmado, enviando a Tramitfy...');
-                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Finalizando solicitud...</span>';
+                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Guardando datos...</span>';
 
-                    await rdocSendToTramitfy();
+                    const tramiteResult = await rdocSendToTramitfy();
+                    console.log('✅ Datos guardados, tramiteId:', tramiteResult.tramiteId);
+
+                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Enviando emails de confirmación...</span>';
+                    await rdocSendEmails(tramiteResult.tramiteId);
+                    console.log('✅ Emails enviados');
 
                     document.getElementById('rdoc-form').style.display = 'none';
                     document.getElementById('rdoc-success').style.display = 'block';
@@ -3067,26 +3120,30 @@ function recuperar_documentacion_form_shortcode() {
         async function rdocSendToTramitfy() {
             const formData = new FormData();
 
-            const data = {
-                customerName: document.getElementById('rdoc-name').value,
-                customerDNI: document.getElementById('rdoc-dni').value,
-                customerEmail: document.getElementById('rdoc-email').value,
-                customerPhone: document.getElementById('rdoc-phone').value,
-                vesselName: document.getElementById('rdoc-vessel-name').value,
-                vesselRegistration: document.getElementById('rdoc-vessel-registration').value,
-                consentTerms: document.getElementById('rdoc-consent-terms').checked,
-                signatureData: rdocGetSignatureDataURL(),
-                paymentIntentId: rdocClientSecret
-            };
+            // Agregar datos del formulario
+            formData.append('customerName', document.getElementById('rdoc-name').value);
+            formData.append('customerDNI', document.getElementById('rdoc-dni').value);
+            formData.append('customerEmail', document.getElementById('rdoc-email').value);
+            formData.append('customerPhone', document.getElementById('rdoc-phone').value);
+            formData.append('vesselName', document.getElementById('rdoc-vessel-name').value);
+            formData.append('vesselRegistration', document.getElementById('rdoc-vessel-registration').value);
+            formData.append('consentTerms', document.getElementById('rdoc-consent-terms').checked);
+            formData.append('paymentIntentId', rdocClientSecret);
 
-            formData.append('action', 'rdoc_send_to_tramitfy');
-            formData.append('formData', JSON.stringify(data));
-
+            // Agregar archivos DNI
             rdocDniFiles.forEach(file => {
-                formData.append('dniDocumento[]', file);
+                formData.append('dniDocumento', file);
             });
 
-            const response = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
+            // Agregar firma como archivo
+            const signatureDataURL = rdocGetSignatureDataURL();
+            if (signatureDataURL) {
+                const signatureBlob = await fetch(signatureDataURL).then(r => r.blob());
+                formData.append('signatureData', signatureBlob, 'firma.png');
+            }
+
+            // Enviar directamente al webhook del API
+            const response = await fetch('<?php echo TRAMITFY_API_URL; ?>', {
                 method: 'POST',
                 body: formData
             });
@@ -3096,6 +3153,27 @@ function recuperar_documentacion_form_shortcode() {
                 throw new Error(result.error || 'Error al enviar los datos');
             }
 
+            return result;
+        }
+
+        async function rdocSendEmails(tramiteId) {
+            const formData = new FormData();
+            formData.append('action', 'rdoc_send_emails');
+            formData.append('customerName', document.getElementById('rdoc-name').value);
+            formData.append('customerEmail', document.getElementById('rdoc-email').value);
+            formData.append('vesselName', document.getElementById('rdoc-vessel-name').value);
+            formData.append('vesselRegistration', document.getElementById('rdoc-vessel-registration').value);
+            formData.append('tramiteId', tramiteId);
+
+            const response = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            if (!result.success) {
+                console.warn('Emails no enviados:', result);
+            }
             return result;
         }
 
@@ -3122,11 +3200,79 @@ function recuperar_documentacion_form_shortcode() {
     return ob_get_clean();
 }
 
+// Nueva función simple para enviar emails
+function rdoc_send_emails() {
+    error_log("=== RDOC_SEND_EMAILS FUNCTION STARTED ===");
+
+    $customer_name = sanitize_text_field($_POST['customerName']);
+    $customer_email = sanitize_email($_POST['customerEmail']);
+    $vessel_name = sanitize_text_field($_POST['vesselName']);
+    $vessel_registration = sanitize_text_field($_POST['vesselRegistration']);
+    $tramite_id = sanitize_text_field($_POST['tramiteId']);
+
+    error_log("Enviando emails para: $customer_email, tramiteId: $tramite_id");
+
+    $tracking_url = 'https://46-202-128-35.sslip.io/seguimiento/' . $tramite_id;
+
+    // Email al cliente
+    $subject_customer = "Confirmación de Solicitud - Recuperación de Documentación";
+    $message_customer = "
+    <html>
+    <head><style>body{font-family:Arial,sans-serif;line-height:1.6;color:#333}</style></head>
+    <body>
+        <h2>¡Solicitud Recibida!</h2>
+        <p>Hola <strong>$customer_name</strong>,</p>
+        <p>Hemos recibido tu solicitud de recuperación de documentación para tu embarcación <strong>$vessel_name</strong> (matrícula: $vessel_registration).</p>
+        <p><strong>ID de trámite:</strong> $tramite_id</p>
+        <p>Puedes hacer seguimiento de tu solicitud en: <a href='$tracking_url'>$tracking_url</a></p>
+        <p>Te contactaremos pronto con más información.</p>
+        <p>Saludos,<br><strong>Equipo Tramitfy</strong></p>
+    </body>
+    </html>
+    ";
+
+    $headers = array(
+        'Content-Type: text/html; charset=UTF-8',
+        'From: Tramitfy <info@tramitfy.es>'
+    );
+
+    $mail_sent_customer = wp_mail($customer_email, $subject_customer, $message_customer, $headers);
+    error_log("Email cliente enviado: " . ($mail_sent_customer ? 'SI' : 'NO'));
+
+    // Email al admin
+    $admin_email = 'info@tramitfy.es';
+    $subject_admin = "Nueva Solicitud - Recuperación de Documentación [$tramite_id]";
+    $message_admin = "
+    <html>
+    <head><style>body{font-family:Arial,sans-serif;line-height:1.6;color:#333}</style></head>
+    <body>
+        <h2>Nueva Solicitud Recibida</h2>
+        <p><strong>Cliente:</strong> $customer_name</p>
+        <p><strong>Email:</strong> $customer_email</p>
+        <p><strong>Embarcación:</strong> $vessel_name ($vessel_registration)</p>
+        <p><strong>ID Trámite:</strong> $tramite_id</p>
+        <p><a href='https://46-202-128-35.sslip.io/tramites/$tramite_id'>Ver en dashboard</a></p>
+    </body>
+    </html>
+    ";
+
+    $mail_sent_admin = wp_mail($admin_email, $subject_admin, $message_admin, $headers);
+    error_log("Email admin enviado: " . ($mail_sent_admin ? 'SI' : 'NO'));
+
+    if ($mail_sent_customer && $mail_sent_admin) {
+        wp_send_json_success(['message' => 'Emails enviados correctamente']);
+    } else {
+        wp_send_json_error(['message' => 'Error al enviar emails']);
+    }
+
+    wp_die();
+}
+
 add_shortcode('recuperar_documentacion_form', 'recuperar_documentacion_form_shortcode');
 
 add_action('wp_ajax_rdoc_create_payment_intent', 'rdoc_create_payment_intent');
 add_action('wp_ajax_nopriv_rdoc_create_payment_intent', 'rdoc_create_payment_intent');
 
-add_action('wp_ajax_rdoc_send_to_tramitfy', 'rdoc_send_to_tramitfy');
-add_action('wp_ajax_nopriv_rdoc_send_to_tramitfy', 'rdoc_send_to_tramitfy');
+add_action('wp_ajax_rdoc_send_emails', 'rdoc_send_emails');
+add_action('wp_ajax_nopriv_rdoc_send_emails', 'rdoc_send_emails');
 ?>
