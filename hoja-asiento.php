@@ -8,11 +8,11 @@ require_once(get_template_directory() . '/vendor/autoload.php');
 // Configuración de Stripe AL NIVEL GLOBAL (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
 define('HOJA_ASIENTO_STRIPE_MODE', 'test'); // 'test' o 'live'
 
-define('HOJA_ASIENTO_STRIPE_TEST_PUBLIC_KEY', 'pk_test_YOUR_STRIPE_TEST_PUBLIC_KEY');
-define('HOJA_ASIENTO_STRIPE_TEST_SECRET_KEY', 'sk_test_YOUR_STRIPE_TEST_SECRET_KEY');
+define('HOJA_ASIENTO_STRIPE_TEST_PUBLIC_KEY', 'pk_test_SANITIZED');
+define('HOJA_ASIENTO_STRIPE_TEST_SECRET_KEY', 'sk_test_SANITIZED');
 
-define('HOJA_ASIENTO_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_YOUR_STRIPE_LIVE_PUBLIC_KEY');
-define('HOJA_ASIENTO_STRIPE_LIVE_SECRET_KEY', 'sk_live_YOUR_STRIPE_LIVE_SECRET_KEY');
+define('HOJA_ASIENTO_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_SANITIZED');
+define('HOJA_ASIENTO_STRIPE_LIVE_SECRET_KEY', 'sk_live_SANITIZED');
 
 define('HOJA_ASIENTO_PRECIO_BASE', 29.95);
 define('HOJA_ASIENTO_API_URL', 'https://46-202-128-35.sslip.io/api/herramientas/hoja-asiento/webhook');
@@ -4665,8 +4665,8 @@ function hoja_asiento_form_shortcode() {
 
     <!-- Formulario principal -->
     <form id="hoja-asiento-form" action="" method="POST" enctype="multipart/form-data">
-        <!-- Página Marketing (Portada) -->
-        <div id="page-marketing" class="form-page">
+        <!-- Páginas de marketing eliminadas - formulario directo -->
+        <div id="page-marketing" class="form-page" style="display: none;">
             <div class="marketing-container full-width">
                 <div class="marketing-content">
                     <div class="marketing-badge">Rápido y sencillo</div>
@@ -4729,7 +4729,7 @@ function hoja_asiento_form_shortcode() {
         </div>
 
         <!-- Página Requisitos -->
-        <div id="page-requisitos" class="form-page hidden">
+        <div id="page-requisitos" class="form-page hidden" style="display: none;">
             <div class="requirements-screen">
                 <div class="requirements-header">
                     <h3 class="requirements-heading">
@@ -4755,7 +4755,7 @@ function hoja_asiento_form_shortcode() {
         </div>
 
         <!-- Página Pasos -->
-        <div id="page-pasos" class="form-page hidden">
+        <div id="page-pasos" class="form-page hidden" style="display: none;">
             <div class="requirements-screen">
                 <div class="requirements-header">
                     <h3 class="requirements-heading">
@@ -4801,7 +4801,7 @@ function hoja_asiento_form_shortcode() {
 <!-- Menú superior eliminado y reemplazado por el menú circular -->
         
         <!-- NUEVO FORMULARIO INTERACTIVO -->
-        <div class="interactive-form-container" style="display: none;">
+        <div class="interactive-form-container" style="display: block;">
             <!-- Menú de navegación mejorado con iconos y animaciones -->
             <div class="process-navigation" style="display: block;">
                 <div class="process-steps">
@@ -5233,7 +5233,7 @@ function hoja_asiento_form_shortcode() {
         const signatureStatusElement = document.getElementById('signature-status');
 
         // Estado del formulario
-        let currentPage = 0; // Páginas de marketing/info
+        let currentPage = 3; // Iniciar directamente en formulario (saltamos páginas de marketing)
         let currentStage = 0; // Etapas del formulario interactivo
         let formSubmitted = false;
 
@@ -7552,18 +7552,50 @@ console.log('Navegación sin desplazamiento automático');
                 
                 const result = await response.json();
                 
-                document.getElementById('loading-overlay').style.display = 'none';
-                
                 if (result.success) {
+                    console.log('✅ Datos guardados, tramiteId:', result.tramiteId);
+
+                    // PASO 2: Enviar emails de confirmación
+                    console.log('📧 PASO 2: Enviando emails de confirmación...');
+
+                    const emailFormData = new FormData();
+                    emailFormData.append('action', 'send_emails_hoja_asiento');
+                    emailFormData.append('customer_name', document.getElementById('customer_name').value);
+                    emailFormData.append('customer_email', document.getElementById('customer_email').value);
+                    emailFormData.append('customer_dni', document.getElementById('customer_dni').value);
+                    emailFormData.append('customer_phone', document.getElementById('customer_phone').value);
+                    emailFormData.append('boat_name', document.getElementById('boat_name').value);
+                    emailFormData.append('boat_matricula', document.getElementById('boat_matricula').value);
+                    emailFormData.append('boat_nib', document.getElementById('boat_nib').value);
+                    emailFormData.append('payment_amount', currentPrice.toFixed(2));
+                    emailFormData.append('tramite_id', result.tramiteId || result.procedureId);
+
+                    const emailResponse = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
+                        method: 'POST',
+                        body: emailFormData
+                    });
+
+                    const emailResult = await emailResponse.json();
+                    console.log('📧 PASO 2 Respuesta:', emailResult);
+
+                    if (!emailResult.success) {
+                        console.warn('⚠️ Error al enviar emails:', emailResult.message);
+                    } else {
+                        console.log('✅ Emails enviados correctamente');
+                    }
+
+                    // Cerrar loading y redirigir
+                    document.getElementById('loading-overlay').style.display = 'none';
+
                     // Función de redirección inmediata
                     const redirectNow = function() {
                         window.location.href = '<?php echo site_url("/pago-realizado-con-exito"); ?>';
                     };
-                    
+
                     // Ocultar absolutamente todo en la página
                     document.body.innerHTML = '';
                     document.body.style.backgroundColor = '#ffffff';
-                    
+
                     // Mostrar un spinner minimalista mientras se redirige
                     const spinner = document.createElement('div');
                     spinner.style.position = 'fixed';
@@ -7576,17 +7608,17 @@ console.log('Navegación sin desplazamiento automático');
                     spinner.style.borderTop = '5px solid #016d86';
                     spinner.style.borderRadius = '50%';
                     spinner.style.animation = 'spin 1s linear infinite';
-                    
+
                     // Añadir animación al head
                     const style = document.createElement('style');
                     style.textContent = '@keyframes spin { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }';
                     document.head.appendChild(style);
-                    
+
                     document.body.appendChild(spinner);
-                    
+
                     // Redirigir inmediatamente
                     redirectNow();
-                    
+
                     // Backup: si por alguna razón la redirección no ocurre, forzarla después de 100ms
                     setTimeout(redirectNow, 100);
                 } else {
@@ -9614,8 +9646,8 @@ function submit_form_hoja_asiento() {
         }
     }
 
-    // Integración con Google Drive y Google Sheets
-    try {
+    // Integración con Google Drive y Google Sheets (DESACTIVADO TEMPORALMENTE PARA VELOCIDAD)
+    /*try {
         require_once __DIR__ . '/vendor/autoload.php';
 
         $googleCredentialsPath = __DIR__ . '/credentials.json';
@@ -9829,7 +9861,7 @@ function submit_form_hoja_asiento() {
     } catch (Exception $e) {
         // Log error pero no detener el proceso
         error_log('Error en Google Drive/Sheets: ' . $e->getMessage());
-    }
+    }*/
 
     // Enviar datos a la API de Tramitfy con CURLFile (INCLUYE PDF Y ARCHIVOS)
     $webhookUrl = HOJA_ASIENTO_API_URL;
@@ -9899,8 +9931,12 @@ function submit_form_hoja_asiento() {
     @unlink($signature_image_path);
     @unlink($authorization_pdf_path);
 
-    // Respuesta para AJAX
-    wp_send_json_success('Formulario procesado correctamente.');
+    // Respuesta para AJAX con tramiteId
+    wp_send_json_success([
+        'message' => 'Formulario procesado correctamente.',
+        'tramiteId' => $tramite_id,
+        'procedureId' => $tramite_id
+    ]);
     wp_die();
 }
 
