@@ -755,29 +755,29 @@ function transferencia_moto_shortcode() {
         
         #transferencia-form h2 {
             margin-top: 0;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             color: rgb(var(--primary));
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 600;
             border-bottom: 2px solid rgba(var(--primary), 0.1);
-            padding-bottom: 12px;
+            padding-bottom: 10px;
         }
-        
+
         #transferencia-form h3 {
             color: rgb(var(--primary-dark));
-            font-size: 20px;
-            margin-top: 30px;
-            margin-bottom: 15px;
+            font-size: 18px;
+            margin-top: 24px;
+            margin-bottom: 12px;
             font-weight: 500;
         }
-        
+
         #transferencia-form label {
             font-weight: 500;
             display: block;
-            margin-top: 18px;
+            margin-top: 16px;
             margin-bottom: 6px;
             color: #444444;
-            font-size: 15px;
+            font-size: 14px;
         }
         
         /* Mejoras para los acordeones en página de documentos */
@@ -858,11 +858,11 @@ function transferencia_moto_shortcode() {
         #transferencia-form input[type="tel"],
         #transferencia-form input[type="email"] {
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             margin-top: 6px;
-            border-radius: 8px;
+            border-radius: 6px;
             border: 1px solid #d0d0d0;
-            font-size: 16px;
+            font-size: 15px;
             background-color: #f9f9f9;
             transition: all 0.2s ease;
         }
@@ -882,11 +882,11 @@ function transferencia_moto_shortcode() {
         #transferencia-form .button {
             background-color: rgb(var(--primary));
             color: #ffffff;
-            padding: 14px 24px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 500;
             transition: all 0.3s ease;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -903,15 +903,16 @@ function transferencia_moto_shortcode() {
             box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
         }
         
-        /* Estilos para el menú de navegación mejorado */
+        /* Navegación discreta y profesional */
         #form-navigation {
-            position: relative;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e5e7eb;
+            margin: 0;
             padding: 0;
-            margin-bottom: 30px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            border: 1px solid #e5e7eb;
+            border-radius: 0 16px 0 0;
         }
 
         .nav-progress-bar {
@@ -919,9 +920,8 @@ function transferencia_moto_shortcode() {
             bottom: 0;
             left: 0;
             right: 0;
-            height: 3px;
+            height: 2px;
             background-color: #e5e7eb;
-            border-radius: 0 0 8px 8px;
             z-index: 1;
         }
 
@@ -931,107 +931,76 @@ function transferencia_moto_shortcode() {
             left: 0;
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, #016d86 0%, #01829e 100%);
-            border-radius: 0 0 8px 8px;
-            transition: width 0.6s cubic-bezier(0.65, 0, 0.35, 1);
+            background: #016d86;
+            transition: width 0.4s ease;
         }
 
         .nav-items-container {
             display: flex;
-            justify-content: space-between;
             position: relative;
             z-index: 2;
-            padding: 0;
+            max-width: 900px;
+            margin: 0 auto;
         }
 
         .nav-item {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             text-decoration: none;
-            color: #6b7280;
+            color: #9ca3af;
             font-weight: 500;
+            font-size: 13px;
             position: relative;
-            transition: all 0.2s ease;
+            transition: color 0.2s ease;
             flex: 1;
-            padding: 14px 16px;
-            border-right: 1px solid #e5e7eb;
-        }
-
-        .nav-item:last-child {
-            border-right: none;
+            padding: 12px 16px;
+            justify-content: center;
         }
 
         .nav-item-circle {
-            width: 32px;
-            height: 32px;
-            min-width: 32px;
-            border-radius: 6px;
-            background-color: #f3f4f6;
-            border: 2px solid #e5e7eb;
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            border-radius: 50%;
+            background-color: #e5e7eb;
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
+            font-size: 11px;
+            font-weight: 700;
+            color: #9ca3af;
             transition: all 0.2s ease;
         }
 
         .nav-item-icon {
-            font-size: 16px;
-            color: #6b7280;
-            transition: all 0.2s ease;
-        }
-
-        .nav-item-number {
-            font-size: 14px;
-            font-weight: 700;
-            color: #6b7280;
             display: none;
         }
 
-        .nav-item-text {
-            font-size: 14px;
-            transition: all 0.2s ease;
-            white-space: nowrap;
+        .nav-item-number {
+            display: block;
         }
 
-        /* Estilos para el ítem activo */
+        .nav-item-text {
+            font-size: 13px;
+        }
+
         .nav-item.active {
             color: #016d86;
-            background: #f0f9fb;
         }
 
         .nav-item.active .nav-item-circle {
-            background: linear-gradient(135deg, #016d86, #01829e);
-            border-color: #016d86;
-        }
-
-        .nav-item.active .nav-item-icon {
+            background: #016d86;
             color: white;
         }
 
-        .nav-item.active .nav-item-text {
-            font-weight: 600;
-        }
-
-        /* Estilos para ítems completados */
         .nav-item.completed .nav-item-circle {
             background: #10b981;
-            border-color: #10b981;
-        }
-
-        .nav-item.completed .nav-item-icon {
             color: white;
         }
 
-        /* Efecto hover */
         .nav-item:hover {
-            background: #f9fafb;
-        }
-
-        .nav-item:not(.active):hover .nav-item-circle {
-            transform: scale(1.05);
-            border-color: #016d86;
+            color: #016d86;
         }
         
         /* Estilos responsivos */
@@ -1137,27 +1106,54 @@ function transferencia_moto_shortcode() {
         
         .button-container {
             display: none;
-            flex-wrap: wrap;
             justify-content: space-between;
-            margin-top: 40px;
-            gap: 15px;
+            align-items: center;
+            margin-top: 36px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e7eb;
+            gap: 16px;
         }
-        
+
         .button-container .button {
-            flex: 1 1 auto;
-            text-align: center;
-            min-width: 120px;
+            padding: 14px 32px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            min-width: 140px;
+        }
+
+        #prevButton {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        #prevButton:hover {
+            background: #e5e7eb;
+        }
+
+        #nextButton {
+            background: #016d86;
+            color: white;
+        }
+
+        #nextButton:hover {
+            background: #015266;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(1, 109, 134, 0.2);
         }
         
         /* Estilo mejorado para la sección de precio */
         .price-details {
-            margin-top: 25px;
-            font-size: 16px;
+            margin-top: 20px;
+            font-size: 15px;
             background-color: #fbfbfb;
-            padding: 25px;
-            border-radius: 12px;
+            padding: 20px;
+            border-radius: 10px;
             border: 1px solid #eaeaea;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
             transition: transform 0.2s ease;
         }
         
@@ -3347,32 +3343,32 @@ function transferencia_moto_shortcode() {
            ============================================ */
 
         .tramitfy-layout-wrapper {
-            max-width: 98%;
-            width: 98%;
-            margin: 0 auto;
+            max-width: 1400px;
+            width: 95%;
+            margin: 40px auto;
             padding: 0;
         }
 
         .tramitfy-two-column {
             display: grid !important;
-            grid-template-columns: 1fr 3fr !important;
+            grid-template-columns: 320px 1fr !important;
             grid-template-areas: "sidebar content" !important;
             gap: 0;
             align-items: stretch;
             background: white;
             border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-            min-height: 100vh;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            min-height: 600px;
         }
 
-        /* Panel Lateral Izquierdo - 1/4 del ancho, azul hasta abajo */
+        /* Panel Lateral Izquierdo */
         .tramitfy-sidebar {
             grid-area: sidebar;
             position: relative;
             background: linear-gradient(180deg, #016d86 0%, #014d5f 100%);
             border-radius: 16px 0 0 16px;
-            padding: 22px 18px;
+            padding: 28px 20px;
             box-shadow: none;
             border: none;
             backdrop-filter: none;
@@ -3600,12 +3596,12 @@ function transferencia_moto_shortcode() {
             margin-top: 12px;
         }
 
-        /* Panel Derecho - Formulario - maximizado al 100% */
+        /* Panel Derecho - Formulario - maximizado */
         .tramitfy-main-form {
             grid-area: content;
             background: white;
             border-radius: 0 16px 16px 0;
-            padding: 35px 70px;
+            padding: 0;
             box-shadow: none;
             max-width: none !important;
             width: auto !important;
@@ -3618,15 +3614,29 @@ function transferencia_moto_shortcode() {
         .form-page {
             width: 100%;
             max-width: 100% !important;
+            padding: 32px 40px;
+        }
+
+        /* Transiciones para los pasos del precio */
+        .precio-step {
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+            opacity: 1;
+            transform: translateY(0);
         }
 
         #page-pago {
             width: 100%;
             max-width: 100% !important;
+            padding: 32px 40px !important;
         }
 
         #page-pago > * {
             max-width: 100% !important;
+        }
+
+        /* Panel de admin */
+        .admin-autofill-panel {
+            margin: 24px 40px 0 40px !important;
         }
 
         /* Responsive */
@@ -4319,243 +4329,60 @@ function transferencia_moto_shortcode() {
                 <!-- Panel Lateral Izquierdo -->
                 <aside class="tramitfy-sidebar">
 
-                    <!-- Contenido: PASO 1 - Vehículo -->
-                    <div class="sidebar-content" data-step="page-vehiculo">
-                        <div class="sidebar-body">
-                            <!-- Precio fijo en la parte superior -->
-                            <div style="background: rgba(255, 255, 255, 0.25); padding: 20px; border-radius: 10px; color: #ffffff; margin-bottom: 25px;">
-                                <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Tu tramitación completa</div>
-                                <div style="font-size: 32px; font-weight: 700; margin-bottom: 12px;">134,95€</div>
-                                <div style="font-size: 12px; line-height: 1.8; opacity: 0.95;">
-                                    ✓ Tasas de Capitanía Marítima<br>
-                                    ✓ Gestión y pago ITP<br>
-                                    ✓ Honorarios profesionales<br>
-                                    ✓ IVA incluido
-                                </div>
-                            </div>
-
-                            <!-- Mensaje de urgencia -->
-                            <div style="background: rgba(255, 255, 255, 0.15); padding: 15px; border-radius: 8px; border-left: 4px solid #ffffff; margin-bottom: 20px;">
-                                <p style="margin: 0; color: #ffffff; font-size: 13px; line-height: 1.6;">
-                                    <strong>⚡ En 24 horas:</strong> Entrega en capitanía y documentos provisionales
-                                </p>
-                            </div>
-
-                            <div class="sidebar-info-box">
-                                <p><strong>Necesitaremos información básica</strong> de tu moto de agua para iniciar el trámite.</p>
-                                <p>Puedes buscar por <strong>fabricante y modelo</strong> en nuestra base de datos, o introducir los datos manualmente si no lo encuentras.</p>
-                            </div>
-                        </div>
-                        <div class="sidebar-tips">
-                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
-                            <ul>
-                                <li>La <strong>fecha de matriculación</strong> es importante para calcular el ITP</li>
-                                <li>La encontrarás en el <strong>Tarjeta de la Moto</strong></li>
-                                <li>Si no encuentras tu modelo, márcalo y rellena manualmente</li>
-                            </ul>
-                        </div>
+                    <!-- Contenido dinámico por página -->
+                    <div id="sidebar-dynamic-content" style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                        <!-- Se actualizará dinámicamente con JavaScript -->
                     </div>
 
-                    <!-- Contenido: PASO 2 - Precio -->
-                    <div class="sidebar-content" data-step="page-precio">
+                    <!-- Contenido universal del sidebar -->
+                    <div class="sidebar-content active" data-step="all">
                         <div class="sidebar-body">
-                            <!-- Nuestros servicios arriba del todo -->
-                            <div style="background: rgba(255, 255, 255, 0.25); padding: 20px; border-radius: 10px; color: #ffffff; margin-bottom: 25px;">
-                                <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Nuestros servicios</div>
-                                <div style="font-size: 32px; font-weight: 700; margin-bottom: 12px;">134,95€</div>
-                                <div style="font-size: 12px; line-height: 1.8; opacity: 0.95;">
-                                    ✓ Tasas de Capitanía Marítima<br>
-                                    ✓ Gestión y pago ITP<br>
-                                    ✓ Honorarios profesionales<br>
-                                    ✓ IVA incluido
-                                </div>
-                            </div>
+                            <!-- Título motivacional con iconos de guía -->
+                            <div style="text-align: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                                <h3 style="color: #ffffff; font-size: 22px; margin: 0 0 12px 0; font-weight: 700;">¡Solo 5 minutos!</h3>
+                                <p style="color: rgba(255,255,255,0.95); font-size: 14px; margin: 0 0 16px 0; line-height: 1.5;">Nosotros nos encargamos de todo el proceso</p>
 
-                            <!-- Desglose del trámite con cálculo dinámico del ITP -->
-                            <div style="background: rgba(255, 255, 255, 0.15); padding: 18px; border-radius: 10px; color: #ffffff; margin-bottom: 20px;">
-                                <h4 style="margin: 0 0 15px 0; font-size: 15px; color: #ffffff; font-weight: 600;">
-                                    <i class="fa-solid fa-calculator"></i> Desglose del trámite
-                                </h4>
-                                <div style="font-size: 13px; line-height: 1.6;">
-                                    <div style="display: flex; justify-content: space-between; padding: 8px 0;">
-                                        <span style="opacity: 0.9;">Precio compra:</span>
-                                        <strong id="sidebar-purchase-price" style="color: #ffffff;">0€</strong>
+                                <!-- Pasos visuales -->
+                                <div style="display: flex; justify-content: space-around; margin-top: 16px;">
+                                    <div style="text-align: center;">
+                                        <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-weight: 700; color: #fff; font-size: 16px;">1</div>
+                                        <span style="font-size: 10px; color: rgba(255,255,255,0.9);">Tus datos</span>
                                     </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 8px 0;">
-                                        <span style="opacity: 0.9;">Valor fiscal:</span>
-                                        <strong id="sidebar-fiscal-value" style="color: #ffffff;">-</strong>
+                                    <div style="text-align: center;">
+                                        <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-weight: 700; color: #fff; font-size: 16px;">2</div>
+                                        <span style="font-size: 10px; color: rgba(255,255,255,0.9);">Pago</span>
                                     </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid rgba(255, 255, 255, 0.3); margin-top: 6px;">
-                                        <span>Base imponible:</span>
-                                        <strong id="sidebar-tax-base" style="color: #ffffff;">0€</strong>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 5px 0;">
-                                        <span>Tipo (<span id="sidebar-region-name">-</span>):</span>
-                                        <strong id="sidebar-tax-rate" style="color: #ffffff;">4%</strong>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 10px 0; border-top: 2px solid rgba(255, 255, 255, 0.5); margin-top: 8px; font-weight: bold;">
-                                        <span style="color: #ffffff;">ITP a pagar:</span>
-                                        <strong id="sidebar-itp-amount" style="font-size: 18px; color: #ffffff;">0€</strong>
-                                    </div>
-                                </div>
-                                <small style="display: block; margin-top: 10px; color: rgba(255, 255, 255, 0.8); font-size: 11px;">
-                                    ℹ️ Se aplica sobre el mayor valor
-                                </small>
-                            </div>
-                        </div>
-                        <div class="sidebar-tips">
-                            <ul>
-                                <li>Puedes aplicar un <strong>cupón de descuento</strong> si lo tienes</li>
-                                <li>El ITP varía según cada <strong>comunidad autónoma</strong></li>
-                                <li>Los servicios opcionales agilizarán tu trámite</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Contenido: PASO 3 - Datos -->
-                    <div class="sidebar-content" data-step="page-datos">
-                        <div class="sidebar-header">
-                            <div class="sidebar-icon">
-                                <i class="fa-solid fa-user-circle"></i>
-                            </div>
-                            <div class="sidebar-title">
-                                <h3>Información Personal</h3>
-                                <p>Paso 3 de 6</p>
-                            </div>
-                        </div>
-                        <div class="sidebar-body">
-                            <div class="sidebar-info-box">
-                                <p><strong>📋 Resumen de tu vehículo</strong></p>
-                                <div style="background: rgba(255, 255, 255, 0.15); padding: 12px; border-radius: 8px; margin-top: 10px;">
-                                    <div style="display: flex; justify-content: space-between; padding: 5px 0; font-size: 12px;">
-                                        <span style="opacity: 0.9;">Fabricante:</span>
-                                        <strong id="sidebar-datos-fabricante" style="color: #ffffff;">-</strong>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 5px 0; font-size: 12px;">
-                                        <span style="opacity: 0.9;">Modelo:</span>
-                                        <strong id="sidebar-datos-modelo" style="color: #ffffff;">-</strong>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 5px 0; font-size: 12px;">
-                                        <span style="opacity: 0.9;">Fecha matriculación:</span>
-                                        <strong id="sidebar-datos-fecha" style="color: #ffffff;">-</strong>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 5px 0; font-size: 12px;">
-                                        <span style="opacity: 0.9;">Precio compra:</span>
-                                        <strong id="sidebar-datos-precio" style="color: #ffffff;">-</strong>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="sidebar-tips">
-                            <h4><i class="fa-solid fa-lightbulb"></i> Importante</h4>
-                            <ul>
-                                <li>Estos datos se usarán en el <strong>documento de autorización</strong></li>
-                                <li>Asegúrate de que coincidan con tu <strong>DNI</strong></li>
-                                <li>El email recibirá todas las <strong>notificaciones</strong></li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Contenido: PASO 4 - Documentos -->
-                    <div class="sidebar-content" data-step="page-documentos">
-                        <div class="sidebar-header">
-                            <div class="sidebar-icon">
-                                <i class="fa-solid fa-file-signature"></i>
-                            </div>
-                            <div class="sidebar-title">
-                                <h3>Documentación</h3>
-                                <p>Paso 4 de 6</p>
-                            </div>
-                        </div>
-                        <div class="sidebar-body">
-                            <!-- Vista previa del documento de autorización -->
-                            <div class="sidebar-doc-preview">
-                                <h4 style="color: white; font-size: 13px; margin: 0 0 10px 0; font-weight: 600;">
-                                    <i class="fa-solid fa-scroll"></i> Documento de Autorización
-                                </h4>
-                                <div class="sidebar-doc-card">
-                                    <div style="padding: 4px 0; border-bottom: 1px solid #e5e7eb; margin-bottom: 8px;">
-                                        <p style="font-size: 9px; font-weight: 700; color: #016d86; text-transform: uppercase; margin: 0;">Tramitfy S.L.</p>
-                                    </div>
-                                    <p style="font-size: 11px; color: #1f2937; margin: 0 0 8px 0; line-height: 1.5; text-align: justify;">
-                                        Yo, <strong><span id="preview-name-sidebar" style="color: #016d86;">_____________</span></strong>, con DNI <strong><span id="preview-dni-sidebar" style="color: #016d86;">_____________</span></strong>, autorizo expresamente a <strong>TRAMITFY S.L.</strong> para que realice todas las gestiones necesarias para la transferencia de propiedad de la moto de agua.
-                                    </p>
-                                    <p style="font-size: 10px; color: #6b7280; margin: 0; text-align: center; padding-top: 8px; border-top: 1px dashed #d1d5db; font-style: italic;">
-                                        📝 Firmarás este documento digitalmente
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="sidebar-tips">
-                            <h4><i class="fa-solid fa-lightbulb"></i> Requisitos</h4>
-                            <ul style="font-size: 11px; line-height: 1.5;">
-                                <li><strong>DNI</strong> del comprador y vendedor (ambas caras)</li>
-                                <li><strong>Tarjeta</strong> de la moto de agua</li>
-                                <li><strong>Contrato</strong> de compraventa firmado</li>
-                                <li><strong>Firma digital</strong> del documento</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Contenido: PASO 5 - Pago -->
-                    <div class="sidebar-content" data-step="page-pago">
-                        <div class="sidebar-body">
-                            <h3 style="margin-bottom: 20px; color: #ffffff; font-size: 18px;"><i class="fa-solid fa-clipboard-list"></i> Resumen de su trámite</h3>
-
-                            <!-- Datos Personales -->
-                            <div style="background: rgba(255, 255, 255, 0.15); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                                <h4 style="color: #ffffff; font-size: 14px; margin-bottom: 10px;"><i class="fa-solid fa-user"></i> Datos Personales</h4>
-                                <div style="font-size: 13px; color: rgba(255, 255, 255, 0.9); line-height: 1.8;">
-                                    <p style="margin: 5px 0;"><strong>Nombre:</strong> <span id="summary-name">-</span></p>
-                                    <p style="margin: 5px 0;"><strong>DNI:</strong> <span id="summary-dni">-</span></p>
-                                    <p style="margin: 5px 0;"><strong>Email:</strong> <span id="summary-email">-</span></p>
-                                    <p style="margin: 5px 0;"><strong>Teléfono:</strong> <span id="summary-phone">-</span></p>
-                                </div>
-                            </div>
-
-                            <!-- Datos del Vehículo -->
-                            <div style="background: rgba(255, 255, 255, 0.15); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                                <h4 style="color: #ffffff; font-size: 14px; margin-bottom: 10px;"><i class="fa-solid fa-water"></i> Vehículo</h4>
-                                <div style="font-size: 13px; color: rgba(255, 255, 255, 0.9); line-height: 1.8;">
-                                    <p style="margin: 5px 0;"><strong>Tipo:</strong> Moto de agua</p>
-                                    <p style="margin: 5px 0;"><strong>Fabricante:</strong> <span id="summary-manufacturer">-</span></p>
-                                    <p style="margin: 5px 0;"><strong>Modelo:</strong> <span id="summary-model">-</span></p>
-                                    <p style="margin: 5px 0;"><strong>Fecha Matric.:</strong> <span id="summary-matriculation">-</span></p>
-                                    <p style="margin: 5px 0;"><strong>Precio Compra:</strong> <span id="summary-purchase-price">-</span></p>
-                                    <p style="margin: 5px 0;"><strong>Com. Autónoma:</strong> <span id="summary-region">-</span></p>
-                                </div>
-                            </div>
-
-                            <!-- Resumen de Pago -->
-                            <div style="background: rgba(255, 255, 255, 0.25); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                                <h4 style="color: #ffffff; font-size: 14px; margin-bottom: 10px;"><i class="fa-solid fa-receipt"></i> Resumen de Pago</h4>
-                                <div style="font-size: 13px; color: rgba(255, 255, 255, 0.9); line-height: 1.8;">
-                                    <p style="margin: 5px 0;"><strong>Cambio de titularidad:</strong> <span id="summary-base-price">134.99 €</span></p>
-                                    <p style="margin: 10px 0 5px 0; font-size: 12px; opacity: 0.8;"><strong>Incluye:</strong></p>
-                                    <div style="margin-left: 10px;">
-                                        <p style="margin: 3px 0;">• Tasas + Gestión: <span id="summary-tasas-gestion">114.87 €</span></p>
-                                        <p style="margin: 3px 0;">• IVA: <span id="summary-iva">20.12 €</span></p>
-                                        <p style="margin: 3px 0;">• Comisión bancaria: <span id="summary-comision">0 €</span></p>
-                                    </div>
-                                    <p style="margin: 10px 0 5px 0;"><strong>Impuesto transmisiones:</strong> <span id="summary-transfer-tax">0 €</span></p>
-
-                                    <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid rgba(255, 255, 255, 0.5);">
-                                        <p style="font-size: 16px; font-weight: bold; color: #ffffff;"><strong>Total a pagar:</strong> <span id="summary-final-amount">134.99 €</span></p>
+                                    <div style="text-align: center;">
+                                        <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-weight: 700; color: #fff; font-size: 16px;">3</div>
+                                        <span style="font-size: 10px; color: rgba(255,255,255,0.9);">Listo</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div style="background: rgba(76, 175, 80, 0.2); padding: 12px; border-radius: 8px; border-left: 4px solid #4CAF50;">
-                                <p style="margin: 0; color: #ffffff; font-size: 12px; line-height: 1.6;">
-                                    <i class="fa-solid fa-shield-halved"></i> <strong>Pago seguro</strong> - Conexión cifrada SSL
-                                </p>
+                            <!-- TrustIndex Widget de Trustpilot -->
+                            <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                                <script defer async src='https://cdn.trustindex.io/loader.js?f4fbfd341d12439e0c86fae7fc2'></script>
+                            </div>
+
+                            <!-- Garantías -->
+                            <div style="background: rgba(76, 175, 80, 0.15); padding: 14px; border-radius: 8px; margin-top: 16px; border: 1px solid rgba(76, 175, 80, 0.3);">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                    <i class="fa-solid fa-shield-halved" style="color: #4caf50; font-size: 18px;"></i>
+                                    <span style="color: #fff; font-weight: 700; font-size: 14px;">100% Seguro</span>
+                                </div>
+                                <ul style="margin: 0; padding-left: 20px; color: rgba(255,255,255,0.95); font-size: 12px; line-height: 1.8;">
+                                    <li>Pago con Stripe (100% seguro)</li>
+                                    <li>Gestores profesionales</li>
+                                    <li>Soporte durante todo el proceso</li>
+                                </ul>
+                            </div>
+
+                            <!-- Call to action final -->
+                            <div style="text-align: center; margin-top: 20px; padding: 16px; background: rgba(255,255,255,0.25); border-radius: 8px; border: 2px solid rgba(255,255,255,0.4);">
+                                <p style="color: #ffffff; font-size: 15px; margin: 0 0 6px 0; font-weight: 700;">⚡ Documentos en 24-48h</p>
+                                <p style="color: rgba(255,255,255,0.95); font-size: 12px; margin: 0; line-height: 1.5;">Empieza ahora y olvídate de las gestiones</p>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- TrustIndex Reviews Widget -->
-                    <div style="margin-top: 25px; padding: 20px; background: rgba(255, 255, 255, 0.1); border-radius: 12px; backdrop-filter: blur(10px);">
-                        <script defer async src='https://cdn.trustindex.io/loader.js?f4fbfd341d12439e0c86fae7fc2'></script>
                     </div>
 
                 </aside>
@@ -4582,7 +4409,7 @@ function transferencia_moto_shortcode() {
         <?php endif; ?>
 
         <!-- Navegación del formulario mejorada -->
-        <div id="form-navigation" style="display: none;">
+        <div id="form-navigation">
             <div class="nav-progress-bar">
                 <div class="nav-progress-indicator"></div>
             </div>
@@ -4671,8 +4498,8 @@ function transferencia_moto_shortcode() {
 
         <!-- Página Vehículo -->
         <div id="page-vehiculo" class="form-page form-section-compact">
-            <h2 style="margin-bottom: 10px;">Transferencia de Propiedad</h2>
-            <h3 style="margin-bottom: 25px; font-size: 18px; color: #666;">Información de la Moto</h3>
+            <h2 style="margin-bottom: 10px;">Información de tu Moto</h2>
+            <p style="margin-bottom: 25px; font-size: 15px; color: #666; line-height: 1.6;">Necesitamos estos datos para identificar tu vehículo ante Capitanía Marítima y calcular el ITP según la comunidad autónoma.</p>
             <!-- Tipo de vehículo fijo: Barco -->
             <input type="hidden" name="vehicle_type" value="Barco">
 
@@ -4796,154 +4623,339 @@ function transferencia_moto_shortcode() {
 
         </div> <!-- Fin page-datos -->
 
-        <!-- Página Precio - ULTRA SIMPLIFICADA -->
+        <!-- Página Precio - NUEVO FLUJO LIMPIO -->
         <div id="page-precio" class="form-page form-section-compact hidden">
-            <h2>¿Cuánto cuesta?</h2>
-            <p style="color: #6b7280; margin-bottom: 30px;">Todo incluido, sin sorpresas.</p>
 
-            <!-- Precio Base -->
-            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 16px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <div>
-                        <div style="font-size: 18px; font-weight: 600; color: #1f2937;">Tramitación Completa</div>
-                        <div style="font-size: 14px; color: #6b7280; margin-top: 4px;">Tasas, gestión ITP y honorarios</div>
+            <!-- PASO 1: Información inicial de precios -->
+            <div id="precio-step-1" class="precio-step">
+                <h2>Precio del Trámite</h2>
+                <p style="color: #666; margin-bottom: 32px; font-size: 15px; line-height: 1.6;">Todo lo que necesitas para completar tu transferencia de forma legal y sin complicaciones.</p>
+
+                <!-- Tramitación Completa -->
+                <div style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; padding: 28px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div>
+                            <div style="font-size: 20px; font-weight: 700; color: #1f2937;">Tramitación Completa</div>
+                            <div style="font-size: 14px; color: #6b7280; margin-top: 6px;">Todo incluido para tu tranquilidad</div>
+                        </div>
+                        <div style="font-size: 32px; font-weight: 700; color: #016d86;" id="tramitacion_price">134.99 €</div>
                     </div>
-                    <div style="font-size: 24px; font-weight: 700; color: #016d86;" id="cambio_nombre_price">134.99 €</div>
+                    <div style="border-top: 1px solid #e5e7eb; padding-top: 16px; margin-top: 16px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px; color: #4b5563;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-check-circle" style="color: #10b981;"></i>
+                                <span>Gestión completa</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-check-circle" style="color: #10b981;"></i>
+                                <span>Tasas incluidas</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-check-circle" style="color: #10b981;"></i>
+                                <span>Pago del ITP</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-check-circle" style="color: #10b981;"></i>
+                                <span>IVA incluido</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div style="display: flex; justify-content: space-between; color: #6b7280; font-size: 14px;">
-                    <span>+ Comisión bancaria (1.5%)</span>
-                    <span id="extra_fee_includes_display">0 €</span>
+
+                <!-- ITP (Impuesto) -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div>
+                            <div style="font-size: 20px; font-weight: 700; color: #016d86;">Impuesto (ITP)</div>
+                            <div style="font-size: 14px; color: #016d86; margin-top: 6px;">Obligatorio ante Hacienda</div>
+                        </div>
+                        <div style="font-size: 32px; font-weight: 700; color: #016d86;" id="transfer_tax_step1">0 €</div>
+                    </div>
+                    <div style="border-top: 1px solid #016d86; padding-top: 16px; margin-top: 16px;">
+                        <button type="button" id="ver-calculo-itp" style="background: #016d86; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%;">
+                            <i class="fa-solid fa-calculator"></i> Ver cómo se calcula el ITP
+                        </button>
+                    </div>
+
+                    <!-- Detalle del cálculo (inicialmente oculto) -->
+                    <div id="calculo-itp-detail" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 2px dashed #016d86;">
+                        <div style="font-size: 15px; color: #014d5f; margin-bottom: 16px; line-height: 1.6;">
+                            <strong>¿Cómo se calcula?</strong> El ITP se aplica sobre el mayor valor entre:
+                        </div>
+                        <div style="display: grid; gap: 12px; font-size: 14px;">
+                            <div style="display: flex; justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.7); border-radius: 6px;">
+                                <span style="color: #014d5f;">Precio de compra:</span>
+                                <strong id="precio-compra-calc">0 €</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.7); border-radius: 6px;">
+                                <span style="color: #014d5f;">Valor fiscal:</span>
+                                <strong id="valor-fiscal-calc">0 €</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 12px; background: white; border-radius: 6px; border: 2px solid #016d86;">
+                                <span style="color: #016d86; font-weight: 600;">Base imponible:</span>
+                                <strong style="color: #016d86;" id="base-imponible-calc">0 €</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.7); border-radius: 6px;">
+                                <span style="color: #014d5f;">Tipo impositivo (<span id="region-name-calc">-</span>):</span>
+                                <strong id="tipo-impositivo-calc">4%</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pregunta ITP Pagado -->
+                <div id="itp-question-container" style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; padding: 24px; text-align: center; transition: all 0.3s ease;">
+                    <h3 style="margin: 0 0 8px 0; font-size: 18px; color: #1f2937;">¿Ya has pagado el ITP?</h3>
+                    <p style="margin: 0 0 20px 0; font-size: 14px; color: #6b7280;">Selecciona tu situación</p>
+                    <div style="display: flex; gap: 12px; justify-content: center;">
+                        <button type="button" id="itp-si" class="itp-choice-btn" style="flex: 1; max-width: 200px; padding: 16px 24px; border: 2px solid #10b981; background: white; color: #10b981; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                            Sí, ya lo pagué
+                        </button>
+                        <button type="button" id="itp-no" class="itp-choice-btn" style="flex: 1; max-width: 200px; padding: 16px 24px; border: 2px solid #e5e7eb; background: white; color: #6b7280; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                            No, necesito pagarlo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Flujo: ITP Ya Pagado (oculto inicialmente) -->
+                <div id="itp-ya-pagado-flow" style="display: none; margin-top: 20px; background: #f0fdf4; border: 2px solid #10b981; border-radius: 12px; padding: 24px;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                        <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 24px;"></i>
+                        <h4 style="margin: 0; font-size: 17px; color: #065f46;">Perfecto, ya tienes el ITP pagado</h4>
+                    </div>
+                    <p style="margin: 0 0 20px 0; font-size: 15px; color: #047857; line-height: 1.6;">
+                        Necesitarás <strong>aportar el modelo 620 pagado</strong> para que podamos completar la gestión de la transferencia.
+                    </p>
+                    <div style="background: white; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                        <p style="margin: 0 0 12px 0; font-size: 14px; color: #065f46; font-weight: 600;">
+                            📄 Documento requerido:
+                        </p>
+                        <p style="margin: 0; font-size: 14px; color: #047857;">
+                            Modelo 620 (justificante de pago del ITP ante Hacienda)
+                        </p>
+                    </div>
+                    <p style="margin: 0; font-size: 13px; color: #059669; font-style: italic;">
+                        Lo podrás subir en el paso de documentación más adelante
+                    </p>
+                </div>
+
+                <!-- Flujo: ITP No Pagado - Gestión (oculto inicialmente) -->
+                <div id="itp-no-pagado-flow" style="display: none; margin-top: 20px;">
+                    <!-- Opción de gestión -->
+                    <div style="background: #eff6ff; border: 2px solid #016d86; border-radius: 12px; padding: 24px; margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <i class="fa-solid fa-hand-holding-dollar" style="color: #016d86; font-size: 24px;"></i>
+                            <h4 style="margin: 0; font-size: 17px; color: #014d5f;">¿Quieres que lo gestionemos nosotros?</h4>
+                        </div>
+                        <p style="margin: 0 0 20px 0; font-size: 15px; color: #0369a1; line-height: 1.6;">
+                            Podemos pagarlo y gestionarlo por ti. Tú decides cómo pagarlo:
+                        </p>
+
+                        <!-- Opciones de gestión -->
+                        <div style="display: grid; gap: 12px;">
+                            <!-- Opción: Lo pago yo -->
+                            <label style="display: flex; align-items: flex-start; gap: 12px; padding: 16px; background: white; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s;" class="itp-gestion-option" data-option="yo-pago">
+                                <input type="radio" name="itp_gestion" value="yo-pago" style="margin-top: 4px; width: 18px; height: 18px;">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 15px; font-weight: 600; color: #1f2937; margin-bottom: 4px;">Lo pago yo mismo</div>
+                                    <div style="font-size: 13px; color: #6b7280; line-height: 1.4;">
+                                        Pagas el ITP por tu cuenta y nos aportas el modelo 620. Nosotros gestionamos la transferencia cuando lo recibamos.
+                                    </div>
+                                </div>
+                            </label>
+
+                            <!-- Opción: Lo gestionan ustedes -->
+                            <label style="display: flex; align-items: flex-start; gap: 12px; padding: 16px; background: white; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s;" class="itp-gestion-option" data-option="gestionan-ustedes">
+                                <input type="radio" name="itp_gestion" value="gestionan-ustedes" style="margin-top: 4px; width: 18px; height: 18px;">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 15px; font-weight: 600; color: #1f2937; margin-bottom: 4px;">Lo gestionan ustedes</div>
+                                    <div style="font-size: 13px; color: #6b7280; line-height: 1.4; margin-bottom: 8px;">
+                                        Nosotros pagamos y gestionamos el ITP. Tú abonas el importe del ITP ahora.
+                                    </div>
+                                    <!-- Submétodos de pago (ocultos hasta seleccionar esta opción) -->
+                                    <div id="metodos-pago-itp" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+                                        <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: 600; color: #374151;">¿Cómo prefieres pagarlo?</p>
+                                        <div style="display: grid; gap: 8px;">
+                                            <!-- Tarjeta -->
+                                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                                                <input type="radio" name="metodo_pago_itp" value="tarjeta" style="width: 16px; height: 16px;">
+                                                <div style="flex: 1;">
+                                                    <span style="font-weight: 600; color: #1f2937;">Tarjeta</span>
+                                                    <span style="color: #dc2626; margin-left: 6px;">(+2% comisión bancaria)</span>
+                                                </div>
+                                            </label>
+                                            <!-- Transferencia -->
+                                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                                                <input type="radio" name="metodo_pago_itp" value="transferencia" style="width: 16px; height: 16px;">
+                                                <div style="flex: 1;">
+                                                    <span style="font-weight: 600; color: #1f2937;">Transferencia bancaria</span>
+                                                    <span style="color: #059669; margin-left: 6px;">(sin comisión)</span>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Resumen del ITP a pagar (aparece al seleccionar método) -->
+                    <div id="itp-pago-resumen" style="display: none; background: white; border: 2px solid #016d86; border-radius: 12px; padding: 20px;">
+                        <h4 style="margin: 0 0 16px 0; font-size: 16px; color: #014d5f;">💰 Resumen del pago ITP</h4>
+                        <div style="display: grid; gap: 10px; font-size: 14px;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: #6b7280;">ITP base:</span>
+                                <strong id="itp-base-display">0 €</strong>
+                            </div>
+                            <div id="comision-tarjeta-row" style="display: none;">
+                                <div style="display: flex; justify-content: space-between; color: #dc2626;">
+                                    <span>Comisión tarjeta (2%):</span>
+                                    <strong id="comision-tarjeta-display">0 €</strong>
+                                </div>
+                            </div>
+                            <div style="border-top: 1px solid #e5e7eb; padding-top: 10px; display: flex; justify-content: space-between; font-size: 16px;">
+                                <span style="font-weight: 600; color: #014d5f;">Total ITP a pagar:</span>
+                                <strong style="color: #016d86;" id="itp-total-display">0 €</strong>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- ITP -->
-            <div style="background: #fef3c7; border: 2px solid #fbbf24; border-radius: 8px; padding: 24px; margin-bottom: 16px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <div>
-                        <div style="font-size: 18px; font-weight: 600; color: #92400e;">Impuesto (ITP)</div>
-                        <div style="font-size: 14px; color: #92400e; margin-top: 4px;">Impuesto obligatorio de Hacienda</div>
-                    </div>
-                    <div style="font-size: 24px; font-weight: 700; color: #92400e;" id="transfer_tax_display">0 €</div>
-                </div>
+            <!-- PASO 2: Resumen final con llamado a acción (oculto inicialmente) -->
+            <div id="precio-step-2" class="precio-step" style="display: none;">
+                <h2>¡Perfecto! Esto es lo que incluye tu trámite</h2>
+                <p style="color: #666; margin-bottom: 32px; font-size: 15px; line-height: 1.6;">Todo listo para que te olvides de las gestiones y disfrutes de tu moto de agua</p>
 
-                <button type="button" id="info-link" style="background: none; border: none; color: #92400e; font-size: 14px; cursor: pointer; padding: 0; text-decoration: underline; margin-bottom: 12px;">
-                    <i class="fa-solid fa-calculator"></i> <span id="info-button-text">Ver cómo se calcula</span>
-                </button>
-
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; background: #fffbeb; padding: 10px; border-radius: 4px;">
-                    <input type="checkbox" id="itp_already_paid" name="itp_already_paid" style="width: 18px; height: 18px;">
-                    <span style="font-size: 14px; color: #92400e;">Ya lo pagué</span>
-                </label>
-
-                <!-- Detalle del ITP -->
-                <div id="itp-detail-container" class="itp-detail-section" style="display:none; margin-top: 16px;">
-                    <h3>Cálculo del Impuesto de Transmisiones</h3>
-                    <p class="info-description">El <strong>Impuesto sobre Transmisiones Patrimoniales (ITP)</strong> es un tributo que el comprador debe abonar a Hacienda en los cambios de titularidad de un vehículo entre particulares. Se calcula en base al mayor valor entre el precio de compra y el valor fiscal con depreciación.</p>
-
-                    <div class="calculation-detail">
-                        <div class="calculation-section">
-                            <h4>Datos del vehículo</h4>
-                            <div class="calculation-item">
-                                <span>Valor fiscal base:</span>
-                                <span id="base_value_display">0 €</span>
-                            </div>
-                            <div class="calculation-item">
-                                <span>Antigüedad del vehículo:</span>
-                                <span id="vehicle_age_display">0 años</span>
-                            </div>
-                            <div class="calculation-item">
-                                <span>Porcentaje de depreciación:</span>
-                                <span id="depreciation_percentage_display">0 %</span>
-                            </div>
+                <!-- Resumen total -->
+                <div style="background: linear-gradient(135deg, #016d86, #014d5f); color: white; border-radius: 12px; padding: 32px; margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <div>
+                            <div style="font-size: 16px; opacity: 0.9;">Total a pagar</div>
+                            <div style="font-size: 12px; opacity: 0.75; margin-top: 4px;"><i class="fa-solid fa-lock"></i> Pago 100% seguro con Stripe</div>
                         </div>
-
-                        <div class="calculation-section">
-                            <h4>Cálculo de la base imponible</h4>
-                            <div class="calculation-item">
-                                <span>Valor fiscal con depreciación:</span>
-                                <span id="fiscal_value_display">0 €</span>
-                            </div>
-                            <div class="calculation-item">
-                                <span>Precio de compra declarado:</span>
-                                <span id="purchase_price_display">0 €</span>
-                            </div>
-                            <div class="calculation-item highlight-item">
-                                <span>Base imponible (mayor valor):</span>
-                                <span id="tax_base_display">0 €</span>
-                            </div>
-                        </div>
-
-                        <div class="calculation-section">
-                            <h4>Impuesto aplicable</h4>
-                            <div class="calculation-item">
-                                <span>Tipo impositivo aplicado:</span>
-                                <span id="tax_rate_display">0 %</span>
-                            </div>
-
-                            <div class="calculation-result">
-                                <span>ITP a pagar:</span>
-                                <span id="calculated_itp_display">0 €</span>
-                            </div>
-                        </div>
-
-                        <div id="selected-services-summary" style="display:none; margin-top:15px; padding:12px; background-color:rgba(var(--primary), 0.05); border-radius:var(--radius-md); text-align:center; color:rgb(var(--primary-dark));"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Servicios Extra -->
-            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 16px; overflow: hidden;">
-                <div id="services-accordion" class="accordion-toggle-header" style="cursor: pointer; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 16px; font-weight: 600; color: #1f2937;">➕ Servicios Extra (Opcionales)</span>
-                    <i class="fa-solid fa-chevron-down accordion-icon" style="color: #6b7280; font-size: 14px;"></i>
-                </div>
-                <div class="accordion-content-section" style="display: none; padding: 16px; border-top: 1px solid #e5e7eb;">
-                    <label style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; margin-bottom: 8px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <input type="checkbox" class="extra-option" data-price="40" value="Cambio de nombre" style="width: 18px; height: 18px;">
-                            <span style="font-size: 15px; color: #1f2937;">Cambiar nombre de la moto</span>
-                        </div>
-                        <span style="font-weight: 600; color: #016d86;">+40 €</span>
-                    </label>
-                    <div class="additional-input" id="nombre-input" style="display: none; margin-bottom: 12px;">
-                        <input type="text" id="nuevo_nombre" name="nuevo_nombre" placeholder="Nuevo nombre" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px;">
+                        <div style="font-size: 42px; font-weight: 700;" id="total-final-precio">134.99 €</div>
                     </div>
 
-                    <label style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <input type="checkbox" class="extra-option" data-price="40" value="Cambio de puerto base" style="width: 18px; height: 18px;">
-                            <span style="font-size: 15px; color: #1f2937;">Cambiar puerto base</span>
+                    <!-- Qué incluye (sin precios) -->
+                    <div style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 20px;">
+                        <div style="font-size: 14px; font-weight: 600; margin-bottom: 12px; opacity: 0.9;">Lo que incluye:</div>
+                        <div style="display: grid; gap: 10px; font-size: 14px; opacity: 0.95;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-check-circle" style="color: #4ade80;"></i>
+                                <span>Gestión completa del trámite</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-check-circle" style="color: #4ade80;"></i>
+                                <span>Pago de tasas de Capitanía Marítima</span>
+                            </div>
+                            <div id="incluye-itp-si" style="display: none;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-check-circle" style="color: #4ade80;"></i>
+                                    <span>Gestión del ITP (ya pagado por ti)</span>
+                                </div>
+                            </div>
+                            <div id="incluye-itp-no" style="display: none;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-check-circle" style="color: #4ade80;"></i>
+                                    <span>Pago del Impuesto (ITP) ante Hacienda</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-check-circle" style="color: #4ade80;"></i>
+                                <span>Documentación completa y legalizada</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-check-circle" style="color: #4ade80;"></i>
+                                <span>IVA incluido</span>
+                            </div>
                         </div>
-                        <span style="font-weight: 600; color: #016d86;">+40 €</span>
-                    </label>
-                    <div class="additional-input" id="puerto-input" style="display: none; margin-top: 8px;">
-                        <input type="text" id="nuevo_puerto" name="nuevo_puerto" placeholder="Nuevo puerto" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px;">
                     </div>
                 </div>
-            </div>
 
-            <!-- Cupón -->
-            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 16px; overflow: hidden;">
-                <div id="coupon-accordion" class="accordion-toggle-header" style="cursor: pointer; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 16px; font-weight: 600; color: #1f2937;">🎟️ ¿Tienes cupón?</span>
-                    <i class="fa-solid fa-chevron-down accordion-icon" style="color: #6b7280; font-size: 14px;"></i>
-                </div>
-                <div class="accordion-content-section" style="display: none; padding: 16px; border-top: 1px solid #e5e7eb;">
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" id="coupon_code" name="coupon_code" placeholder="Tu código" style="flex: 1; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 15px;">
-                        <button type="button" id="apply-coupon" style="padding: 10px 20px; background: #016d86; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Aplicar</button>
+                <!-- Llamado a la acción -->
+                <div style="background: #f0fdf4; border: 2px solid #10b981; border-radius: 12px; padding: 28px; text-align: center; margin-bottom: 32px;">
+                    <div style="font-size: 24px; font-weight: 700; color: #065f46; margin-bottom: 12px;">
+                        🎉 ¡Olvídate de las colas y el papeleo!
                     </div>
-                    <p id="coupon-message" class="coupon-message" style="margin: 8px 0 0 0; font-size: 14px;"></p>
+                    <p style="font-size: 16px; color: #047857; line-height: 1.6; margin: 0 0 20px 0;">
+                        Nosotros lo hacemos todo por ti. <strong>Documentos en 24-48h</strong> sin que tengas que moverte de casa.
+                    </p>
+                    <div style="display: flex; gap: 16px; justify-content: center; align-items: center; font-size: 14px; color: #059669;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>100% Legal</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-clock"></i>
+                            <span>Rápido</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-star"></i>
+                            <span>+500 clientes</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Total -->
-            <div style="background: linear-gradient(135deg, #016d86, #014d5f); color: white; border-radius: 8px; padding: 24px; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <div style="font-size: 18px; opacity: 0.9;">Total a Pagar</div>
-                    <div style="font-size: 13px; opacity: 0.8; margin-top: 4px;"><i class="fa-solid fa-lock"></i> Pago seguro</div>
+                <!-- Servicios Extra (Opcional) -->
+                <div style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; margin-bottom: 20px; overflow: hidden;">
+                    <button type="button" id="toggle-servicios-extras" style="width: 100%; padding: 20px; background: white; border: none; display: flex; justify-content: space-between; align-items: center; cursor: pointer; text-align: left;">
+                        <div>
+                            <div style="font-size: 18px; font-weight: 700; color: #1f2937;">Servicios Extra</div>
+                            <div style="font-size: 14px; color: #6b7280; margin-top: 4px;">Opcional - Añade más servicios si lo necesitas</div>
+                        </div>
+                        <i class="fa-solid fa-chevron-down" id="servicios-icon" style="color: #6b7280; font-size: 18px; transition: transform 0.3s;"></i>
+                    </button>
+                    <div id="servicios-extras-content" style="display: none; padding: 20px; border-top: 1px solid #e5e7eb;">
+                        <label style="display: flex; justify-content: space-between; align-items: center; padding: 16px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; margin-bottom: 12px; transition: all 0.2s;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <input type="checkbox" class="extra-option" data-price="40" value="Cambio de nombre" style="width: 20px; height: 20px;">
+                                <div>
+                                    <div style="font-size: 15px; font-weight: 600; color: #1f2937;">Cambio de nombre</div>
+                                    <div style="font-size: 13px; color: #6b7280;">Cambia el nombre de tu moto</div>
+                                </div>
+                            </div>
+                            <span style="font-weight: 700; color: #016d86; font-size: 18px;">+40 €</span>
+                        </label>
+                        <div class="additional-input" id="nombre-input" style="display: none; margin: -6px 0 16px 0;">
+                            <input type="text" id="nuevo_nombre" name="nuevo_nombre" placeholder="Escribe el nuevo nombre" style="width: 100%; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 15px;">
+                        </div>
+
+                        <label style="display: flex; justify-content: space-between; align-items: center; padding: 16px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <input type="checkbox" class="extra-option" data-price="40" value="Cambio de puerto base" style="width: 20px; height: 20px;">
+                                <div>
+                                    <div style="font-size: 15px; font-weight: 600; color: #1f2937;">Cambio de puerto base</div>
+                                    <div style="font-size: 13px; color: #6b7280;">Modifica el puerto de amarre</div>
+                                </div>
+                            </div>
+                            <span style="font-weight: 700; color: #016d86; font-size: 18px;">+40 €</span>
+                        </label>
+                        <div class="additional-input" id="puerto-input" style="display: none; margin-top: 12px;">
+                            <input type="text" id="nuevo_puerto" name="nuevo_puerto" placeholder="Escribe el nuevo puerto" style="width: 100%; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 15px;">
+                        </div>
+                    </div>
                 </div>
-                <div style="font-size: 36px; font-weight: 700;" id="final-amount">134.99 €</div>
+
+                <!-- Cupón -->
+                <div style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+                    <button type="button" id="toggle-cupon" style="width: 100%; padding: 20px; background: white; border: none; display: flex; justify-content: space-between; align-items: center; cursor: pointer; text-align: left;">
+                        <div>
+                            <div style="font-size: 18px; font-weight: 700; color: #1f2937;">¿Tienes un cupón?</div>
+                            <div style="font-size: 14px; color: #6b7280; margin-top: 4px;">Aplica tu descuento aquí</div>
+                        </div>
+                        <i class="fa-solid fa-chevron-down" id="cupon-icon" style="color: #6b7280; font-size: 18px; transition: transform 0.3s;"></i>
+                    </button>
+                    <div id="cupon-content" style="display: none; padding: 20px; border-top: 1px solid #e5e7eb;">
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="coupon_code" name="coupon_code" placeholder="Escribe tu código" style="flex: 1; padding: 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 15px;">
+                            <button type="button" id="apply-coupon" style="padding: 12px 24px; background: #016d86; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 15px;">
+                                Aplicar
+                            </button>
+                        </div>
+                        <p id="coupon-message" style="margin: 12px 0 0 0; font-size: 14px;"></p>
+                    </div>
+                </div>
+
             </div>
 
         </div> <!-- Fin page-precio -->
@@ -5002,7 +5014,7 @@ function transferencia_moto_shortcode() {
         <!-- Página Documentos -->
         <div id="page-documentos" class="form-page form-section-compact hidden">
             <h2>Documentación y Firma</h2>
-            <p class="section-intro">Adjunta los documentos necesarios y firma digitalmente el documento de autorización.</p>
+            <p style="color: #666; margin-bottom: 25px; font-size: 15px; line-height: 1.6;">Sube las fotos o PDFs de tu DNI, tarjeta de la moto y contrato. Luego firma la autorización digitalmente para que podamos representarte ante la administración.</p>
 
             <!-- Sección acordeón para documentación -->
             <div class="accordion-section" id="section-documentos">
@@ -5122,7 +5134,8 @@ function transferencia_moto_shortcode() {
 
         <!-- Página Pago -->
         <div id="page-pago" class="form-page form-section-compact hidden">
-            <h2 style="margin-bottom: 20px;"><i class="fa-solid fa-credit-card"></i> Método de Pago</h2>
+            <h2 style="margin-bottom: 10px;">Método de Pago</h2>
+            <p style="color: #666; margin-bottom: 25px; font-size: 15px; line-height: 1.6;">Pago seguro con Stripe. Procesamos tu trámite inmediatamente tras la confirmación del pago.</p>
 
             <!-- Elemento de pago de Stripe directamente en el formulario -->
             <div id="stripe-container" style="max-width: 100%; margin: 0 auto;">
@@ -5266,7 +5279,35 @@ function transferencia_moto_shortcode() {
 
     <!-- JavaScript para la lógica del formulario -->
     <script>
+    // ============================================
+    // SISTEMA DE LOGS DE DEBUG
+    // ============================================
+    const TRAMITFY_DEBUG = true; // Cambiar a false en producción
+    function logDebug(section, message, data = null) {
+        if (!TRAMITFY_DEBUG) return;
+        const timestamp = new Date().toISOString().substr(11, 8);
+        const prefix = `[TRAMITFY ${timestamp}] [${section}]`;
+        if (data) {
+            console.log(prefix, message, data);
+        } else {
+            console.log(prefix, message);
+        }
+    }
+    function logError(section, message, error = null) {
+        const timestamp = new Date().toISOString().substr(11, 8);
+        const prefix = `[TRAMITFY ERROR ${timestamp}] [${section}]`;
+        if (error) {
+            console.error(prefix, message, error);
+        } else {
+            console.error(prefix, message);
+        }
+    }
+
+    logDebug('INIT', '🚀 Iniciando formulario Tramitfy Transferencia Moto');
+
     document.addEventListener('DOMContentLoaded', function() {
+        logDebug('DOM', '✅ DOMContentLoaded ejecutado');
+
         // Variables globales y configuración
         const itpRates = {
             "Andalucía": 0.04, "Aragón": 0.04, "Asturias": 0.04, "Islas Baleares": 0.04,
@@ -5464,23 +5505,10 @@ function transferencia_moto_shortcode() {
                 page.classList.toggle('hidden', index !== currentPage);
             });
 
-            // ===== ACTUALIZAR SIDEBAR SEGÚN PASO ACTUAL =====
-            const currentPageElement = formPages[currentPage];
-            if (currentPageElement) {
-                const currentPageId = currentPageElement.id;
-
-                // Ocultar todos los contenidos del sidebar
-                document.querySelectorAll('.sidebar-content').forEach(content => {
-                    content.classList.remove('active');
-                });
-
-                // Mostrar el contenido correspondiente al paso actual
-                const activeSidebarContent = document.querySelector(`.sidebar-content[data-step="${currentPageId}"]`);
-                if (activeSidebarContent) {
-                    activeSidebarContent.classList.add('active');
-                }
+            // Actualizar sidebar dinámico según la página activa
+            if (formPages[currentPage]) {
+                actualizarSidebarDinamico(formPages[currentPage].id);
             }
-            // ================================================
 
             // Si estamos pasando a la página de documentos, inicializar el acordeón
             if (formPages[currentPage] && formPages[currentPage].id === 'page-documentos') {
@@ -5757,32 +5785,55 @@ function transferencia_moto_shortcode() {
         }
 
         function calculateFiscalValue() {
+            logDebug('FISCAL', '💰 Calculando valor fiscal');
             const matriculationDate = new Date(matriculationDateInput.value);
             const today = new Date();
             let yearsDifference = today.getFullYear() - matriculationDate.getFullYear();
             const monthsDifference = today.getMonth() - matriculationDate.getMonth();
-            
+
+            logDebug('FISCAL', 'Fecha matriculación:', matriculationDateInput.value);
+            logDebug('FISCAL', 'Años diferencia (inicial):', yearsDifference);
+
             if (monthsDifference < 0 || (monthsDifference === 0 && today.getDate() < matriculationDate.getDate())) {
                 yearsDifference--;
+                logDebug('FISCAL', 'Ajuste por meses/días, años:', yearsDifference);
             }
-            
+
             yearsDifference = (yearsDifference < 0) ? 0 : yearsDifference;
             const depreciationPercentage = calculateDepreciationPercentage(yearsDifference);
             const fiscalValue = basePrice * (depreciationPercentage / 100);
-            
+
+            logDebug('FISCAL', 'Resultado:', {
+                yearsDifference,
+                depreciationPercentage,
+                basePrice,
+                fiscalValue
+            });
+
             return { fiscalValue, depreciationPercentage, yearsDifference };
         }
 
         function calculateTransferTax() {
+            logDebug('ITP', '📊 Calculando ITP');
             const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
             const { fiscalValue, depreciationPercentage, yearsDifference } = calculateFiscalValue();
             const region = regionSelect.value;
             const rate = itpRates[region] || 0;
             const isItpAlreadyPaid = document.getElementById('itp_already_paid').checked;
 
+            logDebug('ITP', 'Datos entrada:', {
+                purchasePrice,
+                fiscalValue,
+                region,
+                rate,
+                isItpAlreadyPaid
+            });
+
             const baseValue = Math.max(purchasePrice, fiscalValue);
             const itp = isItpAlreadyPaid ? 0 : baseValue * rate;
             const extraFee = itp * 0.015;
+
+            logDebug('ITP', 'Resultado cálculo:', { baseValue, itp, extraFee });
 
             // Actualizar elementos de la página de detalle ITP
             baseValueDisplay.textContent = basePrice.toFixed(2) + ' €';
@@ -6976,20 +7027,39 @@ function transferencia_moto_shortcode() {
         }
 
         function populateManufacturers() {
-            const vehicleType = 'Moto de Agua'; // Fijo para transferencia de barcos
-            const csvFile = 'MOTO.csv'; // Fijo para barcos
-            fetch('<?php echo get_template_directory_uri(); ?>/' + csvFile)
-                .then(response => response.text())
+            logDebug('CSV', '📥 Iniciando carga de fabricantes desde CSV');
+            const vehicleType = 'Moto de Agua';
+            const csvFile = 'MOTO.csv';
+            const csvUrl = '<?php echo get_template_directory_uri(); ?>/' + csvFile;
+            logDebug('CSV', 'URL del CSV:', csvUrl);
+
+            fetch(csvUrl)
+                .then(response => {
+                    logDebug('CSV', 'Respuesta recibida, status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                })
                 .then(data => {
+                    logDebug('CSV', 'Datos CSV recibidos, longitud:', data.length);
                     const manufacturers = {};
                     const rows = data.split('\n').slice(1);
-                    rows.forEach(row => {
+                    logDebug('CSV', 'Número de filas (sin header):', rows.length);
+
+                    rows.forEach((row, index) => {
                         const [fabricante, modelo, precio] = row.split(',');
-                        if (!manufacturers[fabricante]) {
-                            manufacturers[fabricante] = [];
+                        if (fabricante && fabricante.trim()) {
+                            if (!manufacturers[fabricante]) {
+                                manufacturers[fabricante] = [];
+                                logDebug('CSV', `Nuevo fabricante encontrado: ${fabricante}`);
+                            }
+                            manufacturers[fabricante].push({ modelo, precio });
                         }
-                        manufacturers[fabricante].push({ modelo, precio });
                     });
+
+                    logDebug('CSV', 'Fabricantes procesados:', Object.keys(manufacturers).length);
+
                     manufacturerSelect.innerHTML = '<option value="">Seleccione un fabricante</option>';
                     Object.keys(manufacturers).forEach(fab => {
                         const option = document.createElement('option');
@@ -6997,6 +7067,11 @@ function transferencia_moto_shortcode() {
                         option.textContent = fab;
                         manufacturerSelect.appendChild(option);
                     });
+
+                    logDebug('CSV', '✅ Fabricantes cargados en el select');
+                })
+                .catch(error => {
+                    logError('CSV', '❌ Error al cargar fabricantes:', error);
                 });
         }
 
@@ -7465,15 +7540,18 @@ function transferencia_moto_shortcode() {
         }
 
         // Inicialización
+        logDebug('INIT', '⚙️ Iniciando configuración del formulario');
         currentPage = 0; // Empezamos en la página de vehículo (primera página del formulario)
         document.querySelector('.button-container').style.display = 'flex'; // Mostrar botones navegación desde el inicio
-        
+        logDebug('INIT', 'Página actual:', currentPage);
+
         populateManufacturers();
         updateForm();
         updateVehicleSelection();
         updateAdditionalInputs();
         initializeSignaturePad();
         updateNoEncuentroBehavior();
+        logDebug('INIT', '✅ Funciones principales ejecutadas');
         
         // Inicializar dropdowns mejorados para opciones adicionales y cupones
         initAdditionalOptionsDropdown();
@@ -7483,14 +7561,17 @@ function transferencia_moto_shortcode() {
         setTimeout(() => {
             updateTotal();
             updatePaymentSummary();
+            logDebug('INIT', '💰 Precios actualizados');
         }, 300);
-        
+
         // Configuración para inicializar acordeón cuando sea necesario
         document.addEventListener('DOMContentLoaded', function() {
             if (document.getElementById('page-documentos') && !document.getElementById('page-documentos').classList.contains('hidden')) {
                 initAccordionSections();
             }
         });
+
+        logDebug('INIT', '🎉 ¡Formulario Tramitfy completamente inicializado!');
         
         // Función para inicializar el dropdown de opciones adicionales
         function initAdditionalOptionsDropdown() {
@@ -7859,6 +7940,838 @@ function transferencia_moto_shortcode() {
     });
     <?php endif; ?>
 
+
+    // ============================================
+    // NUEVO FLUJO DE PÁGINA DE PRECIO
+    // ============================================
+
+    logDebug('PRECIO-INIT', '🎯 Inicializando flujo de página de precio');
+
+    // Variables del flujo de precio
+    let itpPagado = null; // null, true (sí pagado), false (no pagado)
+    let precioStep = 1; // 1 o 2
+
+    // Elementos del nuevo flujo
+    const precioStep1 = document.getElementById('precio-step-1');
+    const precioStep2 = document.getElementById('precio-step-2');
+    const verCalculoBtn = document.getElementById('ver-calculo-itp');
+    const calculoDetail = document.getElementById('calculo-itp-detail');
+    const itpSiBtn = document.getElementById('itp-si');
+    const itpNoBtn = document.getElementById('itp-no');
+    const toggleServiciosBtn = document.getElementById('toggle-servicios-extras');
+    const serviciosContent = document.getElementById('servicios-extras-content');
+    const serviciosIcon = document.getElementById('servicios-icon');
+    const toggleCuponBtn = document.getElementById('toggle-cupon');
+    const cuponContent = document.getElementById('cupon-content');
+    const cuponIcon = document.getElementById('cupon-icon');
+
+    logDebug('PRECIO-INIT', 'Elementos encontrados:', {
+        precioStep1: !!precioStep1,
+        precioStep2: !!precioStep2,
+        verCalculoBtn: !!verCalculoBtn,
+        calculoDetail: !!calculoDetail,
+        itpSiBtn: !!itpSiBtn,
+        itpNoBtn: !!itpNoBtn,
+        toggleServiciosBtn: !!toggleServiciosBtn,
+        serviciosContent: !!serviciosContent,
+        toggleCuponBtn: !!toggleCuponBtn,
+        cuponContent: !!cuponContent
+    });
+
+    // Botón ver cálculo ITP
+    if (verCalculoBtn) {
+        logDebug('PRECIO-INIT', '✅ Event listener añadido a botón ver cálculo');
+        verCalculoBtn.addEventListener('click', function() {
+            if (calculoDetail.style.display === 'none') {
+                calculoDetail.style.display = 'block';
+                verCalculoBtn.innerHTML = '<i class="fa-solid fa-eye-slash"></i> Ocultar cálculo';
+                logDebug('PRECIO-FLOW', '👁️ Cálculo ITP mostrado');
+            } else {
+                calculoDetail.style.display = 'none';
+                verCalculoBtn.innerHTML = '<i class="fa-solid fa-calculator"></i> Ver cómo se calcula el ITP';
+                logDebug('PRECIO-FLOW', '🙈 Cálculo ITP ocultado');
+            }
+        });
+    } else {
+        logError('PRECIO-INIT', '❌ No se encontró botón ver cálculo');
+    }
+
+    // Actualizar valores del cálculo ITP en step 1
+    function actualizarCalculoITPStep1() {
+        logDebug('ITP-STEP1', '🔄 Actualizando cálculo ITP en paso 1');
+
+        const purchasePrice = parseFloat(document.getElementById('purchase_price')?.value) || 0;
+        const region = document.getElementById('region')?.value || '';
+
+        logDebug('ITP-STEP1', 'Precio compra:', purchasePrice);
+        logDebug('ITP-STEP1', 'Región:', region);
+
+        try {
+            // Calcular valor fiscal
+            const { fiscalValue, depreciationPercentage, yearsDifference } = calculateFiscalValue();
+
+            // Base imponible es el mayor entre precio compra y valor fiscal
+            const baseImponible = Math.max(purchasePrice, fiscalValue);
+
+            // Obtener tipo impositivo
+            const taxRate = (itpRates[region] || 0.04);
+            const taxRatePercent = taxRate * 100;
+
+            // Calcular ITP
+            const itp = baseImponible * taxRate;
+
+            logDebug('ITP-STEP1', 'Resultado:', {
+                fiscalValue,
+                baseImponible,
+                taxRate,
+                itp
+            });
+
+            // Actualizar display principal del ITP
+            const transferTaxStep1 = document.getElementById('transfer_tax_step1');
+            if (transferTaxStep1) {
+                transferTaxStep1.textContent = itp.toFixed(2) + ' €';
+                logDebug('ITP-STEP1', '✅ Display principal actualizado');
+            } else {
+                logError('ITP-STEP1', '❌ Elemento transfer_tax_step1 no encontrado');
+            }
+
+            // Actualizar displays en el detalle del cálculo
+            const precioCompraCalc = document.getElementById('precio-compra-calc');
+            const valorFiscalCalc = document.getElementById('valor-fiscal-calc');
+            const baseImponibleCalc = document.getElementById('base-imponible-calc');
+            const regionNameCalc = document.getElementById('region-name-calc');
+            const tipoImpositivoCalc = document.getElementById('tipo-impositivo-calc');
+
+            if (precioCompraCalc) precioCompraCalc.textContent = purchasePrice.toFixed(2) + ' €';
+            if (valorFiscalCalc) valorFiscalCalc.textContent = fiscalValue.toFixed(2) + ' €';
+            if (baseImponibleCalc) baseImponibleCalc.textContent = baseImponible.toFixed(2) + ' €';
+            if (regionNameCalc) regionNameCalc.textContent = region || '-';
+            if (tipoImpositivoCalc) tipoImpositivoCalc.textContent = taxRatePercent.toFixed(0) + '%';
+
+            logDebug('ITP-STEP1', '✅ Todos los displays actualizados');
+        } catch (error) {
+            logError('ITP-STEP1', '❌ Error en cálculo:', error);
+        }
+    }
+
+    // Variables para el nuevo flujo
+    let itpGestionSeleccionada = null; // 'yo-pago' o 'gestionan-ustedes'
+    let itpMetodoPago = null; // 'tarjeta' o 'transferencia'
+    let itpBaseAmount = 0;
+    let itpComisionTarjeta = 0;
+    let itpTotalAmount = 0;
+
+    // Botones ITP pagado/no pagado
+    if (itpSiBtn && itpNoBtn) {
+        logDebug('PRECIO-FLOW', '✅ Botones ITP encontrados');
+
+        itpSiBtn.addEventListener('click', function() {
+            logDebug('PRECIO-FLOW', '✅ Usuario seleccionó: ITP YA PAGADO');
+            itpPagado = true;
+
+            // Estilos activo
+            itpSiBtn.style.background = '#10b981';
+            itpSiBtn.style.color = 'white';
+            itpSiBtn.style.borderColor = '#10b981';
+
+            itpNoBtn.style.background = 'white';
+            itpNoBtn.style.color = '#6b7280';
+            itpNoBtn.style.borderColor = '#e5e7eb';
+
+            // Reducir tamaño del selector
+            const questionContainer = document.getElementById('itp-question-container');
+            questionContainer.style.padding = '12px 16px';
+            questionContainer.querySelector('h3').style.fontSize = '14px';
+            questionContainer.querySelector('h3').style.margin = '0';
+            questionContainer.querySelector('p').style.display = 'none';
+            questionContainer.querySelectorAll('.itp-choice-btn').forEach(btn => {
+                btn.style.padding = '8px 16px';
+                btn.style.fontSize = '13px';
+                btn.style.maxWidth = '150px';
+            });
+
+            // Mostrar flujo "ya pagado"
+            document.getElementById('itp-ya-pagado-flow').style.display = 'block';
+            document.getElementById('itp-no-pagado-flow').style.display = 'none';
+
+            // Continuar después de un momento
+            setTimeout(() => {
+                mostrarPrecioStep2();
+            }, 1500);
+        });
+
+        itpNoBtn.addEventListener('click', function() {
+            logDebug('PRECIO-FLOW', '❌ Usuario seleccionó: ITP NO PAGADO');
+            itpPagado = false;
+
+            // Estilos activo
+            itpNoBtn.style.background = '#016d86';
+            itpNoBtn.style.color = 'white';
+            itpNoBtn.style.borderColor = '#016d86';
+
+            itpSiBtn.style.background = 'white';
+            itpSiBtn.style.color = '#6b7280';
+            itpSiBtn.style.borderColor = '#e5e7eb';
+
+            // Reducir tamaño del selector
+            const questionContainer = document.getElementById('itp-question-container');
+            questionContainer.style.padding = '12px 16px';
+            questionContainer.querySelector('h3').style.fontSize = '14px';
+            questionContainer.querySelector('h3').style.margin = '0';
+            questionContainer.querySelector('p').style.display = 'none';
+            questionContainer.querySelectorAll('.itp-choice-btn').forEach(btn => {
+                btn.style.padding = '8px 16px';
+                btn.style.fontSize = '13px';
+                btn.style.maxWidth = '150px';
+            });
+
+            // Mostrar flujo "no pagado"
+            document.getElementById('itp-ya-pagado-flow').style.display = 'none';
+            document.getElementById('itp-no-pagado-flow').style.display = 'block';
+
+            // Calcular ITP base
+            itpBaseAmount = currentTransferTax || 0;
+            logDebug('PRECIO-FLOW', 'ITP base calculado:', itpBaseAmount);
+        });
+    } else {
+        logError('PRECIO-FLOW', '❌ No se encontraron botones ITP');
+    }
+
+    // Gestión de opciones ITP (lo pago yo / lo gestionan ustedes)
+    document.querySelectorAll('input[name="itp_gestion"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            itpGestionSeleccionada = this.value;
+            logDebug('PRECIO-FLOW', 'Gestión ITP seleccionada:', itpGestionSeleccionada);
+
+            // Actualizar estilos de las opciones
+            document.querySelectorAll('.itp-gestion-option').forEach(opt => {
+                if (opt.querySelector('input').checked) {
+                    opt.style.borderColor = '#016d86';
+                    opt.style.background = '#eff6ff';
+                } else {
+                    opt.style.borderColor = '#e5e7eb';
+                    opt.style.background = 'white';
+                }
+            });
+
+            if (itpGestionSeleccionada === 'gestionan-ustedes') {
+                // Mostrar métodos de pago
+                document.getElementById('metodos-pago-itp').style.display = 'block';
+            } else {
+                // Ocultar métodos de pago y resumen
+                document.getElementById('metodos-pago-itp').style.display = 'none';
+                document.getElementById('itp-pago-resumen').style.display = 'none';
+
+                // Continuar al paso 2
+                setTimeout(() => {
+                    mostrarPrecioStep2();
+                }, 800);
+            }
+        });
+    });
+
+    // Métodos de pago ITP
+    document.querySelectorAll('input[name="metodo_pago_itp"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            itpMetodoPago = this.value;
+            logDebug('PRECIO-FLOW', 'Método pago ITP seleccionado:', itpMetodoPago);
+
+            // Calcular totales
+            if (itpMetodoPago === 'tarjeta') {
+                itpComisionTarjeta = itpBaseAmount * 0.02;
+                itpTotalAmount = itpBaseAmount + itpComisionTarjeta;
+            } else {
+                itpComisionTarjeta = 0;
+                itpTotalAmount = itpBaseAmount;
+            }
+
+            // Actualizar displays
+            document.getElementById('itp-base-display').textContent = itpBaseAmount.toFixed(2) + ' €';
+            document.getElementById('comision-tarjeta-display').textContent = itpComisionTarjeta.toFixed(2) + ' €';
+            document.getElementById('itp-total-display').textContent = itpTotalAmount.toFixed(2) + ' €';
+
+            // Mostrar/ocultar fila de comisión
+            const comisionRow = document.getElementById('comision-tarjeta-row');
+            comisionRow.style.display = (itpMetodoPago === 'tarjeta') ? 'block' : 'none';
+
+            // Mostrar resumen
+            document.getElementById('itp-pago-resumen').style.display = 'block';
+
+            logDebug('PRECIO-FLOW', 'Cálculo ITP:', {
+                base: itpBaseAmount,
+                comision: itpComisionTarjeta,
+                total: itpTotalAmount
+            });
+
+            // Continuar al paso 2 después de mostrar el resumen
+            setTimeout(() => {
+                mostrarPrecioStep2();
+            }, 1500);
+        });
+    });
+
+    // Función para mostrar step 2
+    function mostrarPrecioStep2() {
+        logDebug('PRECIO-FLOW', '🔄 Iniciando transición a paso 2');
+        logDebug('PRECIO-FLOW', 'Estado ITP pagado:', itpPagado);
+
+        if (precioStep1 && precioStep2) {
+            logDebug('PRECIO-FLOW', '✅ Elementos step1 y step2 encontrados');
+
+            // Fade out del step 1
+            precioStep1.style.opacity = '0';
+            precioStep1.style.transform = 'translateY(-20px)';
+            logDebug('PRECIO-FLOW', '↗️ Fade out aplicado al paso 1');
+
+            setTimeout(() => {
+                // Ocultar step 1 completamente
+                precioStep1.style.display = 'none';
+                logDebug('PRECIO-FLOW', '❌ Paso 1 oculto');
+
+                // Mostrar step 2 con fade in
+                precioStep2.style.display = 'block';
+                precioStep2.style.opacity = '0';
+                precioStep2.style.transform = 'translateY(20px)';
+
+                // Forzar reflow
+                precioStep2.offsetHeight;
+
+                // Aplicar animación fade in
+                precioStep2.style.transition = 'opacity 0.4s ease-out, transform 0.4s ease-out';
+                precioStep2.style.opacity = '1';
+                precioStep2.style.transform = 'translateY(0)';
+                logDebug('PRECIO-FLOW', '✅ Paso 2 mostrado con fade in');
+
+                precioStep = 2;
+
+                // Actualizar lo que incluye según ITP
+                const incluyeItpSi = document.getElementById('incluye-itp-si');
+                const incluyeItpNo = document.getElementById('incluye-itp-no');
+
+                if (itpPagado === true) {
+                    incluyeItpSi.style.display = 'block';
+                    incluyeItpNo.style.display = 'none';
+                    logDebug('PRECIO-FLOW', '✅ Mostrado: ITP ya pagado');
+                } else {
+                    if (itpGestionSeleccionada === 'yo-pago') {
+                        incluyeItpSi.style.display = 'block';
+                        incluyeItpNo.style.display = 'none';
+                        logDebug('PRECIO-FLOW', '✅ Mostrado: Usuario paga ITP por su cuenta');
+                    } else {
+                        incluyeItpSi.style.display = 'none';
+                        incluyeItpNo.style.display = 'block';
+                        logDebug('PRECIO-FLOW', '✅ Mostrado: Pago de ITP incluido (gestionamos nosotros)');
+                    }
+                }
+
+                // Actualizar precio total
+                actualizarPrecioFinal();
+
+                // Actualizar resumen en sidebar
+                actualizarSidebarPrecio();
+
+                logDebug('PRECIO-FLOW', '✅ Transición completada');
+            }, 300);
+        } else {
+            logError('PRECIO-FLOW', '❌ No se encontraron elementos step1 o step2');
+        }
+    }
+
+    // Toggle servicios extras
+    if (toggleServiciosBtn) {
+        toggleServiciosBtn.addEventListener('click', function() {
+            if (serviciosContent.style.display === 'none') {
+                serviciosContent.style.display = 'block';
+                serviciosIcon.style.transform = 'rotate(180deg)';
+            } else {
+                serviciosContent.style.display = 'none';
+                serviciosIcon.style.transform = 'rotate(0deg)';
+            }
+        });
+    }
+
+    // Toggle cupón
+    if (toggleCuponBtn) {
+        toggleCuponBtn.addEventListener('click', function() {
+            if (cuponContent.style.display === 'none') {
+                cuponContent.style.display = 'block';
+                cuponIcon.style.transform = 'rotate(180deg)';
+            } else {
+                cuponContent.style.display = 'none';
+                cuponIcon.style.transform = 'rotate(0deg)';
+            }
+        });
+    }
+
+    // Actualizar resumen en sidebar
+    function actualizarSidebarPrecio() {
+        logDebug('SIDEBAR', '📋 Actualizando resumen en sidebar');
+
+        // Crear o actualizar sección de resumen ITP en sidebar
+        let sidebarItpResumen = document.getElementById('sidebar-itp-resumen');
+        if (!sidebarItpResumen) {
+            // Buscar el contenedor del sidebar
+            const sidebarContent = document.querySelector('.tramitfy-sidebar');
+            if (sidebarContent) {
+                sidebarItpResumen = document.createElement('div');
+                sidebarItpResumen.id = 'sidebar-itp-resumen';
+                sidebarItpResumen.style.cssText = 'margin-top: 20px; padding: 16px; background: rgba(255,255,255,0.1); border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);';
+                sidebarContent.appendChild(sidebarItpResumen);
+            }
+        }
+
+        if (sidebarItpResumen) {
+            let contenido = '<div style="font-size: 14px; font-weight: 600; color: white; margin-bottom: 12px;">📋 Resumen ITP</div>';
+
+            if (itpPagado === true) {
+                contenido += `
+                    <div style="font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.5;">
+                        <div style="margin-bottom: 8px;">✅ <strong>Ya pagado</strong></div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.7);">Documento requerido: Modelo 620</div>
+                    </div>
+                `;
+            } else {
+                if (itpGestionSeleccionada === 'yo-pago') {
+                    contenido += `
+                        <div style="font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.5;">
+                            <div style="margin-bottom: 8px;">💳 <strong>Lo pagas tú</strong></div>
+                            <div style="font-size: 12px; color: rgba(255,255,255,0.7);">Documento requerido: Modelo 620</div>
+                        </div>
+                    `;
+                } else if (itpGestionSeleccionada === 'gestionan-ustedes') {
+                    contenido += `
+                        <div style="font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.5; margin-bottom: 10px;">
+                            <div style="margin-bottom: 8px;">🏢 <strong>Lo gestionamos nosotros</strong></div>
+                        </div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.1); padding: 8px; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span>ITP base:</span>
+                                <strong>${itpBaseAmount.toFixed(2)} €</strong>
+                            </div>
+                    `;
+
+                    if (itpMetodoPago === 'tarjeta') {
+                        contenido += `
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #fca5a5;">
+                                <span>Comisión (2%):</span>
+                                <strong>${itpComisionTarjeta.toFixed(2)} €</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.2);">
+                                <span style="font-weight: 600;">Total:</span>
+                                <strong>${itpTotalAmount.toFixed(2)} €</strong>
+                            </div>
+                            <div style="margin-top: 6px; font-size: 11px; color: rgba(255,255,255,0.7);">
+                                Pago: Tarjeta
+                            </div>
+                        `;
+                    } else if (itpMetodoPago === 'transferencia') {
+                        contenido += `
+                            <div style="display: flex; justify-content: space-between; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.2);">
+                                <span style="font-weight: 600;">Total:</span>
+                                <strong>${itpTotalAmount.toFixed(2)} €</strong>
+                            </div>
+                            <div style="margin-top: 6px; font-size: 11px; color: rgba(255,255,255,0.7);">
+                                Pago: Transferencia
+                            </div>
+                        `;
+                    }
+
+                    contenido += `</div>`;
+                }
+            }
+
+            // Botón para volver a editar
+            contenido += `
+                <button type="button" id="volver-editar-itp" style="margin-top: 12px; width: 100%; padding: 8px; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    ✏️ Cambiar selección
+                </button>
+            `;
+
+            sidebarItpResumen.innerHTML = contenido;
+
+            // Event listener para volver a editar
+            const volverBtn = document.getElementById('volver-editar-itp');
+            if (volverBtn) {
+                volverBtn.addEventListener('click', function() {
+                    logDebug('SIDEBAR', '🔙 Usuario quiere cambiar selección ITP');
+                    volverAPaso1Precio();
+                });
+            }
+
+            logDebug('SIDEBAR', '✅ Sidebar actualizado');
+        }
+    }
+
+    // Función para volver al paso 1 de precio
+    function volverAPaso1Precio() {
+        logDebug('PRECIO-FLOW', '🔙 Volviendo al paso 1 de precio');
+
+        // Fade out del paso 2
+        if (precioStep2) {
+            precioStep2.style.opacity = '0';
+            precioStep2.style.transform = 'translateY(20px)';
+
+            setTimeout(() => {
+                precioStep2.style.display = 'none';
+
+                // Mostrar paso 1
+                precioStep1.style.display = 'block';
+                precioStep1.style.opacity = '0';
+                precioStep1.style.transform = 'translateY(-20px)';
+
+                // Forzar reflow
+                precioStep1.offsetHeight;
+
+                // Fade in
+                precioStep1.style.opacity = '1';
+                precioStep1.style.transform = 'translateY(0)';
+
+                precioStep = 1;
+
+                // Restaurar tamaño del selector
+                const questionContainer = document.getElementById('itp-question-container');
+                questionContainer.style.padding = '24px';
+                questionContainer.querySelector('h3').style.fontSize = '18px';
+                questionContainer.querySelector('h3').style.margin = '0 0 8px 0';
+                const subtitleP = questionContainer.querySelector('p');
+                if (subtitleP) subtitleP.style.display = 'block';
+                questionContainer.querySelectorAll('.itp-choice-btn').forEach(btn => {
+                    btn.style.padding = '16px 24px';
+                    btn.style.fontSize = '16px';
+                    btn.style.maxWidth = '200px';
+                });
+
+                // Ocultar flujos
+                document.getElementById('itp-ya-pagado-flow').style.display = 'none';
+                document.getElementById('itp-no-pagado-flow').style.display = 'none';
+
+                logDebug('PRECIO-FLOW', '✅ Vuelto al paso 1');
+            }, 300);
+        }
+    }
+
+    // Actualizar precio final en step 2
+    function actualizarPrecioFinal() {
+        logDebug('PRECIO-FINAL', '💰 Calculando precio final');
+
+        let total = BASE_TRANSFER_PRICE;
+
+        // Añadir ITP según selección
+        if (itpPagado === false && itpGestionSeleccionada === 'gestionan-ustedes') {
+            // Si lo gestionamos nosotros, añadir el ITP (con comisión si es tarjeta)
+            total += itpTotalAmount;
+            logDebug('PRECIO-FINAL', 'ITP incluido (gestionamos):', itpTotalAmount);
+        }
+        // Si ya está pagado o lo paga el usuario, no se añade al total
+
+        // Añadir servicios extras
+        document.querySelectorAll('.extra-option:checked').forEach(function(checkbox) {
+            total += parseFloat(checkbox.dataset.price);
+        });
+
+        // Aplicar descuento de cupón
+        if (couponDiscountPercent > 0) {
+            total = total * (1 - couponDiscountPercent / 100);
+        }
+
+        // Actualizar display
+        const totalFinalEl = document.getElementById('total-final-precio');
+        if (totalFinalEl) {
+            totalFinalEl.textContent = total.toFixed(2) + ' €';
+        }
+
+        // También actualizar el total general (para mantener compatibilidad)
+        finalAmount = total;
+        const finalAmountEl = document.getElementById('final-amount');
+        if (finalAmountEl) {
+            finalAmountEl.textContent = total.toFixed(2) + ' €';
+        }
+    }
+
+    // Event listeners para servicios extras
+    document.querySelectorAll('.extra-option').forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            actualizarPrecioFinal();
+
+            // Mostrar/ocultar input adicional
+            if (this.value === 'Cambio de nombre') {
+                document.getElementById('nombre-input').style.display = this.checked ? 'block' : 'none';
+            } else if (this.value === 'Cambio de puerto base') {
+                document.getElementById('puerto-input').style.display = this.checked ? 'block' : 'none';
+            }
+        });
+    });
+
+    // Resetear flujo cuando se vuelve a página de precio
+    function resetearFlujoPrecio() {
+        if (precioStep1 && precioStep2) {
+            precioStep1.style.display = 'block';
+            precioStep2.style.display = 'none';
+            precioStep = 1;
+            itpPagado = null;
+
+            // Resetear botones ITP
+            if (itpSiBtn) {
+                itpSiBtn.style.background = 'white';
+                itpSiBtn.style.color = '#10b981';
+                itpSiBtn.style.borderColor = '#10b981';
+            }
+            if (itpNoBtn) {
+                itpNoBtn.style.background = 'white';
+                itpNoBtn.style.color = '#6b7280';
+                itpNoBtn.style.borderColor = '#e5e7eb';
+            }
+        }
+    }
+
+    // Detectar cuando se muestra la página de precio para resetear el flujo
+    // Esto se manejará automáticamente cuando el usuario vuelva a la página
+
+    // ============================================
+    // SISTEMA DE SIDEBAR DINÁMICO POR PÁGINA
+    // ============================================
+
+    function actualizarSidebarDinamico(pageId) {
+        logDebug('SIDEBAR-DYN', '🔄 Actualizando sidebar para página:', pageId);
+
+        const sidebarDynamic = document.getElementById('sidebar-dynamic-content');
+        if (!sidebarDynamic) {
+            logError('SIDEBAR-DYN', 'Contenedor dinámico no encontrado');
+            return;
+        }
+
+        let contenido = '';
+
+        switch(pageId) {
+            case 'page-vehiculo':
+                contenido = `
+                    <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
+                        <h4 style="color: white; font-size: 16px; margin: 0 0 12px 0; font-weight: 700;">
+                            <i class="fa-solid fa-ship" style="margin-right: 8px;"></i>Datos de tu Moto
+                        </h4>
+                        <div style="font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.6;">
+                            <div style="margin-bottom: 10px;">
+                                <strong style="color: #fbbf24;">📝 Necesitamos:</strong>
+                            </div>
+                            <ul style="margin: 0; padding-left: 18px; list-style: none;">
+                                <li style="margin-bottom: 6px;">
+                                    <i class="fa-solid fa-check" style="color: #4ade80; margin-right: 6px;"></i>
+                                    Fabricante y modelo
+                                </li>
+                                <li style="margin-bottom: 6px;">
+                                    <i class="fa-solid fa-check" style="color: #4ade80; margin-right: 6px;"></i>
+                                    Fecha de matriculación
+                                </li>
+                                <li style="margin-bottom: 6px;">
+                                    <i class="fa-solid fa-check" style="color: #4ade80; margin-right: 6px;"></i>
+                                    Precio de compra
+                                </li>
+                                <li style="margin-bottom: 6px;">
+                                    <i class="fa-solid fa-check" style="color: #4ade80; margin-right: 6px;"></i>
+                                    Comunidad autónoma
+                                </li>
+                            </ul>
+                            <div style="margin-top: 12px; padding: 10px; background: rgba(251,191,36,0.2); border-radius: 6px; border-left: 3px solid #fbbf24;">
+                                <p style="margin: 0; font-size: 12px; color: white;">
+                                    💡 <strong>Consejo:</strong> Ten a mano la tarjeta de la moto para completar los datos correctamente.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                break;
+
+            case 'page-datos':
+                contenido = `
+                    <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
+                        <h4 style="color: white; font-size: 16px; margin: 0 0 12px 0; font-weight: 700;">
+                            <i class="fa-solid fa-user" style="margin-right: 8px;"></i>Tus Datos
+                        </h4>
+                        <div style="font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.6;">
+                            <div style="margin-bottom: 10px;">
+                                <strong style="color: #fbbf24;">📋 Campos obligatorios:</strong>
+                            </div>
+                            <ul style="margin: 0; padding-left: 18px; list-style: none;">
+                                <li style="margin-bottom: 6px;">
+                                    <i class="fa-solid fa-circle-dot" style="color: #60a5fa; margin-right: 6px; font-size: 10px;"></i>
+                                    Nombre y apellidos (DNI)
+                                </li>
+                                <li style="margin-bottom: 6px;">
+                                    <i class="fa-solid fa-circle-dot" style="color: #60a5fa; margin-right: 6px; font-size: 10px;"></i>
+                                    DNI (formato: 12345678X)
+                                </li>
+                                <li style="margin-bottom: 6px;">
+                                    <i class="fa-solid fa-circle-dot" style="color: #60a5fa; margin-right: 6px; font-size: 10px;"></i>
+                                    Email (notificaciones)
+                                </li>
+                                <li style="margin-bottom: 6px;">
+                                    <i class="fa-solid fa-circle-dot" style="color: #60a5fa; margin-right: 6px; font-size: 10px;"></i>
+                                    Teléfono de contacto
+                                </li>
+                            </ul>
+                            <div style="margin-top: 12px; padding: 10px; background: rgba(96,165,250,0.2); border-radius: 6px; border-left: 3px solid #60a5fa;">
+                                <p style="margin: 0; font-size: 12px; color: white;">
+                                    🔒 <strong>Seguridad:</strong> Tus datos están protegidos y solo se usan para el trámite legal.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                break;
+
+            case 'page-precio':
+                // Para precio ya tenemos la función actualizarSidebarPrecio()
+                // que se llama desde mostrarPrecioStep2()
+                contenido = `
+                    <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
+                        <h4 style="color: white; font-size: 16px; margin: 0 0 12px 0; font-weight: 700;">
+                            <i class="fa-solid fa-euro-sign" style="margin-right: 8px;"></i>Precio del Trámite
+                        </h4>
+                        <div style="font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.6;">
+                            <p style="margin: 0 0 12px 0;">
+                                Revisa el cálculo del ITP y decide cómo gestionarlo.
+                            </p>
+                            <div style="padding: 10px; background: rgba(16,185,129,0.2); border-radius: 6px; border-left: 3px solid #10b981;">
+                                <p style="margin: 0; font-size: 12px; color: white;">
+                                    ✨ Selecciona la opción que mejor se adapte a tu situación
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                break;
+
+            case 'page-documentos':
+                contenido = `
+                    <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
+                        <h4 style="color: white; font-size: 16px; margin: 0 0 12px 0; font-weight: 700;">
+                            <i class="fa-solid fa-file-arrow-up" style="margin-right: 8px;"></i>Documentación
+                        </h4>
+                        <div style="font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.6;">
+                            <div style="margin-bottom: 10px;">
+                                <strong style="color: #fbbf24;">📎 Documentos a subir:</strong>
+                            </div>
+                            <ul style="margin: 0; padding-left: 18px; list-style: none;">
+                                <li style="margin-bottom: 6px;">
+                                    <i class="fa-solid fa-file" style="color: #a78bfa; margin-right: 6px;"></i>
+                                    Tarjeta de la moto
+                                </li>
+                                <li style="margin-bottom: 6px;">
+                                    <i class="fa-solid fa-id-card" style="color: #a78bfa; margin-right: 6px;"></i>
+                                    DNI comprador (ambas caras)
+                                </li>
+                                <li style="margin-bottom: 6px;">
+                                    <i class="fa-solid fa-id-card" style="color: #a78bfa; margin-right: 6px;"></i>
+                                    DNI vendedor (ambas caras)
+                                </li>
+                                <li style="margin-bottom: 6px;">
+                                    <i class="fa-solid fa-file-contract" style="color: #a78bfa; margin-right: 6px;"></i>
+                                    Contrato de compraventa
+                                </li>
+                            </ul>
+                            <div style="margin-top: 12px; padding: 10px; background: rgba(167,139,250,0.2); border-radius: 6px; border-left: 3px solid #a78bfa;">
+                                <p style="margin: 0; font-size: 12px; color: white;">
+                                    📸 <strong>Formatos:</strong> Puedes subir fotos o PDFs. Asegúrate de que se vea todo claramente.
+                                </p>
+                            </div>
+                            <div style="margin-top: 10px; padding: 10px; background: rgba(248,113,113,0.2); border-radius: 6px; border-left: 3px solid #f87171;">
+                                <p style="margin: 0; font-size: 12px; color: white;">
+                                    ✍️ <strong>Importante:</strong> Después de subir los docs, debes firmar la autorización digital.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                break;
+
+            case 'page-pago':
+                const precioBase = BASE_TRANSFER_PRICE || 134.99;
+                const itpIncluido = (itpPagado === false && itpGestionSeleccionada === 'gestionan-ustedes') ? itpTotalAmount : 0;
+                const totalEstimado = precioBase + itpIncluido;
+
+                contenido = `
+                    <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
+                        <h4 style="color: white; font-size: 16px; margin: 0 0 12px 0; font-weight: 700;">
+                            <i class="fa-solid fa-credit-card" style="margin-right: 8px;"></i>Resumen Final
+                        </h4>
+                        <div style="font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.6;">
+                            <div style="background: rgba(16,185,129,0.2); padding: 12px; border-radius: 6px; margin-bottom: 12px; border: 1px solid rgba(16,185,129,0.4);">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span>Tramitación completa:</span>
+                                    <strong>${precioBase.toFixed(2)} €</strong>
+                                </div>
+                                ${itpIncluido > 0 ? `
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span>ITP (gestionado):</span>
+                                    <strong>${itpIncluido.toFixed(2)} €</strong>
+                                </div>
+                                ` : ''}
+                                <div style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 8px; margin-top: 8px; display: flex; justify-content: space-between;">
+                                    <span style="font-weight: 700;">Total a pagar:</span>
+                                    <strong style="font-size: 18px; color: #4ade80;">${totalEstimado.toFixed(2)} €</strong>
+                                </div>
+                            </div>
+                            <div style="padding: 10px; background: rgba(59,130,246,0.2); border-radius: 6px; border-left: 3px solid #3b82f6;">
+                                <p style="margin: 0; font-size: 12px; color: white;">
+                                    🔒 <strong>Pago seguro con Stripe</strong><br>
+                                    Tus datos bancarios están totalmente protegidos
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                break;
+
+            default:
+                contenido = '';
+        }
+
+        sidebarDynamic.innerHTML = contenido;
+        logDebug('SIDEBAR-DYN', '✅ Sidebar actualizado');
+    }
+
+    // ============================================
+    // FIN SISTEMA DE SIDEBAR DINÁMICO
+    // ============================================
+
+    // Actualizar cálculos cuando cambien datos del vehículo
+    const matriculationDateInput = document.getElementById('matriculation_date');
+    const regionSelect = document.getElementById('region');
+
+    logDebug('PRECIO-INIT', 'Inputs encontrados:', {
+        purchasePriceInput: !!purchasePriceInput,
+        matriculationDateInput: !!matriculationDateInput,
+        regionSelect: !!regionSelect
+    });
+
+    if (purchasePriceInput) {
+        purchasePriceInput.addEventListener('change', function() {
+            logDebug('PRECIO-FLOW', '💰 Precio de compra cambiado:', this.value);
+            actualizarCalculoITPStep1();
+        });
+        logDebug('PRECIO-INIT', '✅ Event listener añadido a precio compra');
+    }
+    if (matriculationDateInput) {
+        matriculationDateInput.addEventListener('change', function() {
+            logDebug('PRECIO-FLOW', '📅 Fecha matriculación cambiada:', this.value);
+            actualizarCalculoITPStep1();
+        });
+        logDebug('PRECIO-INIT', '✅ Event listener añadido a fecha matriculación');
+    }
+    if (regionSelect) {
+        regionSelect.addEventListener('change', function() {
+            logDebug('PRECIO-FLOW', '🗺️ Región cambiada:', this.value);
+            actualizarCalculoITPStep1();
+        });
+        logDebug('PRECIO-INIT', '✅ Event listener añadido a región');
+    }
+
+    logDebug('PRECIO-INIT', '✅ Flujo de precio inicializado correctamente');
+
+    // ============================================
+    // FIN NUEVO FLUJO DE PÁGINA DE PRECIO
+    // ============================================
     </script>
     <?php
     return ob_get_clean();
@@ -8571,7 +9484,7 @@ function tpm_submit_form() {
 
         // Enviar email rápido de confirmación al cliente (sin adjuntos pesados)
         $customer_email_quick = $customer_email;
-        $subject_customer_quick = '✓ Pago Recibido - Transferencia de Moto de Agua';
+        $subject_customer_quick = 'Pago Recibido - Transferencia de Moto de Agua';
         $message_customer_quick = "
         <!DOCTYPE html>
         <html>
@@ -8597,7 +9510,7 @@ function tpm_submit_form() {
                             <tr>
                                 <td style='padding: 40px 40px 30px;'>
                                     <div style='background-color: #e8f5e9; border-left: 4px solid #4caf50; padding: 16px 20px; border-radius: 4px; margin-bottom: 30px;'>
-                                        <p style='margin: 0; color: #2e7d32; font-size: 15px; font-weight: 600;'>✓ Pago recibido correctamente</p>
+                                        <p style='margin: 0; color: #2e7d32; font-size: 15px; font-weight: 600;'>Pago recibido correctamente</p>
                                     </div>
 
                                     <p style='margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.6;'>
@@ -8610,7 +9523,7 @@ function tpm_submit_form() {
                                     <!-- Número de Trámite -->
                                     <div style='background-color: #e3f2fd; border-radius: 8px; padding: 20px 24px; margin-bottom: 30px; text-align: center;'>
                                         <p style='margin: 0; color: #1565c0; font-size: 15px; font-weight: 600;'>
-                                            📋 Número de Trámite: <span style='color: #0d47a1;'>$tramite_id</span>
+                                            Número de Trámite: <span style='color: #0d47a1;'>$tramite_id</span>
                                         </p>
                                     </div>
 
@@ -8880,7 +9793,7 @@ function tpm_submit_form() {
         tpm_debug_log('[TPM] Tracking URL: ' . $tracking_url);
     
         // Enviar email al cliente con el link de tracking
-        $subject_customer = '✓ Trámite Registrado - Siga su Transferencia';
+        $subject_customer = 'Trámite Registrado - Siga su Transferencia';
         $display_manufacturer = $no_encuentro ? $manual_manufacturer : $manufacturer;
         $display_model = $no_encuentro ? $manual_model : $model;
         $message_customer = "
@@ -8908,7 +9821,7 @@ function tpm_submit_form() {
                             <tr>
                                 <td style='padding: 40px 40px 30px;'>
                                     <div style='background-color: #e8f5e9; border-left: 4px solid #4caf50; padding: 16px 20px; border-radius: 4px; margin-bottom: 30px;'>
-                                        <p style='margin: 0; color: #2e7d32; font-size: 15px; font-weight: 600;'>✓ Trámite registrado correctamente</p>
+                                        <p style='margin: 0; color: #2e7d32; font-size: 15px; font-weight: 600;'>Trámite registrado correctamente</p>
                                     </div>
 
                                     <p style='margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.6;'>
@@ -8940,7 +9853,7 @@ function tpm_submit_form() {
                                     <!-- Seguimiento -->
                                     <div style='background-color: #e3f2fd; border-radius: 8px; padding: 24px; margin-bottom: 30px; text-align: center;'>
                                         <p style='margin: 0 0 12px; color: #1565c0; font-size: 15px; font-weight: 600;'>
-                                            📋 Número de Trámite
+                                            Número de Trámite
                                         </p>
                                         <p style='margin: 0 0 20px; color: #0d47a1; font-size: 20px; font-weight: 700; letter-spacing: 0.5px;'>
                                             {$tramite_id}
@@ -8949,7 +9862,7 @@ function tpm_submit_form() {
                                             Puede consultar el estado de su trámite en cualquier momento:
                                         </p>
                                         <a href='{$tracking_url}' style='display: inline-block; background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px; box-shadow: 0 3px 8px rgba(25,118,210,0.3); margin-bottom: 16px;'>
-                                            🔍 Ver Estado del Trámite
+                                            Ver Estado del Trámite
                                         </a>
                                         <p style='margin: 0; color: #777; font-size: 13px; line-height: 1.5;'>
                                             O copie este enlace:<br>
@@ -8965,19 +9878,19 @@ function tpm_submit_form() {
                                                 <table width='100%' cellpadding='8' cellspacing='0'>
                                                     <tr>
                                                         <td style='padding: 10px 0; border-bottom: 1px solid #e0e0e0;'>
-                                                            <span style='color: #1976d2; font-size: 18px; margin-right: 10px;'>1️⃣</span>
+                                                            <span style='color: #1976d2; font-weight: 700; font-size: 14px; margin-right: 10px;'>1.</span>
                                                             <span style='color: #555; font-size: 14px;'>Revisaremos su documentación</span>
                                                         </td>
                                                     </tr>
                                                     <tr>
                                                         <td style='padding: 10px 0; border-bottom: 1px solid #e0e0e0;'>
-                                                            <span style='color: #1976d2; font-size: 18px; margin-right: 10px;'>2️⃣</span>
+                                                            <span style='color: #1976d2; font-weight: 700; font-size: 14px; margin-right: 10px;'>2.</span>
                                                             <span style='color: #555; font-size: 14px;'>Tramitaremos la transferencia ante los organismos competentes</span>
                                                         </td>
                                                     </tr>
                                                     <tr>
                                                         <td style='padding: 10px 0;'>
-                                                            <span style='color: #1976d2; font-size: 18px; margin-right: 10px;'>3️⃣</span>
+                                                            <span style='color: #1976d2; font-weight: 700; font-size: 14px; margin-right: 10px;'>3.</span>
                                                             <span style='color: #555; font-size: 14px;'>Le enviaremos la documentación final</span>
                                                         </td>
                                                     </tr>
@@ -8987,7 +9900,7 @@ function tpm_submit_form() {
                                     </table>
 
                                     <p style='margin: 0; color: #666; font-size: 13px; line-height: 1.6; padding: 16px; background-color: #fff3cd; border-left: 3px solid #ffc107; border-radius: 4px;'>
-                                        💡 <strong>Importante:</strong> Le notificaremos por email cualquier actualización o si necesitamos información adicional.
+                                        <strong>Importante:</strong> Le notificaremos por email cualquier actualización o si necesitamos información adicional.
                                     </p>
 
                                 </td>
