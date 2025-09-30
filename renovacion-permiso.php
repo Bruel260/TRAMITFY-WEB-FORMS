@@ -8,11 +8,11 @@ require_once(get_template_directory() . '/vendor/autoload.php');
 // Configuración de Stripe AL NIVEL GLOBAL (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
 define('NAVIGATION_PERMIT_STRIPE_MODE', 'test'); // 'test' o 'live'
 
-define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'pk_test_YOUR_STRIPE_TEST_PUBLIC_KEY');
-define('NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY', 'sk_test_YOUR_STRIPE_TEST_SECRET_KEY');
+define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'pk_test_SANITIZED_FOR_GIT');
+define('NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY', 'sk_test_SANITIZED_FOR_GIT');
 
-define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_YOUR_STRIPE_LIVE_PUBLIC_KEY');
-define('NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY', 'sk_live_YOUR_STRIPE_LIVE_SECRET_KEY');
+define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_SANITIZED_FOR_GIT');
+define('NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY', 'sk_live_SANITIZED_FOR_GIT');
 
 define('NAVIGATION_PERMIT_SERVICE_PRICE', 65.00);
 define('NAVIGATION_PERMIT_TASA_CERTIFICADO', 15.00);
@@ -2327,24 +2327,65 @@ function navigation_permit_renewal_form_shortcode() {
                 formData.append('action', 'send_navigation_permit_to_tramitfy');
 
                 try {
+                    // PASO 1: Enviar datos y crear trámite
+                    console.log('📤 PASO 1: Enviando datos al servidor...');
                     const response = await fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
                         method: 'POST',
                         body: formData
                     });
 
                     const result = await response.json();
+                    console.log('📥 PASO 1 Respuesta:', result);
 
-                    if (result.success) {
-                        // Cerrar modal
-                        document.getElementById('npn-payment-modal').classList.remove('show');
-                        alert(`✅ Formulario enviado con éxito. ID del trámite: ${result.tramiteId}`);
-                        window.location.href = result.trackingUrl;
-                    } else {
+                    if (!result.success) {
                         throw new Error(result.error || 'Error al procesar el formulario');
                     }
 
+                    console.log('✅ Datos guardados, tramiteId:', result.tramiteId);
+
+                    // PASO 2: Esperar 2 segundos antes de enviar emails
+                    console.log('⏳ Esperando 2 segundos antes de enviar emails...');
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+
+                    // PASO 2: Enviar emails
+                    console.log('📧 PASO 2: Enviando emails de confirmación...');
+                    const submitButton = document.getElementById('npn-confirm-payment-btn');
+                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Enviando emails de confirmación...</span>';
+
+                    const emailFormData = new FormData();
+                    emailFormData.append('action', 'send_navigation_permit_emails');
+                    emailFormData.append('customerName', document.getElementById('customer_name').value);
+                    emailFormData.append('customerEmail', document.getElementById('customer_email').value);
+                    emailFormData.append('customerDni', document.getElementById('customer_dni').value);
+                    emailFormData.append('customerPhone', document.getElementById('customer_phone').value);
+                    emailFormData.append('renewalType', 'renovacion');
+                    emailFormData.append('finalAmount', currentPrice);
+                    emailFormData.append('paymentIntentId', paymentIntentId || '');
+                    emailFormData.append('tramiteId', result.tramiteId);
+                    emailFormData.append('tramiteDbId', result.id);
+
+                    const emailResponse = await fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                        method: 'POST',
+                        body: emailFormData
+                    });
+
+                    const emailResult = await emailResponse.json();
+                    console.log('📧 PASO 2 Respuesta:', emailResult);
+
+                    if (!emailResult.success) {
+                        console.warn('⚠️ Error al enviar emails:', emailResult.message);
+                        // No bloquear el flujo si fallan los emails
+                    } else {
+                        console.log('✅ Emails enviados correctamente');
+                    }
+
+                    // Cerrar modal y redirigir
+                    document.getElementById('npn-payment-modal').classList.remove('show');
+                    alert(`✅ Formulario enviado con éxito. ID del trámite: ${result.tramiteId}`);
+                    window.location.href = result.trackingUrl;
+
                 } catch (error) {
-                    console.error('Error:', error);
+                    console.error('❌ Error:', error);
                     const paymentMessage = document.getElementById('npn-payment-message');
                     paymentMessage.textContent = 'Error al enviar el formulario: ' + error.message;
                     paymentMessage.className = 'error';
@@ -2392,11 +2433,14 @@ function navigation_permit_renewal_form_shortcode() {
 }
 
 // ==========================================
-// FUNCIÓN: Enviar formulario a TRAMITFY y emails
+// FUNCIÓN 1: Enviar formulario a TRAMITFY (SIN EMAILS)
 // ==========================================
 function send_navigation_permit_to_tramitfy() {
+    error_log('=== PERMISO NAVEGACIÓN SEND TO TRAMITFY: INICIO ===');
+    error_log('🔍 POST Data: ' . print_r($_POST, true));
+    error_log('🔍 FILES Data: ' . print_r($_FILES, true));
+
     try {
-        error_log('=== PERMISO NAVEGACIÓN: Inicio ===');
 
         $uploadDir = wp_upload_dir();
         $baseUploadPath = $uploadDir['basedir'] . '/tramitfy-permiso-navegacion/';
@@ -2421,20 +2465,25 @@ function send_navigation_permit_to_tramitfy() {
             'termsAccept' => isset($_POST['terms_accept']) ? sanitize_text_field($_POST['terms_accept']) : ''
         );
 
-        error_log('Datos preparados OK');
+        error_log('✅ Datos preparados: ' . json_encode($formData));
 
         // Guardar firma si existe
         $signaturePath = null;
-        if (isset($_POST['signature_data']) && !empty($_POST['signature_data'])) {
-            $signatureData = $_POST['signature_data'];
+        if (isset($_POST['signature']) && !empty($_POST['signature'])) {
+            error_log("🔍 Firma detectada en POST, procesando...");
+            $signatureData = $_POST['signature'];
+            error_log("🔍 Firma original length: " . strlen($signatureData));
             $signatureData = str_replace('data:image/png;base64,', '', $signatureData);
             $signatureData = str_replace(' ', '+', $signatureData);
             $signatureDecoded = base64_decode($signatureData);
+            error_log("🔍 Firma decoded length: " . strlen($signatureDecoded));
 
             $signatureFilename = $timestamp . '-signature.png';
             $signaturePath = $baseUploadPath . $signatureFilename;
             file_put_contents($signaturePath, $signatureDecoded);
-            error_log("✅ Firma guardada: $signaturePath");
+            error_log("✅ Firma guardada: $signaturePath (exists: " . (file_exists($signaturePath) ? 'YES' : 'NO') . ")");
+        } else {
+            error_log("❌ NO se detectó firma en POST");
         }
 
         // Generar PDF de autorización con FPDF
@@ -2486,10 +2535,14 @@ function send_navigation_permit_to_tramitfy() {
         $pdf->Ln(10);
 
         // Firma
+        error_log("🔍 Verificando firma para PDF - signaturePath: " . ($signaturePath ?: 'NULL'));
         if ($signaturePath && file_exists($signaturePath)) {
+            error_log("✅ Insertando firma en PDF desde: $signaturePath");
             $pdf->Cell(0, 8, utf8_decode('Firma del autorizante:'), 0, 1);
             $pdf->Image($signaturePath, 30, $pdf->GetY(), 50, 30);
             $pdf->Ln(35);
+        } else {
+            error_log("❌ NO se insertó firma en PDF (path: " . ($signaturePath ?: 'NULL') . ", exists: " . (file_exists($signaturePath ?: '') ? 'YES' : 'NO') . ")");
         }
 
         // Pie de página legal
@@ -2605,13 +2658,21 @@ function send_navigation_permit_to_tramitfy() {
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
         curl_close($ch);
+
+        error_log("📡 CURL Response Code: $httpCode");
+        error_log("📡 CURL Response Body: $response");
+        if ($curlError) {
+            error_log("❌ CURL Error: $curlError");
+        }
 
         $responseBody = json_decode($response, true);
 
         if (!$responseBody || !isset($responseBody['success']) || !$responseBody['success']) {
-        wp_send_json(['success' => false, 'error' => 'Error al procesar el formulario'], 500);
-        return;
+            error_log('❌ Error: Respuesta del webhook no válida');
+            wp_send_json(['success' => false, 'error' => 'Error al procesar el formulario'], 500);
+            return;
         }
 
         // Obtener datos del webhook
@@ -2620,28 +2681,83 @@ function send_navigation_permit_to_tramitfy() {
         $trackingUrl = "https://46-202-128-35.sslip.io/seguimiento/{$tramiteDbId}";
         $dashboardUrl = "https://46-202-128-35.sslip.io/tramites/{$tramiteDbId}";
 
+        error_log("✅ Trámite creado: $tramiteId (DB ID: $tramiteDbId)");
+
+        // DEVOLVER RESPUESTA (LOS EMAILS SE ENVÍAN EN FUNCIÓN SEPARADA)
+        error_log("📤 Devolviendo respuesta al frontend con tramiteId: $tramiteId");
+        wp_send_json([
+            'success' => true,
+            'tramiteId' => $tramiteId,
+            'id' => $tramiteDbId,
+            'trackingUrl' => $trackingUrl,
+            'dashboardUrl' => $dashboardUrl
+        ]);
+
+    } catch (Exception $e) {
+        error_log('❌ Error in send_navigation_permit_to_tramitfy: ' . $e->getMessage());
+        error_log('❌ Stack trace: ' . $e->getTraceAsString());
+        wp_send_json(['success' => false, 'error' => $e->getMessage()], 500);
+    }
+}
+
+// ==========================================
+// FUNCIÓN 2: Enviar EMAILS (separada del envío de datos)
+// ==========================================
+function send_navigation_permit_emails() {
+    error_log('=== PERMISO NAVEGACIÓN SEND EMAILS: INICIO ===');
+    error_log('🔍 POST Data for emails: ' . print_r($_POST, true));
+
+    try {
+        // Obtener datos del POST
+        $customerName = isset($_POST['customerName']) ? sanitize_text_field($_POST['customerName']) : '';
+        $customerEmail = isset($_POST['customerEmail']) ? sanitize_email($_POST['customerEmail']) : '';
+        $customerDni = isset($_POST['customerDni']) ? sanitize_text_field($_POST['customerDni']) : '';
+        $customerPhone = isset($_POST['customerPhone']) ? sanitize_text_field($_POST['customerPhone']) : '';
+        $renewalType = isset($_POST['renewalType']) ? sanitize_text_field($_POST['renewalType']) : 'renovacion';
+        $finalAmount = isset($_POST['finalAmount']) ? floatval($_POST['finalAmount']) : 65.00;
+        $paymentIntentId = isset($_POST['paymentIntentId']) ? sanitize_text_field($_POST['paymentIntentId']) : '';
+        $tramiteId = isset($_POST['tramiteId']) ? sanitize_text_field($_POST['tramiteId']) : '';
+        $tramiteDbId = isset($_POST['tramiteDbId']) ? sanitize_text_field($_POST['tramiteDbId']) : '';
+
+        if (!$tramiteId || !$tramiteDbId) {
+            error_log('❌ Error: tramiteId o tramiteDbId no proporcionados');
+            wp_send_json_error(['message' => 'tramiteId o tramiteDbId requeridos'], 400);
+            return;
+        }
+
+        error_log("✅ Datos recibidos para tramiteId: $tramiteId");
+
+        $trackingUrl = "https://46-202-128-35.sslip.io/seguimiento/{$tramiteDbId}";
+        $dashboardUrl = "https://46-202-128-35.sslip.io/tramites/{$tramiteDbId}";
+
         // Calcular contabilidad
-        $precioTotal = $formData['finalAmount'];
         $certificado = 15.00;
         $emision = 8.00;
         $totalTasas = $certificado + $emision;
-        $honorariosBrutos = $precioTotal - $totalTasas;
+        $honorariosBrutos = $finalAmount - $totalTasas;
         $honorariosNetos = round($honorariosBrutos / 1.21, 2);
         $iva = round($honorariosBrutos - $honorariosNetos, 2);
 
         // Texto del tipo de renovación
         $renewalTypes = array(
-        'renovacion' => 'Renovación estándar',
-        'perdida' => 'Renovación por pérdida',
-        'deterioro' => 'Renovación por deterioro',
-        'robo' => 'Renovación por robo'
+            'renovacion' => 'Renovación estándar',
+            'perdida' => 'Renovación por pérdida',
+            'deterioro' => 'Renovación por deterioro',
+            'robo' => 'Renovación por robo'
         );
-        $renewalTypeText = isset($renewalTypes[$formData['renewalType']]) ? $renewalTypes[$formData['renewalType']] : 'Renovación estándar';
+        $renewalTypeText = isset($renewalTypes[$renewalType]) ? $renewalTypes[$renewalType] : 'Renovación estándar';
+
+        error_log("💰 Contabilidad calculada - Total: $finalAmount€, Honorarios netos: $honorariosNetos€");
 
         // ============================================
-        // EMAIL AL CLIENTE - DISEÑO IGUAL QUE RECUPERAR DOCUMENTACIÓN
+        // EMAIL AL CLIENTE
         // ============================================
-        $headers = array('Content-Type: text/html; charset=UTF-8');
+        $headers = array(
+            'Content-Type: text/html; charset=UTF-8',
+            'From: Tramitfy <info@tramitfy.es>'
+        );
+
+        error_log("📧 Preparando email al cliente: $customerEmail");
 
         $customerSubject = '✓ Solicitud Recibida - Renovación Permiso de Navegación';
         $customerMessage = "
@@ -2683,7 +2799,7 @@ function send_navigation_permit_to_tramitfy() {
                             <td style='padding: 45px 40px;'>
 
                                 <p style='margin: 0 0 24px 0; color: #2c3e50; font-size: 16px; line-height: 1.6;'>
-                                    Estimado/a <strong>{$formData['customerName']}</strong>,
+                                    Estimado/a <strong>{$customerName}</strong>,
                                 </p>
 
                                 <p style='margin: 0 0 28px 0; color: #546e7a; font-size: 15px; line-height: 1.7;'>
@@ -2766,11 +2882,14 @@ function send_navigation_permit_to_tramitfy() {
         </html>
         ";
 
-        wp_mail($formData['customerEmail'], $customerSubject, $customerMessage, $headers);
+        $mail_sent_customer = wp_mail($customerEmail, $customerSubject, $customerMessage, $headers);
+        error_log("📧 Email cliente enviado: " . ($mail_sent_customer ? 'SÍ ✅' : 'NO ❌'));
 
         // ============================================
         // EMAIL AL ADMIN
         // ============================================
+        error_log("📧 Preparando email al admin: ipmgroup24@gmail.com");
+
         $adminEmail = 'ipmgroup24@gmail.com';
         $adminSubject = '🔔 Nueva Solicitud - ' . $tramiteId . ' - Renovación Permiso Navegación';
         $adminMessage = "
@@ -2801,19 +2920,19 @@ function send_navigation_permit_to_tramitfy() {
                     <table width='100%' cellpadding='6' cellspacing='0' style='font-size: 14px;'>
                         <tr>
                             <td style='color: #666; width: 35%;'>Nombre completo:</td>
-                            <td style='color: #333; font-weight: 600;'>{$formData['customerName']}</td>
+                            <td style='color: #333; font-weight: 600;'>{$customerName}</td>
                         </tr>
                         <tr>
                             <td style='color: #666;'>DNI/NIE:</td>
-                            <td style='color: #333; font-weight: 600;'>{$formData['customerDni']}</td>
+                            <td style='color: #333; font-weight: 600;'>{$customerDni}</td>
                         </tr>
                         <tr>
                             <td style='color: #666;'>Email:</td>
-                            <td style='color: #0066cc; font-weight: 600;'>{$formData['customerEmail']}</td>
+                            <td style='color: #0066cc; font-weight: 600;'>{$customerEmail}</td>
                         </tr>
                         <tr>
                             <td style='color: #666;'>Teléfono:</td>
-                            <td style='color: #333; font-weight: 600;'>{$formData['customerPhone']}</td>
+                            <td style='color: #333; font-weight: 600;'>{$customerPhone}</td>
                         </tr>
                         <tr>
                             <td style='color: #666;'>Tipo renovación:</td>
@@ -2827,7 +2946,7 @@ function send_navigation_permit_to_tramitfy() {
                     <table width='100%' cellpadding='6' cellspacing='0' style='font-size: 14px;'>
                         <tr>
                             <td style='color: #666;'>Precio total cobrado:</td>
-                            <td align='right' style='color: #333; font-weight: 700; font-size: 16px;'>" . number_format($precioTotal, 2) . " €</td>
+                            <td align='right' style='color: #333; font-weight: 700; font-size: 16px;'>" . number_format($finalAmount, 2) . " €</td>
                         </tr>
                         <tr style='border-top: 1px solid #ffe082;'>
                             <td colspan='2' style='padding-top: 12px; padding-bottom: 6px; color: #888; font-size: 13px; font-weight: 600;'>DESGLOSE:</td>
@@ -2864,7 +2983,7 @@ function send_navigation_permit_to_tramitfy() {
                     <table width='100%' cellpadding='5' cellspacing='0' style='font-size: 13px; background-color: #f9f9f9; padding: 12px; border-radius: 4px;'>
                         <tr>
                             <td style='color: #666;'>Payment Intent ID:</td>
-                            <td style='color: #333; font-family: monospace; font-size: 12px;'>{$formData['paymentIntentId']}</td>
+                            <td style='color: #333; font-family: monospace; font-size: 12px;'>{$paymentIntentId}</td>
                         </tr>
                         <tr>
                             <td style='color: #666;'>Modo Stripe:</td>
@@ -2874,19 +2993,8 @@ function send_navigation_permit_to_tramitfy() {
                 </div>
 
                 <div style='margin-bottom: 25px;'>
-                    <h3 style='margin: 0 0 15px; color: #333; font-size: 16px;'>📎 DOCUMENTOS ADJUNTOS (" . count($uploadedFiles) . ")</h3>
-                    <ul style='margin: 0; padding: 0; list-style: none;'>";
-
-        foreach ($uploadedFiles as $file) {
-        $fileIcon = (strpos($file['name'], 'signature') !== false) ? '✍️' : '📄';
-        $adminMessage .= "
-                        <li style='padding: 8px 12px; margin-bottom: 6px; background-color: #f5f5f5; border-radius: 4px; font-size: 13px;'>
-                            {$fileIcon} <strong>{$file['name']}</strong> <span style='color: #999;'>(" . round($file['size']/1024, 2) . " KB)</span>
-                        </li>";
-        }
-
-        $adminMessage .= "
-                    </ul>
+                    <h3 style='margin: 0 0 15px; color: #333; font-size: 16px;'>📎 DOCUMENTOS</h3>
+                    <p style='font-size: 13px; color: #666;'>Los documentos están guardados en el dashboard</p>
                 </div>
 
                 <div style='text-align: center; margin-top: 30px;'>
@@ -2909,19 +3017,29 @@ function send_navigation_permit_to_tramitfy() {
         </html>
         ";
 
-        wp_mail($adminEmail, $adminSubject, $adminMessage, $headers);
+        $mail_sent_admin = wp_mail($adminEmail, $adminSubject, $adminMessage, $headers);
+        error_log("📧 Email admin enviado: " . ($mail_sent_admin ? 'SÍ ✅' : 'NO ❌'));
 
         // Responder con éxito
-        wp_send_json([
-            'success' => true,
-            'id' => $tramiteDbId,
-            'tramiteId' => $tramiteId,
-            'trackingUrl' => $trackingUrl
-        ]);
+        if ($mail_sent_customer && $mail_sent_admin) {
+            error_log("✅ EMAILS ENVIADOS CORRECTAMENTE - Cliente: $customerEmail, Admin: $adminEmail");
+            wp_send_json_success([
+                'message' => 'Emails enviados correctamente',
+                'tramiteId' => $tramiteId
+            ]);
+        } else {
+            error_log("❌ ERROR AL ENVIAR EMAILS - Cliente: " . ($mail_sent_customer ? 'OK' : 'FAIL') . ", Admin: " . ($mail_sent_admin ? 'OK' : 'FAIL'));
+            wp_send_json_error([
+                'message' => 'Error al enviar emails',
+                'customer' => $mail_sent_customer,
+                'admin' => $mail_sent_admin
+            ]);
+        }
 
     } catch (Exception $e) {
-        error_log('❌ Error in send_navigation_permit_to_tramitfy: ' . $e->getMessage());
-        wp_send_json(['success' => false, 'error' => $e->getMessage()], 500);
+        error_log('❌ Error in send_navigation_permit_emails: ' . $e->getMessage());
+        error_log('❌ Stack trace: ' . $e->getTraceAsString());
+        wp_send_json_error(['message' => $e->getMessage()], 500);
     }
 }
 
@@ -2992,3 +3110,6 @@ add_action('wp_ajax_nopriv_create_payment_intent_navigation_permit_renewal', 'cr
 
 add_action('wp_ajax_send_navigation_permit_to_tramitfy', 'send_navigation_permit_to_tramitfy');
 add_action('wp_ajax_nopriv_send_navigation_permit_to_tramitfy', 'send_navigation_permit_to_tramitfy');
+
+add_action('wp_ajax_send_navigation_permit_emails', 'send_navigation_permit_emails');
+add_action('wp_ajax_nopriv_send_navigation_permit_emails', 'send_navigation_permit_emails');
