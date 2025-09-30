@@ -1925,7 +1925,10 @@ function navigation_permit_renewal_form_shortcode() {
 
                 // Inicializar Stripe con la clave pública
                 console.log('💳 Inicializando Stripe con clave pública...');
-                stripe = Stripe('<?php echo $stripe_public_key; ?>');
+                const stripePublicKey = '<?php echo (NAVIGATION_PERMIT_STRIPE_MODE === "test") ? NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY : NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY; ?>';
+                console.log('💳 Usando clave:', stripePublicKey.substring(0, 15) + '...');
+                console.log('💳 Modo:', '<?php echo NAVIGATION_PERMIT_STRIPE_MODE; ?>');
+                stripe = Stripe(stripePublicKey);
                 console.log('✅ Stripe object creado:', stripe);
 
                 try {
