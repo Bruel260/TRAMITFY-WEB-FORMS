@@ -1691,8 +1691,7 @@ function hoja_asiento_form_shortcode() {
 
             // Almacenamiento de archivos
             const fileStorage = {
-                'upload-dni-propietario': [],
-                'upload-documento-barco': []
+                'upload-dni-propietario': []
             };
 
             // Sistema de múltiples archivos
@@ -1769,7 +1768,6 @@ function hoja_asiento_form_shortcode() {
 
             // Inicializar inputs de archivo
             initFileUpload('upload-dni-propietario', 'preview-dni-propietario');
-            initFileUpload('upload-documento-barco', 'preview-documento-barco');
 
             // Navegación entre páginas
             const formPages = document.querySelectorAll('.ha-form-page');
@@ -2292,9 +2290,6 @@ function hoja_asiento_form_shortcode() {
                 // Añadir archivos desde fileStorage
                 fileStorage['upload-dni-propietario'].forEach((file, index) => {
                     formData.append('upload_dni_propietario[]', file);
-                });
-                fileStorage['upload-documento-barco'].forEach((file, index) => {
-                    formData.append('upload_documento_barco[]', file);
                 });
 
                 // Añadir datos adicionales
