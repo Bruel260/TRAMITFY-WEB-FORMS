@@ -4090,32 +4090,57 @@ function transferencia_moto_shortcode() {
                     </div>
 
                     <!-- Contenido: PASO 6 - Resumen y Pago -->
-                    <div class="sidebar-content" data-step="page-resumen">
-                        <div class="sidebar-header">
-                            <div class="sidebar-icon">
-                                <i class="fa-solid fa-credit-card"></i>
-                            </div>
-                            <div class="sidebar-title">
-                                <h3>Confirma y paga</h3>
-                                <p>Paso 6 de 6</p>
-                            </div>
-                        </div>
+                    <div class="sidebar-content" data-step="page-pago">
                         <div class="sidebar-body">
-                            <div class="sidebar-price-highlight">
-                                <div class="sidebar-price-label">Total a pagar ahora</div>
-                                <div class="sidebar-price-amount" id="sidebar-final-amount">134,95€</div>
-                                <div class="sidebar-price-includes">
-                                    ✓ Gestión completa<br>
-                                    ✓ Tasas + Honorarios + IVA<br>
-                                    ✗ ITP (se paga a Hacienda)
-                                </div>
-                                <div class="sidebar-badge">
-                                    <i class="fa-solid fa-shield-halved"></i> Conexión cifrada SSL
+                            <h3 style="margin-bottom: 20px; color: #ffffff; font-size: 18px;"><i class="fa-solid fa-clipboard-list"></i> Resumen de su trámite</h3>
+
+                            <!-- Datos Personales -->
+                            <div style="background: rgba(255, 255, 255, 0.15); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                <h4 style="color: #ffffff; font-size: 14px; margin-bottom: 10px;"><i class="fa-solid fa-user"></i> Datos Personales</h4>
+                                <div style="font-size: 13px; color: rgba(255, 255, 255, 0.9); line-height: 1.8;">
+                                    <p style="margin: 5px 0;"><strong>Nombre:</strong> <span id="summary-name">-</span></p>
+                                    <p style="margin: 5px 0;"><strong>DNI:</strong> <span id="summary-dni">-</span></p>
+                                    <p style="margin: 5px 0;"><strong>Email:</strong> <span id="summary-email">-</span></p>
+                                    <p style="margin: 5px 0;"><strong>Teléfono:</strong> <span id="summary-phone">-</span></p>
                                 </div>
                             </div>
-                            <div class="sidebar-info-box">
-                                <p><strong>Revisa todos los datos</strong> antes de proceder al pago.</p>
-                                <p>Recibirás confirmación por <strong>email inmediatamente</strong>.</p>
+
+                            <!-- Datos del Vehículo -->
+                            <div style="background: rgba(255, 255, 255, 0.15); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                <h4 style="color: #ffffff; font-size: 14px; margin-bottom: 10px;"><i class="fa-solid fa-water"></i> Vehículo</h4>
+                                <div style="font-size: 13px; color: rgba(255, 255, 255, 0.9); line-height: 1.8;">
+                                    <p style="margin: 5px 0;"><strong>Tipo:</strong> Moto de agua</p>
+                                    <p style="margin: 5px 0;"><strong>Fabricante:</strong> <span id="summary-manufacturer">-</span></p>
+                                    <p style="margin: 5px 0;"><strong>Modelo:</strong> <span id="summary-model">-</span></p>
+                                    <p style="margin: 5px 0;"><strong>Fecha Matric.:</strong> <span id="summary-matriculation">-</span></p>
+                                    <p style="margin: 5px 0;"><strong>Precio Compra:</strong> <span id="summary-purchase-price">-</span></p>
+                                    <p style="margin: 5px 0;"><strong>Com. Autónoma:</strong> <span id="summary-region">-</span></p>
+                                </div>
+                            </div>
+
+                            <!-- Resumen de Pago -->
+                            <div style="background: rgba(255, 255, 255, 0.25); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                <h4 style="color: #ffffff; font-size: 14px; margin-bottom: 10px;"><i class="fa-solid fa-receipt"></i> Resumen de Pago</h4>
+                                <div style="font-size: 13px; color: rgba(255, 255, 255, 0.9); line-height: 1.8;">
+                                    <p style="margin: 5px 0;"><strong>Cambio de titularidad:</strong> <span id="summary-base-price">134.99 €</span></p>
+                                    <p style="margin: 10px 0 5px 0; font-size: 12px; opacity: 0.8;"><strong>Incluye:</strong></p>
+                                    <div style="margin-left: 10px;">
+                                        <p style="margin: 3px 0;">• Tasas + Gestión: <span id="summary-tasas-gestion">114.87 €</span></p>
+                                        <p style="margin: 3px 0;">• IVA: <span id="summary-iva">20.12 €</span></p>
+                                        <p style="margin: 3px 0;">• Comisión bancaria: <span id="summary-comision">0 €</span></p>
+                                    </div>
+                                    <p style="margin: 10px 0 5px 0;"><strong>Impuesto transmisiones:</strong> <span id="summary-transfer-tax">0 €</span></p>
+
+                                    <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid rgba(255, 255, 255, 0.5);">
+                                        <p style="font-size: 16px; font-weight: bold; color: #ffffff;"><strong>Total a pagar:</strong> <span id="summary-final-amount">134.99 €</span></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="background: rgba(76, 175, 80, 0.2); padding: 12px; border-radius: 8px; border-left: 4px solid #4CAF50;">
+                                <p style="margin: 0; color: #ffffff; font-size: 12px; line-height: 1.6;">
+                                    <i class="fa-solid fa-shield-halved"></i> <strong>Pago seguro</strong> - Conexión cifrada SSL
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -4704,188 +4729,116 @@ function transferencia_moto_shortcode() {
 
         <!-- Página Pago -->
         <div id="page-pago" class="form-page form-section-compact hidden">
-            <h2 style="margin-bottom: 10px;">Resumen y Pago</h2>
+            <h2 style="margin-bottom: 20px;"><i class="fa-solid fa-credit-card"></i> Método de Pago</h2>
 
-            <!-- Panel de resumen completo del trámite -->
-            <div class="summary-panel">
-                <h3 style="margin-bottom: 20px;"><i class="fa-solid fa-clipboard-list"></i> Resumen de su trámite</h3>
+            <!-- Elemento de pago de Stripe directamente en el formulario -->
+            <div id="stripe-container" style="max-width: 600px; margin: 0 auto;">
+                <!-- Spinner de carga mientras se inicializa -->
+                <div id="stripe-loading" style="text-align: center; padding: 40px;">
+                    <div class="stripe-spinner" style="margin: 0 auto 20px;"></div>
+                    <p style="color: #666;">Cargando sistema de pago seguro...</p>
+                </div>
 
-                <div class="summary-grid">
-                    <!-- Columna 1: Datos Personales -->
-                    <div class="summary-section">
-                        <h4><i class="fa-solid fa-user"></i> Datos Personales</h4>
-                        <div class="summary-content">
-                            <p><strong>Nombre:</strong> <span id="summary-name">-</span></p>
-                            <p><strong>DNI:</strong> <span id="summary-dni">-</span></p>
-                            <p><strong>Email:</strong> <span id="summary-email">-</span></p>
-                            <p><strong>Teléfono:</strong> <span id="summary-phone">-</span></p>
-                        </div>
-                    </div>
-                    
-                    <!-- Columna 2: Datos del Vehículo -->
-                    <div class="summary-section">
-                        <h4><i class="fa-solid fa-water"></i> Vehículo</h4>
-                        <div class="summary-content">
-                            <p><strong>Tipo:</strong> <span id="summary-vehicle-type">-</span></p>
-                            <p><strong>Fabricante:</strong> <span id="summary-manufacturer">-</span></p>
-                            <p><strong>Modelo:</strong> <span id="summary-model">-</span></p>
-                            <p><strong>Fecha Matric.:</strong> <span id="summary-matriculation">-</span></p>
-                            <p><strong>Precio Compra:</strong> <span id="summary-purchase-price">-</span></p>
-                            <p><strong>Com. Autónoma:</strong> <span id="summary-region">-</span></p>
-                        </div>
-                    </div>
-                    
-                    <!-- Columna 3: Resumen de Pago -->
-                    <div class="summary-section">
-                        <h4><i class="fa-solid fa-receipt"></i> Resumen de Pago</h4>
-                        <div class="summary-content">
-                            <p><strong>Cambio de titularidad:</strong> <span id="summary-base-price">134.99 €</span></p>
-                            <p style="margin-top: 10px; font-size: 0.9em; color: #666;"><strong>Incluye:</strong></p>
-                            <div style="margin-left: 10px; font-size: 0.9em;">
-                                <p>• Tasas + Gestión: <span id="summary-tasas-gestion">114.87 €</span></p>
-                                <p>• IVA: <span id="summary-iva">20.12 €</span></p>
-                                <p>• Comisión bancaria: <span id="summary-comision">0 €</span></p>
+                <!-- Contenedor donde se montará el elemento de pago -->
+                <div id="payment-element" class="payment-element-container" style="margin-bottom: 30px;"></div>
+
+                <!-- Términos y condiciones -->
+                <div class="terms-container payment-terms" style="margin: 30px 0; text-align: center; padding: 20px; border: 2px solid rgba(var(--primary), 0.3); border-radius: var(--radius-md); background-color: rgba(var(--primary), 0.05);">
+                    <label style="display: flex; align-items: center; justify-content: center; gap: 12px; font-weight: 500; cursor: pointer;">
+                        <div class="custom-checkbox-container" style="position: relative; width: 18px; height: 18px;">
+                            <input type="checkbox" id="terms_accept_pago" name="terms_accept_pago" required style="position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0;">
+                            <div class="checkmark-box" style="position: absolute; top: 0; left: 0; height: 18px; width: 18px; background-color: white; border: 1.5px solid rgb(var(--primary)); border-radius: 3px; transition: all 0.2s ease;"></div>
+                            <div class="checkmark" style="position: absolute; top: 0; left: 0; height: 18px; width: 18px; display: none; z-index: 2;">
+                                <i class="fa-solid fa-check" style="position: absolute; top: 1px; left: 3px; color: white; font-size: 12px;"></i>
                             </div>
-                            <p style="margin-top: 10px;"><strong>Impuesto transmisiones:</strong> <span id="summary-transfer-tax-detail">0 €</span></p>
-                            <p id="summary-discount-detail" style="display: none; color: #2e8b57;"><strong>Descuento aplicado:</strong> <span id="summary-discount-amount">0 €</span></p>
-                            
-                            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ddd;">
-                                <p id="summary-extras-detail" style="display: none;"><strong>Servicios adicionales:</strong></p>
-                                <p id="summary-name-change" style="display: none;">• Cambio de Nombre: <span>40 €</span></p>
-                                <p id="summary-port-change" style="display: none;">• Cambio de Puerto: <span>40 €</span></p>
-                                <div id="summary-extras"></div>
-                            </div>
+                        </div>
+                        <span>Acepto los <a href="https://tramitfy.es/terminos-y-condiciones-de-uso/" target="_blank" style="font-weight: 600; text-decoration: underline; color: rgb(var(--primary-dark));">términos y condiciones de pago</a></span>
+                    </label>
+                </div>
+
+                <style>
+                    /* Estilos mejorados para el checkbox personalizado */
+                    .custom-checkbox-container input:checked ~ .checkmark-box {
+                        background-color: rgb(var(--primary)) !important;
+                    }
+
+                    .custom-checkbox-container input:checked ~ .checkmark {
+                        display: block !important;
+                        z-index: 5 !important;
+                    }
+
+                    /* Usar !important para forzar la visualización */
+                    .custom-checkbox-container input:checked + .checkmark,
+                    .custom-checkbox-container input:checked ~ .checkmark {
+                        display: block !important;
+                    }
+
+                    .custom-checkbox-container input:focus ~ .checkmark-box {
+                        box-shadow: 0 0 0 2px rgba(var(--primary), 0.3);
+                    }
+
+                    .custom-checkbox-container .checkmark-box:hover {
+                        border-color: rgb(var(--primary-dark));
+                    }
+
+                    /* Estilos para el spinner de carga de Stripe */
+                    .stripe-spinner {
+                        border: 4px solid #f3f3f3;
+                        border-top: 4px solid #4f46e5;
+                        border-radius: 50%;
+                        width: 40px;
+                        height: 40px;
+                        animation: spin 1s linear infinite;
+                    }
+
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
+
+                <!-- Indicadores de seguridad -->
+                <div class="payment-security" style="margin: 20px 0; text-align: center; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
+                    <div class="security-badges" style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap;">
+                        <div class="security-badge" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #4b5563;">
+                            <i class="fa-solid fa-lock" style="color: #10b981;"></i>
+                            <span>Pago Seguro</span>
+                        </div>
+                        <div class="security-badge" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #4b5563;">
+                            <i class="fa-solid fa-shield-alt" style="color: #10b981;"></i>
+                            <span>Datos Encriptados</span>
+                        </div>
+                        <div class="security-badge" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #4b5563;">
+                            <i class="fa-brands fa-stripe" style="color: #635bff;"></i>
+                            <span>Powered by Stripe</span>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Cupón aplicado (si existe) -->
-                <div id="summary-coupon-container" style="display: none;">
-                    <p><i class="fa-solid fa-tag"></i> <strong>Cupón aplicado:</strong> <span id="summary-coupon">-</span></p>
-                </div>
-            </div>
-            
-            <div class="total-price" style="margin-top: 30px; padding: 15px 20px; background-color: rgba(var(--primary), 0.05); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
-                <span class="total-label" style="font-size: 20px; font-weight: 600; color: rgb(var(--neutral-800));">TOTAL:</span>
-                <span class="total-value" id="final-summary-amount" style="font-size: 24px; font-weight: 700; color: rgb(var(--primary)); background-color: rgba(var(--primary), 0.1); padding: 8px 15px; border-radius: var(--radius-md);">0 €</span>
-            </div>
-            
-            <div class="terms-container payment-terms" style="margin-top: 30px; text-align: center; padding: 20px; border: 2px solid rgba(var(--primary), 0.3); border-radius: var(--radius-md); background-color: rgba(var(--primary), 0.05); box-shadow: 0 4px 8px rgba(0,0,0,0.05);">
-                <label style="display: flex; align-items: center; justify-content: center; gap: 12px; font-weight: 500; cursor: pointer;">
-                    <div class="custom-checkbox-container" style="position: relative; width: 18px; height: 18px;">
-                        <input type="checkbox" id="terms_accept_pago" name="terms_accept_pago" required style="position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0;">
-                        <div class="checkmark-box" style="position: absolute; top: 0; left: 0; height: 18px; width: 18px; background-color: white; border: 1.5px solid rgb(var(--primary)); border-radius: 3px; transition: all 0.2s ease;"></div>
-                        <div class="checkmark" style="position: absolute; top: 0; left: 0; height: 18px; width: 18px; display: none; z-index: 2;">
-                            <i class="fa-solid fa-check" style="position: absolute; top: 1px; left: 3px; color: white; font-size: 12px;"></i>
-                        </div>
-                    </div>
-                    <span>Acepto los <a href="https://tramitfy.es/terminos-y-condiciones-de-uso/" target="_blank" style="font-weight: 600; text-decoration: underline; color: rgb(var(--primary-dark));">términos y condiciones de pago</a></span>
-                </label>
-            </div>
 
-            <style>
-                /* Estilos mejorados para el checkbox personalizado */
-                .custom-checkbox-container input:checked ~ .checkmark-box {
-                    background-color: rgb(var(--primary)) !important;
-                }
-                
-                .custom-checkbox-container input:checked ~ .checkmark {
-                    display: block !important;
-                    z-index: 5 !important;
-                }
-                
-                /* Usar !important para forzar la visualización */
-                .custom-checkbox-container input:checked + .checkmark,
-                .custom-checkbox-container input:checked ~ .checkmark {
-                    display: block !important;
-                }
-                
-                .custom-checkbox-container input:focus ~ .checkmark-box {
-                    box-shadow: 0 0 0 2px rgba(var(--primary), 0.3);
-                }
-                
-                .custom-checkbox-container .checkmark-box:hover {
-                    border-color: rgb(var(--primary-dark));
-                }
-                
-                /* Estilo adicional para el checkbox dentro del modal */
-                #modal-terms-accept:checked + label,
-                label.checked {
-                    color: rgb(var(--primary));
-                    font-weight: 600;
-                }
-                
-                /* Estilos mejorados para el botón de pago */
-                .payment-button {
-                    transition: all 0.3s ease;
-                    transform: translateY(0);
-                    box-shadow: 0 4px 12px rgba(var(--primary-dark), 0.2);
-                }
-                .payment-button:hover {
-                    transform: translateY(-3px);
-                    box-shadow: 0 8px 16px rgba(var(--primary-dark), 0.3);
-                }
-                .payment-button:active {
-                    transform: translateY(1px);
-                    box-shadow: 0 2px 8px rgba(var(--primary-dark), 0.2);
-                }
-            </style>
+                <!-- Mensajes de estado del pago -->
+                <div id="payment-message" class="hidden" style="margin: 20px 0; padding: 15px; border-radius: 8px; text-align: center; font-weight: 500;"></div>
 
-            <!-- Nuevo botón de pago -->
-            <div class="payment-button-container" style="margin-top: 40px;">
-                <button type="button" id="show-payment-modal" class="payment-button" style="font-size: 18px; font-weight: 600; padding: 14px 28px; border-radius: 8px; background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%); color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; max-width: 400px; margin: 0 auto;">
-                    <i class="fa-solid fa-credit-card"></i> Realizar Pago Seguro
+                <!-- Botón de pago -->
+                <button type="button" id="submit-payment" class="btn-primary" style="width: 100%; padding: 16px; font-size: 18px; font-weight: 600; background: linear-gradient(135deg, #016d86 0%, #015266 100%); color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px; transition: all 0.3s ease; box-shadow: 0 4px 6px -1px rgba(1, 109, 134, 0.3), 0 2px 4px -1px rgba(1, 109, 134, 0.2);">
+                    <i class="fa-solid fa-lock"></i> Pagar Ahora
                 </button>
-            </div>
-        </div>
 
-        <!-- Modal de pago -->
-        <div id="payment-modal" class="payment-modal">
-            <div class="payment-modal-content">
-                <span class="close-modal">&times;</span>
-                <h3><i class="fa-solid fa-lock"></i> Realizar Pago Seguro</h3>
-                
-                <div id="stripe-container">
-                    <!-- Spinner de carga mientras se inicializa -->
-                    <div id="stripe-loading">
-                        <div class="stripe-spinner"></div>
-                        <p>Cargando sistema de pago...</p>
-                    </div>
-                    
-                    <!-- Contenedor donde se montará el elemento de pago -->
-                    <div id="payment-element" class="payment-element-container"></div>
-                    
-                    <!-- Indicadores de seguridad -->
-                    <div class="payment-security">
-                        <div class="security-badges">
-                            <div class="security-badge">
-                                <i class="fa-solid fa-lock"></i>
-                                <span>Pago Seguro</span>
-                            </div>
-                            <div class="security-badge">
-                                <i class="fa-solid fa-shield-alt"></i>
-                                <span>Datos Encriptados</span>
-                            </div>
-                            <div class="security-badge">
-                                <i class="fa-brands fa-stripe"></i>
-                                <span>Stripe</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Mensajes de estado del pago -->
-                    <div id="payment-message" class="hidden"></div>
-                </div>
-                
-                <!-- Nota de términos ya aceptados (reemplaza el checkbox) -->
-                <div class="terms-reminder" style="margin: 20px 0; text-align: center; font-size: 14px; color: rgb(var(--neutral-600));">
-                    <i class="fa-solid fa-check-circle" style="color: rgb(var(--success)); margin-right: 5px;"></i>
-                    <span>Términos y condiciones aceptados</span>
-                </div>
-                
-                <button type="button" id="confirm-payment-button" class="confirm-payment-button">
-                    <i class="fa-solid fa-check-circle"></i> Confirmar Pago
-                </button>
+                <style>
+                    #submit-payment:hover {
+                        background: linear-gradient(135deg, #015266 0%, #013d4d 100%);
+                        box-shadow: 0 6px 8px -1px rgba(1, 109, 134, 0.4), 0 4px 6px -1px rgba(1, 109, 134, 0.3);
+                        transform: translateY(-1px);
+                    }
+                    #submit-payment:active {
+                        transform: translateY(0);
+                        box-shadow: 0 2px 4px -1px rgba(1, 109, 134, 0.3);
+                    }
+                    #submit-payment:disabled {
+                        background: #9ca3af;
+                        cursor: not-allowed;
+                        box-shadow: none;
+                    }
+                </style>
             </div>
         </div>
 
@@ -5193,7 +5146,16 @@ function transferencia_moto_shortcode() {
             }
             
             if (formPages[currentPage].id === 'page-pago') {
+                updateTotal(); // Actualizar totales primero para incluir ITP
                 updatePaymentSummary();
+                // Inicializar Stripe cuando se muestra la página de pago
+                setTimeout(() => {
+                    try {
+                        initializeStripe(finalAmount);
+                    } catch (error) {
+                        console.error("Error al inicializar Stripe:", error);
+                    }
+                }, 300);
             }
             
             updateTermsCheckbox();
@@ -5299,16 +5261,54 @@ function transferencia_moto_shortcode() {
                     return;
                 }
 
-                // Configurar la apariencia de Stripe
+                // Configurar la apariencia de Stripe con los colores de la marca
                 const appearance = {
                     theme: 'stripe',
                     variables: {
                         colorPrimary: '#016d86',
                         colorBackground: '#ffffff',
-                        colorText: '#333333',
-                        fontFamily: 'Roboto, sans-serif',
-                        borderRadius: '4px',
-                        colorDanger: '#e74c3c',
+                        colorText: '#1f2937',
+                        colorDanger: '#dc2626',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                        fontSizeBase: '16px',
+                        spacingUnit: '4px',
+                        borderRadius: '8px',
+                        colorTextSecondary: '#6b7280',
+                        colorTextPlaceholder: '#9ca3af',
+                    },
+                    rules: {
+                        '.Input': {
+                            border: '1px solid #d1d5db',
+                            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+                            padding: '12px',
+                            fontSize: '16px',
+                        },
+                        '.Input:focus': {
+                            border: '1px solid #016d86',
+                            boxShadow: '0 0 0 3px rgba(1, 109, 134, 0.1)',
+                            outline: 'none',
+                        },
+                        '.Label': {
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            color: '#374151',
+                            marginBottom: '8px',
+                        },
+                        '.Tab': {
+                            border: '1px solid #e5e7eb',
+                            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+                        },
+                        '.Tab:hover': {
+                            backgroundColor: '#f9fafb',
+                        },
+                        '.Tab--selected': {
+                            backgroundColor: '#016d86',
+                            color: '#ffffff',
+                            borderColor: '#016d86',
+                        },
+                        '.Tab--selected:hover': {
+                            backgroundColor: '#015266',
+                        },
                     }
                 };
                 
@@ -5391,6 +5391,7 @@ function transferencia_moto_shortcode() {
             const itp = isItpAlreadyPaid ? 0 : baseValue * rate;
             const extraFee = itp * 0.015;
 
+            // Actualizar elementos de la página de detalle ITP
             baseValueDisplay.textContent = basePrice.toFixed(2) + ' €';
             depreciationPercentageDisplay.textContent = depreciationPercentage + ' %';
             fiscalValueDisplay.textContent = fiscalValue.toFixed(2) + ' €';
@@ -5399,6 +5400,21 @@ function transferencia_moto_shortcode() {
             taxBaseDisplay.textContent = baseValue.toFixed(2) + ' €';
             taxRateDisplay.textContent = (rate * 100).toFixed(2) + ' %';
             calculatedItpDisplay.textContent = itp.toFixed(2) + ' €';
+
+            // Actualizar elementos del sidebar "Desglose del trámite"
+            const sidebarPurchasePrice = document.getElementById('sidebar-purchase-price');
+            const sidebarFiscalValue = document.getElementById('sidebar-fiscal-value');
+            const sidebarTaxBase = document.getElementById('sidebar-tax-base');
+            const sidebarTaxRate = document.getElementById('sidebar-tax-rate');
+            const sidebarItpAmount = document.getElementById('sidebar-itp-amount');
+            const sidebarRegionName = document.getElementById('sidebar-region-name');
+
+            if (sidebarPurchasePrice) sidebarPurchasePrice.textContent = purchasePrice.toFixed(2) + '€';
+            if (sidebarFiscalValue) sidebarFiscalValue.textContent = fiscalValue > 0 ? fiscalValue.toFixed(2) + '€' : '-';
+            if (sidebarTaxBase) sidebarTaxBase.textContent = baseValue.toFixed(2) + '€';
+            if (sidebarTaxRate) sidebarTaxRate.textContent = (rate * 100).toFixed(0) + '%';
+            if (sidebarItpAmount) sidebarItpAmount.textContent = itp.toFixed(2) + '€';
+            if (sidebarRegionName) sidebarRegionName.textContent = region || '-';
 
             return { itp, extraFee };
         }
@@ -5505,7 +5521,7 @@ function transferencia_moto_shortcode() {
             // Obtenemos el ITP y su comisión bancaria
             const { itp, extraFee } = calculateTransferTax();
             currentTransferTax = itp;
-            let currentExtraFee = extraFee;
+            currentExtraFee = extraFee; // Actualizar variable global, no crear nueva local
 
             // Base para aplicar descuento (solo sobre transferFee)
             const discountBase = transferFee; 
@@ -5624,74 +5640,116 @@ function transferencia_moto_shortcode() {
 
         // Actualizar resumen para pago
         function updatePaymentSummary() {
-            document.getElementById('summary-name').textContent = customerNameInput.value || '-';
-            document.getElementById('summary-dni').textContent = customerDniInput.value || '-';
-            document.getElementById('summary-email').textContent = customerEmailInput.value || '-';
-            document.getElementById('summary-phone').textContent = customerPhoneInput.value || '-';
-            
-            const vehicleType = 'Moto de Agua'; // Fijo para transferencia de barcos
-            document.getElementById('summary-vehicle-type').textContent = vehicleType;
-            
+            // Actualizar datos personales (sidebar y página resumen)
+            const summaryNameElements = document.querySelectorAll('#summary-name');
+            const summaryDniElements = document.querySelectorAll('#summary-dni');
+            const summaryEmailElements = document.querySelectorAll('#summary-email');
+            const summaryPhoneElements = document.querySelectorAll('#summary-phone');
+
+            summaryNameElements.forEach(el => el.textContent = customerNameInput.value || '-');
+            summaryDniElements.forEach(el => el.textContent = customerDniInput.value || '-');
+            summaryEmailElements.forEach(el => el.textContent = customerEmailInput.value || '-');
+            summaryPhoneElements.forEach(el => el.textContent = customerPhoneInput.value || '-');
+
+            const vehicleType = 'Moto de Agua';
+            const summaryVehicleTypeElements = document.querySelectorAll('#summary-vehicle-type');
+            summaryVehicleTypeElements.forEach(el => el.textContent = vehicleType);
+
             const noEncuentro = noEncuentroCheckbox.checked;
+            const summaryManufacturerElements = document.querySelectorAll('#summary-manufacturer');
+            const summaryModelElements = document.querySelectorAll('#summary-model');
+            const summaryMatriculationElements = document.querySelectorAll('#summary-matriculation');
+
             if (noEncuentro) {
-                document.getElementById('summary-manufacturer').textContent = document.getElementById('manual_manufacturer').value || '-';
-                document.getElementById('summary-model').textContent = document.getElementById('manual_model').value || '-';
-                document.getElementById('summary-matriculation').textContent = 'No aplica';
+                summaryManufacturerElements.forEach(el => el.textContent = document.getElementById('manual_manufacturer').value || '-');
+                summaryModelElements.forEach(el => el.textContent = document.getElementById('manual_model').value || '-');
+                summaryMatriculationElements.forEach(el => el.textContent = 'No aplica');
             } else {
-                document.getElementById('summary-manufacturer').textContent = manufacturerSelect.value || '-';
-                document.getElementById('summary-model').textContent = modelSelect.value || '-';
-                document.getElementById('summary-matriculation').textContent = matriculationDateInput.value || '-';
+                summaryManufacturerElements.forEach(el => el.textContent = manufacturerSelect.value || '-');
+                summaryModelElements.forEach(el => el.textContent = modelSelect.value || '-');
+                summaryMatriculationElements.forEach(el => el.textContent = matriculationDateInput.value || '-');
             }
-            
-            document.getElementById('summary-purchase-price').textContent = purchasePriceInput.value + ' €' || '-';
-            document.getElementById('summary-region').textContent = regionSelect.value || '-';
-            
-            const cambioNombrePrice = cambioNombrePriceDisplay.textContent;
-            const tasasHonorarios = document.getElementById('tasas_honorarios_display').textContent;
-            const iva = document.getElementById('iva_display').textContent;
-            const comisionBancaria = extraFeeIncludesDisplay.textContent;
-            const transferTax = transferTaxDisplay.textContent;
-            
-            document.getElementById('summary-base-price').textContent = cambioNombrePrice;
-            document.getElementById('summary-tasas-gestion').textContent = tasasHonorarios;
-            document.getElementById('summary-iva').textContent = iva;
-            document.getElementById('summary-comision').textContent = comisionBancaria;
-            document.getElementById('summary-transfer-tax-detail').textContent = transferTax;
-            
-            document.getElementById('summary-name-change').style.display = 'none';
-            document.getElementById('summary-port-change').style.display = 'none';
-            
+
+            const summaryPurchasePriceElements = document.querySelectorAll('#summary-purchase-price');
+            const summaryRegionElements = document.querySelectorAll('#summary-region');
+            summaryPurchasePriceElements.forEach(el => el.textContent = purchasePriceInput.value + ' €' || '-');
+            summaryRegionElements.forEach(el => el.textContent = regionSelect.value || '-');
+
+            // Obtener valores actuales (con validación para evitar null)
+            const cambioNombrePrice = cambioNombrePriceDisplay ? cambioNombrePriceDisplay.textContent : '134.99 €';
+            const tasasHonorariosEl = document.getElementById('tasas_honorarios_display');
+            const ivaEl = document.getElementById('iva_display');
+            const tasasHonorarios = tasasHonorariosEl ? tasasHonorariosEl.textContent : '114.87 €';
+            const iva = ivaEl ? ivaEl.textContent : '20.12 €';
+
+            // Usar variables globales para ITP y comisión (más fiables que DOM)
+            const comisionBancaria = currentExtraFee ? currentExtraFee.toFixed(2) + ' €' : '0 €';
+            const transferTax = currentTransferTax ? currentTransferTax.toFixed(2) + ' €' : '0 €';
+
+            console.log('updatePaymentSummary - ITP:', currentTransferTax, 'Comisión:', currentExtraFee, 'Total:', finalAmount);
+
+            const summaryBasePriceElements = document.querySelectorAll('#summary-base-price');
+            const summaryTasasGestionElements = document.querySelectorAll('#summary-tasas-gestion');
+            const summaryIvaElements = document.querySelectorAll('#summary-iva');
+            const summaryComisionElements = document.querySelectorAll('#summary-comision');
+            const summaryTransferTaxElements = document.querySelectorAll('#summary-transfer-tax, #summary-transfer-tax-detail');
+            const summaryFinalAmountElements = document.querySelectorAll('#summary-final-amount');
+
+            console.log('Elementos ITP encontrados:', summaryTransferTaxElements.length, 'Valor a asignar:', transferTax);
+
+            summaryBasePriceElements.forEach(el => el.textContent = cambioNombrePrice);
+            summaryTasasGestionElements.forEach(el => el.textContent = tasasHonorarios);
+            summaryIvaElements.forEach(el => el.textContent = iva);
+            summaryComisionElements.forEach(el => el.textContent = comisionBancaria);
+            summaryTransferTaxElements.forEach(el => {
+                console.log('Actualizando elemento ITP:', el.id, 'con valor:', transferTax);
+                el.textContent = transferTax;
+            });
+            summaryFinalAmountElements.forEach(el => el.textContent = finalAmount.toFixed(2) + ' €');
+
+            const summaryNameChange = document.getElementById('summary-name-change');
+            const summaryPortChange = document.getElementById('summary-port-change');
+            if (summaryNameChange) summaryNameChange.style.display = 'none';
+            if (summaryPortChange) summaryPortChange.style.display = 'none';
+
             const extraOptions = document.querySelectorAll('.extra-option');
             let hasExtras = false;
-            
+
             extraOptions.forEach(option => {
                 if (option.checked) {
                     hasExtras = true;
-                    if (option.value === 'Cambio de nombre') {
-                        document.getElementById('summary-name-change').style.display = 'block';
-                    } else if (option.value === 'Cambio de puerto base') {
-                        document.getElementById('summary-port-change').style.display = 'block';
+                    if (option.value === 'Cambio de nombre' && summaryNameChange) {
+                        summaryNameChange.style.display = 'block';
+                    } else if (option.value === 'Cambio de puerto base' && summaryPortChange) {
+                        summaryPortChange.style.display = 'block';
                     }
                 }
             });
-            
-            document.getElementById('summary-extras-detail').style.display = hasExtras ? 'block' : 'none';
-            
+
+            const summaryExtrasDetail = document.getElementById('summary-extras-detail');
+            if (summaryExtrasDetail) summaryExtrasDetail.style.display = hasExtras ? 'block' : 'none';
+
             const couponCode = couponCodeInput.value;
+            const summaryCouponContainer = document.getElementById('summary-coupon-container');
+            const summaryCoupon = document.getElementById('summary-coupon');
+            const summaryDiscountDetail = document.getElementById('summary-discount-detail');
+            const summaryDiscountAmount = document.getElementById('summary-discount-amount');
+
             if (couponCode && couponDiscountPercent > 0) {
-                document.getElementById('summary-coupon-container').style.display = 'block';
-                document.getElementById('summary-coupon').textContent = couponCode + ' (' + couponDiscountPercent + '% descuento)';
-                
-                document.getElementById('summary-discount-detail').style.display = 'block';
+                if (summaryCouponContainer) summaryCouponContainer.style.display = 'block';
+                if (summaryCoupon) summaryCoupon.textContent = couponCode + ' (' + couponDiscountPercent + '% descuento)';
+
+                if (summaryDiscountDetail) summaryDiscountDetail.style.display = 'block';
                 const discountBase = BASE_TRANSFER_PRICE;
                 const discountAmount = (couponDiscountPercent / 100) * discountBase;
-                document.getElementById('summary-discount-amount').textContent = discountAmount.toFixed(2) + ' €';
+                if (summaryDiscountAmount) summaryDiscountAmount.textContent = discountAmount.toFixed(2) + ' €';
             } else {
-                document.getElementById('summary-coupon-container').style.display = 'none';
-                document.getElementById('summary-discount-detail').style.display = 'none';
+                if (summaryCouponContainer) summaryCouponContainer.style.display = 'none';
+                if (summaryDiscountDetail) summaryDiscountDetail.style.display = 'none';
             }
-            
-            document.getElementById('final-summary-amount').textContent = finalAmount.toFixed(2) + ' €';
+
+            const finalSummaryAmount = document.getElementById('final-summary-amount');
+            if (finalSummaryAmount) finalSummaryAmount.textContent = finalAmount.toFixed(2) + ' €';
         }
 
         // Validación y firma
@@ -6857,170 +6915,107 @@ function transferencia_moto_shortcode() {
             }
         });
 
-        document.getElementById('show-payment-modal').addEventListener('click', function() {
-            const termsCheckbox = document.querySelector('input[name="terms_accept_pago"]');
-            const customerEmail = document.getElementById('customer_email').value.trim();
-            
-            // Verificar términos y condiciones
-            if (!termsCheckbox || !termsCheckbox.checked) {
-                alert('Debe aceptar los términos y condiciones de pago para continuar.');
-                return;
-            }
-            
-            // Verificar que se haya ingresado el email
-            if (!customerEmail) {
-                alert('Debe ingresar su correo electrónico en la sección de datos personales para continuar.');
-                return;
-            }
-            
-            // Verificar que se haya firmado el documento
-            if (signaturePad && signaturePad.isEmpty()) {
-                alert('Debe firmar el documento de autorización antes de continuar con el pago.');
-                return;
-            }
-            
-            // Mostrar el modal
-            document.getElementById('payment-modal').classList.add('show');
-            
-            // Inicializar Stripe después de un pequeño retraso para que la animación del modal termine
-            setTimeout(() => {
-                try {
-                    initializeStripe(finalAmount);
-                } catch (error) {
-                    console.error("Error al inicializar Stripe:", error);
-                    document.getElementById('payment-message').textContent = 'Error al inicializar el sistema de pago: ' + error.message;
-                    document.getElementById('payment-message').className = 'error';
-                    document.getElementById('stripe-loading').style.display = 'none';
-                }
-            }, 500);
-            
-            // La validación del botón de confirmación de pago está en un listener separado
-            // abajo para evitar duplicados
-        });
-        
-        document.querySelector('.close-modal').addEventListener('click', function() {
-            document.getElementById('payment-modal').classList.remove('show');
-        });
-        
-        document.getElementById('payment-modal').addEventListener('click', function(event) {
-            if (event.target === this) {
-                this.classList.remove('show');
-            }
-        });
-        
-        document.getElementById('confirm-payment-button').addEventListener('click', async function() {
-            // Mostrar overlay de carga y deshabilitar el botón
-            const loadingOverlay = document.getElementById('loading-overlay');
-            loadingOverlay.style.display = 'flex';
-            this.disabled = true;
-            
-            // Activar el primer paso (payment)
-            updateLoadingStep('payment');
-            
-            // Limpiar mensajes anteriores
-            const paymentMessage = document.getElementById('payment-message');
-            paymentMessage.className = 'hidden';
-            paymentMessage.textContent = '';
-            
-            try {
-                // Verificar que Stripe esté inicializado correctamente
-                if (!stripe || !elements) {
-                    console.error("Error: Stripe no está inicializado correctamente");
-                    paymentMessage.textContent = 'Error: El sistema de pago no está inicializado correctamente. Por favor, recargue la página e intente nuevamente.';
-                    paymentMessage.className = 'error';
-                    loadingOverlay.style.display = 'none';
-                    this.disabled = false;
+        // Event listener para el botón de pago directo en la página
+        const submitPaymentBtn = document.getElementById('submit-payment');
+        if (submitPaymentBtn) {
+            submitPaymentBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+
+                if (!document.querySelector('input[name="terms_accept_pago"]').checked) {
+                    const paymentMessage = document.getElementById('payment-message');
+                    if (paymentMessage) {
+                        paymentMessage.textContent = 'Debe aceptar los términos y condiciones de pago para continuar.';
+                        paymentMessage.className = 'error';
+                        paymentMessage.style.display = 'block';
+                        paymentMessage.style.backgroundColor = '#fee2e2';
+                        paymentMessage.style.color = '#991b1b';
+                        paymentMessage.style.border = '1px solid #fca5a5';
+                    }
                     return;
                 }
-                
-                // Mostrar mensaje de procesamiento
-                paymentMessage.textContent = 'Procesando su pago...';
-                paymentMessage.className = 'processing';
-                
-                // Confirmar el pago
-                const { error, paymentIntent } = await stripe.confirmPayment({
-                    elements,
-                    confirmParams: {
-                        // URL de retorno en caso de autenticación 3D Secure
-                        return_url: window.location.href,
-                        payment_method_data: {
-                            billing_details: {
-                                name: customerNameInput.value.trim(),
-                                email: customerEmailInput.value.trim(),
-                                phone: customerPhoneInput.value.trim(),
+
+                document.getElementById('loading-overlay').style.display = 'flex';
+                submitPaymentBtn.disabled = true;
+                submitPaymentBtn.textContent = 'Procesando...';
+
+                const paymentMessage = document.getElementById('payment-message');
+                paymentMessage.classList.remove('success', 'error');
+                paymentMessage.classList.add('hidden');
+                paymentMessage.style.display = 'none';
+
+                try {
+                    if (!stripe || !elements) {
+                        console.error("Stripe no ha sido inicializado correctamente");
+                        throw new Error("Error en la configuración del sistema de pago");
+                    }
+
+                    const { error, paymentIntent } = await stripe.confirmPayment({
+                        elements,
+                        confirmParams: {
+                            return_url: window.location.href,
+                            payment_method_data: {
+                                billing_details: {
+                                    name: customerNameInput.value.trim(),
+                                    email: customerEmailInput.value.trim(),
+                                    phone: customerPhoneInput.value.trim(),
+                                },
                             },
                         },
-                    },
-                    redirect: 'if_required'
-                });
-                
-                // Manejar errores de pago
-                if (error) {
-                    console.error("Error en el pago:", error);
-                    
-                    // Mensaje de error en español
-                    let errorMessage;
-                    switch (error.type) {
-                        case 'card_error':
-                            errorMessage = 'Error con la tarjeta: ' + error.message;
-                            break;
-                        case 'validation_error':
-                            errorMessage = 'Por favor, revise los datos de su tarjeta: ' + error.message;
-                            break;
-                        default:
-                            errorMessage = 'Ha ocurrido un error en el procesamiento del pago: ' + error.message;
-                    }
-                    
-                    paymentMessage.textContent = errorMessage;
-                    paymentMessage.className = 'error';
-                    loadingOverlay.style.display = 'none';
-                    this.disabled = false;
-                    return;
-                }
-                
-                // Pago exitoso
-                paymentMessage.textContent = 'Pago realizado con éxito. Procesando su solicitud...';
-                paymentMessage.className = 'success';
-                
-                // Activar el segundo paso (documents)
-                updateLoadingStep('documents');
-                
-                // Esperar un momento antes de continuar (para mostrar visualmente el progreso)
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                
-                paymentCompleted = true;
-                
-                purchaseDetails = {
-                    totalAmount: finalAmount.toFixed(2),
-                    options: Array.from(extraOptions).filter(opt => opt.checked).map(opt => opt.value),
-                    transferTax: currentTransferTax.toFixed(2),
-                    customerName: customerNameInput.value.trim(),
-                    customerEmail: customerEmailInput.value.trim(),
-                    customerPhone: customerPhoneInput.value.trim(),
-                    customerDNI: customerDniInput.value.trim(),
-                    nuevoNombre: document.getElementById('nuevo_nombre').value.trim(),
-                    nuevoPuerto: document.getElementById('nuevo_puerto').value.trim(),
-                    couponUsed: couponValue,
-                    tramite_id: '<?php echo $tramite_id; ?>' // Añadimos el ID de trámite
-                };
+                        redirect: 'if_required'
+                    });
 
-                // Activar el tercer paso (complete) después de un momento
-                setTimeout(() => {
-                    updateLoadingStep('complete');
-                    // Esperar un momento y luego enviar el form final
-                    setTimeout(() => {
-                        handleFinalSubmission();
-                    }, 1000);
-                }, 2000);
-                
-            } catch (err) {
-                console.error("Error inesperado:", err);
-                paymentMessage.textContent = 'Ocurrió un error al procesar el pago: ' + err.message;
-                paymentMessage.classList.add('error');
-                loadingOverlay.style.display = 'none';
-                this.disabled = false;
-            }
-        });
+                    if (error) {
+                        console.error("Error en el pago:", error);
+                        paymentMessage.textContent = error.message;
+                        paymentMessage.style.display = 'block';
+                        paymentMessage.style.backgroundColor = '#fee2e2';
+                        paymentMessage.style.color = '#991b1b';
+                        paymentMessage.style.border = '1px solid #fca5a5';
+                        document.getElementById('loading-overlay').style.display = 'none';
+                        submitPaymentBtn.disabled = false;
+                        submitPaymentBtn.innerHTML = '<i class="fa-solid fa-lock"></i> Pagar Ahora';
+                        return;
+                    }
+
+                    paymentMessage.textContent = '¡Pago realizado con éxito!';
+                    paymentMessage.style.display = 'block';
+                    paymentMessage.style.backgroundColor = '#d1fae5';
+                    paymentMessage.style.color = '#065f46';
+                    paymentMessage.style.border = '1px solid #6ee7b7';
+
+                    paymentCompleted = true;
+
+                    purchaseDetails = {
+                        totalAmount: finalAmount.toFixed(2),
+                        options: Array.from(extraOptions).filter(opt => opt.checked).map(opt => opt.value),
+                        transferTax: currentTransferTax.toFixed(2),
+                        customerName: customerNameInput.value.trim(),
+                        customerEmail: customerEmailInput.value.trim(),
+                        customerPhone: customerPhoneInput.value.trim(),
+                        customerDNI: customerDniInput.value.trim(),
+                        nuevoNombre: document.getElementById('nuevo_nombre').value.trim(),
+                        nuevoPuerto: document.getElementById('nuevo_puerto').value.trim(),
+                        couponUsed: couponValue,
+                        tramite_id: '<?php echo $tramite_id; ?>',
+                        paymentIntentId: paymentIntent.id
+                    };
+
+                    sendEmails();
+                    handleFinalSubmission();
+
+                } catch (err) {
+                    console.error("Error inesperado:", err);
+                    paymentMessage.textContent = 'Ocurrió un error al procesar el pago: ' + err.message;
+                    paymentMessage.style.display = 'block';
+                    paymentMessage.style.backgroundColor = '#fee2e2';
+                    paymentMessage.style.color = '#991b1b';
+                    paymentMessage.style.border = '1px solid #fca5a5';
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    submitPaymentBtn.disabled = false;
+                    submitPaymentBtn.innerHTML = '<i class="fa-solid fa-lock"></i> Pagar Ahora';
+                }
+            });
+        }
 
         // Inicialización
         currentPage = 0; // Empezamos en la página de vehículo (primera página del formulario)
