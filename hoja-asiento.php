@@ -9802,13 +9802,15 @@ function submit_form_hoja_asiento() {
         error_log('Error en Google Drive/Sheets: ' . $e->getMessage());
     }
 
-    // Limpieza
-    @unlink($signature_image_path);
+    // Enviar datos a la API de Tramitfy con CURL multipart (INCLUYE PDF Y ARCHIVOS)
+    $webhookUrl = HOJA_ASIENTO_API_URL;
 
-    // Enviar datos a la API de Tramitfy - Webhook para sincronizar con React Dashboard
-    $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/forms/hoja-asiento';
+    // Preparar multipart form data
+    $boundary = '----WebKitFormBoundary' . uniqid();
+    $postBody = '';
 
-    $tramitfy_data = array(
+    // Agregar campos de texto
+    $fields = array(
         'customer_name' => $customer_name,
         'customer_dni' => $customer_dni,
         'customer_email' => $customer_email,
@@ -9817,25 +9819,67 @@ function submit_form_hoja_asiento() {
         'boat_matricula' => $boat_matricula,
         'boat_nib' => $boat_nib,
         'coupon_used' => $coupon_used,
-        'payment_intent_id' => $tramite_id,
-        'payment_completed' => 'true'
+        'paymentIntentId' => $tramite_id,
+        'payment_completed' => 'true',
+        'finalAmount' => $payment_amount
     );
 
-    $tramitfy_response = wp_remote_post($tramitfy_api_url, array(
-        'method' => 'POST',
-        'timeout' => 30,
-        'headers' => array(
-            'Content-Type' => 'application/x-www-form-urlencoded'
-        ),
-        'body' => $tramitfy_data
-    ));
-
-    if (is_wp_error($tramitfy_response)) {
-        error_log('Error enviando a API Tramitfy: ' . $tramitfy_response->get_error_message());
-    } else {
-        $response_body = wp_remote_retrieve_body($tramitfy_response);
-        error_log('Respuesta de API Tramitfy: ' . $response_body);
+    foreach ($fields as $name => $value) {
+        $postBody .= "--$boundary\r\n";
+        $postBody .= "Content-Disposition: form-data; name=\"$name\"\r\n\r\n";
+        $postBody .= "$value\r\n";
     }
+
+    // Agregar PDF de autorización
+    if (file_exists($authorization_pdf_path)) {
+        $postBody .= "--$boundary\r\n";
+        $postBody .= "Content-Disposition: form-data; name=\"autorizacion_pdf\"; filename=\"$authorization_pdf_name\"\r\n";
+        $postBody .= "Content-Type: application/pdf\r\n\r\n";
+        $postBody .= file_get_contents($authorization_pdf_path) . "\r\n";
+    }
+
+    // Agregar imagen de firma
+    if (file_exists($signature_image_path)) {
+        $postBody .= "--$boundary\r\n";
+        $postBody .= "Content-Disposition: form-data; name=\"firma\"; filename=\"$signature_image_name\"\r\n";
+        $postBody .= "Content-Type: image/png\r\n\r\n";
+        $postBody .= file_get_contents($signature_image_path) . "\r\n";
+    }
+
+    // Agregar archivos subidos desde el formulario
+    foreach ($_FILES as $fileKey => $file) {
+        if ($file['error'] === UPLOAD_ERR_OK && file_exists($file['tmp_name'])) {
+            $postBody .= "--$boundary\r\n";
+            $postBody .= "Content-Disposition: form-data; name=\"$fileKey\"; filename=\"{$file['name']}\"\r\n";
+            $postBody .= "Content-Type: {$file['type']}\r\n\r\n";
+            $postBody .= file_get_contents($file['tmp_name']) . "\r\n";
+        }
+    }
+
+    $postBody .= "--$boundary--\r\n";
+
+    // Usar CURL para enviar multipart (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $webhookUrl);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $postBody);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: multipart/form-data; boundary=' . $boundary,
+        'Content-Length: ' . strlen($postBody)
+    ]);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    error_log('=== HOJA ASIENTO WEBHOOK ===');
+    error_log('HTTP Code: ' . $httpCode);
+    error_log('Response: ' . $response);
+
+    // Limpieza de archivos temporales
+    @unlink($signature_image_path);
+    @unlink($authorization_pdf_path);
 
     // Respuesta para AJAX
     wp_send_json_success('Formulario procesado correctamente.');
