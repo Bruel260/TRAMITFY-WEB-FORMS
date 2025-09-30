@@ -3907,8 +3907,8 @@ function transferencia_moto_shortcode() {
                         </div>
                     </div>
 
-                    <!-- Contenido: PASO 2 - Precio -->
-                    <div class="sidebar-content" data-step="page-precio">
+                    <!-- Contenido: Desglose de precios - Se muestra en vehiculo y documentos -->
+                    <div class="sidebar-content active" data-step="page-vehiculo">
                         <div class="sidebar-header">
                             <div class="sidebar-icon">
                                 <i class="fa-solid fa-calculator"></i>
@@ -3918,104 +3918,167 @@ function transferencia_moto_shortcode() {
                             </div>
                         </div>
                         <div class="sidebar-body">
-                            <div class="sidebar-price-highlight">
-                                <div class="sidebar-price-label">Tramitación completa</div>
-                                <div class="sidebar-price-amount">134,95€</div>
-                                <div class="sidebar-price-includes">
-                                    ✓ Tasas oficiales de Capitanía<br>
-                                    ✓ Honorarios profesionales<br>
-                                    ✓ IVA incluido
+                            <!-- Desglose Nuestros Servicios -->
+                            <div class="sidebar-info-box" style="margin-bottom: 20px;">
+                                <h4 style="margin: 0 0 15px 0; font-size: 15px; font-weight: 700; color: #ffffff;">Tu tramitación</h4>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                    <span>Tasas Capitanía + Gestión + Pago ITP:</span>
+                                    <span id="sidebar-tasas-gestion">114,87€</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                    <span>Honorarios profesionales:</span>
+                                    <span id="sidebar-honorarios">0€</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px;">
+                                    <span>IVA incluido:</span>
+                                    <span id="sidebar-iva">20,12€</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid rgba(255,255,255,0.3); font-weight: 700; font-size: 18px;">
+                                    <span>Total a pagar:</span>
+                                    <span id="sidebar-total-amount">134,95€</span>
                                 </div>
                             </div>
 
-                            <!-- Desglose ITP -->
-                            <div class="sidebar-info-box" style="margin-top: 20px;">
-                                <h4 style="margin: 0 0 15px 0; font-size: 15px; font-weight: 700; color: #ffffff;">Impuesto de Transmisiones (ITP)</h4>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
-                                    <span>Precio compra:</span>
-                                    <span id="sidebar-purchase-price">0€</span>
+                            <!-- Desglose ITP Detallado -->
+                            <div class="sidebar-info-box">
+                                <h4 style="margin: 0 0 15px 0; font-size: 15px; font-weight: 700; color: #ffffff;">Cálculo del ITP</h4>
+
+                                <!-- Datos del vehículo -->
+                                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                                    <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Datos del vehículo</p>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
+                                        <span>Valor fiscal base:</span>
+                                        <span id="sidebar-base-value">0€</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
+                                        <span>Antigüedad:</span>
+                                        <span id="sidebar-vehicle-age">0 años</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
+                                        <span>Depreciación aplicada:</span>
+                                        <span id="sidebar-depreciation">0%</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
+                                        <span>Valor fiscal con depreciación:</span>
+                                        <span id="sidebar-fiscal-value">0€</span>
+                                    </div>
                                 </div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
-                                    <span>Valor fiscal:</span>
-                                    <span id="sidebar-fiscal-value">-</span>
+
+                                <!-- Cálculo -->
+                                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                                    <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Base imponible</p>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
+                                        <span>Precio de compra:</span>
+                                        <span id="sidebar-purchase-price">0€</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px; margin-top: 6px;">
+                                        <span>Mayor valor (base imponible):</span>
+                                        <span id="sidebar-taxable-base">0€</span>
+                                    </div>
                                 </div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
-                                    <span>Base imponible:</span>
-                                    <span id="sidebar-taxable-base">0€</span>
+
+                                <!-- Resultado -->
+                                <div>
+                                    <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Impuesto a pagar</p>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                        <span>Tipo aplicado:</span>
+                                        <span id="sidebar-tax-rate">4%</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid rgba(255,255,255,0.3); font-weight: 700; font-size: 16px;">
+                                        <span>ITP a pagar a Hacienda:</span>
+                                        <span id="sidebar-itp-amount">0€</span>
+                                    </div>
                                 </div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px;">
-                                    <span>Tipo (%):</span>
-                                    <span id="sidebar-tax-rate">4%</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid rgba(255,255,255,0.3); font-weight: 700; font-size: 16px;">
-                                    <span>ITP a pagar:</span>
-                                    <span id="sidebar-itp-amount">0€</span>
-                                </div>
-                                <p style="margin: 12px 0 0 0; font-size: 12px; opacity: 0.9; font-style: italic;">Se aplica sobre el mayor valor</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Contenido: PASO 3 - Documentos -->
+                    <!-- Mismo contenido para page-documentos -->
                     <div class="sidebar-content" data-step="page-documentos">
                         <div class="sidebar-header">
                             <div class="sidebar-icon">
-                                <i class="fa-solid fa-file-circle-check"></i>
+                                <i class="fa-solid fa-calculator"></i>
                             </div>
                             <div class="sidebar-title">
-                                <h3>Tu documentación</h3>
-                                <p>Paso 3 de 6</p>
+                                <h3>Nuestros servicios</h3>
                             </div>
                         </div>
                         <div class="sidebar-body">
-                            <div class="sidebar-checklist">
-                                <div class="sidebar-checklist-item">
-                                    <div class="sidebar-check-icon">
-                                        <i class="fa-solid fa-check"></i>
+                            <!-- Desglose Nuestros Servicios -->
+                            <div class="sidebar-info-box" style="margin-bottom: 20px;">
+                                <h4 style="margin: 0 0 15px 0; font-size: 15px; font-weight: 700; color: #ffffff;">Tu tramitación</h4>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                    <span>Tasas Capitanía + Gestión + Pago ITP:</span>
+                                    <span id="sidebar-tasas-gestion">114,87€</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                    <span>Honorarios profesionales:</span>
+                                    <span id="sidebar-honorarios">0€</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px;">
+                                    <span>IVA incluido:</span>
+                                    <span id="sidebar-iva">20,12€</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid rgba(255,255,255,0.3); font-weight: 700; font-size: 18px;">
+                                    <span>Total a pagar:</span>
+                                    <span id="sidebar-total-amount">134,95€</span>
+                                </div>
+                            </div>
+
+                            <!-- Desglose ITP Detallado -->
+                            <div class="sidebar-info-box">
+                                <h4 style="margin: 0 0 15px 0; font-size: 15px; font-weight: 700; color: #ffffff;">Cálculo del ITP</h4>
+
+                                <!-- Datos del vehículo -->
+                                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                                    <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Datos del vehículo</p>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
+                                        <span>Valor fiscal base:</span>
+                                        <span id="sidebar-base-value">0€</span>
                                     </div>
-                                    <div class="sidebar-checklist-text">
-                                        <strong>Hoja de asiento</strong><br>
-                                        Del Tarjeta de la Moto
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
+                                        <span>Antigüedad:</span>
+                                        <span id="sidebar-vehicle-age">0 años</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
+                                        <span>Depreciación aplicada:</span>
+                                        <span id="sidebar-depreciation">0%</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
+                                        <span>Valor fiscal con depreciación:</span>
+                                        <span id="sidebar-fiscal-value">0€</span>
                                     </div>
                                 </div>
-                                <div class="sidebar-checklist-item">
-                                    <div class="sidebar-check-icon">
-                                        <i class="fa-solid fa-check"></i>
+
+                                <!-- Cálculo -->
+                                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                                    <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Base imponible</p>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
+                                        <span>Precio de compra:</span>
+                                        <span id="sidebar-purchase-price">0€</span>
                                     </div>
-                                    <div class="sidebar-checklist-text">
-                                        <strong>DNI del comprador</strong><br>
-                                        Por ambas caras
-                                    </div>
-                                </div>
-                                <div class="sidebar-checklist-item">
-                                    <div class="sidebar-check-icon">
-                                        <i class="fa-solid fa-check"></i>
-                                    </div>
-                                    <div class="sidebar-checklist-text">
-                                        <strong>DNI del vendedor</strong><br>
-                                        Por ambas caras
+                                    <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px; margin-top: 6px;">
+                                        <span>Mayor valor (base imponible):</span>
+                                        <span id="sidebar-taxable-base">0€</span>
                                     </div>
                                 </div>
-                                <div class="sidebar-checklist-item">
-                                    <div class="sidebar-check-icon">
-                                        <i class="fa-solid fa-check"></i>
+
+                                <!-- Resultado -->
+                                <div>
+                                    <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Impuesto a pagar</p>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                        <span>Tipo aplicado:</span>
+                                        <span id="sidebar-tax-rate">4%</span>
                                     </div>
-                                    <div class="sidebar-checklist-text">
-                                        <strong>Contrato de compraventa</strong><br>
-                                        Firmado por ambas partes
+                                    <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid rgba(255,255,255,0.3); font-weight: 700; font-size: 16px;">
+                                        <span>ITP a pagar a Hacienda:</span>
+                                        <span id="sidebar-itp-amount">0€</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="sidebar-tips">
-                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
-                            <ul>
-                                <li>Puedes subir <strong>múltiples archivos</strong> en cada campo</li>
-                                <li>Acepta <strong>fotos o PDFs</strong></li>
-                                <li>En móvil puedes usar la <strong>cámara directamente</strong></li>
-                            </ul>
-                        </div>
                     </div>
+
 
                     <!-- Contenido: PASO 4 - Datos Personales -->
                     <div class="sidebar-content" data-step="page-datos">
@@ -4146,32 +4209,22 @@ function transferencia_moto_shortcode() {
                     <span class="nav-item-text">Vehículo</span>
                 </a>
                 
-                <a href="#" class="nav-item" data-page-id="page-precio">
-                    <div class="nav-item-circle">
-                        <div class="nav-item-icon">
-                            <i class="fa-solid fa-tag"></i>
-                        </div>
-                        <div class="nav-item-number">2</div>
-                    </div>
-                    <span class="nav-item-text">Precio</span>
-                </a>
-                
                 <a href="#" class="nav-item" data-page-id="page-documentos">
                     <div class="nav-item-circle">
                         <div class="nav-item-icon">
                             <i class="fa-solid fa-file-alt"></i>
                         </div>
-                        <div class="nav-item-number">3</div>
+                        <div class="nav-item-number">2</div>
                     </div>
                     <span class="nav-item-text">Documentos</span>
                 </a>
-                
+
                 <a href="#" class="nav-item" data-page-id="page-pago">
                     <div class="nav-item-circle">
                         <div class="nav-item-icon">
                             <i class="fa-solid fa-credit-card"></i>
                         </div>
-                        <div class="nav-item-number">4</div>
+                        <div class="nav-item-number">3</div>
                     </div>
                     <span class="nav-item-text">Pago</span>
                 </a>
@@ -4304,186 +4357,58 @@ function transferencia_moto_shortcode() {
 
         </div> <!-- Fin page-vehiculo -->
 
-        <!-- Página Precio - REDISEÑADA -->
-        <div id="page-precio" class="form-page form-section-compact hidden">
-            <h2>Resumen del Trámite</h2>
-            
-            <!-- Tarjeta principal mejorada con todos los detalles del trámite -->
-            <div class="price-summary-card">
-                <div class="price-summary-header">
-                    <h3><i class="fa-solid fa-receipt"></i> Desglose del Trámite</h3>
-                    <div class="price-summary-badge">Precio transparente</div>
-                </div>
-                
-                <div class="price-summary-body">
-                    <!-- Servicio principal -->
-                    <div class="price-summary-main">
-                        <div class="price-summary-title">
-                            <span>Cambio de Titularidad</span>
-                            <div class="price-summary-amount" id="cambio_nombre_price">134.99 €</div>
-                        </div>
-                        <div class="price-summary-details">
-                            <div class="price-summary-row">
-                                <span><i class="fa-solid fa-check"></i> Tasas capitanía marítima + Gestión</span>
-                                <span id="tasas_honorarios_display">114.87 €</span>
-                            </div>
-                            <div class="price-summary-row">
-                                <span><i class="fa-solid fa-check"></i> IVA</span>
-                                <span id="iva_display">20.12 €</span>
-                            </div>
-                            <div class="price-summary-row">
-                                <span><i class="fa-solid fa-check"></i> Comisión bancaria (1.5% del ITP)</span>
-                                <span id="extra_fee_includes_display">0 €</span>
-                            </div>
-                            <div class="price-summary-row discount-row" id="discount-li" style="display:none;">
-                                <span><i class="fa-solid fa-tag"></i> Descuento aplicado</span>
-                                <span id="discount-amount" class="discount-text">0 €</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Impuesto de transmisiones -->
-                    <div class="price-summary-tax">
-                        <div class="price-summary-title">
-                            <span>Impuesto de Transmisiones Patrimoniales</span>
-                            <div class="price-summary-amount" id="transfer_tax_display">0 €</div>
-                        </div>
-                        <!-- Opción para ITP ya pagado -->
-                        <div class="itp-paid-option">
-                            <label class="service-checkbox">
-                                <input type="checkbox" id="itp_already_paid" name="itp_already_paid">
-                                <span class="checkbox-custom"></span>
-                                <div class="service-info">
-                                    <span class="service-name">Ya tengo pagado el ITP</span>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <!-- Desplegables para secciones opcionales -->
-                    <!-- Servicios adicionales - ahora como acordeón -->
-                    <div class="price-summary-accordion" id="services-accordion">
-                        <div class="accordion-toggle-header">
-                            <span><i class="fa-solid fa-plus-circle"></i> Servicios Adicionales Opcionales</span>
-                            <i class="fa-solid fa-chevron-down accordion-icon"></i>
-                        </div>
-                        <div class="accordion-content-section">
-                            <div class="additional-service-item">
-                                <label class="service-checkbox">
-                                    <input type="checkbox" class="extra-option" data-price="40" value="Cambio de nombre">
-                                    <span class="checkbox-custom"></span>
-                                    <div class="service-info">
-                                        <span class="service-name">Cambiar el nombre de la moto de agua</span>
-                                        <span class="service-price">40 €</span>
-                                    </div>
-                                </label>
-                                <div class="additional-input" id="nombre-input" style="display: none;">
-                                    <input type="text" id="nuevo_nombre" name="nuevo_nombre" placeholder="Ingrese el nuevo nombre de la moto de agua" />
-                                </div>
-                            </div>
-                            
-                            <div class="additional-service-item">
-                                <label class="service-checkbox">
-                                    <input type="checkbox" class="extra-option" data-price="40" value="Cambio de puerto base">
-                                    <span class="checkbox-custom"></span>
-                                    <div class="service-info">
-                                        <span class="service-name">Cambio de puerto base</span>
-                                        <span class="service-price">40 €</span>
-                                    </div>
-                                </label>
-                                <div class="additional-input" id="puerto-input" style="display: none;">
-                                    <input type="text" id="nuevo_puerto" name="nuevo_puerto" placeholder="Ingrese el nuevo puerto" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Cupón - ahora como acordeón -->
-                    <div class="price-summary-accordion" id="coupon-accordion">
-                        <div class="accordion-toggle-header">
-                            <span><i class="fa-solid fa-tag"></i> ¿Tienes un cupón de descuento?</span>
-                            <i class="fa-solid fa-chevron-down accordion-icon"></i>
-                        </div>
-                        <div class="accordion-content-section">
-                            <div class="coupon-container">
-                                <div class="coupon-input-wrapper">
-                                    <input type="text" id="coupon_code" name="coupon_code" placeholder="Introduce tu código de descuento" />
-                                    <button type="button" id="apply-coupon" class="coupon-button">Aplicar</button>
-                                </div>
-                                <p id="coupon-message" class="coupon-message"></p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Total con distintivo visual -->
-                    <div class="price-summary-total">
-                        <div class="price-summary-total-label">
-                            <span>Total a Pagar</span>
-                            <div class="price-summary-guarantees">
-                                <span><i class="fa-solid fa-lock"></i> Pago seguro</span>
-                                <span><i class="fa-solid fa-shield-alt"></i> Garantía de servicio</span>
-                            </div>
-                        </div>
-                        <div class="price-summary-total-amount" id="final-amount">134.99 €</div>
-                    </div>
-                </div>
-            </div>
-            <!-- Ya no necesitamos el modal, ahora es inline -->
-            <!-- 
-            <div id="info-popup" class="info-modal">
-                <div class="info-modal-content">
-                    <div class="info-modal-header">
-                        <h3>Detalle del cálculo del ITP</h3>
-                        <button class="close-modal">&times;</button>
-                    </div>
-                    <div class="info-modal-body">
-                        <p class="info-description">El <strong>Impuesto sobre Transmisiones Patrimoniales (ITP)</strong> es un tributo que el comprador debe abonar a Hacienda en los cambios de titularidad de un vehículo entre particulares.</p>
-                        
-                        <div class="calculation-detail">
-                            <div class="calculation-item">
-                                <span>Valor fiscal base:</span>
-                                <span id="base_value_display">0 €</span>
-                            </div>
-                            <div class="calculation-item">
-                                <span>Antigüedad del vehículo:</span>
-                                <span id="vehicle_age_display">0 años</span>
-                            </div>
-                            <div class="calculation-item">
-                                <span>Porcentaje de depreciación:</span>
-                                <span id="depreciation_percentage_display">0 %</span>
-                            </div>
-                            <div class="calculation-item">
-                                <span>Valor fiscal con depreciación:</span>
-                                <span id="fiscal_value_display">0 €</span>
-                            </div>
-                            <div class="calculation-item">
-                                <span>Precio de compra declarado:</span>
-                                <span id="purchase_price_display">0 €</span>
-                            </div>
-                            <div class="calculation-item">
-                                <span>Base imponible (mayor valor):</span>
-                                <span id="tax_base_display">0 €</span>
-                            </div>
-                            <div class="calculation-item">
-                                <span>Tipo impositivo aplicado:</span>
-                                <span id="tax_rate_display">0 %</span>
-                            </div>
-                            
-                            <div class="calculation-result">
-                                <span>ITP a pagar:</span>
-                                <span id="calculated_itp_display">0 €</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            -->
-        </div> <!-- Fin page-precio -->
-
         <!-- Página Documentos -->
         <div id="page-documentos" class="form-page form-section-compact hidden">
             <h2>Documentos</h2>
-            
+
+            <!-- Opción para ITP ya pagado -->
+            <div class="itp-paid-option" style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
+                <label class="service-checkbox">
+                    <input type="checkbox" id="itp_already_paid" name="itp_already_paid">
+                    <span class="checkbox-custom"></span>
+                    <div class="service-info">
+                        <span class="service-name">Ya tengo pagado el ITP (Impuesto de Transmisiones Patrimoniales)</span>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Servicios adicionales - acordeón -->
+            <div class="price-summary-accordion" id="services-accordion" style="margin-bottom: 20px;">
+                <div class="accordion-toggle-header">
+                    <span><i class="fa-solid fa-plus-circle"></i> Servicios Adicionales Opcionales</span>
+                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                </div>
+                <div class="accordion-content-section">
+                    <div class="additional-service-item">
+                        <label class="service-checkbox">
+                            <input type="checkbox" class="extra-option" data-price="40" value="Cambio de nombre">
+                            <span class="checkbox-custom"></span>
+                            <div class="service-info">
+                                <span class="service-name">Cambiar el nombre de la moto de agua</span>
+                                <span class="service-price">40 €</span>
+                            </div>
+                        </label>
+                        <div class="additional-input" id="nombre-input" style="display: none;">
+                            <input type="text" id="nuevo_nombre" name="nuevo_nombre" placeholder="Ingrese el nuevo nombre de la moto de agua" />
+                        </div>
+                    </div>
+
+                    <div class="additional-service-item">
+                        <label class="service-checkbox">
+                            <input type="checkbox" class="extra-option" data-price="40" value="Cambio de puerto base">
+                            <span class="checkbox-custom"></span>
+                            <div class="service-info">
+                                <span class="service-name">Cambio de puerto base</span>
+                                <span class="service-price">40 €</span>
+                            </div>
+                        </label>
+                        <div class="additional-input" id="puerto-input" style="display: none;">
+                            <input type="text" id="nuevo_puerto" name="nuevo_puerto" placeholder="Ingrese el nuevo puerto" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Sección acordeón para datos personales -->
             <div class="accordion-section" id="section-datos">
                 <div class="accordion-header active">
@@ -4643,6 +4568,23 @@ function transferencia_moto_shortcode() {
         <div id="page-pago" class="form-page form-section-compact hidden">
             <h2 style="margin-bottom: 10px;">Resumen y Pago</h2>
 
+            <!-- Cupón de descuento - acordeón -->
+            <div class="price-summary-accordion" id="coupon-accordion" style="margin-bottom: 20px;">
+                <div class="accordion-toggle-header">
+                    <span><i class="fa-solid fa-tag"></i> ¿Tienes un cupón de descuento?</span>
+                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                </div>
+                <div class="accordion-content-section">
+                    <div class="coupon-container">
+                        <div class="coupon-input-wrapper">
+                            <input type="text" id="coupon_code" name="coupon_code" placeholder="Introduce tu código de descuento" />
+                            <button type="button" id="apply-coupon" class="coupon-button">Aplicar</button>
+                        </div>
+                        <p id="coupon-message" class="coupon-message"></p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Panel de resumen completo del trámite -->
             <div class="summary-panel">
                 <h3 style="margin-bottom: 20px;"><i class="fa-solid fa-clipboard-list"></i> Resumen de su trámite</h3>
@@ -4681,7 +4623,6 @@ function transferencia_moto_shortcode() {
                             <div style="margin-left: 10px; font-size: 0.9em;">
                                 <p>• Tasas + Gestión: <span id="summary-tasas-gestion">114.87 €</span></p>
                                 <p>• IVA: <span id="summary-iva">20.12 €</span></p>
-                                <p>• Comisión bancaria: <span id="summary-comision">0 €</span></p>
                             </div>
                             <p style="margin-top: 10px;"><strong>Impuesto transmisiones:</strong> <span id="summary-transfer-tax-detail">0 €</span></p>
                             <p id="summary-discount-detail" style="display: none; color: #2e8b57;"><strong>Descuento aplicado:</strong> <span id="summary-discount-amount">0 €</span></p>
@@ -4915,7 +4856,6 @@ function transferencia_moto_shortcode() {
         const noEncuentroCheckbox = document.getElementById('no_encuentro_checkbox');
         const manualFields = document.getElementById('manual-fields');
 
-        const extraFeeIncludesDisplay = document.getElementById('extra_fee_includes_display');
         const cambioNombrePriceDisplay = document.getElementById('cambio_nombre_price');
         const infoPopup = document.getElementById('info-popup');
         const matriculationDateInput = document.getElementById('matriculation_date');
@@ -5066,10 +5006,13 @@ function transferencia_moto_shortcode() {
                 });
 
                 // Mostrar el contenido correspondiente al paso actual
-                const activeSidebarContent = document.querySelector(`.sidebar-content[data-step="${currentPageId}"]`);
-                if (activeSidebarContent) {
-                    activeSidebarContent.classList.add('active');
-                }
+                // Buscar sidebar que tenga el data-step exacto o que contenga el currentPageId
+                document.querySelectorAll('.sidebar-content').forEach(content => {
+                    const dataStep = content.getAttribute('data-step');
+                    if (dataStep && (dataStep === currentPageId || dataStep.includes(currentPageId))) {
+                        content.classList.add('active');
+                    }
+                });
             }
             // ================================================
 
@@ -5079,11 +5022,19 @@ function transferencia_moto_shortcode() {
                 setTimeout(initAccordionSections, 100);
             }
 
-            // Si estamos pasando a la página de precio, inicializar los acordeones de precio
-            if (formPages[currentPage] && formPages[currentPage].id === 'page-precio') {
-                console.log("Actualizando a página precio, inicializando acordeones de precio");
+            // Inicializar acordeones cuando llegamos a documentos (donde están ahora)
+            if (formPages[currentPage] && formPages[currentPage].id === 'page-documentos') {
+                console.log("Actualizando a página documentos, inicializando acordeones");
                 setTimeout(() => {
                     initAdditionalOptionsDropdown();
+                    initCouponDropdown();
+                }, 100);
+            }
+
+            // Inicializar acordeón de cupón en page-pago
+            if (formPages[currentPage] && formPages[currentPage].id === 'page-pago') {
+                console.log("Actualizando a página pago, inicializando acordeón de cupón");
+                setTimeout(() => {
                     initCouponDropdown();
                 }, 100);
             }
@@ -5326,7 +5277,7 @@ function transferencia_moto_shortcode() {
 
             const baseValue = Math.max(purchasePrice, fiscalValue);
             const itp = isItpAlreadyPaid ? 0 : baseValue * rate;
-            const extraFee = itp * 0.015;
+            const extraFee = 0; // Comisión bancaria eliminada
 
             baseValueDisplay.textContent = basePrice.toFixed(2) + ' €';
             depreciationPercentageDisplay.textContent = depreciationPercentage + ' %';
@@ -5343,22 +5294,55 @@ function transferencia_moto_shortcode() {
         // Actualizar valores ITP en el sidebar
         function updateSidebarITP() {
             const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
-            const fiscalValue = selectedModelPrice > 0 ? parseFloat(document.getElementById('fiscal_value_display')?.textContent || 0) : 0;
+            const baseValue = selectedModelPrice || 0;
+            const matriculationDate = matriculationDateInput.value;
+            let vehicleAge = 0;
+            let depreciationPercentage = 0;
+
+            if (matriculationDate) {
+                const matriculationYear = new Date(matriculationDate).getFullYear();
+                const currentYear = new Date().getFullYear();
+                vehicleAge = currentYear - matriculationYear;
+                depreciationPercentage = Math.min(vehicleAge * 5, 50);
+            }
+
+            const depreciationFactor = 1 - (depreciationPercentage / 100);
+            const fiscalValue = baseValue * depreciationFactor;
             const taxableBase = Math.max(purchasePrice, fiscalValue);
             const taxRate = parseFloat(document.querySelector('#region option:checked')?.dataset.rate || 4);
             const itp = currentTransferTax || 0;
 
-            const sidebarPurchasePrice = document.getElementById('sidebar-purchase-price');
+            // IDs del sidebar
+            const sidebarBaseValue = document.getElementById('sidebar-base-value');
+            const sidebarVehicleAge = document.getElementById('sidebar-vehicle-age');
+            const sidebarDepreciation = document.getElementById('sidebar-depreciation');
             const sidebarFiscalValue = document.getElementById('sidebar-fiscal-value');
+            const sidebarPurchasePrice = document.getElementById('sidebar-purchase-price');
             const sidebarTaxableBase = document.getElementById('sidebar-taxable-base');
             const sidebarTaxRate = document.getElementById('sidebar-tax-rate');
             const sidebarItpAmount = document.getElementById('sidebar-itp-amount');
 
+            if (sidebarBaseValue) sidebarBaseValue.textContent = baseValue > 0 ? baseValue.toFixed(2) + '€' : '0€';
+            if (sidebarVehicleAge) sidebarVehicleAge.textContent = vehicleAge + ' años';
+            if (sidebarDepreciation) sidebarDepreciation.textContent = depreciationPercentage + '%';
+            if (sidebarFiscalValue) sidebarFiscalValue.textContent = fiscalValue > 0 ? fiscalValue.toFixed(2) + '€' : '0€';
             if (sidebarPurchasePrice) sidebarPurchasePrice.textContent = purchasePrice.toFixed(2) + '€';
-            if (sidebarFiscalValue) sidebarFiscalValue.textContent = fiscalValue > 0 ? fiscalValue.toFixed(2) + '€' : '-';
             if (sidebarTaxableBase) sidebarTaxableBase.textContent = taxableBase.toFixed(2) + '€';
             if (sidebarTaxRate) sidebarTaxRate.textContent = taxRate + '%';
             if (sidebarItpAmount) sidebarItpAmount.textContent = itp.toFixed(2) + '€';
+        }
+
+        // Actualizar desglose de tramitación en sidebar
+        function updateSidebarTramitacion(tasasGestion, honorarios, iva, total) {
+            const sidebarTasasGestion = document.getElementById('sidebar-tasas-gestion');
+            const sidebarHonorarios = document.getElementById('sidebar-honorarios');
+            const sidebarIva = document.getElementById('sidebar-iva');
+            const sidebarTotalAmount = document.getElementById('sidebar-total-amount');
+
+            if (sidebarTasasGestion) sidebarTasasGestion.textContent = tasasGestion.toFixed(2) + '€';
+            if (sidebarHonorarios) sidebarHonorarios.textContent = honorarios.toFixed(2) + '€';
+            if (sidebarIva) sidebarIva.textContent = iva.toFixed(2) + '€';
+            if (sidebarTotalAmount) sidebarTotalAmount.textContent = total.toFixed(2) + '€';
         }
 
         function updateTransferTaxDisplay() {
@@ -5544,15 +5528,13 @@ function transferencia_moto_shortcode() {
             const transferTaxDisplay = document.getElementById('transfer_tax_display');
             const tasasHonorariosDisplay = document.getElementById('tasas_honorarios_display');
             const ivaDisplay = document.getElementById('iva_display');
-            const extraFeeIncludesDisplay = document.getElementById('extra_fee_includes_display');
             const cambioNombrePriceDisplay = document.getElementById('cambio_nombre_price');
-            
+
             if (transferTaxDisplay) transferTaxDisplay.textContent = itp.toFixed(2) + ' €';
-            
+
             const tasasMasHonorarios = baseTasas + discountedHonorarios;
             if (tasasHonorariosDisplay) tasasHonorariosDisplay.textContent = tasasMasHonorarios.toFixed(2) + ' €';
             if (ivaDisplay) ivaDisplay.textContent = newIva.toFixed(2) + ' €';
-            if (extraFeeIncludesDisplay) extraFeeIncludesDisplay.textContent = finalExtraFee.toFixed(2) + ' €';
             if (cambioNombrePriceDisplay) cambioNombrePriceDisplay.textContent = totalGestion.toFixed(2) + ' €';
 
             // Guardar valores en campos ocultos
@@ -5568,6 +5550,10 @@ function transferencia_moto_shortcode() {
             if (typeof calculateTransferTax === 'function') {
                 calculateTransferTax();
             }
+
+            // Actualizar sidebar con desglose de tramitación
+            const tasasMasHonorarios = baseTasas + discountedHonorarios;
+            updateSidebarTramitacion(tasasMasHonorarios, discountedHonorarios, newIva, totalGestion);
             
             // Actualizar contenido HTML para servicios adicionales seleccionados
             const servicesSummary = document.getElementById('selected-services-summary');
@@ -5610,13 +5596,11 @@ function transferencia_moto_shortcode() {
             const cambioNombrePrice = cambioNombrePriceDisplay.textContent;
             const tasasHonorarios = document.getElementById('tasas_honorarios_display').textContent;
             const iva = document.getElementById('iva_display').textContent;
-            const comisionBancaria = extraFeeIncludesDisplay.textContent;
             const transferTax = transferTaxDisplay.textContent;
-            
+
             document.getElementById('summary-base-price').textContent = cambioNombrePrice;
             document.getElementById('summary-tasas-gestion').textContent = tasasHonorarios;
             document.getElementById('summary-iva').textContent = iva;
-            document.getElementById('summary-comision').textContent = comisionBancaria;
             document.getElementById('summary-transfer-tax-detail').textContent = transferTax;
             
             document.getElementById('summary-name-change').style.display = 'none';
