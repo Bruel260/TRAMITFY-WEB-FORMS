@@ -31,19 +31,29 @@ function navigation_permit_renewal_form_shortcode() {
                 </div>';
     }
 
-    // Configuración de Stripe - movido dentro de la función para evitar conflictos con Elementor
+    // Configuración de Stripe - IGUAL QUE RECUPERAR DOCUMENTACIÓN
     if (!defined('NAVIGATION_PERMIT_STRIPE_MODE')) {
         define('NAVIGATION_PERMIT_STRIPE_MODE', 'test'); // 'test' o 'live'
+
         define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'pk_test_YOUR_STRIPE_TEST_PUBLIC_KEY');
         define('NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY', 'sk_test_YOUR_STRIPE_TEST_SECRET_KEY');
+
         define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_YOUR_STRIPE_LIVE_PUBLIC_KEY');
         define('NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY', 'sk_live_YOUR_STRIPE_LIVE_SECRET_KEY');
+
         define('NAVIGATION_PERMIT_SERVICE_PRICE', 65.00);
+        define('NAVIGATION_PERMIT_TASA_CERTIFICADO', 15.00);
+        define('NAVIGATION_PERMIT_TASA_EMISION', 8.00);
     }
 
-    // Seleccionar las claves según el modo
-    $stripe_public_key = (NAVIGATION_PERMIT_STRIPE_MODE === 'live') ? NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY : NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY;
-    $stripe_secret_key = (NAVIGATION_PERMIT_STRIPE_MODE === 'live') ? NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY : NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY;
+    // Seleccionar las claves según el modo (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
+    if (NAVIGATION_PERMIT_STRIPE_MODE === 'test') {
+        $stripe_public_key = NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY;
+        $stripe_secret_key = NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY;
+    } else {
+        $stripe_public_key = NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY;
+        $stripe_secret_key = NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY;
+    }
     
     // Encolar los scripts y estilos necesarios
     wp_enqueue_style('navigation-permit-renewal-form-style', get_template_directory_uri() . '/style.css', array(), filemtime(get_template_directory() . '/style.css'));
@@ -2391,43 +2401,45 @@ function send_navigation_permit_to_tramitfy() {
         }
     }
 
-    // Enviar al webhook de Node.js
+    // Enviar al webhook de Node.js usando CURL (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
     $webhookUrl = 'https://46-202-128-35.sslip.io/api/herramientas/permiso-navegacion/webhook';
 
     $boundary = '----WebKitFormBoundary' . uniqid();
-    $postData = '';
+    $postBody = '';
 
     // Agregar campos de formulario
     foreach ($formData as $key => $value) {
-        $postData .= "--{$boundary}\r\n";
-        $postData .= "Content-Disposition: form-data; name=\"{$key}\"\r\n\r\n";
-        $postData .= "{$value}\r\n";
+        $postBody .= "--{$boundary}\r\n";
+        $postBody .= "Content-Disposition: form-data; name=\"{$key}\"\r\n\r\n";
+        $postBody .= $value . "\r\n";
     }
 
     // Agregar archivos
     foreach ($uploadedFiles as $file) {
-        $postData .= "--{$boundary}\r\n";
-        $postData .= "Content-Disposition: form-data; name=\"{$file['fieldname']}\"; filename=\"{$file['name']}\"\r\n";
-        $postData .= "Content-Type: {$file['type']}\r\n\r\n";
-        $postData .= file_get_contents($file['tmp_name']) . "\r\n";
+        $postBody .= "--{$boundary}\r\n";
+        $postBody .= "Content-Disposition: form-data; name=\"files[]\"; filename=\"{$file['name']}\"\r\n";
+        $postBody .= "Content-Type: application/octet-stream\r\n\r\n";
+        $postBody .= file_get_contents($file['tmp_name']) . "\r\n";
     }
 
-    $postData .= "--{$boundary}--\r\n";
+    $postBody .= "--{$boundary}--\r\n";
 
-    $response = wp_remote_post($webhookUrl, array(
-        'body' => $postData,
-        'headers' => array(
-            'Content-Type' => 'multipart/form-data; boundary=' . $boundary
-        ),
-        'timeout' => 60
-    ));
+    // Usar CURL en lugar de wp_remote_post (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $webhookUrl);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $postBody);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: multipart/form-data; boundary=' . $boundary,
+        'Content-Length: ' . strlen($postBody)
+    ]);
 
-    if (is_wp_error($response)) {
-        wp_send_json(['success' => false, 'error' => $response->get_error_message()], 500);
-        return;
-    }
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
 
-    $responseBody = json_decode(wp_remote_retrieve_body($response), true);
+    $responseBody = json_decode($response, true);
 
     if (!$responseBody || !isset($responseBody['success']) || !$responseBody['success']) {
         wp_send_json(['success' => false, 'error' => 'Error al procesar el formulario'], 500);
@@ -2459,76 +2471,129 @@ function send_navigation_permit_to_tramitfy() {
     $renewalTypeText = isset($renewalTypes[$formData['renewalType']]) ? $renewalTypes[$formData['renewalType']] : 'Renovación estándar';
 
     // ============================================
-    // EMAIL AL CLIENTE
+    // EMAIL AL CLIENTE - DISEÑO IGUAL QUE RECUPERAR DOCUMENTACIÓN
     // ============================================
     $headers = array('Content-Type: text/html; charset=UTF-8');
 
-    $customerSubject = '✅ Confirmación - Renovación Permiso de Navegación - ' . $tramiteId;
+    $customerSubject = '✓ Solicitud Recibida - Renovación Permiso de Navegación';
     $customerMessage = "
     <!DOCTYPE html>
     <html>
     <head>
         <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     </head>
-    <body style='margin: 0; padding: 20px; font-family: Arial, sans-serif; background-color: #f5f5f5;'>
-        <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
+    <body style='margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif; background-color: #f4f7fa;'>
+        <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #f4f7fa; padding: 40px 20px;'>
+            <tr>
+                <td align='center'>
+                    <!-- Email Content Container -->
+                    <table width='600' cellpadding='0' cellspacing='0' style='background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden;'>
 
-            <div style='background: linear-gradient(135deg, #0066cc 0%, #004a99 100%); padding: 30px; text-align: center; color: white;'>
-                <h1 style='margin: 0; font-size: 26px; font-weight: 600;'>✅ ¡Solicitud Recibida!</h1>
-                <p style='margin: 10px 0 0; font-size: 14px; opacity: 0.95;'>Renovación de Permiso de Navegación</p>
-                <p style='margin: 12px 0 0; font-size: 18px; font-weight: 700; background: rgba(255,255,255,0.2); padding: 10px 16px; border-radius: 6px; display: inline-block;'>📋 {$tramiteId}</p>
-            </div>
+                        <!-- Header Gradient -->
+                        <tr>
+                            <td style='background: linear-gradient(135deg, rgb(1, 109, 134) 0%, rgb(0, 86, 106) 100%); padding: 45px 40px; text-align: center;'>
+                                <h1 style='margin: 0 0 12px 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;'>
+                                    ✓ Solicitud Recibida
+                                </h1>
+                                <p style='margin: 0 0 20px 0; color: rgba(255,255,255,0.95); font-size: 16px;'>
+                                    Renovación de Permiso de Navegación
+                                </p>
+                                <div style='background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 14px 24px; border-radius: 8px; display: inline-block;'>
+                                    <p style='margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;'>
+                                        Número de trámite
+                                    </p>
+                                    <p style='margin: 6px 0 0 0; color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: 0.5px;'>
+                                        {$tramiteId}
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
 
-            <div style='padding: 30px;'>
-                <p style='margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.6;'>
-                    Estimado/a <strong>{$formData['customerName']}</strong>,
-                </p>
-                <p style='margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.6;'>
-                    Hemos recibido correctamente su solicitud de <strong>{$renewalTypeText}</strong>. Su trámite ha sido registrado y procesaremos su documentación a la mayor brevedad posible.
-                </p>
+                        <!-- Body Content -->
+                        <tr>
+                            <td style='padding: 45px 40px;'>
 
-                <div style='background-color: #e3f2fd; padding: 18px 20px; border-radius: 6px; margin: 25px 0; border-left: 4px solid #0066cc;'>
-                    <p style='margin: 0 0 8px; color: #555; font-size: 14px;'>
-                        <strong>Número de trámite:</strong> <span style='color: #0066cc;'>{$tramiteId}</span>
-                    </p>
-                    <p style='margin: 0 0 8px; color: #555; font-size: 14px;'>
-                        <strong>Estado:</strong> <span style='color: #f57f17;'>Pendiente de revisión</span>
-                    </p>
-                    <p style='margin: 0; color: #555; font-size: 14px;'>
-                        <strong>Tipo:</strong> {$renewalTypeText}
-                    </p>
-                </div>
+                                <p style='margin: 0 0 24px 0; color: #2c3e50; font-size: 16px; line-height: 1.6;'>
+                                    Estimado/a <strong>{$formData['customerName']}</strong>,
+                                </p>
 
-                <p style='margin: 20px 0; color: #333; font-size: 15px; line-height: 1.6;'>
-                    Puede consultar el estado de su trámite en cualquier momento a través del siguiente enlace:
-                </p>
+                                <p style='margin: 0 0 28px 0; color: #546e7a; font-size: 15px; line-height: 1.7;'>
+                                    Hemos recibido correctamente su solicitud de renovación de permiso de navegación. Nuestro equipo revisará su documentación y comenzará con la tramitación a la mayor brevedad posible.
+                                </p>
 
-                <div style='text-align: center; margin: 25px 0;'>
-                    <a href='{$trackingUrl}' style='display: inline-block; background: linear-gradient(135deg, #0066cc 0%, #004a99 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; box-shadow: 0 3px 8px rgba(0,102,204,0.3);'>
-                        🔍 Ver Estado del Trámite
-                    </a>
-                </div>
+                                <!-- Status Box -->
+                                <table width='100%' cellpadding='0' cellspacing='0' style='background: linear-gradient(to right, #e3f2fd, #f0f7ff); border-radius: 10px; border-left: 4px solid rgb(1, 109, 134); margin: 32px 0;'>
+                                    <tr>
+                                        <td style='padding: 24px 28px;'>
+                                            <table width='100%' cellpadding='8' cellspacing='0'>
+                                                <tr>
+                                                    <td style='color: #546e7a; font-size: 14px; font-weight: 600;'>
+                                                        Estado actual:
+                                                    </td>
+                                                    <td align='right'>
+                                                        <span style='background-color: #fff3e0; color: #e65100; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;'>
+                                                            Pendiente
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style='color: #546e7a; font-size: 14px; font-weight: 600;'>
+                                                        Fecha de solicitud:
+                                                    </td>
+                                                    <td align='right' style='color: #2c3e50; font-size: 14px; font-weight: 600;'>
+                                                        " . date('d/m/Y H:i') . "
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
 
-                <p style='margin: 25px 0 0; color: #333; font-size: 15px; line-height: 1.6;'>
-                    Le mantendremos informado sobre el progreso de su solicitud.
-                </p>
+                                <p style='margin: 32px 0 24px 0; color: #546e7a; font-size: 15px; line-height: 1.7;'>
+                                    Puede consultar el estado de su trámite en cualquier momento desde el siguiente enlace:
+                                </p>
 
-                <p style='margin: 25px 0 0; color: #333; font-size: 15px;'>
-                    Atentamente,<br>
-                    <strong>Equipo Tramitfy</strong>
-                </p>
-            </div>
+                                <!-- CTA Button -->
+                                <table width='100%' cellpadding='0' cellspacing='0' style='margin: 32px 0;'>
+                                    <tr>
+                                        <td align='center'>
+                                            <a href='{$trackingUrl}' style='display: inline-block; background: linear-gradient(135deg, rgb(1, 109, 134) 0%, rgb(0, 86, 106) 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 15px; font-weight: 600; box-shadow: 0 4px 12px rgba(1, 109, 134, 0.3);'>
+                                                🔍 Ver Estado del Trámite
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
 
-            <div style='background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #e0e0e0;'>
-                <p style='margin: 0 0 6px; color: #666; font-size: 13px;'>
-                    Tramitfy S.L. | info@tramitfy.es | +34 689 170 273
-                </p>
-                <p style='margin: 0; color: #999; font-size: 12px;'>
-                    Paseo Castellana 194 puerta B, Madrid, España
-                </p>
-            </div>
+                                <p style='margin: 32px 0 0 0; color: #546e7a; font-size: 14px; line-height: 1.7;'>
+                                    Le mantendremos informado del progreso de su solicitud.
+                                </p>
 
-        </div>
+                                <p style='margin: 32px 0 0 0; color: #2c3e50; font-size: 15px;'>
+                                    Atentamente,<br>
+                                    <strong style='color: rgb(1, 109, 134);'>Equipo Tramitfy</strong>
+                                </p>
+
+                            </td>
+                        </tr>
+
+                        <!-- Footer -->
+                        <tr>
+                            <td style='background-color: #f8f9fa; padding: 32px 40px; border-top: 1px solid #e0e0e0;'>
+                                <p style='margin: 0 0 8px 0; color: #78909c; font-size: 13px; text-align: center; line-height: 1.5;'>
+                                    <strong style='color: #546e7a;'>Tramitfy</strong><br>
+                                    info@tramitfy.es | +34 689 170 273
+                                </p>
+                                <p style='margin: 8px 0 0 0; color: #90a4ae; font-size: 12px; text-align: center;'>
+                                    Paseo Castellana 194 puerta B, Madrid, España
+                                </p>
+                            </td>
+                        </tr>
+
+                    </table>
+                </td>
+            </tr>
+        </table>
     </body>
     </html>
     ";
@@ -2687,30 +2752,62 @@ function send_navigation_permit_to_tramitfy() {
     ]);
 }
 
-// Función para crear Payment Intent de Stripe
+// Función para crear Payment Intent de Stripe - IGUAL QUE RECUPERAR DOCUMENTACIÓN
 function create_payment_intent_navigation_permit_renewal() {
-    // Configurar Stripe dentro de la función para evitar conflictos
-    $stripe_secret_key = (NAVIGATION_PERMIT_STRIPE_MODE === 'live') ? NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY : NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY;
+    // Configurar Stripe dentro de la función (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
+    if (NAVIGATION_PERMIT_STRIPE_MODE === 'test') {
+        $stripe_secret_key = NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY;
+    } else {
+        $stripe_secret_key = NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY;
+    }
+
+    header('Content-Type: application/json');
 
     require_once get_template_directory() . '/vendor/autoload.php';
 
-    \Stripe\Stripe::setApiKey($stripe_secret_key);
-    
-    $amount = isset($_POST['amount']) ? intval($_POST['amount']) : 6500;
-    
     try {
+        error_log('=== NAVIGATION PERMIT PAYMENT INTENT ===');
+        error_log('STRIPE MODE: ' . NAVIGATION_PERMIT_STRIPE_MODE);
+        error_log('Using Stripe key starting with: ' . substr($stripe_secret_key, 0, 25));
+
+        \Stripe\Stripe::setApiKey($stripe_secret_key);
+
+        $currentKey = \Stripe\Stripe::getApiKey();
+        error_log('Stripe API Key confirmed: ' . substr($currentKey, 0, 25));
+
+        $amount = NAVIGATION_PERMIT_SERVICE_PRICE * 100; // 65.00 EUR = 6500 cents
+
         $paymentIntent = \Stripe\PaymentIntent::create([
             'amount' => $amount,
             'currency' => 'eur',
-            'automatic_payment_methods' => ['enabled' => true],
+            'automatic_payment_methods' => [
+                'enabled' => true,
+            ],
             'description' => 'Renovación Permiso de Navegación',
+            'metadata' => [
+                'service' => 'Permiso Navegación',
+                'source' => 'tramitfy_web',
+                'form' => 'renovacion_permiso',
+                'mode' => NAVIGATION_PERMIT_STRIPE_MODE
+            ]
         ]);
-        
-        wp_send_json([
-            'clientSecret' => $paymentIntent->client_secret
+
+        error_log('Payment Intent created: ' . $paymentIntent->id);
+
+        echo json_encode([
+            'clientSecret' => $paymentIntent->client_secret,
+            'debug' => [
+                'mode' => NAVIGATION_PERMIT_STRIPE_MODE,
+                'keyUsed' => substr($stripe_secret_key, 0, 25) . '...',
+                'keyConfirmed' => substr($currentKey, 0, 25) . '...',
+                'paymentIntentId' => $paymentIntent->id
+            ]
         ]);
     } catch (Exception $e) {
-        wp_send_json(['error' => $e->getMessage()], 500);
+        error_log('Error creating payment intent: ' . $e->getMessage());
+        echo json_encode(['error' => $e->getMessage()]);
     }
+
+    wp_die();
 }
 ?>
