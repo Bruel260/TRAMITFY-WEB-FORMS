@@ -3345,13 +3345,14 @@ function transferencia_barco_shortcode() {
         .tramitfy-sidebar {
             position: sticky;
             top: 20px;
-            background: linear-gradient(135deg, rgba(1, 109, 134, 0.05) 0%, rgba(1, 109, 134, 0.02) 100%);
+            background: linear-gradient(135deg, #016d86 0%, #014d5f 100%);
             border-radius: 16px;
             padding: 30px;
-            box-shadow: 0 8px 32px rgba(1, 109, 134, 0.08);
-            border: 1px solid rgba(1, 109, 134, 0.1);
+            box-shadow: 0 8px 32px rgba(1, 109, 134, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             min-height: 500px;
+            color: #ffffff;
         }
 
         .sidebar-content {
@@ -3380,7 +3381,7 @@ function transferencia_barco_shortcode() {
             gap: 15px;
             margin-bottom: 25px;
             padding-bottom: 20px;
-            border-bottom: 2px solid rgba(1, 109, 134, 0.15);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
         }
 
         .sidebar-icon {
@@ -3402,14 +3403,14 @@ function transferencia_barco_shortcode() {
 
         .sidebar-title h3 {
             margin: 0 0 5px 0;
-            color: rgb(var(--primary-dark));
+            color: #ffffff;
             font-size: 20px;
             font-weight: 700;
         }
 
         .sidebar-title p {
             margin: 0;
-            color: rgb(var(--neutral-600));
+            color: rgba(255, 255, 255, 0.8);
             font-size: 13px;
         }
 
@@ -3418,17 +3419,18 @@ function transferencia_barco_shortcode() {
         }
 
         .sidebar-info-box {
-            background: white;
+            background: rgba(255, 255, 255, 0.15);
             padding: 18px;
             border-radius: 10px;
             margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-            border-left: 3px solid rgb(var(--primary));
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-left: 3px solid rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(10px);
         }
 
         .sidebar-info-box p {
             margin: 0 0 8px 0;
-            color: rgb(var(--neutral-700));
+            color: rgba(255, 255, 255, 0.95);
             font-size: 14px;
             line-height: 1.6;
         }
@@ -3438,7 +3440,8 @@ function transferencia_barco_shortcode() {
         }
 
         .sidebar-info-box strong {
-            color: rgb(var(--primary-dark));
+            color: #ffffff;
+            font-weight: 700;
         }
 
         .sidebar-checklist {
@@ -3482,15 +3485,16 @@ function transferencia_barco_shortcode() {
         }
 
         .sidebar-tips {
-            background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, rgba(255, 193, 7, 0.03) 100%);
+            background: rgba(255, 193, 7, 0.2);
             padding: 18px;
             border-radius: 10px;
             border-left: 3px solid #FFC107;
+            backdrop-filter: blur(10px);
         }
 
         .sidebar-tips h4 {
             margin: 0 0 12px 0;
-            color: #F57C00;
+            color: #FFC107;
             font-size: 14px;
             font-weight: 700;
             display: flex;
@@ -3508,7 +3512,7 @@ function transferencia_barco_shortcode() {
         }
 
         .sidebar-tips li {
-            color: rgb(var(--neutral-700));
+            color: rgba(255, 255, 255, 0.95);
             font-size: 13px;
             line-height: 1.6;
             margin-bottom: 8px;
@@ -3519,13 +3523,15 @@ function transferencia_barco_shortcode() {
         }
 
         .sidebar-price-highlight {
-            background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
+            background: rgba(255, 255, 255, 0.2);
             color: white;
             padding: 25px;
             border-radius: 12px;
             text-align: center;
             margin-bottom: 20px;
-            box-shadow: 0 6px 20px rgba(var(--primary), 0.25);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
         }
 
         .sidebar-price-label {
@@ -4219,6 +4225,11 @@ function transferencia_barco_shortcode() {
                         </div>
                     </div>
 
+                    <!-- TrustIndex Reviews Widget -->
+                    <div style="margin-top: 25px; padding: 20px; background: rgba(255, 255, 255, 0.1); border-radius: 12px; backdrop-filter: blur(10px);">
+                        <script defer async src='https://cdn.trustindex.io/loader.js?f4fbfd341d12439e0c86fae7fc2'></script>
+                    </div>
+
                 </aside>
 
                 <!-- Panel Derecho - Formulario -->
@@ -4324,11 +4335,6 @@ function transferencia_barco_shortcode() {
         <div id="page-vehiculo" class="form-page form-section-compact">
             <h2 style="margin-bottom: 8px; font-size: 20px;">Transferencia de Propiedad</h2>
             <h3 style="margin-bottom: 12px; font-size: 16px; color: #666;">Información del Barco</h3>
-
-            <!-- TrustIndex Reviews Widget -->
-            <div style="margin: 20px 0 30px; text-align: center;">
-                <script defer async src='https://cdn.trustindex.io/loader.js?f4fbfd341d12439e0c86fae7fc2'></script>
-            </div>
             <!-- Tipo de vehículo fijo: Barco -->
             <input type="hidden" name="vehicle_type" value="Barco">
 
