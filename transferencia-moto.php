@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: Transferencia Barco
+Plugin Name: Transferencia Moto de Agua
 Description: Formulario de transferencia de barco con Stripe, lógica de cupones y opción para usar solo el precio de compra (sin tablas CSV) cuando el usuario no encuentra su modelo.
 Version: 1.1
 Author: GPT-4
@@ -5499,6 +5499,11 @@ function transferencia_moto_shortcode() {
             const discountedHonorarios = baseHonorarios * (1 - discountRatio);
             const newIva = discountedHonorarios * 0.21;
 
+            // Guardar valores globalmente para poder acceder en el submit
+            window.currentTasas = baseTasas;
+            window.currentHonorarios = discountedHonorarios;
+            window.currentIva = newIva;
+
             // Cálculo final
             const totalGestion = baseTasas + discountedHonorarios + newIva + finalExtraFee;
             const total = itp + totalGestion;
@@ -6297,11 +6302,14 @@ function transferencia_moto_shortcode() {
                 alert('Por favor, firme el documento...');
                 return;
             }
-            
+
+            // IMPORTANTE: Actualizar el total para asegurar que las variables globales estén correctas
+            updateTotal();
+
             // Mantener visible el overlay en lugar de mostrarlo de nuevo
             // Ya debería estar visible desde el proceso de pago
             // document.getElementById('loading-overlay').style.display = 'flex';
-            
+
             const alertMessage = document.getElementById('alert-message');
             const alertMessageText = document.getElementById('alert-message-text');
             alertMessage.style.display = 'block';
@@ -6312,9 +6320,24 @@ function transferencia_moto_shortcode() {
             formData.append('final_amount', finalAmount.toFixed(2));
             formData.append('current_transfer_tax', currentTransferTax.toFixed(2));
             formData.append('current_extra_fee', currentExtraFee.toFixed(2));
-            formData.append('tasas_hidden', document.getElementById('tasas_hidden').value);
-            formData.append('iva_hidden', document.getElementById('iva_hidden').value);
-            formData.append('honorarios_hidden', document.getElementById('honorarios_hidden').value);
+
+            // Leer valores calculados de las variables globales
+            // Estos valores se acaban de actualizar en updateTotal() arriba
+            const tasasValue = window.currentTasas || 0;
+            const ivaValue = window.currentIva || 0;
+            const honorariosValue = window.currentHonorarios || 0;
+
+            console.log('Valores económicos a enviar:', {
+                tasas: tasasValue,
+                iva: ivaValue,
+                honorarios: honorariosValue,
+                itp: currentTransferTax,
+                total: finalAmount
+            });
+
+            formData.append('tasas_hidden', tasasValue.toFixed(2));
+            formData.append('iva_hidden', ivaValue.toFixed(2));
+            formData.append('honorarios_hidden', honorariosValue.toFixed(2));
 
             if (signaturePad) {
                 formData.append('signature', signaturePad.toDataURL());
@@ -6333,6 +6356,9 @@ function transferencia_moto_shortcode() {
             })
             .then(response => response.json())
             .then(data => {
+                console.log('Respuesta del servidor:', data);
+                console.log('data.success =', data.success);
+                console.log('tracking_url =', data.data?.tracking_url);
                 if (data.success) {
                     alertMessageText.textContent = '¡Formulario enviado con éxito! Redirigiendo...';
                     
@@ -6391,10 +6417,13 @@ function transferencia_moto_shortcode() {
 
         function updateVehicleSelection() {
             document.querySelectorAll('.radio-group label').forEach(label => label.classList.remove('selected'));
-            const selectedRadio = {value: 'Moto de Agua'}; // Fijo para transferencia de barcos
-            if (selectedRadio) {
-                selectedRadio.parentElement.classList.add('selected');
-            }
+            // Buscar el radio button de "Moto de Agua" o "Barco" y seleccionar su label
+            const vehicleRadios = document.querySelectorAll('input[name="vehicle_type"]');
+            vehicleRadios.forEach(radio => {
+                if (radio.checked && radio.parentElement) {
+                    radio.parentElement.classList.add('selected');
+                }
+            });
         }
 
         function updateAdditionalInputs() {
@@ -7718,493 +7747,838 @@ function tpm_send_emails() {
 }
 
 /**
+ * Helper function to log debug messages to a file we can access
+ */
+function tpm_debug_log($message) {
+    $debug_log = get_template_directory() . '/tramitfy-moto-debug.log';
+    $timestamp = date('Y-m-d H:i:s');
+    file_put_contents($debug_log, "[$timestamp] $message\n", FILE_APPEND);
+    error_log($message);
+}
+
+/**
  * 4. SUBMIT FINAL FORM (documentos + firma)
  */
 add_action('wp_ajax_submit_moto_form_tpm', 'tpm_submit_form');
 add_action('wp_ajax_nopriv_submit_moto_form_tpm', 'tpm_submit_form');
 function tpm_submit_form() {
-    $customer_name = sanitize_text_field($_POST['customer_name']);
-    $customer_dni = sanitize_text_field($_POST['customer_dni']);
-    $customer_email = sanitize_email($_POST['customer_email']);
-    $customer_phone = sanitize_text_field($_POST['customer_phone']);
-    $vehicle_type = sanitize_text_field($_POST['vehicle_type']);
-    $no_encuentro = isset($_POST['no_encuentro_checkbox']) && $_POST['no_encuentro_checkbox'] === 'on';
-    $manufacturer = sanitize_text_field($_POST['manufacturer']);
-    $model = sanitize_text_field($_POST['model']);
-    $manual_manufacturer = sanitize_text_field($_POST['manual_manufacturer']);
-    $manual_model = sanitize_text_field($_POST['manual_model']);
-    $matriculation_date = sanitize_text_field($_POST['matriculation_date']);
-    $purchase_price = floatval($_POST['purchase_price']);
-    $region = sanitize_text_field($_POST['region']);
-    $nuevo_nombre = isset($_POST['nuevo_nombre']) ? sanitize_text_field($_POST['nuevo_nombre']) : '';
-    $nuevo_puerto = isset($_POST['nuevo_puerto']) ? sanitize_text_field($_POST['nuevo_puerto']) : '';
-    $coupon_used = isset($_POST['coupon_used']) ? sanitize_text_field($_POST['coupon_used']) : '';
-    $signature = $_POST['signature'];
+    tpm_debug_log('[TPM] INICIO tpm_submit_form');
 
-    $final_amount = isset($_POST['final_amount']) ? floatval($_POST['final_amount']) : 0;
-    $current_transfer_tax = isset($_POST['current_transfer_tax']) ? floatval($_POST['current_transfer_tax']) : 0;
-    $current_extra_fee = isset($_POST['current_extra_fee']) ? floatval($_POST['current_extra_fee']) : 0;
-    $tasas_hidden = isset($_POST['tasas_hidden']) ? floatval($_POST['tasas_hidden']) : 0;
-    $iva_hidden = isset($_POST['iva_hidden']) ? floatval($_POST['iva_hidden']) : 0;
-    $honorarios_hidden = isset($_POST['honorarios_hidden']) ? floatval($_POST['honorarios_hidden']) : 0;
+    try {
+        $customer_name = sanitize_text_field($_POST['customer_name']);
+        $customer_dni = sanitize_text_field($_POST['customer_dni']);
+        $customer_email = sanitize_email($_POST['customer_email']);
+        $customer_phone = sanitize_text_field($_POST['customer_phone']);
+        $vehicle_type = sanitize_text_field($_POST['vehicle_type']);
+        $no_encuentro = isset($_POST['no_encuentro_checkbox']) && $_POST['no_encuentro_checkbox'] === 'on';
+        $manufacturer = sanitize_text_field($_POST['manufacturer']);
+        $model = sanitize_text_field($_POST['model']);
+        $manual_manufacturer = sanitize_text_field($_POST['manual_manufacturer']);
+        $manual_model = sanitize_text_field($_POST['manual_model']);
+        $matriculation_date = sanitize_text_field($_POST['matriculation_date']);
+        $purchase_price = floatval($_POST['purchase_price']);
+        $region = sanitize_text_field($_POST['region']);
+        $nuevo_nombre = isset($_POST['nuevo_nombre']) ? sanitize_text_field($_POST['nuevo_nombre']) : '';
+        $nuevo_puerto = isset($_POST['nuevo_puerto']) ? sanitize_text_field($_POST['nuevo_puerto']) : '';
+        $coupon_used = isset($_POST['coupon_used']) ? sanitize_text_field($_POST['coupon_used']) : '';
+        $signature = $_POST['signature'];
+    
+        tpm_debug_log('[TPM] Datos básicos procesados');
 
-    // Generar TRÁMITE ID para Transferencia
-    $prefix = 'TMA-TRANS';
-    $counter_option = 'tma_trans_counter';
-    $current_cnt = get_option($counter_option, 0);
-    $current_cnt++;
-    update_option($counter_option, $current_cnt);
+        $final_amount = isset($_POST['final_amount']) ? floatval($_POST['final_amount']) : 0;
+        $current_transfer_tax = isset($_POST['current_transfer_tax']) ? floatval($_POST['current_transfer_tax']) : 0;
+        $current_extra_fee = isset($_POST['current_extra_fee']) ? floatval($_POST['current_extra_fee']) : 0;
+        $tasas_hidden = isset($_POST['tasas_hidden']) ? floatval($_POST['tasas_hidden']) : 0;
+        $iva_hidden = isset($_POST['iva_hidden']) ? floatval($_POST['iva_hidden']) : 0;
+        $honorarios_hidden = isset($_POST['honorarios_hidden']) ? floatval($_POST['honorarios_hidden']) : 0;
 
-    $date_part = date('Ymd');
-    $secuencial = str_pad($current_cnt, 6, '0', STR_PAD_LEFT);
-    $tramite_id = $prefix . '-' . $date_part . '-' . $secuencial;
-
-    // Procesar la imagen de la firma en PNG
-    $signature_data = str_replace('data:image/png;base64,', '', $signature);
-    $signature_data = str_replace(' ', '+', $signature_data);
-    $signature_data = base64_decode($signature_data);
-    $upload_dir = wp_upload_dir();
-    $signature_image_name = 'signature_' . time() . '.png';
-    $signature_image_path = $upload_dir['path'] . '/' . $signature_image_name;
-    file_put_contents($signature_image_path, $signature_data);
-
-    // Obtener base_price desde CSV si es necesario
-    $base_price = 0;
-    if (!$no_encuentro && $vehicle_type !== 'Moto de Agua') {
-        $csv_file = ($vehicle_type === 'Moto de Agua') ? 'MOTO.csv' : 'MOTO.csv';
-        $csv_path = get_template_directory() . '/' . $csv_file;
-        if (($handle = fopen($csv_path, 'r')) !== false) {
-            fgetcsv($handle, 1000, ','); // Saltar encabezado
-            while (($row = fgetcsv($handle, 1000, ',')) !== false) {
-                list($csv_manufacturer, $csv_model, $csv_price) = $row;
-                if ($csv_manufacturer === $manufacturer && $csv_model === $model) {
-                    $base_price = floatval($csv_price);
-                    break;
+        tpm_debug_log('[TPM] Valores económicos recibidos: finalAmount=' . $final_amount . ', ITP=' . $current_transfer_tax . ', tasas=' . $tasas_hidden . ', iva=' . $iva_hidden . ', honorarios=' . $honorarios_hidden);
+    
+        // Generar TRÁMITE ID para Transferencia
+        $prefix = 'TMA-TRANS';
+        $counter_option = 'tma_trans_counter';
+        $current_cnt = get_option($counter_option, 0);
+        $current_cnt++;
+        update_option($counter_option, $current_cnt);
+    
+        $date_part = date('Ymd');
+        $secuencial = str_pad($current_cnt, 6, '0', STR_PAD_LEFT);
+        $tramite_id = $prefix . '-' . $date_part . '-' . $secuencial;
+    
+        // Procesar la imagen de la firma en PNG
+        tpm_debug_log('[TPM] Procesando firma');
+        $signature_data = str_replace('data:image/png;base64,', '', $signature);
+        $signature_data = str_replace(' ', '+', $signature_data);
+        $signature_data = base64_decode($signature_data);
+        $upload_dir = wp_upload_dir();
+        $signature_image_name = 'signature_' . time() . '.png';
+        $signature_image_path = $upload_dir['path'] . '/' . $signature_image_name;
+        file_put_contents($signature_image_path, $signature_data);
+        tpm_debug_log('[TPM] Firma guardada: ' . $signature_image_path);
+    
+        // Obtener base_price desde CSV si es necesario
+        $base_price = 0;
+        if (!$no_encuentro && $vehicle_type !== 'Moto de Agua') {
+            $csv_file = ($vehicle_type === 'Moto de Agua') ? 'MOTO.csv' : 'MOTO.csv';
+            $csv_path = get_template_directory() . '/' . $csv_file;
+            if (($handle = fopen($csv_path, 'r')) !== false) {
+                fgetcsv($handle, 1000, ','); // Saltar encabezado
+                while (($row = fgetcsv($handle, 1000, ',')) !== false) {
+                    list($csv_manufacturer, $csv_model, $csv_price) = $row;
+                    if ($csv_manufacturer === $manufacturer && $csv_model === $model) {
+                        $base_price = floatval($csv_price);
+                        break;
+                    }
                 }
+                fclose($handle);
             }
-            fclose($handle);
         }
-    }
-
-    // Crear PDF de autorización profesional
-    require_once get_template_directory() . '/vendor/fpdf/fpdf.php';
-    $pdf = new FPDF();
-    $pdf->AddPage();
-    $pdf->SetAutoPageBreak(true, 20);
-
-    // Colores corporativos (RGB)
-    $colorPrimario = array(1, 109, 134);  // #016d86
-    $colorGris = array(85, 85, 85);       // #555
-
-    // === ENCABEZADO ===
-    // Logo (si existe en el servidor)
-    $logo_path = get_template_directory() . '/assets/img/logo.png';
-    if (file_exists($logo_path)) {
-        $pdf->Image($logo_path, 15, 12, 40);
-    }
-
-    // Línea superior decorativa
-    $pdf->SetFillColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
-    $pdf->Rect(0, 0, 210, 3, 'F');
-
-    // Información del documento (lado derecho)
-    $pdf->SetXY(130, 15);
-    $pdf->SetFont('Arial', 'B', 11);
-    $pdf->SetTextColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
-    $pdf->Cell(65, 5, utf8_decode('DOCUMENTO OFICIAL'), 0, 1, 'R');
-
-    $pdf->SetFont('Arial', '', 9);
-    $pdf->SetTextColor(100, 100, 100);
-    $pdf->SetX(130);
-    $pdf->Cell(65, 5, utf8_decode('Fecha: ') . date('d/m/Y'), 0, 1, 'R');
-    $pdf->SetX(130);
-    $pdf->Cell(65, 5, utf8_decode('ID: ') . $tramite_id, 0, 1, 'R');
-
-    $pdf->Ln(15);
-
-    // === TÍTULO PRINCIPAL ===
-    $pdf->SetFont('Arial', 'B', 18);
-    $pdf->SetTextColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
-    $pdf->Cell(0, 8, utf8_decode('AUTORIZACIÓN PARA TRANSFERENCIA'), 0, 1, 'C');
-    $pdf->SetFont('Arial', 'B', 16);
-    $pdf->Cell(0, 8, utf8_decode('DE PROPIEDAD'), 0, 1, 'C');
-
-    $pdf->Ln(10);
-
-    // === TEXTO INTRODUCTORIO ===
-    $pdf->SetFont('Arial', '', 11);
-    $pdf->SetTextColor(0, 0, 0);
-    $texto = "Yo, $customer_name, con DNI $customer_dni y correo electrónico $customer_email, autorizo expresamente a TRAMITFY S.L. (CIF B55388557) para que, actuando en mi nombre y representación, realice todas las gestiones necesarias para la transferencia de propiedad del siguiente vehículo:";
-    $pdf->MultiCell(0, 6, utf8_decode($texto), 0, 'J');
-    $pdf->Ln(8);
-
-    // === SECCIÓN: DATOS DEL VEHÍCULO ===
-    // Encabezado de sección
-    $pdf->SetFillColor(240, 240, 240);
-    $pdf->SetFont('Arial', 'B', 12);
-    $pdf->SetTextColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
-    $pdf->Cell(0, 8, utf8_decode('  DATOS DEL VEHÍCULO'), 0, 1, 'L', true);
-    $pdf->Ln(2);
-
-    // Contenido de la sección
-    $pdf->SetFont('Arial', '', 11);
-    $pdf->SetTextColor(0, 0, 0);
-    $pdf->Cell(50, 6, utf8_decode('Tipo de Vehículo:'), 0, 0);
-    $pdf->SetFont('Arial', 'B', 11);
-    $pdf->Cell(0, 6, utf8_decode($vehicle_type), 0, 1);
-
-    $pdf->SetFont('Arial', '', 11);
-    if (!$no_encuentro) {
-        $pdf->Cell(50, 6, utf8_decode('Fabricante:'), 0, 0);
+    
+        // Crear PDF de autorización profesional
+        tpm_debug_log('[TPM] Creando PDF autorización');
+        require_once get_template_directory() . '/vendor/fpdf/fpdf.php';
+        $pdf = new FPDF();
+        $pdf->AddPage();
+        $pdf->SetAutoPageBreak(true, 20);
+    
+        // Colores corporativos (RGB)
+        $colorPrimario = array(1, 109, 134);  // #016d86
+        $colorGris = array(85, 85, 85);       // #555
+    
+        // === ENCABEZADO ===
+        // Logo (si existe en el servidor)
+        $logo_path = get_template_directory() . '/assets/img/logo.png';
+        if (file_exists($logo_path)) {
+            $pdf->Image($logo_path, 15, 12, 40);
+        }
+    
+        // Línea superior decorativa
+        $pdf->SetFillColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
+        $pdf->Rect(0, 0, 210, 3, 'F');
+    
+        // Información del documento (lado derecho)
+        $pdf->SetXY(130, 15);
         $pdf->SetFont('Arial', 'B', 11);
-        $pdf->Cell(0, 6, utf8_decode($manufacturer), 0, 1);
-
-        $pdf->SetFont('Arial', '', 11);
-        $pdf->Cell(50, 6, utf8_decode('Modelo:'), 0, 0);
-        $pdf->SetFont('Arial', 'B', 11);
-        $pdf->Cell(0, 6, utf8_decode($model), 0, 1);
-
-        $pdf->SetFont('Arial', '', 11);
-        $pdf->Cell(50, 6, utf8_decode('Fecha Matriculación:'), 0, 0);
-        $pdf->SetFont('Arial', 'B', 11);
-        $pdf->Cell(0, 6, utf8_decode($matriculation_date), 0, 1);
-    } else {
-        $pdf->Cell(50, 6, utf8_decode('Fabricante:'), 0, 0);
-        $pdf->SetFont('Arial', 'B', 11);
-        $pdf->Cell(0, 6, utf8_decode($manual_manufacturer), 0, 1);
-
-        $pdf->SetFont('Arial', '', 11);
-        $pdf->Cell(50, 6, utf8_decode('Modelo:'), 0, 0);
-        $pdf->SetFont('Arial', 'B', 11);
-        $pdf->Cell(0, 6, utf8_decode($manual_model), 0, 1);
-
-        $pdf->SetFont('Arial', 'I', 10);
+        $pdf->SetTextColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
+        $pdf->Cell(65, 5, utf8_decode('DOCUMENTO OFICIAL'), 0, 1, 'R');
+    
+        $pdf->SetFont('Arial', '', 9);
         $pdf->SetTextColor(100, 100, 100);
-        $pdf->Cell(0, 6, utf8_decode('(Fecha de matriculación no disponible)'), 0, 1);
+        $pdf->SetX(130);
+        $pdf->Cell(65, 5, utf8_decode('Fecha: ') . date('d/m/Y'), 0, 1, 'R');
+        $pdf->SetX(130);
+        $pdf->Cell(65, 5, utf8_decode('ID: ') . $tramite_id, 0, 1, 'R');
+    
+        $pdf->Ln(15);
+    
+        // === TÍTULO PRINCIPAL ===
+        $pdf->SetFont('Arial', 'B', 18);
+        $pdf->SetTextColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
+        $pdf->Cell(0, 8, utf8_decode('AUTORIZACIÓN PARA TRANSFERENCIA'), 0, 1, 'C');
+        $pdf->SetFont('Arial', 'B', 16);
+        $pdf->Cell(0, 8, utf8_decode('DE PROPIEDAD'), 0, 1, 'C');
+    
+        $pdf->Ln(10);
+    
+        // === TEXTO INTRODUCTORIO ===
+        $pdf->SetFont('Arial', '', 11);
         $pdf->SetTextColor(0, 0, 0);
-    }
-
-    // === SERVICIOS ADICIONALES (si los hay) ===
-    if (!empty($nuevo_nombre) || !empty($nuevo_puerto)) {
+        $texto = "Yo, $customer_name, con DNI $customer_dni y correo electrónico $customer_email, autorizo expresamente a TRAMITFY S.L. (CIF B55388557) para que, actuando en mi nombre y representación, realice todas las gestiones necesarias para la transferencia de propiedad del siguiente vehículo:";
+        $pdf->MultiCell(0, 6, utf8_decode($texto), 0, 'J');
         $pdf->Ln(8);
+    
+        // === SECCIÓN: DATOS DEL VEHÍCULO ===
+        // Encabezado de sección
         $pdf->SetFillColor(240, 240, 240);
         $pdf->SetFont('Arial', 'B', 12);
         $pdf->SetTextColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
-        $pdf->Cell(0, 8, utf8_decode('  SERVICIOS ADICIONALES SOLICITADOS'), 0, 1, 'L', true);
+        $pdf->Cell(0, 8, utf8_decode('  DATOS DEL VEHÍCULO'), 0, 1, 'L', true);
         $pdf->Ln(2);
-
+    
+        // Contenido de la sección
         $pdf->SetFont('Arial', '', 11);
         $pdf->SetTextColor(0, 0, 0);
-        if (!empty($nuevo_nombre)) {
-            $pdf->Cell(50, 6, utf8_decode('Cambio de Nombre:'), 0, 0);
+        $pdf->Cell(50, 6, utf8_decode('Tipo de Vehículo:'), 0, 0);
+        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->Cell(0, 6, utf8_decode($vehicle_type), 0, 1);
+    
+        $pdf->SetFont('Arial', '', 11);
+        if (!$no_encuentro) {
+            $pdf->Cell(50, 6, utf8_decode('Fabricante:'), 0, 0);
             $pdf->SetFont('Arial', 'B', 11);
-            $pdf->Cell(0, 6, utf8_decode($nuevo_nombre), 0, 1);
-        }
-        if (!empty($nuevo_puerto)) {
+            $pdf->Cell(0, 6, utf8_decode($manufacturer), 0, 1);
+    
             $pdf->SetFont('Arial', '', 11);
-            $pdf->Cell(50, 6, utf8_decode('Cambio de Puerto Base:'), 0, 0);
+            $pdf->Cell(50, 6, utf8_decode('Modelo:'), 0, 0);
             $pdf->SetFont('Arial', 'B', 11);
-            $pdf->Cell(0, 6, utf8_decode($nuevo_puerto), 0, 1);
+            $pdf->Cell(0, 6, utf8_decode($model), 0, 1);
+    
+            $pdf->SetFont('Arial', '', 11);
+            $pdf->Cell(50, 6, utf8_decode('Fecha Matriculación:'), 0, 0);
+            $pdf->SetFont('Arial', 'B', 11);
+            $pdf->Cell(0, 6, utf8_decode($matriculation_date), 0, 1);
+        } else {
+            $pdf->Cell(50, 6, utf8_decode('Fabricante:'), 0, 0);
+            $pdf->SetFont('Arial', 'B', 11);
+            $pdf->Cell(0, 6, utf8_decode($manual_manufacturer), 0, 1);
+    
+            $pdf->SetFont('Arial', '', 11);
+            $pdf->Cell(50, 6, utf8_decode('Modelo:'), 0, 0);
+            $pdf->SetFont('Arial', 'B', 11);
+            $pdf->Cell(0, 6, utf8_decode($manual_model), 0, 1);
+    
+            $pdf->SetFont('Arial', 'I', 10);
+            $pdf->SetTextColor(100, 100, 100);
+            $pdf->Cell(0, 6, utf8_decode('(Fecha de matriculación no disponible)'), 0, 1);
+            $pdf->SetTextColor(0, 0, 0);
         }
-    }
-
-    $pdf->Ln(8);
-
-    // === DECLARACIÓN ===
-    $pdf->SetFont('Arial', '', 10);
-    $pdf->SetTextColor(0, 0, 0);
-    $declaracion = "Esta autorización incluye la presentación de documentación, pago de tasas administrativas, y cualquier otra gestión requerida por la autoridad competente para completar la transferencia.";
-    $pdf->MultiCell(0, 5, utf8_decode($declaracion), 0, 'J');
-
-    $pdf->Ln(5);
-    $pdf->SetFont('Arial', 'B', 10);
-    $declaracion2 = "DECLARO QUE: Los datos proporcionados son veraces y me comprometo a facilitar cualquier documentación adicional que sea requerida para completar el trámite.";
-    $pdf->MultiCell(0, 5, utf8_decode($declaracion2), 0, 'J');
-
-    // === FIRMA ===
-    $pdf->Ln(12);
-    $pdf->SetFont('Arial', 'B', 11);
-    $pdf->SetTextColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
-    $pdf->Cell(0, 6, utf8_decode('FIRMA DEL SOLICITANTE'), 0, 1, 'C');
-    $pdf->SetFont('Arial', 'I', 9);
-    $pdf->SetTextColor(100, 100, 100);
-    $pdf->Cell(0, 5, utf8_decode('(La firma electrónica tiene la misma validez legal que una firma manuscrita)'), 0, 1, 'C');
-    $pdf->Ln(5);
-
-    // Insertar imagen de firma centrada
-    $signatureWidth = 60;
-    $signatureHeight = 30;
-    $xPos = ($pdf->GetPageWidth() - $signatureWidth) / 2;
-    $pdf->Image($signature_image_path, $xPos, $pdf->GetY(), $signatureWidth, $signatureHeight);
-    $pdf->Ln($signatureHeight + 5);
-
-    // Línea de firma
-    $pdf->SetDrawColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
-    $pdf->Line(60, $pdf->GetY(), 150, $pdf->GetY());
-    $pdf->Ln(2);
-    $pdf->SetFont('Arial', 'B', 10);
-    $pdf->SetTextColor(0, 0, 0);
-    $pdf->Cell(0, 5, utf8_decode($customer_name), 0, 1, 'C');
-    $pdf->SetFont('Arial', '', 9);
-    $pdf->SetTextColor(100, 100, 100);
-    $pdf->Cell(0, 5, utf8_decode('DNI: ' . $customer_dni), 0, 1, 'C');
-
-    // === PIE DE PÁGINA ===
-    $pdf->SetY(-20);
-    $pdf->SetFont('Arial', 'I', 8);
-    $pdf->SetTextColor(120, 120, 120);
-    $pdf->Cell(0, 4, utf8_decode('TRAMITFY S.L. - CIF: B55388557'), 0, 1, 'C');
-    $pdf->Cell(0, 4, utf8_decode('Web: www.tramitfy.es - Email: info@tramitfy.es'), 0, 1, 'C');
-
-    // Línea inferior decorativa
-    $pdf->SetFillColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
-    $pdf->Rect(0, 294, 210, 3, 'F');
-
-    // Guardar PDF
-    $authorization_pdf_name = 'autorizacion_' . $tramite_id . '_' . time() . '.pdf';
-    $authorization_pdf_path = $upload_dir['path'] . '/' . $authorization_pdf_name;
-    $pdf->Output('F', $authorization_pdf_path);
-
-    // Borrar imagen temporal de la firma
-    unlink($signature_image_path);
-
-    // Manejar archivos subidos (múltiples archivos por campo)
-    $attachments = [$authorization_pdf_path];
-    $upload_fields = [
-        'upload_hoja_asiento',
-        'upload_tarjeta_moto',
-        'upload_dni_comprador',
-        'upload_dni_vendedor',
-        'upload_contrato_compraventa'
-    ];
-
-    foreach ($upload_fields as $field_name) {
-        if (isset($_FILES[$field_name]) && is_array($_FILES[$field_name]['name'])) {
-            // Múltiples archivos
-            $file_count = count($_FILES[$field_name]['name']);
-            for ($i = 0; $i < $file_count; $i++) {
-                if ($_FILES[$field_name]['error'][$i] === UPLOAD_ERR_OK) {
-                    $file_array = array(
-                        'name'     => $_FILES[$field_name]['name'][$i],
-                        'type'     => $_FILES[$field_name]['type'][$i],
-                        'tmp_name' => $_FILES[$field_name]['tmp_name'][$i],
-                        'error'    => $_FILES[$field_name]['error'][$i],
-                        'size'     => $_FILES[$field_name]['size'][$i]
-                    );
-                    $uploaded_file = wp_handle_upload($file_array, ['test_form' => false]);
-                    if (isset($uploaded_file['file'])) {
-                        $attachments[] = $uploaded_file['file'];
+    
+        // === SERVICIOS ADICIONALES (si los hay) ===
+        if (!empty($nuevo_nombre) || !empty($nuevo_puerto)) {
+            $pdf->Ln(8);
+            $pdf->SetFillColor(240, 240, 240);
+            $pdf->SetFont('Arial', 'B', 12);
+            $pdf->SetTextColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
+            $pdf->Cell(0, 8, utf8_decode('  SERVICIOS ADICIONALES SOLICITADOS'), 0, 1, 'L', true);
+            $pdf->Ln(2);
+    
+            $pdf->SetFont('Arial', '', 11);
+            $pdf->SetTextColor(0, 0, 0);
+            if (!empty($nuevo_nombre)) {
+                $pdf->Cell(50, 6, utf8_decode('Cambio de Nombre:'), 0, 0);
+                $pdf->SetFont('Arial', 'B', 11);
+                $pdf->Cell(0, 6, utf8_decode($nuevo_nombre), 0, 1);
+            }
+            if (!empty($nuevo_puerto)) {
+                $pdf->SetFont('Arial', '', 11);
+                $pdf->Cell(50, 6, utf8_decode('Cambio de Puerto Base:'), 0, 0);
+                $pdf->SetFont('Arial', 'B', 11);
+                $pdf->Cell(0, 6, utf8_decode($nuevo_puerto), 0, 1);
+            }
+        }
+    
+        $pdf->Ln(8);
+    
+        // === DECLARACIÓN ===
+        $pdf->SetFont('Arial', '', 10);
+        $pdf->SetTextColor(0, 0, 0);
+        $declaracion = "Esta autorización incluye la presentación de documentación, pago de tasas administrativas, y cualquier otra gestión requerida por la autoridad competente para completar la transferencia.";
+        $pdf->MultiCell(0, 5, utf8_decode($declaracion), 0, 'J');
+    
+        $pdf->Ln(5);
+        $pdf->SetFont('Arial', 'B', 10);
+        $declaracion2 = "DECLARO QUE: Los datos proporcionados son veraces y me comprometo a facilitar cualquier documentación adicional que sea requerida para completar el trámite.";
+        $pdf->MultiCell(0, 5, utf8_decode($declaracion2), 0, 'J');
+    
+        // === FIRMA ===
+        $pdf->Ln(12);
+        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->SetTextColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
+        $pdf->Cell(0, 6, utf8_decode('FIRMA DEL SOLICITANTE'), 0, 1, 'C');
+        $pdf->SetFont('Arial', 'I', 9);
+        $pdf->SetTextColor(100, 100, 100);
+        $pdf->Cell(0, 5, utf8_decode('(La firma electrónica tiene la misma validez legal que una firma manuscrita)'), 0, 1, 'C');
+        $pdf->Ln(5);
+    
+        // Insertar imagen de firma centrada
+        $signatureWidth = 60;
+        $signatureHeight = 30;
+        $xPos = ($pdf->GetPageWidth() - $signatureWidth) / 2;
+        $pdf->Image($signature_image_path, $xPos, $pdf->GetY(), $signatureWidth, $signatureHeight);
+        $pdf->Ln($signatureHeight + 5);
+    
+        // Línea de firma
+        $pdf->SetDrawColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
+        $pdf->Line(60, $pdf->GetY(), 150, $pdf->GetY());
+        $pdf->Ln(2);
+        $pdf->SetFont('Arial', 'B', 10);
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->Cell(0, 5, utf8_decode($customer_name), 0, 1, 'C');
+        $pdf->SetFont('Arial', '', 9);
+        $pdf->SetTextColor(100, 100, 100);
+        $pdf->Cell(0, 5, utf8_decode('DNI: ' . $customer_dni), 0, 1, 'C');
+    
+        // === PIE DE PÁGINA ===
+        $pdf->SetY(-20);
+        $pdf->SetFont('Arial', 'I', 8);
+        $pdf->SetTextColor(120, 120, 120);
+        $pdf->Cell(0, 4, utf8_decode('TRAMITFY S.L. - CIF: B55388557'), 0, 1, 'C');
+        $pdf->Cell(0, 4, utf8_decode('Web: www.tramitfy.es - Email: info@tramitfy.es'), 0, 1, 'C');
+    
+        // Línea inferior decorativa
+        $pdf->SetFillColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
+        $pdf->Rect(0, 294, 210, 3, 'F');
+    
+        // Guardar PDF
+        $authorization_pdf_name = 'autorizacion_' . $tramite_id . '_' . time() . '.pdf';
+        $authorization_pdf_path = $upload_dir['path'] . '/' . $authorization_pdf_name;
+        $pdf->Output('F', $authorization_pdf_path);
+        tpm_debug_log('[TPM] PDF guardado: ' . $authorization_pdf_path);
+    
+        // Borrar imagen temporal de la firma
+        unlink($signature_image_path);
+        tpm_debug_log('[TPM] Firma temporal eliminada');
+    
+        // Manejar archivos subidos (múltiples archivos por campo)
+        tpm_debug_log('[TPM] Procesando archivos adjuntos');
+        $attachments = [$authorization_pdf_path];
+        $upload_fields = [
+            'upload_hoja_asiento',
+            'upload_tarjeta_moto',
+            'upload_dni_comprador',
+            'upload_dni_vendedor',
+            'upload_contrato_compraventa'
+        ];
+    
+        foreach ($upload_fields as $field_name) {
+            if (isset($_FILES[$field_name]) && is_array($_FILES[$field_name]['name'])) {
+                // Múltiples archivos
+                $file_count = count($_FILES[$field_name]['name']);
+                for ($i = 0; $i < $file_count; $i++) {
+                    if ($_FILES[$field_name]['error'][$i] === UPLOAD_ERR_OK) {
+                        $file_array = array(
+                            'name'     => $_FILES[$field_name]['name'][$i],
+                            'type'     => $_FILES[$field_name]['type'][$i],
+                            'tmp_name' => $_FILES[$field_name]['tmp_name'][$i],
+                            'error'    => $_FILES[$field_name]['error'][$i],
+                            'size'     => $_FILES[$field_name]['size'][$i]
+                        );
+                        $uploaded_file = wp_handle_upload($file_array, ['test_form' => false]);
+                        if (isset($uploaded_file['file'])) {
+                            $attachments[] = $uploaded_file['file'];
+                        }
                     }
                 }
             }
         }
+
+        tpm_debug_log('[TPM] Total archivos procesados: ' . count($attachments));
+
+        /*************************************************************/
+        /*** RESPUESTA INMEDIATA AL CLIENTE - Sin esperas largas ***/
+        /*************************************************************/
+    
+        // Guardar datos del trámite en archivo temporal para procesamiento async
+        $async_data = array(
+            'tramite_id' => $tramite_id,
+            'customer_name' => $customer_name,
+            'customer_dni' => $customer_dni,
+            'customer_email' => $customer_email,
+            'customer_phone' => $customer_phone,
+            'vehicle_type' => $vehicle_type,
+            'manufacturer' => $no_encuentro ? $manual_manufacturer : $manufacturer,
+            'model' => $no_encuentro ? $manual_model : $model,
+            'matriculation_date' => $no_encuentro ? '' : $matriculation_date,
+            'purchase_price' => $purchase_price,
+            'region' => $region,
+            'nuevo_nombre' => $nuevo_nombre,
+            'nuevo_puerto' => $nuevo_puerto,
+            'coupon_used' => $coupon_used,
+            'final_amount' => $final_amount,
+            'current_transfer_tax' => $current_transfer_tax,
+            'current_extra_fee' => $current_extra_fee,
+            'tasas_hidden' => $tasas_hidden,
+            'iva_hidden' => $iva_hidden,
+            'honorarios_hidden' => $honorarios_hidden,
+            'attachments' => $attachments,
+            'authorization_pdf_path' => $authorization_pdf_path,
+            'no_encuentro' => $no_encuentro
+        );
+    
+        // Guardar en archivo temporal
+        tpm_debug_log('[TPM] Guardando datos async');
+        $temp_dir = get_temp_dir() . 'tramitfy-async/';
+        if (!file_exists($temp_dir)) {
+            mkdir($temp_dir, 0755, true);
+        }
+        $async_file = $temp_dir . 'barco-' . $tramite_id . '-' . time() . '.json';
+        file_put_contents($async_file, json_encode($async_data));
+        tpm_debug_log('[TPM] Archivo async guardado: ' . $async_file);
+
+        // COMENTADO: El procesamiento async no funciona en shared hosting y no es necesario
+        // $script_path = get_template_directory() . '/process-barco-async.php';
+        // $log_file = get_template_directory() . '/logs/async-barco.log';
+        // $cmd = sprintf('php %s %s >> %s 2>&1 &',
+        //     escapeshellarg($script_path),
+        //     escapeshellarg($async_file),
+        //     escapeshellarg($log_file)
+        // );
+        // exec($cmd);
+        tpm_debug_log('[TPM] Continuando con emails (sin procesamiento async)');
+
+        // Enviar email rápido de confirmación al cliente (sin adjuntos pesados)
+        $customer_email_quick = $customer_email;
+        $subject_customer_quick = '✓ Pago Recibido - Transferencia de Moto de Agua';
+        $message_customer_quick = "
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+        </head>
+        <body style='margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif; background-color: #f4f7fa;'>
+            <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #f4f7fa; padding: 40px 20px;'>
+                <tr>
+                    <td align='center'>
+                        <table width='600' cellpadding='0' cellspacing='0' style='background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);'>
+
+                            <!-- Header -->
+                            <tr>
+                                <td style='background: linear-gradient(135deg, #0066cc 0%, #004a99 100%); padding: 40px 40px 35px; text-align: center;'>
+                                    <h1 style='margin: 0; color: #ffffff; font-size: 26px; font-weight: 600; letter-spacing: -0.5px;'>TRAMITFY</h1>
+                                    <p style='margin: 8px 0 0; color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 400;'>Gestión de Trámites Marítimos</p>
+                                </td>
+                            </tr>
+
+                            <!-- Confirmación Pago -->
+                            <tr>
+                                <td style='padding: 40px 40px 30px;'>
+                                    <div style='background-color: #e8f5e9; border-left: 4px solid #4caf50; padding: 16px 20px; border-radius: 4px; margin-bottom: 30px;'>
+                                        <p style='margin: 0; color: #2e7d32; font-size: 15px; font-weight: 600;'>✓ Pago recibido correctamente</p>
+                                    </div>
+
+                                    <p style='margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.6;'>
+                                        Estimado/a <strong>$customer_name</strong>,
+                                    </p>
+                                    <p style='margin: 0 0 30px; color: #555; font-size: 15px; line-height: 1.7;'>
+                                        Hemos recibido su pago y su solicitud de transferencia está siendo procesada. En breve recibirá un segundo email con todos los detalles y el enlace de seguimiento.
+                                    </p>
+
+                                    <!-- Número de Trámite -->
+                                    <div style='background-color: #e3f2fd; border-radius: 8px; padding: 20px 24px; margin-bottom: 30px; text-align: center;'>
+                                        <p style='margin: 0; color: #1565c0; font-size: 15px; font-weight: 600;'>
+                                            📋 Número de Trámite: <span style='color: #0d47a1;'>$tramite_id</span>
+                                        </p>
+                                    </div>
+
+                                    <p style='margin: 0 0 10px; color: #555; font-size: 14px; line-height: 1.7;'>
+                                        Nuestro equipo ha comenzado a procesar su solicitud. Le mantendremos informado en cada paso del proceso.
+                                    </p>
+
+                                </td>
+                            </tr>
+
+                            <!-- Footer -->
+                            <tr>
+                                <td style='background-color: #f8f9fa; padding: 30px 40px; text-align: center; border-top: 1px solid #e0e0e0;'>
+                                    <p style='margin: 0 0 8px; color: #666; font-size: 13px;'>
+                                        Gracias por confiar en nosotros
+                                    </p>
+                                    <p style='margin: 0; color: #0066cc; font-size: 15px; font-weight: 600;'>
+                                        Equipo TRAMITFY
+                                    </p>
+                                    <p style='margin: 16px 0 0; color: #999; font-size: 12px;'>
+                                        Este correo es informativo. Por favor, no responda a este mensaje.
+                                    </p>
+                                </td>
+                            </tr>
+
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        ";
+        $headers_quick = [
+            'Content-Type: text/html; charset=UTF-8',
+            'From: info@tramitfy.es'
+        ];
+        tpm_debug_log('[TPM] Enviando email rápido al cliente: ' . $customer_email_quick);
+        $mail_result = wp_mail($customer_email_quick, $subject_customer_quick, $message_customer_quick, $headers_quick);
+        tpm_debug_log('[TPM] Email cliente resultado: ' . ($mail_result ? 'SUCCESS' : 'FAILED'));
+    
+        // Enviar email al ADMIN con detalles completos
+        $admin_email = 'ipmgroup24@gmail.com';
+        $subject_admin = "🔔 Nuevo Trámite - Transferencia Moto - $tramite_id";
+        $honorarios_netos = round($honorarios_hidden / 1.21, 2);
+        $message_admin = "
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+        </head>
+        <body style='margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif; background-color: #f4f7fa;'>
+            <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #f4f7fa; padding: 30px 20px;'>
+                <tr>
+                    <td align='center'>
+                        <table width='700' cellpadding='0' cellspacing='0' style='background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);'>
+
+                            <!-- Header Admin -->
+                            <tr>
+                                <td style='background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%); padding: 30px 40px; text-align: center;'>
+                                    <h1 style='margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;'>🔔 NUEVO TRÁMITE</h1>
+                                    <p style='margin: 8px 0 0; color: rgba(255,255,255,0.95); font-size: 15px; font-weight: 500;'>Transferencia de Moto de Agua</p>
+                                </td>
+                            </tr>
+
+                            <!-- ID Trámite -->
+                            <tr>
+                                <td style='padding: 30px 40px 20px;'>
+                                    <div style='background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%); border-radius: 8px; padding: 16px 24px; text-align: center; margin-bottom: 25px;'>
+                                        <p style='margin: 0; color: #ffffff; font-size: 18px; font-weight: 700; letter-spacing: 0.5px;'>$tramite_id</p>
+                                    </div>
+
+                                    <!-- Datos del Cliente -->
+                                    <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #f8f9fa; border-radius: 8px; margin-bottom: 20px; overflow: hidden;'>
+                                        <tr>
+                                            <td style='padding: 20px 24px;'>
+                                                <h3 style='margin: 0 0 14px; color: #d32f2f; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;'>👤 CLIENTE</h3>
+                                                <table width='100%' cellpadding='6' cellspacing='0'>
+                                                    <tr>
+                                                        <td style='color: #666; font-size: 13px; padding: 5px 0; width: 35%;'>Nombre:</td>
+                                                        <td style='color: #222; font-size: 14px; padding: 5px 0; font-weight: 600;'>$customer_name</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style='color: #666; font-size: 13px; padding: 5px 0;'>DNI:</td>
+                                                        <td style='color: #222; font-size: 14px; padding: 5px 0; font-weight: 600;'>$customer_dni</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style='color: #666; font-size: 13px; padding: 5px 0;'>Email:</td>
+                                                        <td style='color: #1565c0; font-size: 13px; padding: 5px 0;'><a href='mailto:$customer_email' style='color: #1565c0; text-decoration: none;'>$customer_email</a></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style='color: #666; font-size: 13px; padding: 5px 0;'>Teléfono:</td>
+                                                        <td style='color: #222; font-size: 14px; padding: 5px 0; font-weight: 600;'>$customer_phone</td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+
+                                    <!-- Datos del Vehículo -->
+                                    <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #e3f2fd; border-radius: 8px; margin-bottom: 20px; overflow: hidden;'>
+                                        <tr>
+                                            <td style='padding: 20px 24px;'>
+                                                <h3 style='margin: 0 0 14px; color: #0066cc; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;'>🚤 VEHÍCULO</h3>
+                                                <table width='100%' cellpadding='6' cellspacing='0'>
+                                                    <tr>
+                                                        <td style='color: #666; font-size: 13px; padding: 5px 0; width: 35%;'>Tipo:</td>
+                                                        <td style='color: #222; font-size: 14px; padding: 5px 0; font-weight: 600;'>$vehicle_type</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style='color: #666; font-size: 13px; padding: 5px 0;'>Fabricante:</td>
+                                                        <td style='color: #222; font-size: 14px; padding: 5px 0; font-weight: 600;'>" . ($no_encuentro ? $manual_manufacturer : $manufacturer) . "</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style='color: #666; font-size: 13px; padding: 5px 0;'>Modelo:</td>
+                                                        <td style='color: #222; font-size: 14px; padding: 5px 0; font-weight: 600;'>" . ($no_encuentro ? $manual_model : $model) . "</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style='color: #666; font-size: 13px; padding: 5px 0;'>Precio Compra:</td>
+                                                        <td style='color: #222; font-size: 14px; padding: 5px 0; font-weight: 600;'>" . number_format($purchase_price, 2) . " €</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style='color: #666; font-size: 13px; padding: 5px 0;'>Región:</td>
+                                                        <td style='color: #222; font-size: 14px; padding: 5px 0; font-weight: 600;'>$region</td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+
+                                    <!-- Desglose Económico -->
+                                    <table width='100%' cellpadding='0' cellspacing='0' style='background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%); border-radius: 8px; margin-bottom: 25px; overflow: hidden;'>
+                                        <tr>
+                                            <td style='padding: 20px 24px;'>
+                                                <h3 style='margin: 0 0 14px; color: #2e7d32; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;'>💰 DESGLOSE ECONÓMICO</h3>
+                                                <table width='100%' cellpadding='6' cellspacing='0'>
+                                                    <tr>
+                                                        <td style='color: #666; font-size: 14px; padding: 6px 0; width: 50%;'>Precio Total:</td>
+                                                        <td align='right' style='color: #1565c0; font-size: 17px; padding: 6px 0; font-weight: 700;'>" . number_format($final_amount, 2) . " €</td>
+                                                    </tr>
+                                                    <tr style='border-top: 1px solid #ddd;'>
+                                                        <td style='color: #666; font-size: 13px; padding: 6px 0;'>ITP (Impuesto):</td>
+                                                        <td align='right' style='color: #555; font-size: 14px; padding: 6px 0; font-weight: 600;'>" . number_format($current_transfer_tax, 2) . " €</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style='color: #666; font-size: 13px; padding: 6px 0;'>Tasas:</td>
+                                                        <td align='right' style='color: #555; font-size: 14px; padding: 6px 0; font-weight: 600;'>" . number_format($tasas_hidden, 2) . " €</td>
+                                                    </tr>
+                                                    <tr style='border-top: 2px solid #4caf50; background-color: #f1f8e9;'>
+                                                        <td style='color: #2e7d32; font-size: 14px; padding: 8px 0; font-weight: 700;'>Honorarios (con IVA):</td>
+                                                        <td align='right' style='color: #2e7d32; font-size: 16px; padding: 8px 0; font-weight: 700;'>" . number_format($honorarios_hidden, 2) . " €</td>
+                                                    </tr>
+                                                    <tr style='background-color: #f1f8e9;'>
+                                                        <td style='color: #558b2f; font-size: 13px; padding: 4px 0 8px 20px;'>Base imponible:</td>
+                                                        <td align='right' style='color: #558b2f; font-size: 13px; padding: 4px 0 8px 0;'>" . number_format($honorarios_netos, 2) . " €</td>
+                                                    </tr>
+                                                    <tr style='background-color: #f1f8e9;'>
+                                                        <td style='color: #558b2f; font-size: 13px; padding: 0 0 8px 20px;'>IVA (21%):</td>
+                                                        <td align='right' style='color: #558b2f; font-size: 13px; padding: 0 0 8px 0;'>" . number_format($iva_hidden, 2) . " €</td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+
+                                    <!-- Botón Dashboard -->
+                                    <div style='text-align: center; margin-top: 25px;'>
+                                        <a href='https://46-202-128-35.sslip.io/tramites' style='display: inline-block; background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px; box-shadow: 0 3px 8px rgba(25,118,210,0.3);'>
+                                            📊 Ver en Dashboard
+                                        </a>
+                                    </div>
+
+                                </td>
+                            </tr>
+
+                            <!-- Footer -->
+                            <tr>
+                                <td style='background-color: #f8f9fa; padding: 20px 40px; text-align: center; border-top: 1px solid #e0e0e0;'>
+                                    <p style='margin: 0; color: #999; font-size: 12px;'>
+                                        Email automático del sistema TRAMITFY
+                                    </p>
+                                </td>
+                            </tr>
+
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        ";
+        tpm_debug_log('[TPM] Enviando email al admin: ' . $admin_email);
+        $admin_mail_result = wp_mail($admin_email, $subject_admin, $message_admin, $headers_quick);
+        tpm_debug_log('[TPM] Email admin resultado: ' . ($admin_mail_result ? 'SUCCESS' : 'FAILED'));
+
+        // Enviar a TRAMITFY API con archivos adjuntos
+        tpm_debug_log('[TPM] Enviando webhook con archivos adjuntos');
+        $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/motos/webhook';
+
+        // Preparar archivos para enviar con CURLFile
+        $file_fields = array();
+        tpm_debug_log('[TPM] Total archivos a enviar: ' . count($attachments));
+        foreach ($attachments as $index => $file_path) {
+            if (file_exists($file_path)) {
+                $cfile = new CURLFile($file_path, mime_content_type($file_path), basename($file_path));
+                $file_fields["files[$index]"] = $cfile;
+                tpm_debug_log('[TPM] Adjuntando archivo ' . $index . ': ' . basename($file_path));
+            } else {
+                tpm_debug_log('[TPM] Archivo NO existe: ' . $file_path);
+            }
+        }
+
+        // Añadir payment_intent_id
+        $payment_intent_id = isset($_POST['payment_intent_id']) ? sanitize_text_field($_POST['payment_intent_id']) : '';
+
+        // Calcular honorarios netos (sin IVA)
+        $honorarios_netos_calc = round(floatval($honorarios_hidden) / 1.21, 2);
+
+        // Preparar datos completos (datos + archivos)
+        // IMPORTANTE: Con multipart/form-data, todos los valores deben ser strings
+        $form_data = array_merge(array(
+            'tramiteId' => (string)$tramite_id,
+            'tramiteType' => 'Transferencia Moto',
+            'customerName' => (string)$customer_name,
+            'customerDni' => (string)$customer_dni,
+            'customerEmail' => (string)$customer_email,
+            'customerPhone' => (string)$customer_phone,
+            'vehicleType' => (string)$vehicle_type,
+            'manufacturer' => (string)($no_encuentro ? $manual_manufacturer : $manufacturer),
+            'model' => (string)($no_encuentro ? $manual_model : $model),
+            'matriculationDate' => (string)($no_encuentro ? '' : $matriculation_date),
+            'purchasePrice' => (string)floatval($purchase_price),
+            'region' => (string)$region,
+            'nuevoNombre' => (string)$nuevo_nombre,
+            'nuevoPuerto' => (string)$nuevo_puerto,
+            'couponUsed' => (string)$coupon_used,
+            'finalAmount' => (string)floatval($final_amount),
+            'transferTax' => (string)floatval($current_transfer_tax),
+            'extraFee' => (string)floatval($current_extra_fee),
+            'tasas' => (string)floatval($tasas_hidden),
+            'iva' => (string)floatval($iva_hidden),
+            'honorarios' => (string)floatval($honorarios_hidden),
+            'honorariosNetos' => (string)$honorarios_netos_calc,
+            'paymentIntentId' => (string)$payment_intent_id,
+            'status' => 'pending'
+        ), $file_fields);
+
+        tpm_debug_log('[TPM] Datos a enviar: tramiteId=' . $tramite_id . ', customerName=' . $customer_name . ', finalAmount=' . $final_amount);
+
+        // Enviar con cURL (multipart/form-data para archivos)
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $tramitfy_api_url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $form_data);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        tpm_debug_log('[TPM] Webhook HTTP ' . $http_code . ' - Response: ' . $response);
+    
+        // Parsear la respuesta para obtener el ID del tracking
+        $response_data = json_decode($response, true);
+        $tracking_id = isset($response_data['id']) ? $response_data['id'] : time();
+        $tracking_url = 'https://46-202-128-35.sslip.io/seguimiento/' . $tracking_id;
+        tpm_debug_log('[TPM] Tracking URL: ' . $tracking_url);
+    
+        // Enviar email al cliente con el link de tracking
+        $subject_customer = '✓ Trámite Registrado - Siga su Transferencia';
+        $display_manufacturer = $no_encuentro ? $manual_manufacturer : $manufacturer;
+        $display_model = $no_encuentro ? $manual_model : $model;
+        $message_customer = "
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+        </head>
+        <body style='margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif; background-color: #f4f7fa;'>
+            <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #f4f7fa; padding: 40px 20px;'>
+                <tr>
+                    <td align='center'>
+                        <table width='600' cellpadding='0' cellspacing='0' style='background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);'>
+
+                            <!-- Header -->
+                            <tr>
+                                <td style='background: linear-gradient(135deg, #0066cc 0%, #004a99 100%); padding: 40px 40px 35px; text-align: center;'>
+                                    <h1 style='margin: 0; color: #ffffff; font-size: 26px; font-weight: 600; letter-spacing: -0.5px;'>TRAMITFY</h1>
+                                    <p style='margin: 8px 0 0; color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 400;'>Gestión de Trámites Marítimos</p>
+                                </td>
+                            </tr>
+
+                            <!-- Confirmación -->
+                            <tr>
+                                <td style='padding: 40px 40px 30px;'>
+                                    <div style='background-color: #e8f5e9; border-left: 4px solid #4caf50; padding: 16px 20px; border-radius: 4px; margin-bottom: 30px;'>
+                                        <p style='margin: 0; color: #2e7d32; font-size: 15px; font-weight: 600;'>✓ Trámite registrado correctamente</p>
+                                    </div>
+
+                                    <p style='margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.6;'>
+                                        Estimado/a <strong>{$customer_name}</strong>,
+                                    </p>
+                                    <p style='margin: 0 0 30px; color: #555; font-size: 15px; line-height: 1.7;'>
+                                        Su solicitud de transferencia ha sido registrada en nuestro sistema. Nuestro equipo comenzará a tramitar su solicitud en breve.
+                                    </p>
+
+                                    <!-- Resumen Vehículo -->
+                                    <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #f8f9fa; border-radius: 8px; margin-bottom: 25px; overflow: hidden;'>
+                                        <tr>
+                                            <td style='padding: 20px 24px;'>
+                                                <h3 style='margin: 0 0 16px; color: #0066cc; font-size: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Vehículo</h3>
+                                                <table width='100%' cellpadding='6' cellspacing='0'>
+                                                    <tr>
+                                                        <td style='color: #666; font-size: 14px; padding: 6px 0; width: 35%;'>Tipo:</td>
+                                                        <td style='color: #333; font-size: 14px; padding: 6px 0; font-weight: 600;'>{$vehicle_type}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style='color: #666; font-size: 14px; padding: 6px 0;'>Marca/Modelo:</td>
+                                                        <td style='color: #333; font-size: 14px; padding: 6px 0; font-weight: 600;'>{$display_manufacturer} {$display_model}</td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+
+                                    <!-- Seguimiento -->
+                                    <div style='background-color: #e3f2fd; border-radius: 8px; padding: 24px; margin-bottom: 30px; text-align: center;'>
+                                        <p style='margin: 0 0 12px; color: #1565c0; font-size: 15px; font-weight: 600;'>
+                                            📋 Número de Trámite
+                                        </p>
+                                        <p style='margin: 0 0 20px; color: #0d47a1; font-size: 20px; font-weight: 700; letter-spacing: 0.5px;'>
+                                            {$tramite_id}
+                                        </p>
+                                        <p style='margin: 0 0 16px; color: #555; font-size: 14px;'>
+                                            Puede consultar el estado de su trámite en cualquier momento:
+                                        </p>
+                                        <a href='{$tracking_url}' style='display: inline-block; background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px; box-shadow: 0 3px 8px rgba(25,118,210,0.3); margin-bottom: 16px;'>
+                                            🔍 Ver Estado del Trámite
+                                        </a>
+                                        <p style='margin: 0; color: #777; font-size: 13px; line-height: 1.5;'>
+                                            O copie este enlace:<br>
+                                            <span style='color: #1565c0; font-size: 12px;'>{$tracking_url}</span>
+                                        </p>
+                                    </div>
+
+                                    <!-- Próximos Pasos -->
+                                    <table width='100%' cellpadding='0' cellspacing='0' style='margin-bottom: 25px;'>
+                                        <tr>
+                                            <td>
+                                                <h3 style='margin: 0 0 16px; color: #333; font-size: 16px; font-weight: 600;'>Próximos pasos:</h3>
+                                                <table width='100%' cellpadding='8' cellspacing='0'>
+                                                    <tr>
+                                                        <td style='padding: 10px 0; border-bottom: 1px solid #e0e0e0;'>
+                                                            <span style='color: #1976d2; font-size: 18px; margin-right: 10px;'>1️⃣</span>
+                                                            <span style='color: #555; font-size: 14px;'>Revisaremos su documentación</span>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style='padding: 10px 0; border-bottom: 1px solid #e0e0e0;'>
+                                                            <span style='color: #1976d2; font-size: 18px; margin-right: 10px;'>2️⃣</span>
+                                                            <span style='color: #555; font-size: 14px;'>Tramitaremos la transferencia ante los organismos competentes</span>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style='padding: 10px 0;'>
+                                                            <span style='color: #1976d2; font-size: 18px; margin-right: 10px;'>3️⃣</span>
+                                                            <span style='color: #555; font-size: 14px;'>Le enviaremos la documentación final</span>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+
+                                    <p style='margin: 0; color: #666; font-size: 13px; line-height: 1.6; padding: 16px; background-color: #fff3cd; border-left: 3px solid #ffc107; border-radius: 4px;'>
+                                        💡 <strong>Importante:</strong> Le notificaremos por email cualquier actualización o si necesitamos información adicional.
+                                    </p>
+
+                                </td>
+                            </tr>
+
+                            <!-- Footer -->
+                            <tr>
+                                <td style='background-color: #f8f9fa; padding: 30px 40px; text-align: center; border-top: 1px solid #e0e0e0;'>
+                                    <p style='margin: 0 0 8px; color: #666; font-size: 13px;'>
+                                        Gracias por confiar en nosotros
+                                    </p>
+                                    <p style='margin: 0; color: #0066cc; font-size: 15px; font-weight: 600;'>
+                                        Equipo TRAMITFY
+                                    </p>
+                                    <p style='margin: 16px 0 0; color: #999; font-size: 12px;'>
+                                        Este correo es informativo. Por favor, no responda a este mensaje.
+                                    </p>
+                                </td>
+                            </tr>
+
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>";
+    
+        $headers_customer = array('Content-Type: text/html; charset=UTF-8', 'From: Tramitfy <info@tramitfy.es>');
+        tpm_debug_log('[TPM] Enviando email tracking al cliente: ' . $customer_email);
+        $tracking_mail_result = wp_mail($customer_email, $subject_customer, $message_customer, $headers_customer);
+        tpm_debug_log('[TPM] Email tracking resultado: ' . ($tracking_mail_result ? 'SUCCESS' : 'FAILED'));
+    
+        // RESPONDER AL CLIENTE CON LA URL DE TRACKING
+        tpm_debug_log('[TPM] Enviando respuesta JSON al cliente');
+        wp_send_json_success(array(
+            'message' => 'Formulario procesado correctamente',
+            'tramite_id' => $tramite_id,
+            'tracking_id' => $tracking_id,
+            'tracking_url' => $tracking_url
+        ));
+        tpm_debug_log('[TPM] FIN tpm_submit_form');
+
+    } catch (Exception $e) {
+        tpm_debug_log('[TPM] ERROR CRÍTICO: ' . $e->getMessage());
+        tpm_debug_log('[TPM] Archivo: ' . $e->getFile() . ' Línea: ' . $e->getLine());
+        tpm_debug_log('[TPM] Stack trace: ' . $e->getTraceAsString());
+        wp_send_json_error([
+            'message' => 'Error procesando formulario: ' . $e->getMessage(),
+            'file' => basename($e->getFile()),
+            'line' => $e->getLine(),
+            'debug' => WP_DEBUG ? $e->getTraceAsString() : ''
+        ]);
     }
 
-    /*************************************************************/
-    /*** RESPUESTA INMEDIATA AL CLIENTE - Sin esperas largas ***/
-    /*************************************************************/
-
-    // Guardar datos del trámite en archivo temporal para procesamiento async
-    $async_data = array(
-        'tramite_id' => $tramite_id,
-        'customer_name' => $customer_name,
-        'customer_dni' => $customer_dni,
-        'customer_email' => $customer_email,
-        'customer_phone' => $customer_phone,
-        'vehicle_type' => $vehicle_type,
-        'manufacturer' => $no_encuentro ? $manual_manufacturer : $manufacturer,
-        'model' => $no_encuentro ? $manual_model : $model,
-        'matriculation_date' => $no_encuentro ? '' : $matriculation_date,
-        'purchase_price' => $purchase_price,
-        'region' => $region,
-        'nuevo_nombre' => $nuevo_nombre,
-        'nuevo_puerto' => $nuevo_puerto,
-        'coupon_used' => $coupon_used,
-        'final_amount' => $final_amount,
-        'current_transfer_tax' => $current_transfer_tax,
-        'current_extra_fee' => $current_extra_fee,
-        'tasas_hidden' => $tasas_hidden,
-        'iva_hidden' => $iva_hidden,
-        'honorarios_hidden' => $honorarios_hidden,
-        'attachments' => $attachments,
-        'authorization_pdf_path' => $authorization_pdf_path,
-        'no_encuentro' => $no_encuentro
-    );
-
-    // Guardar en archivo temporal
-    $temp_dir = get_temp_dir() . 'tramitfy-async/';
-    if (!file_exists($temp_dir)) {
-        mkdir($temp_dir, 0755, true);
-    }
-    $async_file = $temp_dir . 'barco-' . $tramite_id . '-' . time() . '.json';
-    file_put_contents($async_file, json_encode($async_data));
-
-    // Lanzar procesamiento asíncrono en background (no bloqueante)
-    $script_path = get_template_directory() . '/process-barco-async.php';
-    $log_file = get_template_directory() . '/logs/async-barco.log';
-    $cmd = sprintf('php %s %s >> %s 2>&1 &',
-        escapeshellarg($script_path),
-        escapeshellarg($async_file),
-        escapeshellarg($log_file)
-    );
-    exec($cmd);
-
-    // Enviar email rápido de confirmación al cliente (sin adjuntos pesados)
-    $customer_email_quick = $customer_email;
-    $subject_customer_quick = 'Confirmación de pago recibido - Tramitfy';
-    $message_customer_quick = "
-    <html>
-    <head><meta charset='UTF-8'></head>
-    <body style='font-family: Arial, sans-serif;'>
-        <div style='max-width:600px;margin:auto;padding:20px;background:#f9f9f9;'>
-            <div style='text-align:center;'>
-                <img src='https://www.tramitfy.es/wp-content/uploads/LOGO.png' alt='Tramitfy Logo' style='max-width:200px;'>
-                <h2 style='color:#016d86;'>¡Pago Recibido Exitosamente!</h2>
-            </div>
-            <div style='background:#fff;padding:20px;border-radius:8px;'>
-                <p>Hola <strong>$customer_name</strong>,</p>
-                <p>Hemos recibido tu pago y tu trámite está siendo procesado.</p>
-                <p><strong>Número de trámite:</strong> $tramite_id</p>
-                <p>En breve recibirás un segundo email con toda la documentación y detalles completos.</p>
-                <p>Gracias por confiar en Tramitfy.</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    ";
-    $headers_quick = [
-        'Content-Type: text/html; charset=UTF-8',
-        'From: info@tramitfy.es'
-    ];
-    wp_mail($customer_email_quick, $subject_customer_quick, $message_customer_quick, $headers_quick);
-
-    // Enviar email al ADMIN con detalles completos
-    $admin_email = 'ipmgroup24@gmail.com';
-    $subject_admin = "Nuevo trámite de transferencia - $tramite_id";
-    $message_admin = "
-    <html>
-    <head><meta charset='UTF-8'></head>
-    <body style='font-family: Arial, sans-serif;'>
-        <div style='max-width:600px;margin:auto;padding:20px;background:#f9f9f9;'>
-            <div style='text-align:center;'>
-                <img src='https://www.tramitfy.es/wp-content/uploads/LOGO.png' alt='Tramitfy Logo' style='max-width:200px;'>
-                <h2 style='color:#016d86;'>Nuevo Trámite Recibido</h2>
-            </div>
-            <div style='background:#fff;padding:20px;border-radius:8px;'>
-                <h3>Trámite ID: $tramite_id</h3>
-                <h4>Datos del Cliente:</h4>
-                <table style='width:100%;border-collapse:collapse;'>
-                    <tr><th style='text-align:left;padding:8px;'>Nombre:</th><td style='padding:8px;'>$customer_name</td></tr>
-                    <tr><th style='text-align:left;padding:8px;'>DNI:</th><td style='padding:8px;'>$customer_dni</td></tr>
-                    <tr><th style='text-align:left;padding:8px;'>Email:</th><td style='padding:8px;'>$customer_email</td></tr>
-                    <tr><th style='text-align:left;padding:8px;'>Teléfono:</th><td style='padding:8px;'>$customer_phone</td></tr>
-                </table>
-                <h4>Datos del Vehículo:</h4>
-                <table style='width:100%;border-collapse:collapse;'>
-                    <tr><th style='text-align:left;padding:8px;'>Tipo:</th><td style='padding:8px;'>$vehicle_type</td></tr>
-                    <tr><th style='text-align:left;padding:8px;'>Fabricante:</th><td style='padding:8px;'>" . ($no_encuentro ? $manual_manufacturer : $manufacturer) . "</td></tr>
-                    <tr><th style='text-align:left;padding:8px;'>Modelo:</th><td style='padding:8px;'>" . ($no_encuentro ? $manual_model : $model) . "</td></tr>
-                    <tr><th style='text-align:left;padding:8px;'>Precio Compra:</th><td style='padding:8px;'>" . number_format($purchase_price, 2) . " €</td></tr>
-                    <tr><th style='text-align:left;padding:8px;'>Región:</th><td style='padding:8px;'>$region</td></tr>
-                </table>
-                <h4>Desglose Económico:</h4>
-                <table style='width:100%;border-collapse:collapse;'>
-                    <tr><th style='text-align:left;padding:8px;'>Precio Total:</th><td style='padding:8px;'>" . number_format($final_amount, 2) . " €</td></tr>
-                    <tr><th style='text-align:left;padding:8px;'>ITP:</th><td style='padding:8px;'>" . number_format($current_transfer_tax, 2) . " €</td></tr>
-                    <tr><th style='text-align:left;padding:8px;'>Tasas:</th><td style='padding:8px;'>" . number_format($tasas_hidden, 2) . " €</td></tr>
-                    <tr><th style='text-align:left;padding:8px;'>Honorarios:</th><td style='padding:8px;'>" . number_format($honorarios_hidden, 2) . " €</td></tr>
-                    <tr><th style='text-align:left;padding:8px;'>IVA:</th><td style='padding:8px;'>" . number_format($iva_hidden, 2) . " €</td></tr>
-                </table>
-                <p><a href='https://46-202-128-35.sslip.io/tramites' style='background:#016d86;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;display:inline-block;margin-top:20px;'>Ver en Dashboard</a></p>
-            </div>
-        </div>
-    </body>
-    </html>
-    ";
-    wp_mail($admin_email, $subject_admin, $message_admin, $headers_quick);
-
-    // Enviar a TRAMITFY API inmediatamente (solo datos, sin archivos pesados)
-    $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/motos/webhook';
-    $tramitfy_quick_data = array(
-        'tramiteId' => $tramite_id,
-        'tramiteType' => 'Transferencia Moto',
-        'customerName' => $customer_name,
-        'customerDni' => $customer_dni,
-        'customerEmail' => $customer_email,
-        'customerPhone' => $customer_phone,
-        'vehicleType' => $vehicle_type,
-        'manufacturer' => $no_encuentro ? $manual_manufacturer : $manufacturer,
-        'model' => $no_encuentro ? $manual_model : $model,
-        'matriculationDate' => $no_encuentro ? '' : $matriculation_date,
-        'purchasePrice' => floatval($purchase_price),
-        'region' => $region,
-        'nuevoNombre' => $nuevo_nombre,
-        'nuevoPuerto' => $nuevo_puerto,
-        'couponUsed' => $coupon_used,
-        'finalAmount' => floatval($final_amount),
-        'transferTax' => floatval($current_transfer_tax),
-        'extraFee' => floatval($current_extra_fee),
-        'tasas' => floatval($tasas_hidden),
-        'iva' => floatval($iva_hidden),
-        'honorarios' => floatval($honorarios_hidden),
-        'status' => 'pending',
-        'notes' => 'Archivos en proceso de subida'
-    );
-
-    // Añadir payment_intent_id a los datos
-    $payment_intent_id = isset($_POST['payment_intent_id']) ? sanitize_text_field($_POST['payment_intent_id']) : '';
-    $tramitfy_quick_data['paymentIntentId'] = $payment_intent_id;
-
-    // Enviar datos básicos inmediatamente y capturar respuesta
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $tramitfy_api_url);
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($tramitfy_quick_data));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Timeout más razonable
-    $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    // Parsear la respuesta para obtener el ID del tracking
-    $response_data = json_decode($response, true);
-    $tracking_id = isset($response_data['id']) ? $response_data['id'] : time();
-    $tracking_url = 'https://46-202-128-35.sslip.io/seguimiento/' . $tracking_id;
-
-    // Enviar email al cliente con el link de tracking
-    $subject_customer = 'Confirmación de su solicitud - Tramitfy';
-    $message_customer = "
-    <html>
-    <body style='font-family: Arial, sans-serif;'>
-        <div style='max-width:600px; margin:auto; padding:20px; background:#f9f9f9; border:1px solid #e0e0e0; border-radius:10px;'>
-            <div style='text-align:center;'>
-                <img src='https://www.tramitfy.es/wp-content/uploads/LOGO.png' alt='Tramitfy' style='max-width:200px;'>
-            </div>
-            <h2 style='color:#016d86;'>¡Su solicitud ha sido recibida!</h2>
-            <p>Estimado/a {$customer_name},</p>
-            <p>Hemos recibido su solicitud de transferencia de moto de agua con el ID: <strong>{$tramite_id}</strong></p>
-            <p>Puede hacer seguimiento de su trámite en cualquier momento usando el siguiente enlace:</p>
-            <div style='text-align:center; margin:30px 0;'>
-                <a href='{$tracking_url}' style='background:#016d86; color:white; padding:15px 30px; text-decoration:none; border-radius:5px; display:inline-block;'>Ver Estado del Trámite</a>
-            </div>
-            <p>También puede copiar este enlace: {$tracking_url}</p>
-            <p>Recibirá notificaciones por email cuando haya actualizaciones en su trámite.</p>
-            <p>Saludos cordiales,<br>El equipo de Tramitfy</p>
-        </div>
-    </body>
-    </html>";
-
-    $headers_customer = array('Content-Type: text/html; charset=UTF-8', 'From: Tramitfy <info@tramitfy.es>');
-    wp_mail($customer_email, $subject_customer, $message_customer, $headers_customer);
-
-    // RESPONDER AL CLIENTE CON LA URL DE TRACKING
-    wp_send_json_success(array(
-        'message' => 'Formulario procesado correctamente',
-        'tramite_id' => $tramite_id,
-        'tracking_id' => $tracking_id,
-        'tracking_url' => $tracking_url
-    ));
     wp_die();
 }
 
