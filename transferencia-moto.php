@@ -5356,7 +5356,7 @@ function transferencia_moto_shortcode() {
     };
 
     // Inicialización del sistema
-    logInfo('INIT', '========== TRAMITFY MOTO FORM v1.8 ==========');
+    logInfo('INIT', '========== TRAMITFY MOTO FORM v1.9.1-DEBUG (Deploy ' + Date.now() + ') ==========');
     logInfo('INIT', `🌐 User Agent: ${navigator.userAgent.substring(0, 100)}...`);
     logInfo('INIT', `📱 Viewport: ${window.innerWidth}x${window.innerHeight}`);
     logInfo('INIT', `🔗 URL: ${window.location.href}`);
@@ -5426,6 +5426,14 @@ function transferencia_moto_shortcode() {
         const vehicleCsvSection = document.getElementById('vehicle-csv-section');
         const noEncuentroCheckbox = document.getElementById('no_encuentro_checkbox');
         const manualFields = document.getElementById('manual-fields');
+
+        // Log de verificación de elementos clave
+        logDebug('INIT', 'Elementos del vehículo:', {
+            manufacturerSelect: !!manufacturerSelect,
+            modelSelect: !!modelSelect,
+            vehicleCsvSection: !!vehicleCsvSection,
+            noEncuentroCheckbox: !!noEncuentroCheckbox
+        });
 
         const extraFeeIncludesDisplay = document.getElementById('extra_fee_includes_display');
         const cambioNombrePriceDisplay = document.getElementById('cambio_nombre_price');
@@ -7326,67 +7334,83 @@ function transferencia_moto_shortcode() {
         });
 
 
-        document.getElementById('info-link').addEventListener('click', function(e) {
-            e.preventDefault();
-            const itpDetailContainer = document.getElementById('itp-detail-container');
-            const infoButtonText = document.getElementById('info-button-text');
-            const isVisible = itpDetailContainer.style.display !== 'none';
-            
-            if (isVisible) {
-                itpDetailContainer.style.display = 'none';
-                infoButtonText.textContent = 'Ver detalle del cálculo del ITP';
-            } else {
-                itpDetailContainer.style.display = 'block';
-                infoButtonText.textContent = 'Ocultar detalle del cálculo';
-            }
-        });
+        const infoLink = document.getElementById('info-link');
+        if (infoLink) {
+            infoLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                const itpDetailContainer = document.getElementById('itp-detail-container');
+                const infoButtonText = document.getElementById('info-button-text');
+                const isVisible = itpDetailContainer.style.display !== 'none';
+
+                if (isVisible) {
+                    itpDetailContainer.style.display = 'none';
+                    infoButtonText.textContent = 'Ver detalle del cálculo del ITP';
+                } else {
+                    itpDetailContainer.style.display = 'block';
+                    infoButtonText.textContent = 'Ocultar detalle del cálculo';
+                }
+            });
+        }
 
         const docPopup = document.getElementById('document-popup');
-        const closePopup = docPopup.querySelector('.close-popup');
         const exampleImage = document.getElementById('document-example-image');
-        
-        document.querySelectorAll('.view-example').forEach(link => {
-            link.addEventListener('click', function(event) {
-                event.preventDefault();
-                const docType = this.getAttribute('data-doc');
-                exampleImage.src = '/wp-content/uploads/exampledocs/' + docType + '.jpg';
-                docPopup.style.display = 'block';
-            });
-        });
-        
-        closePopup.addEventListener('click', () => {
-            docPopup.style.display = 'none';
-        });
-        
-        window.addEventListener('click', function(event) {
-            if (event.target === docPopup) {
-                docPopup.style.display = 'none';
-            }
-        });
 
-        purchasePriceInput.addEventListener('input', function() {
-            this.value = this.value.replace(/[.,]/g, '');
-            onInputChange();
-        });
-        
-        regionSelect.addEventListener('change', onInputChange);
+        if (docPopup) {
+            const closePopup = docPopup.querySelector('.close-popup');
+
+            document.querySelectorAll('.view-example').forEach(link => {
+                link.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const docType = this.getAttribute('data-doc');
+                    if (exampleImage) exampleImage.src = '/wp-content/uploads/exampledocs/' + docType + '.jpg';
+                    docPopup.style.display = 'block';
+                });
+            });
+
+            if (closePopup) {
+                closePopup.addEventListener('click', () => {
+                    docPopup.style.display = 'none';
+                });
+            }
+
+            window.addEventListener('click', function(event) {
+                if (event.target === docPopup) {
+                    docPopup.style.display = 'none';
+                }
+            });
+        }
+
+        if (purchasePriceInput) {
+            purchasePriceInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[.,]/g, '');
+                onInputChange();
+            });
+        }
+
+        if (regionSelect) {
+            regionSelect.addEventListener('change', onInputChange);
+        }
 
         // Manejar el checkbox de ITP ya pagado
         const itpAlreadyPaidCheckbox = document.getElementById('itp_already_paid');
         const itpPaymentProofRow = document.getElementById('itp-payment-proof-row');
         const itpComprobante = document.getElementById('upload-itp-comprobante');
 
-        itpAlreadyPaidCheckbox.addEventListener('change', function() {
-            // Mostrar/ocultar campo para subir comprobante
-            itpPaymentProofRow.style.display = this.checked ? 'flex' : 'none';
+        if (itpAlreadyPaidCheckbox) {
+            itpAlreadyPaidCheckbox.addEventListener('change', function() {
+                // Mostrar/ocultar campo para subir comprobante
+                if (itpPaymentProofRow) itpPaymentProofRow.style.display = this.checked ? 'flex' : 'none';
 
-            // Cambiar si el campo es requerido o no
-            itpComprobante.required = this.checked;
+                // Cambiar si el campo es requerido o no
+                if (itpComprobante) itpComprobante.required = this.checked;
 
-            // Actualizar cálculos
-            onInputChange();
-        });
-        matriculationDateInput.addEventListener('change', onInputChange);
+                // Actualizar cálculos
+                onInputChange();
+            });
+        }
+        if (matriculationDateInput) {
+            matriculationDateInput.addEventListener('change', onInputChange);
+        }
         
         extraOptions.forEach(opt => opt.addEventListener('change', () => {
             updateAdditionalInputs();
@@ -7471,14 +7495,17 @@ function transferencia_moto_shortcode() {
         if (modelSelect) {
             logInfo('MODEL', '✅ Event listener añadido a modelSelect');
             modelSelect.addEventListener('change', function() {
-            if (!noEncuentroCheckbox.checked) {
-                const selectedOption = this.options[this.selectedIndex];
-                basePrice = selectedOption ? parseFloat(selectedOption.dataset.price) : 0;
-            } else {
-                basePrice = 0;
-            }
-            onInputChange();
-        });
+                if (!noEncuentroCheckbox.checked) {
+                    const selectedOption = this.options[this.selectedIndex];
+                    basePrice = selectedOption ? parseFloat(selectedOption.dataset.price) : 0;
+                } else {
+                    basePrice = 0;
+                }
+                onInputChange();
+            });
+        } else {
+            logError('MODEL', '❌ modelSelect no encontrado');
+        }
 
         noEncuentroCheckbox.addEventListener('change', () => {
             const checked = noEncuentroCheckbox.checked;
@@ -7499,14 +7526,19 @@ function transferencia_moto_shortcode() {
             logSuccess('NO-ENCUENTRO', checked ? '✅ Modo manual activado' : '✅ Modo CSV activado');
         });
 
-        couponCodeInput.addEventListener('input', debounceValidateCoupon);
+        if (couponCodeInput) {
+            couponCodeInput.addEventListener('input', debounceValidateCoupon);
+        }
 
-        document.getElementById('apply-coupon').addEventListener('click', function() {
-            const couponInput = document.getElementById('coupon_code');
-            if (couponInput && couponInput.value.trim()) {
-                debounceValidateCoupon();
-            }
-        });
+        const applyCouponBtn = document.getElementById('apply-coupon');
+        if (applyCouponBtn) {
+            applyCouponBtn.addEventListener('click', function() {
+                const couponInput = document.getElementById('coupon_code');
+                if (couponInput && couponInput.value.trim()) {
+                    debounceValidateCoupon();
+                }
+            });
+        }
 
         customerNameInput.addEventListener('input', onDocumentFieldsInput);
         customerDniInput.addEventListener('input', onDocumentFieldsInput);
