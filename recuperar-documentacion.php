@@ -2603,12 +2603,6 @@ function recuperar_documentacion_form_shortcode() {
                 isValid = false;
             }
 
-            console.log('Firma presente:', rdocHasSignature);
-            if (!rdocHasSignature) {
-                errors.push('Firma digital');
-                isValid = false;
-            }
-
             if (!isValid) {
                 console.log('Validación fallida. Campos faltantes:', errors);
                 const errorList = errors.map(e => '• ' + e).join('<br>');
@@ -2950,8 +2944,25 @@ function recuperar_documentacion_form_shortcode() {
 
         // ====== VALIDACIÓN PÁGINA 2 (PAGO) ======
         function rdocValidatePage2() {
-            console.log('=== VALIDANDO PÁGINA 2 (PAGO) ===');
+            console.log('=== VALIDANDO PÁGINA 2 (FIRMA Y PAGO) ===');
 
+            // Validar firma digital
+            console.log('Firma presente:', rdocHasSignature);
+            if (!rdocHasSignature) {
+                rdocShowNotification(
+                    'Por favor, firma el documento de autorización antes de continuar con el pago.',
+                    'warning',
+                    'Firma Requerida'
+                );
+                // Scroll a la firma
+                const signatureSection = document.querySelector('.rdoc-signature-page');
+                if (signatureSection) {
+                    signatureSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return false;
+            }
+
+            // Validar términos y condiciones
             const consentTerms = document.getElementById('rdoc-consent-terms');
             if (!consentTerms.checked) {
                 rdocShowNotification(
