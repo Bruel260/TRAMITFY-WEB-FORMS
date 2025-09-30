@@ -3991,25 +3991,24 @@ function transferencia_barco_shortcode() {
                     <div class="sidebar-content" data-step="page-vehiculo">
                         <div class="sidebar-header">
                             <div class="sidebar-icon">
-                                <i class="fa-solid fa-ship"></i>
+                                <i class="fa-solid fa-clock"></i>
                             </div>
                             <div class="sidebar-title">
-                                <h3>Datos de tu embarcación</h3>
-                                <p>Paso 1 de 6</p>
+                                <h3>En 24h: Documentos provisionales y presentación capitanía</h3>
                             </div>
                         </div>
                         <div class="sidebar-body">
                             <div class="sidebar-info-box">
-                                <p><strong>Necesitaremos información básica</strong> de tu embarcación para iniciar el trámite.</p>
-                                <p>Puedes buscar por <strong>fabricante y modelo</strong> en nuestra base de datos, o introducir los datos manualmente si no lo encuentras.</p>
+                                <p><strong>Comienza ahora</strong> y mañana tendrás toda la documentación provisional lista para navegar.</p>
+                                <p>Nos encargamos de presentar en <strong>Capitanía Marítima</strong> y gestionar todo el papeleo.</p>
                             </div>
                         </div>
                         <div class="sidebar-tips">
-                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
+                            <h4><i class="fa-solid fa-circle-check"></i> Qué necesitas tener a mano</h4>
                             <ul>
-                                <li>La <strong>fecha de matriculación</strong> es importante para calcular el ITP</li>
-                                <li>La encontrarás en el <strong>Registro Marítimo</strong></li>
-                                <li>Si no encuentras tu modelo, márcalo y rellena manualmente</li>
+                                <li>Matrícula y modelo de tu embarcación</li>
+                                <li>DNI del vendedor y comprador</li>
+                                <li>Contrato de compraventa (lo subimos después)</li>
                             </ul>
                         </div>
                     </div>
@@ -4021,61 +4020,45 @@ function transferencia_barco_shortcode() {
                                 <i class="fa-solid fa-calculator"></i>
                             </div>
                             <div class="sidebar-title">
-                                <h3>Impuestos y Servicios</h3>
-                                <p>Paso 2 de 6</p>
+                                <h3>Nuestros servicios</h3>
                             </div>
                         </div>
                         <div class="sidebar-body">
-                            <!-- Cálculo dinámico del ITP -->
-                            <div class="sidebar-itp-calculator" id="sidebar-itp-display" style="background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                                <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #016d86;"><i class="fa-solid fa-receipt"></i> Cálculo del ITP</h4>
-                                <div style="font-size: 13px;">
-                                    <div style="display: flex; justify-content: space-between; padding: 4px 0;">
-                                        <span>Precio compra:</span>
-                                        <strong id="sidebar-purchase-price">0€</strong>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 4px 0;">
-                                        <span>Valor fiscal:</span>
-                                        <strong id="sidebar-fiscal-value">-</strong>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px solid #dee2e6; margin-top: 4px;">
-                                        <span>Base imponible:</span>
-                                        <strong id="sidebar-tax-base" style="color: #016d86;">0€</strong>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 4px 0;">
-                                        <span>Tipo (<span id="sidebar-region-name">-</span>):</span>
-                                        <strong id="sidebar-tax-rate">4%</strong>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px solid #016d86; margin-top: 4px; font-weight: bold; color: #016d86;">
-                                        <span>ITP a pagar:</span>
-                                        <strong id="sidebar-itp-amount" style="font-size: 16px;">0€</strong>
-                                    </div>
-                                </div>
-                                <small style="display: block; margin-top: 8px; color: #6c757d; font-size: 11px;">
-                                    <i class="fa-solid fa-info-circle"></i> Se aplica sobre el mayor valor
-                                </small>
-                            </div>
-
                             <div class="sidebar-price-highlight">
-                                <div class="sidebar-price-label">Nuestros servicios</div>
+                                <div class="sidebar-price-label">Tramitación completa</div>
                                 <div class="sidebar-price-amount">134,95€</div>
-                                <div class="sidebar-price-includes" style="font-size: 12px;">
-                                    ✓ Tasas de Capitanía<br>
-                                    ✓ Gestión profesional<br>
+                                <div class="sidebar-price-includes">
+                                    ✓ Tasas oficiales de Capitanía<br>
+                                    ✓ Honorarios profesionales<br>
                                     ✓ IVA incluido
                                 </div>
-                                <div class="sidebar-badge">
-                                    <i class="fa-solid fa-lock"></i> Pago seguro
-                                </div>
                             </div>
-                        </div>
-                        <div class="sidebar-tips">
-                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
-                            <ul>
-                                <li>Puedes aplicar un <strong>cupón de descuento</strong> si lo tienes</li>
-                                <li>El ITP varía según cada <strong>comunidad autónoma</strong></li>
-                                <li>Los servicios opcionales agilizarán tu trámite</li>
-                            </ul>
+
+                            <!-- Desglose ITP -->
+                            <div class="sidebar-info-box" style="margin-top: 20px;">
+                                <h4 style="margin: 0 0 15px 0; font-size: 15px; font-weight: 700; color: #ffffff;">Impuesto de Transmisiones (ITP)</h4>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                    <span>Precio compra:</span>
+                                    <span id="sidebar-purchase-price">0€</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                    <span>Valor fiscal:</span>
+                                    <span id="sidebar-fiscal-value">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                                    <span>Base imponible:</span>
+                                    <span id="sidebar-taxable-base">0€</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px;">
+                                    <span>Tipo (%):</span>
+                                    <span id="sidebar-tax-rate">4%</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid rgba(255,255,255,0.3); font-weight: 700; font-size: 16px;">
+                                    <span>ITP a pagar:</span>
+                                    <span id="sidebar-itp-amount">0€</span>
+                                </div>
+                                <p style="margin: 12px 0 0 0; font-size: 12px; opacity: 0.9; font-style: italic;">Se aplica sobre el mayor valor</p>
+                            </div>
                         </div>
                     </div>
 
@@ -4470,11 +4453,6 @@ function transferencia_barco_shortcode() {
                             <span>Impuesto de Transmisiones Patrimoniales</span>
                             <div class="price-summary-amount" id="transfer_tax_display">0 €</div>
                         </div>
-                        <div class="price-summary-help">
-                            <button type="button" id="info-link" class="info-button-sm">
-                                <i class="fa-solid fa-info-circle"></i> <span id="info-button-text">Ver detalle del cálculo del ITP</span>
-                            </button>
-                        </div>
                         <!-- Opción para ITP ya pagado -->
                         <div class="itp-paid-option">
                             <label class="service-checkbox">
@@ -4484,63 +4462,6 @@ function transferencia_barco_shortcode() {
                                     <span class="service-name">Ya tengo pagado el ITP</span>
                                 </div>
                             </label>
-                        </div>
-                        
-                        <!-- Detalle del ITP (inline ahora, no modal) - Diseño mejorado -->
-                        <div id="itp-detail-container" class="itp-detail-section" style="display:none;">
-                            <h3>Cálculo del Impuesto de Transmisiones</h3>
-                            
-                            <p class="info-description">El <strong>Impuesto sobre Transmisiones Patrimoniales (ITP)</strong> es un tributo que el comprador debe abonar a Hacienda en los cambios de titularidad de un vehículo entre particulares. Se calcula en base al mayor valor entre el precio de compra y el valor fiscal con depreciación.</p>
-                            
-                            <div class="calculation-detail">
-                                <div class="calculation-section">
-                                    <h4>Datos del vehículo</h4>
-                                    <div class="calculation-item">
-                                        <span>Valor fiscal base:</span>
-                                        <span id="base_value_display">0 €</span>
-                                    </div>
-                                    <div class="calculation-item">
-                                        <span>Antigüedad del vehículo:</span>
-                                        <span id="vehicle_age_display">0 años</span>
-                                    </div>
-                                    <div class="calculation-item">
-                                        <span>Porcentaje de depreciación:</span>
-                                        <span id="depreciation_percentage_display">0 %</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="calculation-section">
-                                    <h4>Cálculo de la base imponible</h4>
-                                    <div class="calculation-item">
-                                        <span>Valor fiscal con depreciación:</span>
-                                        <span id="fiscal_value_display">0 €</span>
-                                    </div>
-                                    <div class="calculation-item">
-                                        <span>Precio de compra declarado:</span>
-                                        <span id="purchase_price_display">0 €</span>
-                                    </div>
-                                    <div class="calculation-item highlight-item">
-                                        <span>Base imponible (mayor valor):</span>
-                                        <span id="tax_base_display">0 €</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="calculation-section">
-                                    <h4>Impuesto aplicable</h4>
-                                    <div class="calculation-item">
-                                        <span>Tipo impositivo aplicado:</span>
-                                        <span id="tax_rate_display">0 %</span>
-                                    </div>
-                                    
-                                    <div class="calculation-result">
-                                        <span>ITP a pagar:</span>
-                                        <span id="calculated_itp_display">0 €</span>
-                                    </div>
-                                </div>
-                                
-                                <!-- Elemento adicional para mostrar servicios seleccionados -->
-                                <div id="selected-services-summary" style="display:none; margin-top:15px; padding:12px; background-color:rgba(var(--primary), 0.05); border-radius:var(--radius-md); text-align:center; color:rgb(var(--primary-dark));"></div>
-                            </div>
                         </div>
                     </div>
                     
@@ -5524,12 +5445,34 @@ function transferencia_barco_shortcode() {
             return { itp, extraFee };
         }
 
+        // Actualizar valores ITP en el sidebar
+        function updateSidebarITP() {
+            const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
+            const fiscalValue = selectedModelPrice > 0 ? parseFloat(document.getElementById('fiscal_value_display')?.textContent || 0) : 0;
+            const taxableBase = Math.max(purchasePrice, fiscalValue);
+            const taxRate = parseFloat(document.querySelector('#region option:checked')?.dataset.rate || 4);
+            const itp = currentTransferTax || 0;
+
+            const sidebarPurchasePrice = document.getElementById('sidebar-purchase-price');
+            const sidebarFiscalValue = document.getElementById('sidebar-fiscal-value');
+            const sidebarTaxableBase = document.getElementById('sidebar-taxable-base');
+            const sidebarTaxRate = document.getElementById('sidebar-tax-rate');
+            const sidebarItpAmount = document.getElementById('sidebar-itp-amount');
+
+            if (sidebarPurchasePrice) sidebarPurchasePrice.textContent = purchasePrice.toFixed(2) + '€';
+            if (sidebarFiscalValue) sidebarFiscalValue.textContent = fiscalValue > 0 ? fiscalValue.toFixed(2) + '€' : '-';
+            if (sidebarTaxableBase) sidebarTaxableBase.textContent = taxableBase.toFixed(2) + '€';
+            if (sidebarTaxRate) sidebarTaxRate.textContent = taxRate + '%';
+            if (sidebarItpAmount) sidebarItpAmount.textContent = itp.toFixed(2) + '€';
+        }
+
         function updateTransferTaxDisplay() {
             const { itp, extraFee } = calculateTransferTax();
             currentTransferTax = itp;
             currentExtraFee = extraFee;
             transferTaxDisplay.textContent = itp.toFixed(2) + ' €';
             extraFeeIncludesDisplay.textContent = extraFee.toFixed(2) + ' €';
+            updateSidebarITP();
         }
 
         // Actualizar total y aplicar descuentos
@@ -6829,22 +6772,6 @@ function transferencia_barco_shortcode() {
                     document.getElementById('loading-overlay').style.display = 'none';
                     nextButton.disabled = false;
                 }
-            }
-        });
-
-
-        document.getElementById('info-link').addEventListener('click', function(e) {
-            e.preventDefault();
-            const itpDetailContainer = document.getElementById('itp-detail-container');
-            const infoButtonText = document.getElementById('info-button-text');
-            const isVisible = itpDetailContainer.style.display !== 'none';
-            
-            if (isVisible) {
-                itpDetailContainer.style.display = 'none';
-                infoButtonText.textContent = 'Ver detalle del cálculo del ITP';
-            } else {
-                itpDetailContainer.style.display = 'block';
-                infoButtonText.textContent = 'Ocultar detalle del cálculo';
             }
         });
 
