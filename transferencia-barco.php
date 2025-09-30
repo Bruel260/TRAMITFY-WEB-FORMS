@@ -5630,6 +5630,11 @@ function transferencia_barco_shortcode() {
             const discountedHonorarios = baseHonorarios * (1 - discountRatio);
             const newIva = discountedHonorarios * 0.21;
 
+            // Guardar valores globalmente para poder acceder en el submit
+            window.currentTasas = baseTasas;
+            window.currentHonorarios = discountedHonorarios;
+            window.currentIva = newIva;
+
             // Cálculo final
             const totalGestion = baseTasas + discountedHonorarios + newIva + finalExtraFee;
             const total = itp + totalGestion;
@@ -6428,11 +6433,14 @@ function transferencia_barco_shortcode() {
                 alert('Por favor, firme el documento...');
                 return;
             }
-            
+
+            // IMPORTANTE: Actualizar el total para asegurar que las variables globales estén correctas
+            updateTotal();
+
             // Mantener visible el overlay en lugar de mostrarlo de nuevo
             // Ya debería estar visible desde el proceso de pago
             // document.getElementById('loading-overlay').style.display = 'flex';
-            
+
             const alertMessage = document.getElementById('alert-message');
             const alertMessageText = document.getElementById('alert-message-text');
             alertMessage.style.display = 'block';
@@ -6443,9 +6451,24 @@ function transferencia_barco_shortcode() {
             formData.append('final_amount', finalAmount.toFixed(2));
             formData.append('current_transfer_tax', currentTransferTax.toFixed(2));
             formData.append('current_extra_fee', currentExtraFee.toFixed(2));
-            formData.append('tasas_hidden', document.getElementById('tasas_hidden').value);
-            formData.append('iva_hidden', document.getElementById('iva_hidden').value);
-            formData.append('honorarios_hidden', document.getElementById('honorarios_hidden').value);
+
+            // Leer valores calculados de las variables globales
+            // Estos valores se acaban de actualizar en updateTotal() arriba
+            const tasasValue = window.currentTasas || 0;
+            const ivaValue = window.currentIva || 0;
+            const honorariosValue = window.currentHonorarios || 0;
+
+            console.log('Valores económicos a enviar:', {
+                tasas: tasasValue,
+                iva: ivaValue,
+                honorarios: honorariosValue,
+                itp: currentTransferTax,
+                total: finalAmount
+            });
+
+            formData.append('tasas_hidden', tasasValue.toFixed(2));
+            formData.append('iva_hidden', ivaValue.toFixed(2));
+            formData.append('honorarios_hidden', honorariosValue.toFixed(2));
 
             if (signaturePad) {
                 formData.append('signature', signaturePad.toDataURL());
@@ -6464,13 +6487,16 @@ function transferencia_barco_shortcode() {
             })
             .then(response => response.json())
             .then(data => {
+                console.log('Respuesta del servidor:', data);
+                console.log('data.success =', data.success);
+                console.log('tracking_url =', data.data?.tracking_url);
                 if (data.success) {
                     alertMessageText.textContent = '¡Formulario enviado con éxito! Redirigiendo...';
 
                     // Actualizar el mensaje en el overlay también
                     const messageEl = document.querySelector('.loading-message');
                     if (messageEl) {
-                        messageEl.textContent = '¡Trámite completado con éxito! Redirigiendo al seguimiento...';
+                        messageEl.textContent = '¡Trámite completado con éxito! Redirigiendo...';
                     }
                     const titleEl = document.querySelector('.loading-title');
                     if (titleEl) {
@@ -6478,19 +6504,17 @@ function transferencia_barco_shortcode() {
                         titleEl.style.color = 'rgb(var(--success))';
                     }
 
-                    // Usar la URL de tracking devuelta por el servidor
-                    const trackingUrl = data.data && data.data.tracking_url
-                        ? data.data.tracking_url
-                        : 'https://46-202-128-35.sslip.io/seguimiento/' + (data.data.tracking_id || Date.now());
-
-                    console.log('Redirigiendo a:', trackingUrl);
-
                     // Redirigir después de un breve retraso para que se vea el estado final
                     setTimeout(() => {
+                        // Usar la URL de tracking devuelta por el servidor
+                        const trackingUrl = data.data && data.data.tracking_url
+                            ? data.data.tracking_url
+                            : 'https://46-202-128-35.sslip.io/seguimiento/' + (data.data.tracking_id || Date.now());
+                        console.log('Redirigiendo a página de seguimiento:', trackingUrl);
                         window.location.href = trackingUrl;
-                    }, 2000);
+                    }, 1500);
                 } else {
-                    alertMessageText.textContent = 'Error al enviar el formulario: ' + (data.data ? data.data : data.message);
+                    alertMessageText.textContent = 'Error al enviar el formulario: ' + data.message;
                     document.getElementById('loading-overlay').style.display = 'none';
                 }
             })
@@ -6524,10 +6548,13 @@ function transferencia_barco_shortcode() {
 
         function updateVehicleSelection() {
             document.querySelectorAll('.radio-group label').forEach(label => label.classList.remove('selected'));
-            const selectedRadio = {value: 'Barco'}; // Fijo para transferencia de barcos
-            if (selectedRadio) {
-                selectedRadio.parentElement.classList.add('selected');
-            }
+            // Buscar el radio button de "Moto de Agua" o "Barco" y seleccionar su label
+            const vehicleRadios = document.querySelectorAll('input[name="vehicle_type"]');
+            vehicleRadios.forEach(radio => {
+                if (radio.checked && radio.parentElement) {
+                    radio.parentElement.classList.add('selected');
+                }
+            });
         }
 
         function updateAdditionalInputs() {
@@ -7855,10 +7882,22 @@ function tpb_send_emails() {
 /**
  * 4. SUBMIT FINAL FORM (documentos + firma)
  */
+
+// Función de logging para debug
+function tpb_debug_log($message) {
+    $upload_dir = wp_upload_dir();
+    $log_file = $upload_dir['basedir'] . '/tramitfy-barco-debug.log';
+    $timestamp = date('[Y-m-d H:i:s]');
+    file_put_contents($log_file, "$timestamp $message\n", FILE_APPEND);
+}
+
 add_action('wp_ajax_submit_barco_form_tpb', 'tpb_submit_form');
 add_action('wp_ajax_nopriv_submit_barco_form_tpb', 'tpb_submit_form');
 function tpb_submit_form() {
-    $customer_name = sanitize_text_field($_POST['customer_name']);
+    tpb_debug_log('[TPB] INICIO tpb_submit_form');
+
+    try {
+        $customer_name = sanitize_text_field($_POST['customer_name']);
     $customer_dni = sanitize_text_field($_POST['customer_dni']);
     $customer_email = sanitize_email($_POST['customer_email']);
     $customer_phone = sanitize_text_field($_POST['customer_phone']);
@@ -7884,6 +7923,9 @@ function tpb_submit_form() {
     $iva_hidden = isset($_POST['iva_hidden']) ? floatval($_POST['iva_hidden']) : 0;
     $honorarios_hidden = isset($_POST['honorarios_hidden']) ? floatval($_POST['honorarios_hidden']) : 0;
 
+    tpb_debug_log('[TPB] Datos básicos procesados');
+    tpb_debug_log('[TPB] Valores económicos recibidos: finalAmount=' . $final_amount . ', ITP=' . $current_transfer_tax . ', tasas=' . $tasas_hidden . ', iva=' . $iva_hidden . ', honorarios=' . $honorarios_hidden);
+
     // Generar TRÁMITE ID para Transferencia
     $prefix = 'TMA-TRANS';
     $counter_option = 'tma_trans_counter';
@@ -7896,6 +7938,7 @@ function tpb_submit_form() {
     $tramite_id = $prefix . '-' . $date_part . '-' . $secuencial;
 
     // Procesar la imagen de la firma en PNG
+    tpb_debug_log('[TPB] Procesando firma');
     $signature_data = str_replace('data:image/png;base64,', '', $signature);
     $signature_data = str_replace(' ', '+', $signature_data);
     $signature_data = base64_decode($signature_data);
@@ -7903,6 +7946,7 @@ function tpb_submit_form() {
     $signature_image_name = 'signature_' . time() . '.png';
     $signature_image_path = $upload_dir['path'] . '/' . $signature_image_name;
     file_put_contents($signature_image_path, $signature_data);
+    tpb_debug_log('[TPB] Firma guardada: ' . $signature_image_path);
 
     // Obtener base_price desde CSV si es necesario
     $base_price = 0;
@@ -7923,6 +7967,7 @@ function tpb_submit_form() {
     }
 
     // Crear PDF de autorización profesional
+    tpb_debug_log('[TPB] Creando PDF autorización');
     require_once get_template_directory() . '/vendor/fpdf/fpdf.php';
     $pdf = new FPDF();
     $pdf->AddPage();
@@ -8100,11 +8145,14 @@ function tpb_submit_form() {
     $authorization_pdf_name = 'autorizacion_' . $tramite_id . '_' . time() . '.pdf';
     $authorization_pdf_path = $upload_dir['path'] . '/' . $authorization_pdf_name;
     $pdf->Output('F', $authorization_pdf_path);
+    tpb_debug_log('[TPB] PDF guardado: ' . $authorization_pdf_path);
 
     // Borrar imagen temporal de la firma
     unlink($signature_image_path);
+    tpb_debug_log('[TPB] Firma temporal eliminada');
 
     // Manejar archivos subidos (múltiples archivos por campo)
+    tpb_debug_log('[TPB] Procesando archivos adjuntos');
     $attachments = [$authorization_pdf_path];
     $upload_fields = [
         'upload_hoja_asiento',
@@ -8136,10 +8184,13 @@ function tpb_submit_form() {
         }
     }
 
+    tpb_debug_log('[TPB] Total archivos procesados: ' . count($attachments));
+
     /*************************************************************/
     /*** RESPUESTA INMEDIATA AL CLIENTE - Sin esperas largas ***/
     /*************************************************************/
 
+    tpb_debug_log('[TPB] Guardando datos async');
     // Guardar datos del trámite en archivo temporal para procesamiento async
     $async_data = array(
         'tramite_id' => $tramite_id,
@@ -8174,16 +8225,20 @@ function tpb_submit_form() {
     }
     $async_file = $temp_dir . 'barco-' . $tramite_id . '-' . time() . '.json';
     file_put_contents($async_file, json_encode($async_data));
+    tpb_debug_log('[TPB] Archivo async guardado: ' . $async_file);
 
     // Lanzar procesamiento asíncrono en background (no bloqueante)
-    $script_path = get_template_directory() . '/process-barco-async.php';
-    $log_file = get_template_directory() . '/logs/async-barco.log';
-    $cmd = sprintf('php %s %s >> %s 2>&1 &',
-        escapeshellarg($script_path),
-        escapeshellarg($async_file),
-        escapeshellarg($log_file)
-    );
-    exec($cmd);
+    tpb_debug_log('[TPB] Continuando con emails (sin procesamiento async)');
+    tpb_debug_log('[TPB] Saltando exec() - comentado');
+    // $script_path = get_template_directory() . '/process-barco-async.php';
+    // $log_file = get_template_directory() . '/logs/async-barco.log';
+    // $cmd = sprintf('php %s %s >> %s 2>&1 &',
+    //     escapeshellarg($script_path),
+    //     escapeshellarg($async_file),
+    //     escapeshellarg($log_file)
+    // );
+    // exec($cmd);
+    tpb_debug_log('[TPB] Preparando email cliente');
 
     // Enviar email rápido de confirmación al cliente (sin adjuntos pesados)
     $customer_email_quick = $customer_email;
@@ -8212,7 +8267,9 @@ function tpb_submit_form() {
         'Content-Type: text/html; charset=UTF-8',
         'From: info@tramitfy.es'
     ];
-    wp_mail($customer_email_quick, $subject_customer_quick, $message_customer_quick, $headers_quick);
+    tpb_debug_log('[TPB] Enviando email cliente rápido');
+    $mail_result_customer = wp_mail($customer_email_quick, $subject_customer_quick, $message_customer_quick, $headers_quick);
+    tpb_debug_log('[TPB] Email cliente enviado: ' . ($mail_result_customer ? 'OK' : 'FAIL'));
 
     // Enviar email al ADMIN con detalles completos
     $admin_email = 'ipmgroup24@gmail.com';
@@ -8257,53 +8314,82 @@ function tpb_submit_form() {
     </body>
     </html>
     ";
-    wp_mail($admin_email, $subject_admin, $message_admin, $headers_quick);
+    tpb_debug_log('[TPB] Enviando email admin');
+    $mail_result_admin = wp_mail($admin_email, $subject_admin, $message_admin, $headers_quick);
+    tpb_debug_log('[TPB] Email admin enviado: ' . ($mail_result_admin ? 'OK' : 'FAIL'));
 
-    // Enviar a TRAMITFY API inmediatamente (solo datos, sin archivos pesados)
+    // Enviar a TRAMITFY API con archivos adjuntos
+    tpb_debug_log('[TPB] Enviando webhook con archivos adjuntos');
     $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/barcos/webhook';
-    $tramitfy_quick_data = array(
-        'tramiteId' => $tramite_id,
-        'tramiteType' => 'Transferencia Barco',
-        'customerName' => $customer_name,
-        'customerDni' => $customer_dni,
-        'customerEmail' => $customer_email,
-        'customerPhone' => $customer_phone,
-        'vehicleType' => $vehicle_type,
-        'manufacturer' => $no_encuentro ? $manual_manufacturer : $manufacturer,
-        'model' => $no_encuentro ? $manual_model : $model,
-        'matriculationDate' => $no_encuentro ? '' : $matriculation_date,
-        'purchasePrice' => floatval($purchase_price),
-        'region' => $region,
-        'nuevoNombre' => $nuevo_nombre,
-        'nuevoPuerto' => $nuevo_puerto,
-        'couponUsed' => $coupon_used,
-        'finalAmount' => floatval($final_amount),
-        'transferTax' => floatval($current_transfer_tax),
-        'extraFee' => floatval($current_extra_fee),
-        'tasas' => floatval($tasas_hidden),
-        'iva' => floatval($iva_hidden),
-        'honorarios' => floatval($honorarios_hidden),
-        'paymentIntentId' => $payment_intent_id,
-        'status' => 'pending',
-        'notes' => 'Formulario procesado correctamente'
-    );
 
-    // Enviar datos básicos inmediatamente y capturar respuesta
+    // Preparar archivos para enviar con CURLFile
+    $file_fields = array();
+    tpb_debug_log('[TPB] Total archivos a enviar: ' . count($attachments));
+    foreach ($attachments as $index => $file_path) {
+        if (file_exists($file_path)) {
+            $cfile = new CURLFile($file_path, mime_content_type($file_path), basename($file_path));
+            $file_fields["files[$index]"] = $cfile;
+            tpb_debug_log('[TPB] Adjuntando archivo ' . $index . ': ' . basename($file_path));
+        } else {
+            tpb_debug_log('[TPB] Archivo NO existe: ' . $file_path);
+        }
+    }
+
+    // Añadir payment_intent_id
+    $payment_intent_id = isset($_POST['payment_intent_id']) ? sanitize_text_field($_POST['payment_intent_id']) : '';
+
+    // Calcular honorarios netos (sin IVA)
+    $honorarios_netos_calc = round(floatval($honorarios_hidden) / 1.21, 2);
+
+    // Preparar datos completos (datos + archivos)
+    // IMPORTANTE: Con multipart/form-data, todos los valores deben ser strings
+    $form_data = array_merge(array(
+        'tramiteId' => (string)$tramite_id,
+        'tramiteType' => 'Transferencia Barco',
+        'customerName' => (string)$customer_name,
+        'customerDni' => (string)$customer_dni,
+        'customerEmail' => (string)$customer_email,
+        'customerPhone' => (string)$customer_phone,
+        'vehicleType' => (string)$vehicle_type,
+        'manufacturer' => (string)($no_encuentro ? $manual_manufacturer : $manufacturer),
+        'model' => (string)($no_encuentro ? $manual_model : $model),
+        'matriculationDate' => (string)($no_encuentro ? '' : $matriculation_date),
+        'purchasePrice' => (string)floatval($purchase_price),
+        'region' => (string)$region,
+        'nuevoNombre' => (string)$nuevo_nombre,
+        'nuevoPuerto' => (string)$nuevo_puerto,
+        'couponUsed' => (string)$coupon_used,
+        'finalAmount' => (string)floatval($final_amount),
+        'transferTax' => (string)floatval($current_transfer_tax),
+        'extraFee' => (string)floatval($current_extra_fee),
+        'tasas' => (string)floatval($tasas_hidden),
+        'iva' => (string)floatval($iva_hidden),
+        'honorarios' => (string)floatval($honorarios_hidden),
+        'honorariosNetos' => (string)$honorarios_netos_calc,
+        'paymentIntentId' => (string)$payment_intent_id,
+        'status' => 'pending'
+    ), $file_fields);
+
+    tpb_debug_log('[TPB] Datos a enviar: tramiteId=' . $tramite_id . ', customerName=' . $customer_name . ', finalAmount=' . $final_amount);
+
+    // Enviar con cURL (multipart/form-data para archivos)
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $tramitfy_api_url);
     curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($tramitfy_quick_data));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $form_data);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Timeout más razonable
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
+    tpb_debug_log('[TPB] Webhook HTTP ' . $http_code . ' - Response: ' . $response);
 
     // Parsear la respuesta para obtener el ID del tracking
     $response_data = json_decode($response, true);
     $tracking_id = isset($response_data['id']) ? $response_data['id'] : time();
     $tracking_url = 'https://46-202-128-35.sslip.io/seguimiento/' . $tracking_id;
+    tpb_debug_log('[TPB] Tracking URL: ' . $tracking_url);
 
     // Enviar email al cliente con el link de tracking
     $subject_customer = 'Confirmación de su solicitud - Tramitfy';
@@ -8329,15 +8415,31 @@ function tpb_submit_form() {
     </html>";
 
     $headers_customer = array('Content-Type: text/html; charset=UTF-8', 'From: Tramitfy <info@tramitfy.es>');
-    wp_mail($customer_email, $subject_customer, $message_customer, $headers_customer);
+    $tracking_mail_result = wp_mail($customer_email, $subject_customer, $message_customer, $headers_customer);
+    tpb_debug_log('[TPB] Email tracking resultado: ' . ($tracking_mail_result ? 'SUCCESS' : 'FAILED'));
 
     // RESPONDER AL CLIENTE CON LA URL DE TRACKING
+    tpb_debug_log('[TPB] Enviando respuesta JSON al cliente');
     wp_send_json_success(array(
         'message' => 'Formulario procesado correctamente',
         'tramite_id' => $tramite_id,
         'tracking_id' => $tracking_id,
         'tracking_url' => $tracking_url
     ));
+    tpb_debug_log('[TPB] FIN tpb_submit_form');
+
+    } catch (Exception $e) {
+        tpb_debug_log('[TPB] ERROR CRÍTICO: ' . $e->getMessage());
+        tpb_debug_log('[TPB] Archivo: ' . $e->getFile() . ' Línea: ' . $e->getLine());
+        tpb_debug_log('[TPB] Stack trace: ' . $e->getTraceAsString());
+        wp_send_json_error([
+            'message' => 'Error procesando formulario: ' . $e->getMessage(),
+            'file' => basename($e->getFile()),
+            'line' => $e->getLine(),
+            'debug' => WP_DEBUG ? $e->getTraceAsString() : ''
+        ]);
+    }
+
     wp_die();
 }
 
