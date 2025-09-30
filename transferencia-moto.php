@@ -4192,6 +4192,11 @@ function transferencia_moto_shortcode() {
         <div id="page-vehiculo" class="form-page form-section-compact">
             <h2 style="margin-bottom: 10px;">Transferencia de Propiedad</h2>
             <h3 style="margin-bottom: 25px; font-size: 18px; color: #666;">Información de la Moto</h3>
+
+            <!-- TrustIndex Reviews Widget -->
+            <div style="margin: 20px 0 30px; text-align: center;">
+                <script defer async src='https://cdn.trustindex.io/loader.js?f4fbfd341d12439e0c86fae7fc2'></script>
+            </div>
             <!-- Tipo de vehículo fijo: Barco -->
             <input type="hidden" name="vehicle_type" value="Barco">
 

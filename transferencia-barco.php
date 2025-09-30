@@ -4324,6 +4324,11 @@ function transferencia_barco_shortcode() {
         <div id="page-vehiculo" class="form-page form-section-compact">
             <h2 style="margin-bottom: 8px; font-size: 20px;">Transferencia de Propiedad</h2>
             <h3 style="margin-bottom: 12px; font-size: 16px; color: #666;">Información del Barco</h3>
+
+            <!-- TrustIndex Reviews Widget -->
+            <div style="margin: 20px 0 30px; text-align: center;">
+                <script defer async src='https://cdn.trustindex.io/loader.js?f4fbfd341d12439e0c86fae7fc2'></script>
+            </div>
             <!-- Tipo de vehículo fijo: Barco -->
             <input type="hidden" name="vehicle_type" value="Barco">
 
