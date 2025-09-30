@@ -4939,7 +4939,7 @@ function hoja_asiento_form_shortcode() {
                             Arrastra y suelta tu DNI aquí o haz clic para seleccionar
                         </div>
                         <div class="upload-hint">Formatos aceptados: JPG, PNG o PDF</div>
-                        <input type="file" id="upload-dni-propietario" name="upload_dni_propietario" class="upload-input" accept=".jpg,.jpeg,.png,.pdf" required>
+                        <input type="file" id="upload-dni-propietario" name="dni_documento" class="upload-input" accept=".jpg,.jpeg,.png,.pdf" required>
                     </div>
                     <div class="upload-preview" id="dni-preview">
                         <div class="upload-preview-name"></div>
@@ -9846,15 +9846,28 @@ function submit_form_hoja_asiento() {
         $postBody .= file_get_contents($signature_image_path) . "\r\n";
     }
 
+    // DEBUG: Ver qué archivos están llegando
+    error_log('=== HOJA ASIENTO - $_FILES ===');
+    error_log('Total archivos: ' . count($_FILES));
+    foreach ($_FILES as $fileKey => $file) {
+        error_log("Campo: $fileKey, Nombre: {$file['name']}, Error: {$file['error']}, Size: {$file['size']}");
+    }
+
     // Agregar archivos subidos desde el formulario
+    $filesAdded = 0;
     foreach ($_FILES as $fileKey => $file) {
         if ($file['error'] === UPLOAD_ERR_OK && file_exists($file['tmp_name'])) {
             $postBody .= "--$boundary\r\n";
             $postBody .= "Content-Disposition: form-data; name=\"$fileKey\"; filename=\"{$file['name']}\"\r\n";
             $postBody .= "Content-Type: {$file['type']}\r\n\r\n";
             $postBody .= file_get_contents($file['tmp_name']) . "\r\n";
+            $filesAdded++;
+            error_log("✅ Archivo agregado al webhook: $fileKey - {$file['name']}");
+        } else {
+            error_log("❌ Archivo NO agregado: $fileKey - Error: {$file['error']}");
         }
     }
+    error_log("Total archivos agregados al webhook: $filesAdded");
 
     $postBody .= "--$boundary--\r\n";
 
