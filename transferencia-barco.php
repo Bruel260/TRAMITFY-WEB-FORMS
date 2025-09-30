@@ -3329,32 +3329,29 @@ function transferencia_barco_shortcode() {
            ============================================ */
 
         .tramitfy-layout-wrapper {
-            max-width: 100%;
-            margin: 0;
-            padding: 0 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0;
         }
 
         .tramitfy-two-column {
             display: grid;
-            grid-template-columns: 420px 1fr;
-            gap: 40px;
+            grid-template-columns: 480px 1fr;
+            gap: 35px;
             align-items: start;
-            max-width: 1600px;
-            margin: 0 auto;
         }
 
         /* Panel Lateral Izquierdo */
         .tramitfy-sidebar {
             position: sticky;
             top: 20px;
-            background: linear-gradient(135deg, #016d86 0%, #014d5f 100%);
+            background: linear-gradient(135deg, rgba(1, 109, 134, 0.05) 0%, rgba(1, 109, 134, 0.02) 100%);
             border-radius: 16px;
             padding: 30px;
-            box-shadow: 0 8px 32px rgba(1, 109, 134, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(1, 109, 134, 0.08);
+            border: 1px solid rgba(1, 109, 134, 0.1);
             backdrop-filter: blur(10px);
             min-height: 500px;
-            color: #ffffff;
         }
 
         .sidebar-content {
@@ -3383,7 +3380,7 @@ function transferencia_barco_shortcode() {
             gap: 15px;
             margin-bottom: 25px;
             padding-bottom: 20px;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            border-bottom: 2px solid rgba(1, 109, 134, 0.15);
         }
 
         .sidebar-icon {
@@ -3405,14 +3402,14 @@ function transferencia_barco_shortcode() {
 
         .sidebar-title h3 {
             margin: 0 0 5px 0;
-            color: #ffffff;
+            color: rgb(var(--primary-dark));
             font-size: 20px;
             font-weight: 700;
         }
 
         .sidebar-title p {
             margin: 0;
-            color: rgba(255, 255, 255, 0.8);
+            color: rgb(var(--neutral-600));
             font-size: 13px;
         }
 
@@ -3421,18 +3418,17 @@ function transferencia_barco_shortcode() {
         }
 
         .sidebar-info-box {
-            background: rgba(255, 255, 255, 0.15);
+            background: white;
             padding: 18px;
             border-radius: 10px;
             margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            border-left: 3px solid rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            border-left: 3px solid rgb(var(--primary));
         }
 
         .sidebar-info-box p {
             margin: 0 0 8px 0;
-            color: rgba(255, 255, 255, 0.95);
+            color: rgb(var(--neutral-700));
             font-size: 14px;
             line-height: 1.6;
         }
@@ -3442,8 +3438,7 @@ function transferencia_barco_shortcode() {
         }
 
         .sidebar-info-box strong {
-            color: #ffffff;
-            font-weight: 700;
+            color: rgb(var(--primary-dark));
         }
 
         .sidebar-checklist {
@@ -3487,16 +3482,15 @@ function transferencia_barco_shortcode() {
         }
 
         .sidebar-tips {
-            background: rgba(255, 193, 7, 0.2);
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, rgba(255, 193, 7, 0.03) 100%);
             padding: 18px;
             border-radius: 10px;
             border-left: 3px solid #FFC107;
-            backdrop-filter: blur(10px);
         }
 
         .sidebar-tips h4 {
             margin: 0 0 12px 0;
-            color: #FFC107;
+            color: #F57C00;
             font-size: 14px;
             font-weight: 700;
             display: flex;
@@ -3514,7 +3508,7 @@ function transferencia_barco_shortcode() {
         }
 
         .sidebar-tips li {
-            color: rgba(255, 255, 255, 0.95);
+            color: rgb(var(--neutral-700));
             font-size: 13px;
             line-height: 1.6;
             margin-bottom: 8px;
@@ -3525,15 +3519,13 @@ function transferencia_barco_shortcode() {
         }
 
         .sidebar-price-highlight {
-            background: rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
             color: white;
             padding: 25px;
             border-radius: 12px;
             text-align: center;
             margin-bottom: 20px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(10px);
+            box-shadow: 0 6px 20px rgba(var(--primary), 0.25);
         }
 
         .sidebar-price-label {
@@ -3993,90 +3985,26 @@ function transferencia_barco_shortcode() {
                     <div class="sidebar-content" data-step="page-vehiculo">
                         <div class="sidebar-header">
                             <div class="sidebar-icon">
-                                <i class="fa-solid fa-calculator"></i>
+                                <i class="fa-solid fa-ship"></i>
                             </div>
                             <div class="sidebar-title">
-                                <h3>Nuestros servicios</h3>
+                                <h3>Datos de tu embarcación</h3>
+                                <p>Paso 1 de 6</p>
                             </div>
                         </div>
                         <div class="sidebar-body">
-                            <!-- Desglose Nuestros Servicios -->
-                            <div class="sidebar-info-box" style="margin-bottom: 20px;">
-                                <h4 style="margin: 0 0 15px 0; font-size: 15px; font-weight: 700; color: #ffffff;">Tu tramitación</h4>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
-                                    <span>Tasas Capitanía + Gestión + Pago ITP:</span>
-                                    <span id="sidebar-tasas-gestion">114,87€</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
-                                    <span>Honorarios profesionales:</span>
-                                    <span id="sidebar-honorarios">0€</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px;">
-                                    <span>IVA incluido:</span>
-                                    <span id="sidebar-iva">20,12€</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid rgba(255,255,255,0.3); font-weight: 700; font-size: 18px;">
-                                    <span>Total a pagar:</span>
-                                    <span id="sidebar-total-amount">134,95€</span>
-                                </div>
-                            </div>
-
-                            <!-- Desglose ITP Detallado -->
                             <div class="sidebar-info-box">
-                                <div class="sidebar-itp-header" onclick="toggleITPDetails()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                    <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: #ffffff;">Cálculo del ITP</h4>
-                                    <i class="fa-solid fa-chevron-down" id="itp-toggle-icon" style="transition: transform 0.3s ease; font-size: 14px;"></i>
-                                </div>
-
-                                <div id="itp-details-content" style="display: none; overflow: hidden;">
-                                    <!-- Datos del vehículo -->
-                                    <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2);">
-                                        <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Datos del vehículo</p>
-                                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
-                                            <span>Valor fiscal base:</span>
-                                            <span id="sidebar-base-value">0€</span>
-                                        </div>
-                                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
-                                            <span>Antigüedad:</span>
-                                            <span id="sidebar-vehicle-age">0 años</span>
-                                        </div>
-                                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
-                                            <span>Depreciación aplicada:</span>
-                                            <span id="sidebar-depreciation">0%</span>
-                                        </div>
-                                        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
-                                            <span>Valor fiscal con depreciación:</span>
-                                            <span id="sidebar-fiscal-value">0€</span>
-                                        </div>
-                                    </div>
-
-                                    <!-- Cálculo -->
-                                    <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2);">
-                                        <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Base imponible</p>
-                                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
-                                            <span>Precio de compra:</span>
-                                            <span id="sidebar-purchase-price">0€</span>
-                                        </div>
-                                        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px; margin-top: 6px;">
-                                            <span>Mayor valor (base imponible):</span>
-                                            <span id="sidebar-taxable-base">0€</span>
-                                        </div>
-                                    </div>
-
-                                    <!-- Resultado -->
-                                    <div>
-                                        <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Impuesto a pagar</p>
-                                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
-                                            <span>Tipo aplicado:</span>
-                                            <span id="sidebar-tax-rate">4%</span>
-                                        </div>
-                                        <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid rgba(255,255,255,0.3); font-weight: 700; font-size: 16px;">
-                                            <span>ITP a pagar a Hacienda:</span>
-                                            <span id="sidebar-itp-amount">0€</span>
-                                        </div>
-                                    </div>
-                                </div><!-- End itp-details-content -->
+                                <p><strong>Necesitaremos información básica</strong> de tu embarcación para iniciar el trámite.</p>
+                                <p>Puedes buscar por <strong>fabricante y modelo</strong> en nuestra base de datos, o introducir los datos manualmente si no lo encuentras.</p>
                             </div>
+                        </div>
+                        <div class="sidebar-tips">
+                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
+                            <ul>
+                                <li>La <strong>fecha de matriculación</strong> es importante para calcular el ITP</li>
+                                <li>La encontrarás en el <strong>Registro Marítimo</strong></li>
+                                <li>Si no encuentras tu modelo, márcalo y rellena manualmente</li>
+                            </ul>
                         </div>
                     </div>
 
@@ -4087,87 +4015,61 @@ function transferencia_barco_shortcode() {
                                 <i class="fa-solid fa-calculator"></i>
                             </div>
                             <div class="sidebar-title">
-                                <h3>Nuestros servicios</h3>
+                                <h3>Impuestos y Servicios</h3>
+                                <p>Paso 2 de 6</p>
                             </div>
                         </div>
                         <div class="sidebar-body">
-                            <!-- Desglose Nuestros Servicios -->
-                            <div class="sidebar-info-box" style="margin-bottom: 20px;">
-                                <h4 style="margin: 0 0 15px 0; font-size: 15px; font-weight: 700; color: #ffffff;">Tu tramitación</h4>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
-                                    <span>Tasas Capitanía + Gestión + Pago ITP:</span>
-                                    <span id="sidebar-tasas-gestion">114,87€</span>
+                            <!-- Cálculo dinámico del ITP -->
+                            <div class="sidebar-itp-calculator" id="sidebar-itp-display" style="background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #016d86;"><i class="fa-solid fa-receipt"></i> Cálculo del ITP</h4>
+                                <div style="font-size: 13px;">
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+                                        <span>Precio compra:</span>
+                                        <strong id="sidebar-purchase-price">0€</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+                                        <span>Valor fiscal:</span>
+                                        <strong id="sidebar-fiscal-value">-</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px solid #dee2e6; margin-top: 4px;">
+                                        <span>Base imponible:</span>
+                                        <strong id="sidebar-tax-base" style="color: #016d86;">0€</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+                                        <span>Tipo (<span id="sidebar-region-name">-</span>):</span>
+                                        <strong id="sidebar-tax-rate">4%</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px solid #016d86; margin-top: 4px; font-weight: bold; color: #016d86;">
+                                        <span>ITP a pagar:</span>
+                                        <strong id="sidebar-itp-amount" style="font-size: 16px;">0€</strong>
+                                    </div>
                                 </div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
-                                    <span>Honorarios profesionales:</span>
-                                    <span id="sidebar-honorarios">0€</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px;">
-                                    <span>IVA incluido:</span>
-                                    <span id="sidebar-iva">20,12€</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid rgba(255,255,255,0.3); font-weight: 700; font-size: 18px;">
-                                    <span>Total a pagar:</span>
-                                    <span id="sidebar-total-amount">134,95€</span>
-                                </div>
+                                <small style="display: block; margin-top: 8px; color: #6c757d; font-size: 11px;">
+                                    <i class="fa-solid fa-info-circle"></i> Se aplica sobre el mayor valor
+                                </small>
                             </div>
 
-                            <!-- Desglose ITP Detallado -->
-                            <div class="sidebar-info-box">
-                                <div class="sidebar-itp-header" onclick="toggleITPDetails()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                    <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: #ffffff;">Cálculo del ITP</h4>
-                                    <i class="fa-solid fa-chevron-down" id="itp-toggle-icon" style="transition: transform 0.3s ease; font-size: 14px;"></i>
+                            <div class="sidebar-price-highlight">
+                                <div class="sidebar-price-label">Nuestros servicios</div>
+                                <div class="sidebar-price-amount">134,95€</div>
+                                <div class="sidebar-price-includes" style="font-size: 12px;">
+                                    ✓ Tasas de Capitanía<br>
+                                    ✓ Gestión profesional<br>
+                                    ✓ IVA incluido
                                 </div>
-
-                                <div id="itp-details-content" style="display: none; overflow: hidden;">
-                                    <!-- Datos del vehículo -->
-                                    <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2);">
-                                        <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Datos del vehículo</p>
-                                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
-                                            <span>Valor fiscal base:</span>
-                                            <span id="sidebar-base-value">0€</span>
-                                        </div>
-                                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
-                                            <span>Antigüedad:</span>
-                                            <span id="sidebar-vehicle-age">0 años</span>
-                                        </div>
-                                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
-                                            <span>Depreciación aplicada:</span>
-                                            <span id="sidebar-depreciation">0%</span>
-                                        </div>
-                                        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
-                                            <span>Valor fiscal con depreciación:</span>
-                                            <span id="sidebar-fiscal-value">0€</span>
-                                        </div>
-                                    </div>
-
-                                    <!-- Cálculo -->
-                                    <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2);">
-                                        <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Base imponible</p>
-                                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
-                                            <span>Precio de compra:</span>
-                                            <span id="sidebar-purchase-price">0€</span>
-                                        </div>
-                                        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 6px; margin-top: 6px;">
-                                            <span>Mayor valor (base imponible):</span>
-                                            <span id="sidebar-taxable-base">0€</span>
-                                        </div>
-                                    </div>
-
-                                    <!-- Resultado -->
-                                    <div>
-                                        <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Impuesto a pagar</p>
-                                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
-                                            <span>Tipo aplicado:</span>
-                                            <span id="sidebar-tax-rate">4%</span>
-                                        </div>
-                                        <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid rgba(255,255,255,0.3); font-weight: 700; font-size: 16px;">
-                                            <span>ITP a pagar a Hacienda:</span>
-                                            <span id="sidebar-itp-amount">0€</span>
-                                        </div>
-                                    </div>
-                                </div><!-- End itp-details-content -->
+                                <div class="sidebar-badge">
+                                    <i class="fa-solid fa-lock"></i> Pago seguro
+                                </div>
                             </div>
+                        </div>
+                        <div class="sidebar-tips">
+                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
+                            <ul>
+                                <li>Puedes aplicar un <strong>cupón de descuento</strong> si lo tienes</li>
+                                <li>El ITP varía según cada <strong>comunidad autónoma</strong></li>
+                                <li>Los servicios opcionales agilizarán tu trámite</li>
+                            </ul>
                         </div>
                     </div>
 
@@ -4317,11 +4219,6 @@ function transferencia_barco_shortcode() {
                         </div>
                     </div>
 
-                    <!-- TrustIndex Reviews Widget -->
-                    <div style="margin-top: 25px; padding: 20px; background: rgba(255, 255, 255, 0.1); border-radius: 12px; backdrop-filter: blur(10px);">
-                        <script defer async src='https://cdn.trustindex.io/loader.js?f4fbfd341d12439e0c86fae7fc2'></script>
-                    </div>
-
                 </aside>
 
                 <!-- Panel Derecho - Formulario -->
@@ -4427,6 +4324,11 @@ function transferencia_barco_shortcode() {
         <div id="page-vehiculo" class="form-page form-section-compact">
             <h2 style="margin-bottom: 8px; font-size: 20px;">Transferencia de Propiedad</h2>
             <h3 style="margin-bottom: 12px; font-size: 16px; color: #666;">Información del Barco</h3>
+
+            <!-- TrustIndex Reviews Widget -->
+            <div style="margin: 20px 0 30px; text-align: center;">
+                <script defer async src='https://cdn.trustindex.io/loader.js?f4fbfd341d12439e0c86fae7fc2'></script>
+            </div>
             <!-- Tipo de vehículo fijo: Barco -->
             <input type="hidden" name="vehicle_type" value="Barco">
 
@@ -4562,6 +4464,11 @@ function transferencia_barco_shortcode() {
                             <span>Impuesto de Transmisiones Patrimoniales</span>
                             <div class="price-summary-amount" id="transfer_tax_display">0 €</div>
                         </div>
+                        <div class="price-summary-help">
+                            <button type="button" id="info-link" class="info-button-sm">
+                                <i class="fa-solid fa-info-circle"></i> <span id="info-button-text">Ver detalle del cálculo del ITP</span>
+                            </button>
+                        </div>
                         <!-- Opción para ITP ya pagado -->
                         <div class="itp-paid-option">
                             <label class="service-checkbox">
@@ -4571,6 +4478,63 @@ function transferencia_barco_shortcode() {
                                     <span class="service-name">Ya tengo pagado el ITP</span>
                                 </div>
                             </label>
+                        </div>
+                        
+                        <!-- Detalle del ITP (inline ahora, no modal) - Diseño mejorado -->
+                        <div id="itp-detail-container" class="itp-detail-section" style="display:none;">
+                            <h3>Cálculo del Impuesto de Transmisiones</h3>
+                            
+                            <p class="info-description">El <strong>Impuesto sobre Transmisiones Patrimoniales (ITP)</strong> es un tributo que el comprador debe abonar a Hacienda en los cambios de titularidad de un vehículo entre particulares. Se calcula en base al mayor valor entre el precio de compra y el valor fiscal con depreciación.</p>
+                            
+                            <div class="calculation-detail">
+                                <div class="calculation-section">
+                                    <h4>Datos del vehículo</h4>
+                                    <div class="calculation-item">
+                                        <span>Valor fiscal base:</span>
+                                        <span id="base_value_display">0 €</span>
+                                    </div>
+                                    <div class="calculation-item">
+                                        <span>Antigüedad del vehículo:</span>
+                                        <span id="vehicle_age_display">0 años</span>
+                                    </div>
+                                    <div class="calculation-item">
+                                        <span>Porcentaje de depreciación:</span>
+                                        <span id="depreciation_percentage_display">0 %</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="calculation-section">
+                                    <h4>Cálculo de la base imponible</h4>
+                                    <div class="calculation-item">
+                                        <span>Valor fiscal con depreciación:</span>
+                                        <span id="fiscal_value_display">0 €</span>
+                                    </div>
+                                    <div class="calculation-item">
+                                        <span>Precio de compra declarado:</span>
+                                        <span id="purchase_price_display">0 €</span>
+                                    </div>
+                                    <div class="calculation-item highlight-item">
+                                        <span>Base imponible (mayor valor):</span>
+                                        <span id="tax_base_display">0 €</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="calculation-section">
+                                    <h4>Impuesto aplicable</h4>
+                                    <div class="calculation-item">
+                                        <span>Tipo impositivo aplicado:</span>
+                                        <span id="tax_rate_display">0 %</span>
+                                    </div>
+                                    
+                                    <div class="calculation-result">
+                                        <span>ITP a pagar:</span>
+                                        <span id="calculated_itp_display">0 €</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Elemento adicional para mostrar servicios seleccionados -->
+                                <div id="selected-services-summary" style="display:none; margin-top:15px; padding:12px; background-color:rgba(var(--primary), 0.05); border-radius:var(--radius-md); text-align:center; color:rgb(var(--primary-dark));"></div>
+                            </div>
                         </div>
                     </div>
                     
@@ -5114,10 +5078,6 @@ function transferencia_barco_shortcode() {
         let finalAmount = BASE_TRANSFER_PRICE;
         let purchaseDetails = {};
 
-        // Datos de fabricantes y modelos desde PHP
-        const datos_fabricantes = <?php echo json_encode($datos_fabricantes); ?>;
-        let selectedModelPrice = 0;
-
         // Referencias a elementos del DOM
         const formPages = document.querySelectorAll('.form-page');
         const navLinks = document.querySelectorAll('.nav-link');
@@ -5558,67 +5518,12 @@ function transferencia_barco_shortcode() {
             return { itp, extraFee };
         }
 
-        // Actualizar valores ITP en el sidebar
-        function updateSidebarITP() {
-            const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
-            const baseValue = selectedModelPrice || 0;
-            const matriculationDate = matriculationDateInput.value;
-            let vehicleAge = 0;
-            let depreciationPercentage = 0;
-
-            if (matriculationDate) {
-                const matriculationYear = new Date(matriculationDate).getFullYear();
-                const currentYear = new Date().getFullYear();
-                vehicleAge = currentYear - matriculationYear;
-                depreciationPercentage = Math.min(vehicleAge * 5, 50);
-            }
-
-            const depreciationFactor = 1 - (depreciationPercentage / 100);
-            const fiscalValue = baseValue * depreciationFactor;
-            const taxableBase = Math.max(purchasePrice, fiscalValue);
-            const taxRate = parseFloat(document.querySelector('#region option:checked')?.dataset.rate || 4);
-            const itp = currentTransferTax || 0;
-
-            // IDs del sidebar
-            const sidebarBaseValue = document.getElementById('sidebar-base-value');
-            const sidebarVehicleAge = document.getElementById('sidebar-vehicle-age');
-            const sidebarDepreciation = document.getElementById('sidebar-depreciation');
-            const sidebarFiscalValue = document.getElementById('sidebar-fiscal-value');
-            const sidebarPurchasePrice = document.getElementById('sidebar-purchase-price');
-            const sidebarTaxableBase = document.getElementById('sidebar-taxable-base');
-            const sidebarTaxRate = document.getElementById('sidebar-tax-rate');
-            const sidebarItpAmount = document.getElementById('sidebar-itp-amount');
-
-            if (sidebarBaseValue) sidebarBaseValue.textContent = baseValue > 0 ? baseValue.toFixed(2) + '€' : '0€';
-            if (sidebarVehicleAge) sidebarVehicleAge.textContent = vehicleAge + ' años';
-            if (sidebarDepreciation) sidebarDepreciation.textContent = depreciationPercentage + '%';
-            if (sidebarFiscalValue) sidebarFiscalValue.textContent = fiscalValue > 0 ? fiscalValue.toFixed(2) + '€' : '0€';
-            if (sidebarPurchasePrice) sidebarPurchasePrice.textContent = purchasePrice.toFixed(2) + '€';
-            if (sidebarTaxableBase) sidebarTaxableBase.textContent = taxableBase.toFixed(2) + '€';
-            if (sidebarTaxRate) sidebarTaxRate.textContent = taxRate + '%';
-            if (sidebarItpAmount) sidebarItpAmount.textContent = itp.toFixed(2) + '€';
-        }
-
-        // Actualizar desglose de tramitación en sidebar
-        function updateSidebarTramitacion(tasasGestion, honorarios, iva, total) {
-            const sidebarTasasGestion = document.getElementById('sidebar-tasas-gestion');
-            const sidebarHonorarios = document.getElementById('sidebar-honorarios');
-            const sidebarIva = document.getElementById('sidebar-iva');
-            const sidebarTotalAmount = document.getElementById('sidebar-total-amount');
-
-            if (sidebarTasasGestion) sidebarTasasGestion.textContent = tasasGestion.toFixed(2) + '€';
-            if (sidebarHonorarios) sidebarHonorarios.textContent = honorarios.toFixed(2) + '€';
-            if (sidebarIva) sidebarIva.textContent = iva.toFixed(2) + '€';
-            if (sidebarTotalAmount) sidebarTotalAmount.textContent = total.toFixed(2) + '€';
-        }
-
         function updateTransferTaxDisplay() {
             const { itp, extraFee } = calculateTransferTax();
             currentTransferTax = itp;
             currentExtraFee = extraFee;
             transferTaxDisplay.textContent = itp.toFixed(2) + ' €';
             extraFeeIncludesDisplay.textContent = extraFee.toFixed(2) + ' €';
-            updateSidebarITP();
         }
 
         // Actualizar total y aplicar descuentos
@@ -5817,11 +5722,7 @@ function transferencia_barco_shortcode() {
             if (typeof calculateTransferTax === 'function') {
                 calculateTransferTax();
             }
-
-            // Actualizar sidebar con desglose de tramitación
-            const tasasMasHonorarios = baseTasas + discountedHonorarios;
-            updateSidebarTramitacion(tasasMasHonorarios, discountedHonorarios, newIva, totalGestion);
-
+            
             // Actualizar contenido HTML para servicios adicionales seleccionados
             const servicesSummary = document.getElementById('selected-services-summary');
             if (servicesSummary && selectedServiceLabels.length > 0) {
@@ -5830,7 +5731,7 @@ function transferencia_barco_shortcode() {
             } else if (servicesSummary) {
                 servicesSummary.style.display = 'none';
             }
-
+            
             if (typeof updatePaymentSummary === 'function') {
                 updatePaymentSummary();
             }
@@ -6925,6 +6826,22 @@ function transferencia_barco_shortcode() {
             }
         });
 
+
+        document.getElementById('info-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            const itpDetailContainer = document.getElementById('itp-detail-container');
+            const infoButtonText = document.getElementById('info-button-text');
+            const isVisible = itpDetailContainer.style.display !== 'none';
+            
+            if (isVisible) {
+                itpDetailContainer.style.display = 'none';
+                infoButtonText.textContent = 'Ver detalle del cálculo del ITP';
+            } else {
+                itpDetailContainer.style.display = 'block';
+                infoButtonText.textContent = 'Ocultar detalle del cálculo';
+            }
+        });
+
         const docPopup = document.getElementById('document-popup');
         const closePopup = docPopup.querySelector('.close-popup');
         const exampleImage = document.getElementById('document-example-image');
@@ -7020,10 +6937,8 @@ function transferencia_barco_shortcode() {
             if (!noEncuentroCheckbox.checked) {
                 const selectedOption = this.options[this.selectedIndex];
                 basePrice = selectedOption ? parseFloat(selectedOption.dataset.price) : 0;
-                selectedModelPrice = basePrice; // Sincronizar con selectedModelPrice
             } else {
                 basePrice = 0;
-                selectedModelPrice = 0;
             }
             onInputChange();
         });
@@ -7221,20 +7136,6 @@ function transferencia_barco_shortcode() {
                 this.disabled = false;
             }
         });
-
-        // Función para toggle del desglose ITP
-        window.toggleITPDetails = function() {
-            const content = document.getElementById('itp-details-content');
-            const icon = document.getElementById('itp-toggle-icon');
-
-            if (content.style.display === 'none') {
-                content.style.display = 'block';
-                icon.style.transform = 'rotate(180deg)';
-            } else {
-                content.style.display = 'none';
-                icon.style.transform = 'rotate(0deg)';
-            }
-        };
 
         // Inicialización
         currentPage = 0; // Empezamos en la página de vehículo (primera página del formulario)
