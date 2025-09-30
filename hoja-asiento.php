@@ -1841,11 +1841,7 @@ function hoja_asiento_form_shortcode() {
                 // Validación especial para página de documentos
                 if (currentPage.id === 'page-documents') {
                     if (fileStorage['upload-dni-propietario'].length === 0) {
-                        alert('Por favor, suba al menos un archivo de DNI del Propietario.');
-                        return false;
-                    }
-                    if (fileStorage['upload-documento-barco'].length === 0) {
-                        alert('Por favor, suba al menos un documento de la embarcación (Registro Marítimo o Hoja de Asiento).');
+                        alert('Por favor, suba al menos un archivo de DNI/NIE.');
                         return false;
                     }
                     return true;
