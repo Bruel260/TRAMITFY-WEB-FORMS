@@ -2395,87 +2395,213 @@ function navigation_permit_renewal_form_shortcode() {
 // FUNCIÓN: Enviar formulario a TRAMITFY y emails
 // ==========================================
 function send_navigation_permit_to_tramitfy() {
-    // Preparar datos del formulario
-    $formData = array(
-        'customerName' => sanitize_text_field($_POST['customer_name']),
-        'customerDni' => sanitize_text_field($_POST['customer_dni']),
-        'customerEmail' => sanitize_email($_POST['customer_email']),
-        'customerPhone' => sanitize_text_field($_POST['customer_phone']),
-        'renewalType' => sanitize_text_field($_POST['renewal_type']),
-        'finalAmount' => floatval($_POST['final_amount']),
-        'paymentIntentId' => sanitize_text_field($_POST['payment_intent_id']),
-        'hasSignature' => sanitize_text_field($_POST['has_signature']),
-        'couponCode' => sanitize_text_field($_POST['coupon_code']),
-        'termsAccept' => sanitize_text_field($_POST['terms_accept'])
-    );
+    try {
+        $uploadDir = wp_upload_dir();
+        $baseUploadPath = $uploadDir['basedir'] . '/tramitfy-permiso-navegacion/';
 
-    // Preparar archivos
-    $uploadedFiles = array();
-    if (!empty($_FILES)) {
-        foreach ($_FILES as $fieldName => $file) {
-            if (is_array($file['name'])) {
-                for ($i = 0; $i < count($file['name']); $i++) {
-                    if ($file['error'][$i] === UPLOAD_ERR_OK) {
-                        $uploadedFiles[] = array(
-                            'fieldname' => $fieldName,
-                            'name' => $file['name'][$i],
-                            'tmp_name' => $file['tmp_name'][$i],
-                            'type' => $file['type'][$i],
-                            'size' => $file['size'][$i]
-                        );
+        if (!file_exists($baseUploadPath)) {
+            mkdir($baseUploadPath, 0755, true);
+        }
+
+        $timestamp = time();
+
+        // Preparar datos del formulario
+        $formData = array(
+            'customerName' => sanitize_text_field($_POST['customer_name']),
+            'customerDni' => sanitize_text_field($_POST['customer_dni']),
+            'customerEmail' => sanitize_email($_POST['customer_email']),
+            'customerPhone' => sanitize_text_field($_POST['customer_phone']),
+            'renewalType' => sanitize_text_field($_POST['renewal_type']),
+            'finalAmount' => floatval($_POST['final_amount']),
+            'paymentIntentId' => sanitize_text_field($_POST['payment_intent_id']),
+            'hasSignature' => sanitize_text_field($_POST['has_signature']),
+            'couponCode' => sanitize_text_field($_POST['coupon_code']),
+            'termsAccept' => sanitize_text_field($_POST['terms_accept'])
+        );
+
+        // Guardar firma si existe
+        $signaturePath = null;
+        if (isset($_POST['signature_data']) && !empty($_POST['signature_data'])) {
+            $signatureData = $_POST['signature_data'];
+            $signatureData = str_replace('data:image/png;base64,', '', $signatureData);
+            $signatureData = str_replace(' ', '+', $signatureData);
+            $signatureDecoded = base64_decode($signatureData);
+
+            $signatureFilename = $timestamp . '-signature.png';
+            $signaturePath = $baseUploadPath . $signatureFilename;
+            file_put_contents($signaturePath, $signatureDecoded);
+            error_log("✅ Firma guardada: $signaturePath");
+        }
+
+        // Generar PDF de autorización con FPDF
+        require_once get_template_directory() . '/vendor/fpdf/fpdf.php';
+        $pdf = new FPDF();
+        $pdf->AddPage();
+        $pdf->SetFont('Arial', 'B', 14);
+
+        // Título y fecha
+        $pdf->Cell(0, 10, utf8_decode('AUTORIZACIÓN DE REPRESENTACIÓN'), 0, 1, 'C');
+        $pdf->SetFont('Arial', '', 10);
+        $pdf->Cell(0, 6, 'Fecha: ' . date('d/m/Y'), 0, 1, 'R');
+        $pdf->Ln(6);
+
+        // Información de la autorización
+        $pdf->SetFont('Arial', 'B', 12);
+        $pdf->Cell(0, 10, utf8_decode('DATOS DEL AUTORIZANTE'), 0, 1, 'L');
+        $pdf->SetFont('Arial', '', 11);
+
+        $pdf->Cell(40, 8, 'Nombre completo:', 0, 0);
+        $pdf->Cell(0, 8, utf8_decode($formData['customerName']), 0, 1);
+
+        $pdf->Cell(40, 8, 'DNI/NIE:', 0, 0);
+        $pdf->Cell(0, 8, $formData['customerDni'], 0, 1);
+        $pdf->Ln(5);
+
+        // Texto de la autorización
+        $pdf->SetFont('Arial', 'B', 12);
+        $pdf->Cell(0, 10, utf8_decode('AUTORIZACIÓN'), 0, 1, 'L');
+        $pdf->SetFont('Arial', '', 11);
+
+        $renewalTypes = array(
+            'renovacion' => 'renovación estándar',
+            'perdida' => 'renovación por pérdida',
+            'deterioro' => 'renovación por deterioro',
+            'robo' => 'renovación por robo'
+        );
+        $renewalTypeText = isset($renewalTypes[$formData['renewalType']]) ? $renewalTypes[$formData['renewalType']] : 'renovación';
+
+        $customerName = $formData['customerName'];
+        $customerDni = $formData['customerDni'];
+
+        $texto = "Por la presente, yo $customerName, con DNI/NIE $customerDni, AUTORIZO a Tramitfy S.L. con CIF B55388557 a actuar como mi representante legal para la tramitación y gestión del procedimiento de $renewalTypeText de permiso de navegación ante las autoridades competentes.";
+        $pdf->MultiCell(0, 6, utf8_decode($texto), 0, 'J');
+        $pdf->Ln(3);
+
+        $texto2 = "Doy conformidad para que Tramitfy S.L. pueda presentar y recoger cuanta documentación sea necesaria, subsanar defectos, pagar tasas y realizar cuantas actuaciones sean precisas para la correcta finalización del procedimiento.";
+        $pdf->MultiCell(0, 6, utf8_decode($texto2), 0, 'J');
+        $pdf->Ln(10);
+
+        // Firma
+        if ($signaturePath && file_exists($signaturePath)) {
+            $pdf->Cell(0, 8, utf8_decode('Firma del autorizante:'), 0, 1);
+            $pdf->Image($signaturePath, 30, $pdf->GetY(), 50, 30);
+            $pdf->Ln(35);
+        }
+
+        // Pie de página legal
+        $pdf->SetFont('Arial', 'I', 8);
+        $pdf->MultiCell(0, 4, utf8_decode('En cumplimiento del Reglamento (UE) 2016/679 de Protección de Datos, le informamos que sus datos personales serán tratados por Tramitfy S.L. con la finalidad de gestionar su solicitud. Puede ejercer sus derechos de acceso, rectificación, supresión y portabilidad dirigiéndose a info@tramitfy.es'), 0, 'J');
+
+        $authorizationPdfName = 'autorizacion_' . $timestamp . '.pdf';
+        $authorizationPdfPath = $baseUploadPath . $authorizationPdfName;
+        $pdf->Output('F', $authorizationPdfPath);
+
+        error_log("✅ PDF de autorización generado: $authorizationPdfPath");
+
+        // Procesar archivos adjuntos usando wp_handle_upload
+        add_filter('upload_mimes', function($mimes) {
+            $mimes['pdf'] = 'application/pdf';
+            $mimes['jpg|jpeg'] = 'image/jpeg';
+            $mimes['png'] = 'image/png';
+            return $mimes;
+        });
+
+        $uploadedFiles = array();
+        error_log("=== PERMISO NAVEGACIÓN: Procesando archivos ===");
+
+        if (!empty($_FILES)) {
+            foreach ($_FILES as $fieldName => $file) {
+                if (is_array($file['name'])) {
+                    $file_count = count($file['name']);
+                    for ($i = 0; $i < $file_count; $i++) {
+                        if ($file['error'][$i] === UPLOAD_ERR_OK) {
+                            $file_array = array(
+                                'name'     => $file['name'][$i],
+                                'type'     => $file['type'][$i],
+                                'tmp_name' => $file['tmp_name'][$i],
+                                'error'    => $file['error'][$i],
+                                'size'     => $file['size'][$i]
+                            );
+                            $uploaded_file = wp_handle_upload($file_array, ['test_form' => false]);
+
+                            if (isset($uploaded_file['file'])) {
+                                $uploadedFiles[] = array(
+                                    'fieldname' => $fieldName,
+                                    'path' => $uploaded_file['file'],
+                                    'name' => $file['name'][$i],
+                                    'type' => $file['type'][$i]
+                                );
+                                error_log("✅ Archivo agregado: {$file['name'][$i]}");
+                            } else {
+                                error_log("❌ wp_handle_upload falló: " . (isset($uploaded_file['error']) ? $uploaded_file['error'] : 'sin error'));
+                            }
+                        }
                     }
-                }
-            } else {
-                if ($file['error'] === UPLOAD_ERR_OK) {
-                    $uploadedFiles[] = array(
-                        'fieldname' => $fieldName,
-                        'name' => $file['name'],
-                        'tmp_name' => $file['tmp_name'],
-                        'type' => $file['type'],
-                        'size' => $file['size']
-                    );
+                } else {
+                    if ($file['error'] === UPLOAD_ERR_OK) {
+                        $uploaded_file = wp_handle_upload($file, ['test_form' => false]);
+
+                        if (isset($uploaded_file['file'])) {
+                            $uploadedFiles[] = array(
+                                'fieldname' => $fieldName,
+                                'path' => $uploaded_file['file'],
+                                'name' => $file['name'],
+                                'type' => $file['type']
+                            );
+                            error_log("✅ Archivo agregado: {$file['name']}");
+                        } else {
+                            error_log("❌ wp_handle_upload falló: " . (isset($uploaded_file['error']) ? $uploaded_file['error'] : 'sin error'));
+                        }
+                    }
                 }
             }
         }
-    }
 
-    // Enviar al webhook de Node.js usando CURL (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
-    $webhookUrl = 'https://46-202-128-35.sslip.io/api/herramientas/permiso-navegacion/webhook';
+        // Enviar al webhook de Node.js usando CURLFile
+        $webhookUrl = 'https://46-202-128-35.sslip.io/api/herramientas/permiso-navegacion/webhook';
 
-    $boundary = '----WebKitFormBoundary' . uniqid();
-    $postBody = '';
+        // Preparar datos como strings
+        $form_data = array();
+        foreach ($formData as $key => $value) {
+            $form_data[$key] = (string)$value;
+        }
 
-    // Agregar campos de formulario
-    foreach ($formData as $key => $value) {
-        $postBody .= "--{$boundary}\r\n";
-        $postBody .= "Content-Disposition: form-data; name=\"{$key}\"\r\n\r\n";
-        $postBody .= $value . "\r\n";
-    }
+        // Agregar PDF de autorización
+        if (file_exists($authorizationPdfPath)) {
+            $form_data['autorizacion_pdf'] = new CURLFile($authorizationPdfPath, 'application/pdf', $authorizationPdfName);
+            error_log("✅ PDF autorización agregado: $authorizationPdfName");
+        }
 
-    // Agregar archivos
-    foreach ($uploadedFiles as $file) {
-        $postBody .= "--{$boundary}\r\n";
-        $postBody .= "Content-Disposition: form-data; name=\"files[]\"; filename=\"{$file['name']}\"\r\n";
-        $postBody .= "Content-Type: application/octet-stream\r\n\r\n";
-        $postBody .= file_get_contents($file['tmp_name']) . "\r\n";
-    }
+        // Agregar firma
+        if ($signaturePath && file_exists($signaturePath)) {
+            $form_data['firma'] = new CURLFile($signaturePath, 'image/png', basename($signaturePath));
+            error_log("✅ Firma agregada");
+        }
 
-    $postBody .= "--{$boundary}--\r\n";
+        // Agregar archivos adjuntos
+        foreach ($uploadedFiles as $file) {
+            if (file_exists($file['path'])) {
+                // Usar nombre del campo para categorización
+                if (strpos($file['fieldname'], 'permiso') !== false || strpos($file['fieldname'], 'documento') !== false) {
+                    $form_data['permiso_caducado'] = new CURLFile($file['path'], $file['type'], $file['name']);
+                    error_log("✅ Permiso caducado agregado: {$file['name']}");
+                } else {
+                    $form_data[$file['fieldname']] = new CURLFile($file['path'], $file['type'], $file['name']);
+                    error_log("✅ Archivo agregado ({$file['fieldname']}): {$file['name']}");
+                }
+            }
+        }
 
-    // Usar CURL en lugar de wp_remote_post (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $webhookUrl);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $postBody);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: multipart/form-data; boundary=' . $boundary,
-        'Content-Length: ' . strlen($postBody)
-    ]);
+        // Usar CURL con CURLFile
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $webhookUrl);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $form_data);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
 
     $responseBody = json_decode($response, true);
 
@@ -2779,15 +2905,20 @@ function send_navigation_permit_to_tramitfy() {
     </html>
     ";
 
-    wp_mail($adminEmail, $adminSubject, $adminMessage, $headers);
+        wp_mail($adminEmail, $adminSubject, $adminMessage, $headers);
 
-    // Responder con éxito
-    wp_send_json([
-        'success' => true,
-        'id' => $tramiteDbId,
-        'tramiteId' => $tramiteId,
-        'trackingUrl' => $trackingUrl
-    ]);
+        // Responder con éxito
+        wp_send_json([
+            'success' => true,
+            'id' => $tramiteDbId,
+            'tramiteId' => $tramiteId,
+            'trackingUrl' => $trackingUrl
+        ]);
+
+    } catch (Exception $e) {
+        error_log('❌ Error in send_navigation_permit_to_tramitfy: ' . $e->getMessage());
+        wp_send_json(['success' => false, 'error' => $e->getMessage()], 500);
+    }
 }
 
 // Función para crear Payment Intent de Stripe - IGUAL QUE RECUPERAR DOCUMENTACIÓN

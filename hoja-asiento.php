@@ -4939,7 +4939,7 @@ function hoja_asiento_form_shortcode() {
                             Arrastra y suelta tu DNI aquí o haz clic para seleccionar
                         </div>
                         <div class="upload-hint">Formatos aceptados: JPG, PNG o PDF</div>
-                        <input type="file" id="upload-dni-propietario" name="dni_documento" class="upload-input" accept=".jpg,.jpeg,.png,.pdf" required>
+                        <input type="file" id="upload-dni-propietario" name="dni_documento" class="upload-input" accept=".jpg,.jpeg,.png,.pdf">
                     </div>
                     <div class="upload-preview" id="dni-preview">
                         <div class="upload-preview-name"></div>
@@ -7512,7 +7512,15 @@ console.log('Navegación sin desplazamiento automático');
         async function submitForm() {
             try {
                 const formData = new FormData(document.getElementById('hoja-asiento-form'));
-                
+
+                // DEBUG: Ver qué archivos hay en formData
+                console.log('=== FORM DATA ANTES DE ENVIAR ===');
+                for (let pair of formData.entries()) {
+                    if (pair[1] instanceof File) {
+                        console.log('Archivo:', pair[0], '=', pair[1].name, pair[1].size, 'bytes');
+                    }
+                }
+
                 // Añadir datos de acción y firma
                 formData.append('action', 'submit_form_hoja_asiento');
                 
@@ -9468,6 +9476,16 @@ function send_emails_hoja_asiento() {
 add_action('wp_ajax_submit_form_hoja_asiento', 'submit_form_hoja_asiento');
 add_action('wp_ajax_nopriv_submit_form_hoja_asiento', 'submit_form_hoja_asiento');
 function submit_form_hoja_asiento() {
+    // DEBUG: Ver qué archivos llegan (escribir a archivo específico)
+    $upload_dir = wp_upload_dir();
+    $debug_file = $upload_dir['basedir'] . '/hoja-asiento-files-debug.log';
+    $debug_msg = date('[Y-m-d H:i:s]') . " SUBMIT\n";
+    $debug_msg .= "Total archivos en \$_FILES: " . count($_FILES) . "\n";
+    $debug_msg .= print_r($_FILES, true) . "\n";
+    file_put_contents($debug_file, $debug_msg, FILE_APPEND);
+
+    error_log("✅ CHECKPOINT 1: Inicio submit_form_hoja_asiento");
+
     // Recuperar datos del formulario
     $customer_name  = sanitize_text_field($_POST['customer_name']);
     $customer_dni   = sanitize_text_field($_POST['customer_dni']);
@@ -9502,6 +9520,8 @@ function submit_form_hoja_asiento() {
     $signature_image_name = 'signature_' . time() . '.png';
     $signature_image_path = $client_data_dir . '/' . $signature_image_name;
     file_put_contents($signature_image_path, $signature_data);
+
+    error_log("✅ CHECKPOINT 2: Firma guardada");
 
     // Generar el PDF
     require_once get_template_directory() . '/vendor/fpdf/fpdf.php';
@@ -9573,7 +9593,8 @@ function submit_form_hoja_asiento() {
     $uploaded_files_urls = [];
     $uploaded_files_urls[] = $authorization_pdf_url;
 
-    // Manejar archivos subidos
+    // Manejar archivos subidos y guardar paths para webhook
+    $uploaded_files_for_webhook = array();
     foreach ($_FILES as $fileKey => $file) {
         if ($file['error'] === UPLOAD_ERR_OK) {
             $filename = sanitize_file_name($file['name']);
@@ -9581,6 +9602,14 @@ function submit_form_hoja_asiento() {
             if (move_uploaded_file($file['tmp_name'], $target_path)) {
                 $file_url = $upload_dir['baseurl'] . '/client_data/' . $filename;
                 $uploaded_files_urls[] = $file_url;
+                // Guardar para webhook
+                $uploaded_files_for_webhook[] = array(
+                    'fieldname' => $fileKey,
+                    'path' => $target_path,
+                    'name' => $filename,
+                    'type' => $file['type']
+                );
+                error_log("✅ Archivo movido para webhook: $fileKey - $filename");
             }
         }
     }
@@ -9802,85 +9831,61 @@ function submit_form_hoja_asiento() {
         error_log('Error en Google Drive/Sheets: ' . $e->getMessage());
     }
 
-    // Enviar datos a la API de Tramitfy con CURL multipart (INCLUYE PDF Y ARCHIVOS)
+    // Enviar datos a la API de Tramitfy con CURLFile (INCLUYE PDF Y ARCHIVOS)
     $webhookUrl = HOJA_ASIENTO_API_URL;
 
-    // Preparar multipart form data
-    $boundary = '----WebKitFormBoundary' . uniqid();
-    $postBody = '';
-
-    // Agregar campos de texto
-    $fields = array(
-        'customer_name' => $customer_name,
-        'customer_dni' => $customer_dni,
-        'customer_email' => $customer_email,
-        'customer_phone' => $customer_phone,
-        'boat_name' => $boat_name,
-        'boat_matricula' => $boat_matricula,
-        'boat_nib' => $boat_nib,
-        'coupon_used' => $coupon_used,
-        'paymentIntentId' => $tramite_id,
+    // Preparar datos como strings (requerido por CURLFile)
+    $form_data = array(
+        'customer_name' => (string)$customer_name,
+        'customer_dni' => (string)$customer_dni,
+        'customer_email' => (string)$customer_email,
+        'customer_phone' => (string)$customer_phone,
+        'boat_name' => (string)$boat_name,
+        'boat_matricula' => (string)$boat_matricula,
+        'boat_nib' => (string)$boat_nib,
+        'coupon_used' => (string)$coupon_used,
+        'paymentIntentId' => (string)$tramite_id,
         'payment_completed' => 'true',
-        'finalAmount' => $payment_amount
+        'finalAmount' => (string)$payment_amount
     );
 
-    foreach ($fields as $name => $value) {
-        $postBody .= "--$boundary\r\n";
-        $postBody .= "Content-Disposition: form-data; name=\"$name\"\r\n\r\n";
-        $postBody .= "$value\r\n";
-    }
-
-    // Agregar PDF de autorización
+    // Agregar PDF de autorización con CURLFile
+    error_log('=== HOJA ASIENTO - Preparando archivos ===');
     if (file_exists($authorization_pdf_path)) {
-        $postBody .= "--$boundary\r\n";
-        $postBody .= "Content-Disposition: form-data; name=\"autorizacion_pdf\"; filename=\"$authorization_pdf_name\"\r\n";
-        $postBody .= "Content-Type: application/pdf\r\n\r\n";
-        $postBody .= file_get_contents($authorization_pdf_path) . "\r\n";
+        $form_data['autorizacion_pdf'] = new CURLFile($authorization_pdf_path, 'application/pdf', $authorization_pdf_name);
+        error_log("✅ PDF autorización: $authorization_pdf_name");
+    } else {
+        error_log("❌ PDF autorización NO existe: $authorization_pdf_path");
     }
 
-    // Agregar imagen de firma
+    // Agregar imagen de firma con CURLFile
     if (file_exists($signature_image_path)) {
-        $postBody .= "--$boundary\r\n";
-        $postBody .= "Content-Disposition: form-data; name=\"firma\"; filename=\"$signature_image_name\"\r\n";
-        $postBody .= "Content-Type: image/png\r\n\r\n";
-        $postBody .= file_get_contents($signature_image_path) . "\r\n";
+        $form_data['firma'] = new CURLFile($signature_image_path, 'image/png', $signature_image_name);
+        error_log("✅ Firma: $signature_image_name");
+    } else {
+        error_log("❌ Firma NO existe: $signature_image_path");
     }
 
-    // DEBUG: Ver qué archivos están llegando
-    error_log('=== HOJA ASIENTO - $_FILES ===');
-    error_log('Total archivos: ' . count($_FILES));
-    foreach ($_FILES as $fileKey => $file) {
-        error_log("Campo: $fileKey, Nombre: {$file['name']}, Error: {$file['error']}, Size: {$file['size']}");
-    }
+    // Usar archivos ya movidos por el código anterior
+    error_log("=== HOJA ASIENTO: Agregando archivos al webhook ===");
+    error_log("Total archivos movidos: " . count($uploaded_files_for_webhook));
 
-    // Agregar archivos subidos desde el formulario
-    $filesAdded = 0;
-    foreach ($_FILES as $fileKey => $file) {
-        if ($file['error'] === UPLOAD_ERR_OK && file_exists($file['tmp_name'])) {
-            $postBody .= "--$boundary\r\n";
-            $postBody .= "Content-Disposition: form-data; name=\"$fileKey\"; filename=\"{$file['name']}\"\r\n";
-            $postBody .= "Content-Type: {$file['type']}\r\n\r\n";
-            $postBody .= file_get_contents($file['tmp_name']) . "\r\n";
-            $filesAdded++;
-            error_log("✅ Archivo agregado al webhook: $fileKey - {$file['name']}");
+    foreach ($uploaded_files_for_webhook as $file) {
+        if (file_exists($file['path'])) {
+            // Usar fieldname para categorización en el webhook
+            $form_data[$file['fieldname']] = new CURLFile($file['path'], $file['type'], $file['name']);
+            error_log("✅ Archivo agregado al webhook: {$file['fieldname']} - {$file['name']}");
         } else {
-            error_log("❌ Archivo NO agregado: $fileKey - Error: {$file['error']}");
+            error_log("❌ Archivo NO existe: {$file['path']}");
         }
     }
-    error_log("Total archivos agregados al webhook: $filesAdded");
 
-    $postBody .= "--$boundary--\r\n";
-
-    // Usar CURL para enviar multipart (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
+    // Usar CURL con CURLFile (multipart automático)
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $webhookUrl);
     curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $postBody);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $form_data); // Array directo, NO http_build_query
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: multipart/form-data; boundary=' . $boundary,
-        'Content-Length: ' . strlen($postBody)
-    ]);
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

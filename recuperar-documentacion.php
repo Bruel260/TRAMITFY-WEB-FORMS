@@ -102,6 +102,7 @@ function rdoc_send_to_tramitfy() {
 
         // Guardar la firma como imagen
         $signatureFile = null;
+        $signaturePath = null;
         if (isset($formData['signatureData']) && !empty($formData['signatureData'])) {
             $signatureData = $formData['signatureData'];
             $signatureData = str_replace('data:image/png;base64,', '', $signatureData);
@@ -122,25 +123,110 @@ function rdoc_send_to_tramitfy() {
             }
         }
 
+        // Generar PDF de autorización con FPDF
+        require_once get_template_directory() . '/vendor/fpdf/fpdf.php';
+        $pdf = new FPDF();
+        $pdf->AddPage();
+        $pdf->SetFont('Arial', 'B', 14);
+
+        // Título y fecha
+        $pdf->Cell(0, 10, utf8_decode('AUTORIZACIÓN DE REPRESENTACIÓN'), 0, 1, 'C');
+        $pdf->SetFont('Arial', '', 10);
+        $pdf->Cell(0, 6, 'Fecha: ' . date('d/m/Y'), 0, 1, 'R');
+        $pdf->Ln(6);
+
+        // Información de la autorización
+        $pdf->SetFont('Arial', 'B', 12);
+        $pdf->Cell(0, 10, utf8_decode('DATOS DEL AUTORIZANTE'), 0, 1, 'L');
+        $pdf->SetFont('Arial', '', 11);
+
+        $pdf->Cell(40, 8, 'Nombre completo:', 0, 0);
+        $pdf->Cell(0, 8, utf8_decode($formData['customerName']), 0, 1);
+
+        $pdf->Cell(40, 8, 'DNI/NIE:', 0, 0);
+        $pdf->Cell(0, 8, $formData['customerDNI'], 0, 1);
+        $pdf->Ln(5);
+
+        // Datos de la embarcación
+        $pdf->SetFont('Arial', 'B', 12);
+        $pdf->Cell(0, 10, utf8_decode('DATOS DE LA EMBARCACIÓN'), 0, 1, 'L');
+        $pdf->SetFont('Arial', '', 11);
+
+        $pdf->Cell(40, 8, 'Nombre:', 0, 0);
+        $pdf->Cell(0, 8, utf8_decode($formData['vesselName'] ?? 'No especificado'), 0, 1);
+
+        $pdf->Cell(40, 8, utf8_decode('Matrícula:'), 0, 0);
+        $pdf->Cell(0, 8, $formData['vesselRegistration'] ?? 'No especificada', 0, 1);
+        $pdf->Ln(5);
+
+        // Texto de la autorización
+        $pdf->SetFont('Arial', 'B', 12);
+        $pdf->Cell(0, 10, utf8_decode('AUTORIZACIÓN'), 0, 1, 'L');
+        $pdf->SetFont('Arial', '', 11);
+
+        $customerName = $formData['customerName'];
+        $customerDNI = $formData['customerDNI'];
+        $vesselName = $formData['vesselName'] ?? 'la embarcación indicada';
+        $vesselRegistration = $formData['vesselRegistration'] ?? 'matrícula indicada';
+
+        $texto = "Por la presente, yo $customerName, con DNI/NIE $customerDNI, AUTORIZO a Tramitfy S.L. con CIF B55388557 a actuar como mi representante legal para la tramitación y gestión del procedimiento de recuperación de documentación extraviada para '$vesselName' con matrícula: $vesselRegistration ante las autoridades competentes.";
+        $pdf->MultiCell(0, 6, utf8_decode($texto), 0, 'J');
+        $pdf->Ln(3);
+
+        $texto2 = "Doy conformidad para que Tramitfy S.L. pueda presentar y recoger cuanta documentación sea necesaria, subsanar defectos, pagar tasas y realizar cuantas actuaciones sean precisas para la correcta finalización del procedimiento.";
+        $pdf->MultiCell(0, 6, utf8_decode($texto2), 0, 'J');
+        $pdf->Ln(10);
+
+        // Firma
+        if ($signaturePath && file_exists($signaturePath)) {
+            $pdf->Cell(0, 8, utf8_decode('Firma del autorizante:'), 0, 1);
+            $pdf->Image($signaturePath, 30, $pdf->GetY(), 50, 30);
+            $pdf->Ln(35);
+        }
+
+        // Pie de página legal
+        $pdf->SetFont('Arial', 'I', 8);
+        $pdf->MultiCell(0, 4, utf8_decode('En cumplimiento del Reglamento (UE) 2016/679 de Protección de Datos, le informamos que sus datos personales serán tratados por Tramitfy S.L. con la finalidad de gestionar su solicitud. Puede ejercer sus derechos de acceso, rectificación, supresión y portabilidad dirigiéndose a info@tramitfy.es'), 0, 'J');
+
+        $authorizationPdfName = 'autorizacion_' . $timestamp . '.pdf';
+        $authorizationPdfPath = $baseUploadPath . $authorizationPdfName;
+        $pdf->Output('F', $authorizationPdfPath);
+
+        error_log("✅ PDF de autorización generado: $authorizationPdfPath");
+
+        // Procesar archivos adjuntos usando wp_handle_upload (igual que hoja-asiento)
+        add_filter('upload_mimes', function($mimes) {
+            $mimes['pdf'] = 'application/pdf';
+            $mimes['jpg|jpeg'] = 'image/jpeg';
+            $mimes['png'] = 'image/png';
+            return $mimes;
+        });
+
+        error_log("=== RECUPERAR DOC: Procesando archivos ===");
         if (isset($_FILES['dniDocumento']) && !empty($_FILES['dniDocumento']['name'][0])) {
-            foreach ($_FILES['dniDocumento']['name'] as $key => $filename) {
-                if ($_FILES['dniDocumento']['error'][$key] === UPLOAD_ERR_OK) {
-                    $tmpName = $_FILES['dniDocumento']['tmp_name'][$key];
-                    $size = $_FILES['dniDocumento']['size'][$key];
+            $file_count = count($_FILES['dniDocumento']['name']);
+            for ($i = 0; $i < $file_count; $i++) {
+                if ($_FILES['dniDocumento']['error'][$i] === UPLOAD_ERR_OK) {
+                    $file_array = array(
+                        'name'     => $_FILES['dniDocumento']['name'][$i],
+                        'type'     => $_FILES['dniDocumento']['type'][$i],
+                        'tmp_name' => $_FILES['dniDocumento']['tmp_name'][$i],
+                        'error'    => $_FILES['dniDocumento']['error'][$i],
+                        'size'     => $_FILES['dniDocumento']['size'][$i]
+                    );
+                    $uploaded_file = wp_handle_upload($file_array, ['test_form' => false]);
+                    error_log("Resultado wp_handle_upload: " . print_r($uploaded_file, true));
 
-                    $ext = pathinfo($filename, PATHINFO_EXTENSION);
-                    $safeName = sanitize_file_name($filename);
-                    $uniqueName = $timestamp . '-' . uniqid() . '-' . $safeName;
-
-                    $destination = $baseUploadPath . $uniqueName;
-
-                    if (move_uploaded_file($tmpName, $destination)) {
+                    if (isset($uploaded_file['file'])) {
                         $uploadedFiles[] = [
-                            'name' => $safeName,
-                            'filename' => $uniqueName,
-                            'size' => $size,
-                            'path' => $destination
+                            'name' => $_FILES['dniDocumento']['name'][$i],
+                            'filename' => basename($uploaded_file['file']),
+                            'size' => $_FILES['dniDocumento']['size'][$i],
+                            'path' => $uploaded_file['file']
                         ];
+                        error_log("✅ Archivo agregado: {$_FILES['dniDocumento']['name'][$i]}");
+                    } else {
+                        error_log("❌ wp_handle_upload falló: " . (isset($uploaded_file['error']) ? $uploaded_file['error'] : 'sin error'));
                     }
                 }
             }
@@ -162,33 +248,45 @@ function rdoc_send_to_tramitfy() {
             'timestamp' => date('c')
         ];
 
-        $boundary = '----WebKitFormBoundary' . uniqid();
-        $postBody = '';
+        // Preparar datos con CURLFile (multipart automático)
+        $form_data = array();
 
+        // Agregar campos como strings
         foreach ($postData as $key => $value) {
-            $postBody .= "--{$boundary}\r\n";
-            $postBody .= "Content-Disposition: form-data; name=\"{$key}\"\r\n\r\n";
-            $postBody .= $value . "\r\n";
+            $form_data[$key] = (string)$value;
         }
 
+        // Agregar PDF de autorización
+        if (file_exists($authorizationPdfPath)) {
+            $form_data['autorizacion_pdf'] = new CURLFile($authorizationPdfPath, 'application/pdf', $authorizationPdfName);
+            error_log("✅ PDF autorización agregado: $authorizationPdfName");
+        } else {
+            error_log("❌ PDF autorización NO existe: $authorizationPdfPath");
+        }
+
+        // Agregar archivos con CURLFile (mantener categorización)
+        $fileIndex = 0;
         foreach ($uploadedFiles as $file) {
-            $postBody .= "--{$boundary}\r\n";
-            $postBody .= "Content-Disposition: form-data; name=\"files[]\"; filename=\"{$file['filename']}\"\r\n";
-            $postBody .= "Content-Type: application/octet-stream\r\n\r\n";
-            $postBody .= file_get_contents($file['path']) . "\r\n";
+            if (file_exists($file['path'])) {
+                // Usar nombre específico para firma, dni_documento para el resto
+                if ($file['name'] === 'firma.png') {
+                    $form_data['firma'] = new CURLFile($file['path'], 'image/png', $file['filename']);
+                    error_log("✅ Firma agregada: {$file['filename']}");
+                } else {
+                    $form_data['dni_documento'] = new CURLFile($file['path'], mime_content_type($file['path']), $file['filename']);
+                    error_log("✅ DNI documento agregado: {$file['filename']}");
+                    $fileIndex++;
+                }
+            } else {
+                error_log("❌ Archivo NO existe: {$file['path']}");
+            }
         }
-
-        $postBody .= "--{$boundary}--\r\n";
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, TRAMITFY_API_URL);
         curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $postBody);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $form_data); // Array directo con CURLFile
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: multipart/form-data; boundary=' . $boundary,
-            'Content-Length: ' . strlen($postBody)
-        ]);
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
