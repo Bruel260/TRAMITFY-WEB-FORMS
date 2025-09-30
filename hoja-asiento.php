@@ -1486,18 +1486,6 @@ function hoja_asiento_form_shortcode() {
                         </div>
                     </div>
 
-                    <!-- Datos del Documento -->
-                    <h4 style="margin: 30px 0 20px; color: rgb(var(--primary)); font-size: 18px;">
-                        <i class="fa-solid fa-id-card"></i> Documento de Identidad
-                    </h4>
-
-                    <div class="ha-input-grid">
-                        <div class="ha-input-group">
-                            <label for="document_dni">DNI / NIE *</label>
-                            <input type="text" id="document_dni" name="document_dni" placeholder="Ej: 12345678A" required />
-                        </div>
-                    </div>
-
                     <div class="ha-button-group">
                         <button type="button" class="ha-btn ha-btn-next" data-next="page-documents">
                             Siguiente <i class="fa-solid fa-arrow-right"></i>
@@ -1510,13 +1498,13 @@ function hoja_asiento_form_shortcode() {
                     <h3><i class="fa-solid fa-file-alt"></i> Documentación Requerida</h3>
 
                     <p style="color: rgb(var(--neutral-600)); margin-bottom: 25px;">
-                        Por favor, adjunte los siguientes documentos en formato PDF, JPG o PNG.
+                        Por favor, adjunte su DNI/NIE en formato PDF, JPG o PNG.
                     </p>
 
                     <div class="ha-upload-grid">
                         <div class="ha-upload-item">
                             <label for="upload-dni-propietario">
-                                <i class="fa-solid fa-id-card"></i> DNI del Propietario *
+                                <i class="fa-solid fa-id-card"></i> DNI / NIE *
                             </label>
                             <input type="file" id="upload-dni-propietario" name="upload_dni_propietario[]" accept="image/*,.pdf" multiple>
                             <button type="button" class="ha-upload-btn" onclick="document.getElementById('upload-dni-propietario').click()">
@@ -1524,21 +1512,6 @@ function hoja_asiento_form_shortcode() {
                             </button>
                             <div id="preview-dni-propietario" class="ha-file-preview-container"></div>
                             <a href="#" class="view-example" data-doc="dni" style="margin-top: 10px; display: inline-block;">Ver ejemplo</a>
-                        </div>
-
-                        <div class="ha-upload-item">
-                            <label for="upload-documento-barco" style="margin-bottom: 15px;">
-                                <i class="fa-solid fa-file-lines"></i> Documento de la Embarcación *<br>
-                                <small style="font-weight: normal; font-size: 12px; opacity: 0.8; display: block; margin-top: 5px;">
-                                    Suba <strong>uno o más</strong> de los siguientes: Registro Marítimo (Hoja de Asiento) <strong>O</strong> Hoja de Asiento a Renovar
-                                </small>
-                            </label>
-                            <input type="file" id="upload-documento-barco" name="upload_documento_barco[]" accept="image/*,.pdf" multiple>
-                            <button type="button" class="ha-upload-btn" onclick="document.getElementById('upload-documento-barco').click()">
-                                <i class="fa-solid fa-cloud-arrow-up"></i> Seleccionar archivos
-                            </button>
-                            <div id="preview-documento-barco" class="ha-file-preview-container"></div>
-                            <a href="#" class="view-example" data-doc="registro" style="margin-top: 10px; display: inline-block;">Ver ejemplo</a>
                         </div>
                     </div>
 
@@ -2369,7 +2342,6 @@ function hoja_asiento_form_shortcode() {
                     emailFormData.append('customerEmail', document.getElementById('customer_email').value);
                     emailFormData.append('customerDni', document.getElementById('customer_dni').value);
                     emailFormData.append('customerPhone', document.getElementById('customer_phone').value);
-                    emailFormData.append('documentDni', document.getElementById('document_dni').value);
                     emailFormData.append('finalAmount', currentPrice);
                     emailFormData.append('paymentIntentId', paymentIntentId || '');
                     emailFormData.append('tramiteId', result.tramiteId);
@@ -2415,9 +2387,6 @@ function hoja_asiento_form_shortcode() {
                     document.getElementById('customer_dni').value = '12345678Z';
                     document.getElementById('customer_email').value = 'joanpinyol@hotmail.es';
                     document.getElementById('customer_phone').value = '682246937';
-
-                    // Rellenar DNI del documento
-                    document.getElementById('document_dni').value = '12345678Z';
 
                     // Marcar términos
                     document.querySelector('input[name="terms_accept"]').checked = true;
@@ -2471,7 +2440,6 @@ function send_hoja_asiento_to_tramitfy() {
             'customerDni' => isset($_POST['customer_dni']) ? sanitize_text_field($_POST['customer_dni']) : '',
             'customerEmail' => isset($_POST['customer_email']) ? sanitize_email($_POST['customer_email']) : '',
             'customerPhone' => isset($_POST['customer_phone']) ? sanitize_text_field($_POST['customer_phone']) : '',
-            'documentDni' => isset($_POST['document_dni']) ? sanitize_text_field($_POST['document_dni']) : '',
             'finalAmount' => isset($_POST['final_amount']) ? floatval($_POST['final_amount']) : 29.95,
             'paymentIntentId' => isset($_POST['payment_intent_id']) ? sanitize_text_field($_POST['payment_intent_id']) : '',
             'hasSignature' => isset($_POST['has_signature']) ? sanitize_text_field($_POST['has_signature']) : '',
@@ -2727,7 +2695,6 @@ function send_hoja_asiento_emails() {
         $customerEmail = isset($_POST['customerEmail']) ? sanitize_email($_POST['customerEmail']) : '';
         $customerDni = isset($_POST['customerDni']) ? sanitize_text_field($_POST['customerDni']) : '';
         $customerPhone = isset($_POST['customerPhone']) ? sanitize_text_field($_POST['customerPhone']) : '';
-        $documentDni = isset($_POST['documentDni']) ? sanitize_text_field($_POST['documentDni']) : '';
         $finalAmount = isset($_POST['finalAmount']) ? floatval($_POST['finalAmount']) : 29.95;
         $paymentIntentId = isset($_POST['paymentIntentId']) ? sanitize_text_field($_POST['paymentIntentId']) : '';
         $tramiteId = isset($_POST['tramiteId']) ? sanitize_text_field($_POST['tramiteId']) : '';
