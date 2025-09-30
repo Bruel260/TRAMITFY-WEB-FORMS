@@ -2607,51 +2607,51 @@ function send_navigation_permit_to_tramitfy() {
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
-    $responseBody = json_decode($response, true);
+        $responseBody = json_decode($response, true);
 
-    if (!$responseBody || !isset($responseBody['success']) || !$responseBody['success']) {
+        if (!$responseBody || !isset($responseBody['success']) || !$responseBody['success']) {
         wp_send_json(['success' => false, 'error' => 'Error al procesar el formulario'], 500);
         return;
-    }
+        }
 
-    // Obtener datos del webhook
-    $tramiteId = $responseBody['tramiteId'];
-    $tramiteDbId = $responseBody['id'];
-    $trackingUrl = "https://46-202-128-35.sslip.io/seguimiento/{$tramiteDbId}";
-    $dashboardUrl = "https://46-202-128-35.sslip.io/tramites/{$tramiteDbId}";
+        // Obtener datos del webhook
+        $tramiteId = $responseBody['tramiteId'];
+        $tramiteDbId = $responseBody['id'];
+        $trackingUrl = "https://46-202-128-35.sslip.io/seguimiento/{$tramiteDbId}";
+        $dashboardUrl = "https://46-202-128-35.sslip.io/tramites/{$tramiteDbId}";
 
-    // Calcular contabilidad
-    $precioTotal = $formData['finalAmount'];
-    $certificado = 15.00;
-    $emision = 8.00;
-    $totalTasas = $certificado + $emision;
-    $honorariosBrutos = $precioTotal - $totalTasas;
-    $honorariosNetos = round($honorariosBrutos / 1.21, 2);
-    $iva = round($honorariosBrutos - $honorariosNetos, 2);
+        // Calcular contabilidad
+        $precioTotal = $formData['finalAmount'];
+        $certificado = 15.00;
+        $emision = 8.00;
+        $totalTasas = $certificado + $emision;
+        $honorariosBrutos = $precioTotal - $totalTasas;
+        $honorariosNetos = round($honorariosBrutos / 1.21, 2);
+        $iva = round($honorariosBrutos - $honorariosNetos, 2);
 
-    // Texto del tipo de renovación
-    $renewalTypes = array(
+        // Texto del tipo de renovación
+        $renewalTypes = array(
         'renovacion' => 'Renovación estándar',
         'perdida' => 'Renovación por pérdida',
         'deterioro' => 'Renovación por deterioro',
         'robo' => 'Renovación por robo'
-    );
-    $renewalTypeText = isset($renewalTypes[$formData['renewalType']]) ? $renewalTypes[$formData['renewalType']] : 'Renovación estándar';
+        );
+        $renewalTypeText = isset($renewalTypes[$formData['renewalType']]) ? $renewalTypes[$formData['renewalType']] : 'Renovación estándar';
 
-    // ============================================
-    // EMAIL AL CLIENTE - DISEÑO IGUAL QUE RECUPERAR DOCUMENTACIÓN
-    // ============================================
-    $headers = array('Content-Type: text/html; charset=UTF-8');
+        // ============================================
+        // EMAIL AL CLIENTE - DISEÑO IGUAL QUE RECUPERAR DOCUMENTACIÓN
+        // ============================================
+        $headers = array('Content-Type: text/html; charset=UTF-8');
 
-    $customerSubject = '✓ Solicitud Recibida - Renovación Permiso de Navegación';
-    $customerMessage = "
-    <!DOCTYPE html>
-    <html>
-    <head>
+        $customerSubject = '✓ Solicitud Recibida - Renovación Permiso de Navegación';
+        $customerMessage = "
+        <!DOCTYPE html>
+        <html>
+        <head>
         <meta charset='UTF-8'>
         <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    </head>
-    <body style='margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif; background-color: #f4f7fa;'>
+        </head>
+        <body style='margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif; background-color: #f4f7fa;'>
         <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #f4f7fa; padding: 40px 20px;'>
             <tr>
                 <td align='center'>
@@ -2762,24 +2762,24 @@ function send_navigation_permit_to_tramitfy() {
                 </td>
             </tr>
         </table>
-    </body>
-    </html>
-    ";
+        </body>
+        </html>
+        ";
 
-    wp_mail($formData['customerEmail'], $customerSubject, $customerMessage, $headers);
+        wp_mail($formData['customerEmail'], $customerSubject, $customerMessage, $headers);
 
-    // ============================================
-    // EMAIL AL ADMIN
-    // ============================================
-    $adminEmail = 'ipmgroup24@gmail.com';
-    $adminSubject = '🔔 Nueva Solicitud - ' . $tramiteId . ' - Renovación Permiso Navegación';
-    $adminMessage = "
-    <!DOCTYPE html>
-    <html>
-    <head>
+        // ============================================
+        // EMAIL AL ADMIN
+        // ============================================
+        $adminEmail = 'ipmgroup24@gmail.com';
+        $adminSubject = '🔔 Nueva Solicitud - ' . $tramiteId . ' - Renovación Permiso Navegación';
+        $adminMessage = "
+        <!DOCTYPE html>
+        <html>
+        <head>
         <meta charset='UTF-8'>
-    </head>
-    <body style='margin: 0; padding: 20px; font-family: Arial, sans-serif; background-color: #f5f5f5;'>
+        </head>
+        <body style='margin: 0; padding: 20px; font-family: Arial, sans-serif; background-color: #f5f5f5;'>
         <div style='max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
 
             <div style='background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%); padding: 25px 30px; color: white;'>
@@ -2877,15 +2877,15 @@ function send_navigation_permit_to_tramitfy() {
                     <h3 style='margin: 0 0 15px; color: #333; font-size: 16px;'>📎 DOCUMENTOS ADJUNTOS (" . count($uploadedFiles) . ")</h3>
                     <ul style='margin: 0; padding: 0; list-style: none;'>";
 
-    foreach ($uploadedFiles as $file) {
+        foreach ($uploadedFiles as $file) {
         $fileIcon = (strpos($file['name'], 'signature') !== false) ? '✍️' : '📄';
         $adminMessage .= "
                         <li style='padding: 8px 12px; margin-bottom: 6px; background-color: #f5f5f5; border-radius: 4px; font-size: 13px;'>
                             {$fileIcon} <strong>{$file['name']}</strong> <span style='color: #999;'>(" . round($file['size']/1024, 2) . " KB)</span>
                         </li>";
-    }
+        }
 
-    $adminMessage .= "
+        $adminMessage .= "
                     </ul>
                 </div>
 
@@ -2905,9 +2905,9 @@ function send_navigation_permit_to_tramitfy() {
             </div>
 
         </div>
-    </body>
-    </html>
-    ";
+        </body>
+        </html>
+        ";
 
         wp_mail($adminEmail, $adminSubject, $adminMessage, $headers);
 

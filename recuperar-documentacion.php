@@ -485,8 +485,15 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
     ";
 
     error_log("📧 Enviando email al cliente: $customerEmail");
+    error_log("📧 Asunto: $customerSubject");
+    error_log("📧 Headers: " . print_r($headers, true));
+
     $result1 = wp_mail($customerEmail, $customerSubject, $customerMessage, $headers);
+
     error_log("📧 Resultado email cliente: " . ($result1 ? 'ÉXITO' : 'FALLO'));
+    if (!$result1) {
+        error_log("📧 ERROR: wp_mail() falló para cliente. Verificar configuración SMTP de WordPress");
+    }
 
     // ============================================
     // EMAIL A IPMGROUP (Administrativo)
@@ -650,9 +657,23 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
 
     // Enviar email al administrador
     error_log("📧 Enviando email al admin: $adminEmail");
+    error_log("📧 Asunto admin: $adminSubject");
+
     $result2 = wp_mail($adminEmail, $adminSubject, $adminMessage, $headers);
+
     error_log("📧 Resultado email admin: " . ($result2 ? 'ÉXITO' : 'FALLO'));
+    if (!$result2) {
+        error_log("📧 ERROR: wp_mail() falló para admin. Verificar configuración SMTP de WordPress");
+    }
+
     error_log("📧 === FUNCIÓN EMAILS COMPLETADA ===");
+    error_log("📧 Resumen: Cliente=" . ($result1 ? 'OK' : 'FALLO') . " | Admin=" . ($result2 ? 'OK' : 'FALLO'));
+
+    // Si wp_mail falla, mostrar advertencia en respuesta
+    if (!$result1 || !$result2) {
+        error_log("⚠️ ADVERTENCIA: WordPress no está configurado correctamente para enviar emails");
+        error_log("⚠️ Solución: Instalar plugin 'WP Mail SMTP' o configurar SMTP en wp-config.php");
+    }
 }
 
 if (isset($_POST['action'])) {
