@@ -6450,8 +6450,13 @@ function transferencia_barco_shortcode() {
             if (signaturePad) {
                 formData.append('signature', signaturePad.toDataURL());
             }
-            
+
             formData.append('coupon_used', couponValue);
+
+            // Añadir el payment_intent_id si existe
+            if (purchaseDetails && purchaseDetails.paymentIntentId) {
+                formData.append('payment_intent_id', purchaseDetails.paymentIntentId);
+            }
 
             fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
                 method: 'POST',
@@ -6461,24 +6466,31 @@ function transferencia_barco_shortcode() {
             .then(data => {
                 if (data.success) {
                     alertMessageText.textContent = '¡Formulario enviado con éxito! Redirigiendo...';
-                    
+
                     // Actualizar el mensaje en el overlay también
                     const messageEl = document.querySelector('.loading-message');
                     if (messageEl) {
-                        messageEl.textContent = '¡Trámite completado con éxito! Redirigiendo...';
+                        messageEl.textContent = '¡Trámite completado con éxito! Redirigiendo al seguimiento...';
                     }
                     const titleEl = document.querySelector('.loading-title');
                     if (titleEl) {
                         titleEl.textContent = '¡Proceso Finalizado!';
                         titleEl.style.color = 'rgb(var(--success))';
                     }
-                    
+
+                    // Usar la URL de tracking devuelta por el servidor
+                    const trackingUrl = data.data && data.data.tracking_url
+                        ? data.data.tracking_url
+                        : 'https://46-202-128-35.sslip.io/seguimiento/' + (data.data.tracking_id || Date.now());
+
+                    console.log('Redirigiendo a:', trackingUrl);
+
                     // Redirigir después de un breve retraso para que se vea el estado final
                     setTimeout(() => {
-                        window.location.href = 'https://tramitfy.es/pago-realizado-con-exito/';
-                    }, 1500);
+                        window.location.href = trackingUrl;
+                    }, 2000);
                 } else {
-                    alertMessageText.textContent = 'Error al enviar el formulario: ' + data.message;
+                    alertMessageText.textContent = 'Error al enviar el formulario: ' + (data.data ? data.data : data.message);
                     document.getElementById('loading-overlay').style.display = 'none';
                 }
             })
@@ -6764,7 +6776,8 @@ function transferencia_barco_shortcode() {
                         nuevoNombre: document.getElementById('nuevo_nombre').value.trim(),
                         nuevoPuerto: document.getElementById('nuevo_puerto').value.trim(),
                         couponUsed: couponValue,
-                        tramite_id: '<?php echo $tramite_id; ?>' // Añadimos el ID de trámite
+                        tramite_id: '<?php echo $tramite_id; ?>', // Añadimos el ID de trámite
+                        paymentIntentId: paymentIntent.id // Guardar el payment intent ID
                     };
 
                     sendEmails();
@@ -7862,6 +7875,7 @@ function tpb_submit_form() {
     $nuevo_puerto = isset($_POST['nuevo_puerto']) ? sanitize_text_field($_POST['nuevo_puerto']) : '';
     $coupon_used = isset($_POST['coupon_used']) ? sanitize_text_field($_POST['coupon_used']) : '';
     $signature = $_POST['signature'];
+    $payment_intent_id = isset($_POST['payment_intent_id']) ? sanitize_text_field($_POST['payment_intent_id']) : '';
 
     $final_amount = isset($_POST['final_amount']) ? floatval($_POST['final_amount']) : 0;
     $current_transfer_tax = isset($_POST['current_transfer_tax']) ? floatval($_POST['current_transfer_tax']) : 0;
@@ -8269,23 +8283,61 @@ function tpb_submit_form() {
         'tasas' => floatval($tasas_hidden),
         'iva' => floatval($iva_hidden),
         'honorarios' => floatval($honorarios_hidden),
+        'paymentIntentId' => $payment_intent_id,
         'status' => 'pending',
-        'notes' => 'Archivos en proceso de subida'
+        'notes' => 'Formulario procesado correctamente'
     );
 
-    // Enviar datos básicos inmediatamente (timeout corto)
+    // Enviar datos básicos inmediatamente y capturar respuesta
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $tramitfy_api_url);
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($tramitfy_quick_data));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 5); // Timeout corto
-    curl_exec($ch);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Timeout más razonable
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    // RESPONDER INMEDIATAMENTE AL CLIENTE
-    wp_send_json_success('Formulario procesado correctamente.');
+    // Parsear la respuesta para obtener el ID del tracking
+    $response_data = json_decode($response, true);
+    $tracking_id = isset($response_data['id']) ? $response_data['id'] : time();
+    $tracking_url = 'https://46-202-128-35.sslip.io/seguimiento/' . $tracking_id;
+
+    // Enviar email al cliente con el link de tracking
+    $subject_customer = 'Confirmación de su solicitud - Tramitfy';
+    $message_customer = "
+    <html>
+    <body style='font-family: Arial, sans-serif;'>
+        <div style='max-width:600px; margin:auto; padding:20px; background:#f9f9f9; border:1px solid #e0e0e0; border-radius:10px;'>
+            <div style='text-align:center;'>
+                <img src='https://www.tramitfy.es/wp-content/uploads/LOGO.png' alt='Tramitfy' style='max-width:200px;'>
+            </div>
+            <h2 style='color:#016d86;'>¡Su solicitud ha sido recibida!</h2>
+            <p>Estimado/a {$customer_name},</p>
+            <p>Hemos recibido su solicitud de transferencia de barco con el ID: <strong>{$tramite_id}</strong></p>
+            <p>Puede hacer seguimiento de su trámite en cualquier momento usando el siguiente enlace:</p>
+            <div style='text-align:center; margin:30px 0;'>
+                <a href='{$tracking_url}' style='background:#016d86; color:white; padding:15px 30px; text-decoration:none; border-radius:5px; display:inline-block;'>Ver Estado del Trámite</a>
+            </div>
+            <p>También puede copiar este enlace: {$tracking_url}</p>
+            <p>Recibirá notificaciones por email cuando haya actualizaciones en su trámite.</p>
+            <p>Saludos cordiales,<br>El equipo de Tramitfy</p>
+        </div>
+    </body>
+    </html>";
+
+    $headers_customer = array('Content-Type: text/html; charset=UTF-8', 'From: Tramitfy <info@tramitfy.es>');
+    wp_mail($customer_email, $subject_customer, $message_customer, $headers_customer);
+
+    // RESPONDER AL CLIENTE CON LA URL DE TRACKING
+    wp_send_json_success(array(
+        'message' => 'Formulario procesado correctamente',
+        'tramite_id' => $tramite_id,
+        'tracking_id' => $tracking_id,
+        'tracking_url' => $tracking_url
+    ));
     wp_die();
 }
 
