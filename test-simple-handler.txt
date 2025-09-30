@@ -1,0 +1,19 @@
+Añade esta función temporal AL FINAL del archivo functions.php del tema (antes del ?>):
+
+// HANDLER TEMPORAL SIMPLIFICADO PARA DEBUG
+add_action('wp_ajax_submit_moto_TEST', 'test_simple_handler');
+add_action('wp_ajax_nopriv_submit_moto_TEST', 'test_simple_handler');
+function test_simple_handler() {
+    error_log("=== TEST HANDLER EJECUTADO ===");
+    error_log("POST data: " . print_r($_POST, true));
+    
+    wp_send_json_success(array(
+        'message' => 'Handler ejecutado correctamente',
+        'post_data' => $_POST
+    ));
+}
+
+Luego cambia en el JavaScript del formulario (línea 6311):
+formData.append('action', 'submit_moto_TEST');
+
+Y prueba de nuevo. Esto nos dirá si el problema es con WordPress o con nuestro código específico.

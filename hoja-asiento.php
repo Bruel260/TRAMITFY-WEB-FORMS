@@ -27,7 +27,7 @@ if (HOJA_ASIENTO_STRIPE_MODE === 'test') {
 }
 
 /**
- * Shortcode para el formulario de solicitud de permiso de navegación
+ * Shortcode para el formulario de solicitud de Hoja de Asiento
  */
 function hoja_asiento_form_shortcode() {
     global $stripe_public_key, $stripe_secret_key;
@@ -38,7 +38,7 @@ function hoja_asiento_form_shortcode() {
         \Elementor\Plugin::$instance->editor &&
         \Elementor\Plugin::$instance->editor->is_edit_mode()) {
         return '<div style="padding: 20px; background: #f0f0f0; text-align: center;">
-                    <h3>Formulario de Renovación de Hoja de Asiento</h3>
+                    <h3>Formulario de Solicitud de Hoja de Asiento</h3>
                     <p>El formulario se mostrará aquí en el frontend.</p>
                 </div>';
     }
@@ -88,7 +88,36 @@ function hoja_asiento_form_shortcode() {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
             color: rgb(var(--neutral-800));
-            background: transparent !important;
+            background-color: white !important;
+        }
+
+        /* Forzar fondo blanco en wrappers de WordPress/Elementor */
+        html,
+        body,
+        .elementor,
+        .elementor-section,
+        .elementor-container,
+        .elementor-column,
+        .elementor-widget-wrap,
+        .elementor-element,
+        #content,
+        .site-content,
+        main,
+        .page,
+        article,
+        #primary,
+        .content-area,
+        .site-main,
+        .entry-content {
+            background-color: white !important;
+            background-image: none !important;
+            background: white !important;
+        }
+
+        /* Asegurar que el contenedor del formulario no herede fondos */
+        .ha-container,
+        .ha-form-area {
+            background: white !important;
         }
 
         /* Container principal - Grid de 2 columnas */
@@ -108,10 +137,10 @@ function hoja_asiento_form_shortcode() {
         .ha-sidebar {
             background: linear-gradient(180deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
             color: white;
-            padding: 20px 20px;
+            padding: 30px 25px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 24px;
             position: sticky;
             top: 0;
             height: 95vh;
@@ -132,16 +161,16 @@ function hoja_asiento_form_shortcode() {
         }
 
         .ha-headline {
-            font-size: 17px;
-            font-weight: 600;
+            font-size: 19px;
+            font-weight: 700;
             line-height: 1.3;
-            margin-bottom: 4px;
+            margin-bottom: 10px;
         }
 
         .ha-subheadline {
-            font-size: 13px;
-            opacity: 0.92;
-            line-height: 1.4;
+            font-size: 13.5px;
+            opacity: 0.94;
+            line-height: 1.6;
         }
 
         /* Caja de precio destacada */
@@ -149,10 +178,9 @@ function hoja_asiento_form_shortcode() {
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
             border-radius: 12px;
-            padding: 12px;
+            padding: 18px;
             text-align: center;
             border: 1px solid rgba(255, 255, 255, 0.25);
-            margin: 6px 0;
         }
 
         .ha-price-label {
@@ -1320,46 +1348,44 @@ function hoja_asiento_form_shortcode() {
         <div class="ha-sidebar">
             <!-- Contenido por defecto (Páginas 1, 2 y 4) -->
             <div id="sidebar-default">
-                <div class="ha-logo">
-                    <i class="fa-solid fa-ship"></i>
-                    <span>Tramitfy</span>
-                </div>
-
                 <div>
                     <div class="ha-headline">
                         Solicitud de Hoja de Asiento
                     </div>
                     <div class="ha-subheadline">
-                        Renueva tu permiso de navegación de forma rápida y segura. Gestión completa online sin desplazamientos.
+                        Rellena el formulario con tus datos y nosotros gestionamos todo el proceso ante el Registro Marítimo. Recibe tu documento en 24-48h.
                     </div>
+                </div>
+
+                <div style="background: rgba(255,255,255,0.1); padding: 18px; border-radius: 10px; margin-bottom: 20px; backdrop-filter: blur(10px);">
+                    <p style="font-size: 13.5px; line-height: 1.7; margin: 0; color: rgba(255,255,255,0.95);">
+                        <strong style="display: block; margin-bottom: 8px; font-size: 14px;">¿Qué es la Hoja de Asiento?</strong>
+                        Documento oficial que certifica el historial de titularidad de tu embarcación. Necesaria para compraventas, cambios de matrícula, o cualquier trámite que requiera acreditar la propiedad.
+                    </p>
                 </div>
 
                 <div class="ha-price-box">
                     <div class="ha-price-label">Precio Total</div>
                     <div class="ha-price-amount">29,95€</div>
-                    <div class="ha-price-detail">IVA incluido · Pago único</div>
+                    <div class="ha-price-detail">IVA incluido</div>
                 </div>
 
                 <div class="ha-benefits">
                     <div class="ha-benefit">
                         <i class="fa-solid fa-check"></i>
-                        <span>Certificado de navegabilidad incluido</span>
+                        <span>Presentación en Capitanía en 24h</span>
                     </div>
                     <div class="ha-benefit">
                         <i class="fa-solid fa-check"></i>
-                        <span>Emisión oficial del nuevo permiso</span>
+                        <span>Documentación provisional incluida</span>
                     </div>
                     <div class="ha-benefit">
                         <i class="fa-solid fa-check"></i>
-                        <span>Gestión completa ante autoridades</span>
+                        <span>Seguimiento en tiempo real</span>
                     </div>
                     <div class="ha-benefit">
                         <i class="fa-solid fa-check"></i>
-                        <span>Tramitación rápida en 5-7 días</span>
-                    </div>
-                    <div class="ha-benefit">
-                        <i class="fa-solid fa-check"></i>
-                        <span>Seguimiento online en tiempo real</span>
+                        <span>Asistencia personalizada</span>
                     </div>
                 </div>
 
@@ -1372,20 +1398,16 @@ function hoja_asiento_form_shortcode() {
                         <i class="fa-solid fa-lock"></i>
                         <span>Datos protegidos</span>
                     </div>
-                    <div class="ha-badge">
-                        <i class="fa-solid fa-headset"></i>
-                        <span>Soporte 24/7</span>
-                    </div>
+                </div>
+
+                <!-- Widget de reseñas Trustindex -->
+                <div style="margin-top: auto; padding-top: 20px;">
+                    [trustindex data-widget-id=528e73a37d5c907840566b0945b]
                 </div>
             </div>
 
             <!-- Contenido para página de autorización (Página 3) -->
             <div id="sidebar-authorization" style="display: none;">
-                <div class="ha-logo">
-                    <i class="fa-solid fa-file-signature"></i>
-                    <span>Autorización</span>
-                </div>
-
                 <div class="ha-sidebar-auth-doc">
                     <h4 style="font-size: 18px; font-weight: 700; color: white; margin-bottom: 15px;">
                         DOCUMENTO DE AUTORIZACIÓN
@@ -1393,10 +1415,10 @@ function hoja_asiento_form_shortcode() {
 
                     <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 20px; backdrop-filter: blur(10px);">
                         <p style="font-size: 14px; line-height: 1.8; margin-bottom: 15px;">
-                            Yo, <strong id="sidebar-auth-name" style="color: #fff; font-size: 16px;">[Nombre]</strong>, con DNI/NIE <strong id="sidebar-auth-dni" style="color: #fff;">[DNI]</strong>, autorizo a <strong>TRAMITFY</strong> para que, en mi nombre y representación, gestione ante las autoridades competentes la solicitud de mi permiso de navegación.
+                            Yo, <strong id="sidebar-auth-name" style="color: #fff; font-size: 16px;">[Nombre]</strong>, con DNI/NIE <strong id="sidebar-auth-dni" style="color: #fff;">[DNI]</strong>, autorizo a <strong>TRAMITFY</strong> para que, en mi nombre y representación, gestione ante las autoridades competentes la solicitud de mi Hoja de Asiento.
                         </p>
                         <p style="font-size: 14px; line-height: 1.8;">
-                            Me comprometo a aportar toda la documentación necesaria y a abonar las tasas correspondientes.
+                            Me comprometo a aportar toda la documentación necesaria.
                         </p>
                     </div>
 
@@ -1416,19 +1438,19 @@ function hoja_asiento_form_shortcode() {
             <form id="hoja-asiento-renewal-form" action="" method="POST" enctype="multipart/form-data">
                 
                 <div class="ha-form-header">
-                    <h1 class="ha-form-title">Solicitud de Renovación</h1>
-                    <p class="ha-form-subtitle">Complete el formulario para renovar su permiso de navegación</p>
+                    <h1 class="ha-form-title">Solicitud de Hoja de Asiento</h1>
+                    <p class="ha-form-subtitle">Complete el formulario para obtener su Hoja de Asiento</p>
                 </div>
 
                 <!-- Panel de auto-rellenado para administradores -->
                 <?php if (current_user_can('administrator')): ?>
                 <div class="ha-admin-panel">
                     <div class="ha-admin-panel-info">
-                        <div class="ha-admin-panel-title">🔧 Modo Administrador</div>
+                        <div class="ha-admin-panel-title">Modo Administrador</div>
                         <div class="ha-admin-panel-subtitle">Auto-relleno disponible para testing</div>
                     </div>
                     <button type="button" id="admin-autofill-btn" class="ha-admin-autofill-btn">
-                        ⚡ Auto-rellenar
+                        Auto-rellenar
                     </button>
                 </div>
                 <?php endif; ?>
@@ -1461,6 +1483,10 @@ function hoja_asiento_form_shortcode() {
                 <!-- PÁGINA 1: Datos Personales -->
                 <div id="page-personal-info" class="ha-form-page">
                     <h3><i class="fa-solid fa-user"></i> Datos Personales</h3>
+
+                    <p style="color: #666; font-size: 14px; margin: -10px 0 25px 0; line-height: 1.6;">
+                        Necesitamos tus datos para presentar la solicitud en Capitanía y mantenerte informado del estado del trámite.
+                    </p>
 
                     <div class="ha-inputs-row">
                         <div class="ha-input-group">
@@ -1497,8 +1523,8 @@ function hoja_asiento_form_shortcode() {
                 <div id="page-documents" class="ha-form-page hidden">
                     <h3><i class="fa-solid fa-file-alt"></i> Documentación Requerida</h3>
 
-                    <p style="color: rgb(var(--neutral-600)); margin-bottom: 25px;">
-                        Por favor, adjunte su DNI/NIE en formato PDF, JPG o PNG.
+                    <p style="color: #666; font-size: 14px; margin: -10px 0 25px 0; line-height: 1.6;">
+                        Tu DNI/NIE es necesario para verificar tu identidad ante el Registro Marítimo.
                     </p>
 
                     <div class="ha-upload-grid">
@@ -1529,9 +1555,8 @@ function hoja_asiento_form_shortcode() {
                 <div id="page-authorization" class="ha-form-page hidden">
                     <h3><i class="fa-solid fa-signature"></i> Firme el Documento de Autorización</h3>
 
-                    <p style="color: rgb(var(--neutral-600)); margin-bottom: 25px; text-align: center;" class="auth-instruction-text">
-                        <span class="desktop-text">El documento de autorización se muestra en el panel izquierdo. Por favor, firme en el área inferior para completar la autorización.</span>
-                        <span class="mobile-text" style="display: none;">El documento de autorización se muestra en el panel superior. Por favor, firme en el área inferior para completar la autorización.</span>
+                    <p style="color: #666; font-size: 14px; margin: -10px 0 25px 0; line-height: 1.6; text-align: center;">
+                        Tu firma nos autoriza legalmente a gestionar el trámite en tu nombre ante las autoridades marítimas.
                     </p>
 
                     <div class="ha-signature-label" style="text-align: center; margin-bottom: 15px; font-size: 15px; font-weight: 600; color: rgb(var(--neutral-700));">
@@ -1562,14 +1587,14 @@ function hoja_asiento_form_shortcode() {
                 <div id="page-payment" class="ha-form-page hidden">
                     <h3><i class="fa-solid fa-credit-card"></i> Información de Pago</h3>
 
+                    <p style="color: #666; font-size: 14px; margin: -10px 0 25px 0; line-height: 1.6;">
+                        Pago seguro con Stripe. Tus datos bancarios están protegidos y encriptados.
+                    </p>
+
                     <div class="ha-price-summary">
                         <div class="ha-price-row">
-                            <span>Certificado de navegabilidad</span>
+                            <span>Tasa Registro Marítimo</span>
                             <span>7,61 €</span>
-                        </div>
-                        <div class="ha-price-row">
-                            <span>Emisión de permiso</span>
-                            <span>0,00 €</span>
                         </div>
                         <div class="ha-price-row">
                             <span>Honorarios profesionales</span>
@@ -1679,7 +1704,7 @@ function hoja_asiento_form_shortcode() {
 
         // Evitar ejecución en el editor de Elementor
         if (window.elementor || (typeof elementorFrontend !== 'undefined' && elementorFrontend.isEditMode && elementorFrontend.isEditMode())) {
-            console.log('[Navigation Permit Form] Skipping initialization - Elementor editor detected');
+            console.log('[Hoja de Asiento Form] Skipping initialization - Elementor editor detected');
             return;
         }
 
@@ -1774,7 +1799,7 @@ function hoja_asiento_form_shortcode() {
             const navItems = document.querySelectorAll('.ha-nav-item');
             let currentPageIndex = 0;
 
-            function navigationPermitShowPage(pageId) {
+            function hoja_asientoShowPage(pageId) {
                 formPages.forEach((page, index) => {
                     if (page.id === pageId) {
                         page.classList.remove('hidden');
@@ -1810,9 +1835,9 @@ function hoja_asiento_form_shortcode() {
             // Event listeners para navegación
             document.querySelectorAll('.ha-btn-next').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    if (navigationPermitValidateCurrentPage()) {
+                    if (hoja_asientoValidateCurrentPage()) {
                         const nextPage = this.getAttribute('data-next');
-                        navigationPermitShowPage(nextPage);
+                        hoja_asientoShowPage(nextPage);
                     }
                 });
             });
@@ -1820,20 +1845,22 @@ function hoja_asiento_form_shortcode() {
             document.querySelectorAll('.ha-btn-prev').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const prevPage = this.getAttribute('data-prev');
-                    navigationPermitShowPage(prevPage);
+                    hoja_asientoShowPage(prevPage);
                 });
             });
 
             navItems.forEach(nav => {
                 nav.addEventListener('click', function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     const pageId = this.getAttribute('data-page-id');
-                    navigationPermitShowPage(pageId);
+                    hoja_asientoShowPage(pageId);
+                    return false;
                 });
             });
 
             // Validación de página actual
-            function navigationPermitValidateCurrentPage() {
+            function hoja_asientoValidateCurrentPage() {
                 const currentPage = document.querySelector('.ha-form-page:not(.hidden)');
 
                 // Validación especial para página de documentos
@@ -2187,7 +2214,7 @@ function hoja_asiento_form_shortcode() {
                 // Validar firma
                 if (signaturePad.isEmpty() && (!mainSignatureData || mainSignatureData === null)) {
                     alert('Por favor, firme el documento de autorización.');
-                    navigationPermitShowPage('page-authorization');
+                    hoja_asientoShowPage('page-authorization');
                     return;
                 }
 
@@ -2195,7 +2222,7 @@ function hoja_asiento_form_shortcode() {
                 const customerEmail = document.getElementById('customer_email').value.trim();
                 if (!customerEmail) {
                     alert('Debe ingresar su correo electrónico en la sección de datos personales.');
-                    navigationPermitShowPage('page-personal-info');
+                    hoja_asientoShowPage('page-personal-info');
                     return;
                 }
 
@@ -2295,7 +2322,6 @@ function hoja_asiento_form_shortcode() {
                 // Añadir datos adicionales
                 formData.append('final_amount', currentPrice);
                 formData.append('has_signature', 'true');
-                formData.append('renewal_type', 'renovacion');
                 formData.append('coupon_code', document.getElementById('coupon_code').value || '');
                 formData.append('terms_accept', 'true');
                 formData.append('payment_intent_id', paymentIntentId || '');
@@ -2397,7 +2423,7 @@ function hoja_asiento_form_shortcode() {
             <?php endif; ?>
 
             // Inicializar la primera página
-            navigationPermitShowPage('page-personal-info');
+            hoja_asientoShowPage('page-personal-info');
         });
     })();
     </script>
@@ -2417,7 +2443,7 @@ function send_hoja_asiento_to_tramitfy() {
     try {
 
         $uploadDir = wp_upload_dir();
-        $baseUploadPath = $uploadDir['basedir'] . '/tramitfy-permiso-navegacion/';
+        $baseUploadPath = $uploadDir['basedir'] . '/tramitfy-hoja-asiento/';
 
         if (!file_exists($baseUploadPath)) {
             mkdir($baseUploadPath, 0755, true);
@@ -2499,7 +2525,7 @@ function send_hoja_asiento_to_tramitfy() {
         $customerName = $formData['customerName'];
         $customerDni = $formData['customerDni'];
 
-        $texto = "Por la presente, yo $customerName, con DNI/NIE $customerDni, AUTORIZO a Tramitfy S.L. con CIF B55388557 a actuar como mi representante legal para la tramitación y gestión del procedimiento de $renewalTypeText de permiso de navegación ante las autoridades competentes.";
+        $texto = "Por la presente, yo $customerName, con DNI/NIE $customerDni, AUTORIZO a Tramitfy S.L. con CIF B55388557 a actuar como mi representante legal para la tramitación y gestión del procedimiento de $renewalTypeText de Hoja de Asiento ante las autoridades competentes.";
         $pdf->MultiCell(0, 6, utf8_decode($texto), 0, 'J');
         $pdf->Ln(3);
 
@@ -2588,7 +2614,7 @@ function send_hoja_asiento_to_tramitfy() {
         }
 
         // Enviar al webhook de Node.js usando CURLFile
-        $webhookUrl = 'https://46-202-128-35.sslip.io/api/herramientas/permiso-navegacion/webhook';
+        $webhookUrl = 'https://46-202-128-35.sslip.io/api/herramientas/hoja-asiento/webhook';
 
         // Preparar datos como strings
         $form_data = array();
@@ -2753,7 +2779,7 @@ function send_hoja_asiento_emails() {
                                     ✓ Solicitud Recibida
                                 </h1>
                                 <p style='margin: 0 0 20px 0; color: rgba(255,255,255,0.95); font-size: 16px;'>
-                                    Renovación de Hoja de Asiento
+                                    Solicitud de Hoja de Asiento
                                 </p>
                                 <div style='background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 14px 24px; border-radius: 8px; display: inline-block;'>
                                     <p style='margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;'>
@@ -2775,7 +2801,7 @@ function send_hoja_asiento_emails() {
                                 </p>
 
                                 <p style='margin: 0 0 28px 0; color: #546e7a; font-size: 15px; line-height: 1.7;'>
-                                    Hemos recibido correctamente su solicitud de solicitud de permiso de navegación. Nuestro equipo revisará su documentación y comenzará con la tramitación a la mayor brevedad posible.
+                                    Hemos recibido correctamente su solicitud de solicitud de Hoja de Asiento. Nuestro equipo revisará su documentación y comenzará con la tramitación a la mayor brevedad posible.
                                 </p>
 
                                 <!-- Status Box -->
@@ -2863,7 +2889,7 @@ function send_hoja_asiento_emails() {
         error_log("📧 Preparando email al admin: ipmgroup24@gmail.com");
 
         $adminEmail = 'ipmgroup24@gmail.com';
-        $adminSubject = '🔔 Nueva Solicitud - ' . $tramiteId . ' - Hoja de Asiento Navegación';
+        $adminSubject = '🔔 Nueva Solicitud - ' . $tramiteId . ' - Hoja de Asiento';
         $adminMessage = "
         <!DOCTYPE html>
         <html>
@@ -3029,7 +3055,7 @@ function create_payment_intent_hoja_asiento_renewal() {
     require_once get_template_directory() . '/vendor/autoload.php';
 
     try {
-        error_log('=== NAVIGATION PERMIT PAYMENT INTENT ===');
+        error_log('=== hoja_asiento PAYMENT INTENT ===');
         error_log('STRIPE MODE: ' . HOJA_ASIENTO_STRIPE_MODE);
         error_log('Using Stripe key starting with: ' . substr($stripe_secret_key, 0, 25));
 
@@ -3038,7 +3064,7 @@ function create_payment_intent_hoja_asiento_renewal() {
         $currentKey = \Stripe\Stripe::getApiKey();
         error_log('Stripe API Key confirmed: ' . substr($currentKey, 0, 25));
 
-        $amount = HOJA_ASIENTO_SERVICE_PRICE * 100; // 29.95 EUR = 6500 cents
+        $amount = HOJA_ASIENTO_PRECIO_BASE * 100; // 29.95 EUR = 2995 cents
 
         $paymentIntent = \Stripe\PaymentIntent::create([
             'amount' => $amount,
@@ -3050,7 +3076,7 @@ function create_payment_intent_hoja_asiento_renewal() {
             'metadata' => [
                 'service' => 'Hoja de Asiento',
                 'source' => 'tramitfy_web',
-                'form' => 'renovacion_permiso',
+                'form' => 'hoja_asiento',
                 'mode' => HOJA_ASIENTO_STRIPE_MODE
             ]
         ]);

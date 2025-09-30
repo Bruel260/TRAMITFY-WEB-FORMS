@@ -1,66 +1,13 @@
 <?php
 /*
-Plugin Name: Transferencia Moto de Agua
+Plugin Name: Transferencia Barco
 Description: Formulario de transferencia de barco con Stripe, lógica de cupones y opción para usar solo el precio de compra (sin tablas CSV) cuando el usuario no encuentra su modelo.
-Version: 1.8
+Version: 1.1
 Author: GPT-4
 */
 
 // Asegurarse de que el archivo no sea accedido directamente
 defined('ABSPATH') || exit;
-
-// ============================================
-// SISTEMA DE LOGS TRAMITFY
-// ============================================
-
-// Función de logging mejorada
-if (!function_exists('tramitfy_log')) {
-    function tramitfy_log($message, $context = 'MOTO-FORM', $level = 'INFO') {
-        $log_dir = get_template_directory() . '/logs';
-
-        if (!is_dir($log_dir)) {
-            @mkdir($log_dir, 0755, true);
-        }
-
-        $log_file = $log_dir . '/tramitfy-' . date('Y-m-d') . '.log';
-
-        $timestamp = date('Y-m-d H:i:s');
-        $ip = $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN';
-
-        if (is_array($message) || is_object($message)) {
-            $message = json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        }
-
-        $log_entry = sprintf(
-            "[%s] [%s] [%s] [IP:%s] %s\n",
-            $timestamp,
-            $level,
-            $context,
-            $ip,
-            $message
-        );
-
-        @file_put_contents($log_file, $log_entry, FILE_APPEND);
-
-        if ($level === 'ERROR' || $level === 'CRITICAL') {
-            error_log("TRAMITFY [$context] $level: $message");
-        }
-    }
-}
-
-if (!function_exists('tramitfy_debug')) {
-    function tramitfy_debug($message, $data = null) {
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            $full_msg = $message;
-            if ($data !== null) {
-                $full_msg .= ' | ' . json_encode($data);
-            }
-            tramitfy_log($full_msg, 'DEBUG', 'DEBUG');
-        }
-    }
-}
-
-tramitfy_log('========== INICIO CARGA FORMULARIO MOTO ==========', 'INIT', 'INFO');
 
 // Configuración Stripe para Transferencia Moto - cambiar 'test' a 'live' para producción
 define('MOTO_STRIPE_MODE', 'test'); // 'test' o 'live'
@@ -75,20 +22,18 @@ define('STRIPE_SECRET_KEY', MOTO_STRIPE_MODE === 'test'
  * Carga datos desde archivos CSV según el tipo de vehículo
  */
 function tpm_cargar_datos_csv($tipo) {
-    // Siempre usa MOTO.csv (el parámetro no se usa realmente)
-    $ruta_csv = get_template_directory() . '/MOTO.csv';
-    $data = [];
+    $archivo_csv = ($tipo === 'Moto de Agua') ? 'MOTO.csv' : 'MOTO.csv';
+    $ruta_csv    = get_template_directory() . '/' . $archivo_csv;
+    $data        = [];
 
     if (($handle = fopen($ruta_csv, 'r')) !== false) {
-        // NO saltar header - el CSV no tiene encabezados
+        fgetcsv($handle, 1000, ','); // Se asume que la primera fila es encabezado
         while (($row = fgetcsv($handle, 1000, ',')) !== false) {
-            if (count($row) >= 3) {
-                list($fabricante, $modelo, $precio) = $row;
-                $data[$fabricante][] = [
-                    'modelo' => $modelo,
-                    'precio' => $precio
-                ];
-            }
+            list($fabricante, $modelo, $precio) = $row;
+            $data[$fabricante][] = [
+                'modelo' => $modelo,
+                'precio' => $precio
+            ];
         }
         fclose($handle);
     }
@@ -194,37 +139,7 @@ function transferencia_moto_shortcode() {
             margin: 0;
             padding: 0;
         }
-
-        /* LAYOUTS COMPACTOS PARA FORMULARIO */
-        .form-compact-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 18px;
-        }
-
-        .form-compact-row .form-group {
-            margin-bottom: 0;
-        }
-
-        .form-compact-triple {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 18px;
-        }
-
-        .form-compact-triple .form-group {
-            margin-bottom: 0;
-        }
-
-        @media (max-width: 768px) {
-            .form-compact-triple {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-        }
-
+        
         /* Estilos para la pantalla de marketing inicial */
         .marketing-container {
             display: flex;
@@ -796,43 +711,46 @@ function transferencia_moto_shortcode() {
 
         /* Estilos generales mejorados para el formulario */
         #transferencia-form {
-            max-width: 100%;
-            width: 100%;
-            margin: 20px auto;
-            padding: 0;
-            border: none;
-            border-radius: 16px;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 35px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
             font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            background-color: transparent;
-            box-shadow: none;
-            transition: none;
+            background-color: #ffffff;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            transition: box-shadow 0.3s ease;
+        }
+        
+        #transferencia-form:hover {
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
         }
         
         #transferencia-form h2 {
             margin-top: 0;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             color: rgb(var(--primary));
-            font-size: 26px;
+            font-size: 28px;
             font-weight: 600;
             border-bottom: 2px solid rgba(var(--primary), 0.1);
-            padding-bottom: 10px;
+            padding-bottom: 12px;
         }
-
+        
         #transferencia-form h3 {
             color: rgb(var(--primary-dark));
-            font-size: 18px;
-            margin-top: 24px;
-            margin-bottom: 12px;
+            font-size: 20px;
+            margin-top: 30px;
+            margin-bottom: 15px;
             font-weight: 500;
         }
-
+        
         #transferencia-form label {
             font-weight: 500;
             display: block;
-            margin-top: 16px;
+            margin-top: 18px;
             margin-bottom: 6px;
             color: #444444;
-            font-size: 14px;
+            font-size: 15px;
         }
         
         /* Mejoras para los acordeones en página de documentos */
@@ -913,11 +831,11 @@ function transferencia_moto_shortcode() {
         #transferencia-form input[type="tel"],
         #transferencia-form input[type="email"] {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             margin-top: 6px;
-            border-radius: 6px;
+            border-radius: 8px;
             border: 1px solid #d0d0d0;
-            font-size: 15px;
+            font-size: 16px;
             background-color: #f9f9f9;
             transition: all 0.2s ease;
         }
@@ -937,11 +855,11 @@ function transferencia_moto_shortcode() {
         #transferencia-form .button {
             background-color: rgb(var(--primary));
             color: #ffffff;
-            padding: 12px 24px;
+            padding: 14px 24px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 500;
             transition: all 0.3s ease;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -958,106 +876,150 @@ function transferencia_moto_shortcode() {
             box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
         }
         
-        /* Navegación discreta y profesional */
+        /* Estilos para el menú de navegación mejorado */
         #form-navigation {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: #f8f9fa;
-            border-bottom: 1px solid #e5e7eb;
-            margin: 0;
+            position: relative;
             padding: 0;
-            border-radius: 0 16px 0 0;
+            margin-bottom: 40px;
+            border-radius: 0;
+            background: none;
+            box-shadow: none;
+            border: none;
         }
-
+        
         .nav-progress-bar {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background-color: #e5e7eb;
+            top: 30px;
+            left: 12%;
+            right: 12%;
+            height: 4px;
+            background-color: rgba(var(--neutral-300), 0.5);
+            border-radius: 4px;
             z-index: 1;
         }
-
+        
         .nav-progress-indicator {
             position: absolute;
             top: 0;
             left: 0;
             height: 100%;
-            width: 0%;
-            background: #016d86;
-            transition: width 0.4s ease;
+            width: 0%; /* Se actualiza con JS */
+            background: linear-gradient(90deg, rgb(var(--primary)) 0%, rgb(var(--primary-light)) 100%);
+            border-radius: 4px;
+            transition: width 0.6s cubic-bezier(0.65, 0, 0.35, 1);
+            box-shadow: 0 0 10px rgba(var(--primary), 0.3);
         }
-
+        
         .nav-items-container {
             display: flex;
+            justify-content: space-between;
             position: relative;
             z-index: 2;
-            max-width: 900px;
+            width: 90%;
+            max-width: 800px;
             margin: 0 auto;
-            padding: 0;
         }
-
+        
         .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: rgb(var(--neutral-600));
+            font-weight: 500;
+            position: relative;
+            transition: all 0.3s ease;
+            min-width: 80px;
+        }
+        
+        .nav-item-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: white;
+            border: 2px solid rgba(var(--neutral-300), 0.6);
             display: flex;
             align-items: center;
             justify-content: center;
-            text-decoration: none;
-            color: #6b7280;
-            font-weight: 500;
-            font-size: 14px;
+            margin-bottom: 10px;
             position: relative;
-            transition: color 0.2s ease;
-            flex: 1;
-            padding: 16px 20px;
-            border-bottom: 3px solid transparent;
+            transition: all 0.4s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
-
-        .nav-item-circle {
-            display: none;
-        }
-
+        
         .nav-item-icon {
-            display: none;
+            position: absolute;
+            font-size: 22px;
+            color: rgb(var(--neutral-500));
+            transition: all 0.3s ease;
+            transform: translateY(0);
+            opacity: 1;
         }
-
+        
         .nav-item-number {
-            display: none;
+            position: absolute;
+            font-size: 18px;
+            font-weight: 600;
+            color: rgb(var(--neutral-500));
+            transition: all 0.3s ease;
+            transform: translateY(30px);
+            opacity: 0;
         }
-
+        
         .nav-item-text {
             font-size: 14px;
-            font-weight: 500;
+            transition: all 0.3s ease;
+            text-align: center;
         }
-
-        /* Estado activo (página actual) */
+        
+        /* Estilos para el ítem activo */
         .nav-item.active {
-            color: #016d86;
+            color: rgb(var(--primary));
+        }
+        
+        .nav-item.active .nav-item-circle {
+            border-color: rgb(var(--primary));
+            background-color: rgba(var(--primary), 0.05);
+            box-shadow: 0 0 0 4px rgba(var(--primary), 0.1);
+            transform: scale(1.1);
+        }
+        
+        .nav-item.active .nav-item-icon {
+            color: rgb(var(--primary));
+            transform: translateY(-30px);
+            opacity: 0;
+        }
+        
+        .nav-item.active .nav-item-number {
+            color: rgb(var(--primary));
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .nav-item.active .nav-item-text {
             font-weight: 600;
-            border-bottom-color: #016d86;
         }
-
-        /* Estado completado (páginas anteriores) */
-        .nav-item.completed {
-            color: #374151;
+        
+        /* Estilos para ítems completados */
+        .nav-item.completed .nav-item-circle {
+            background-color: rgb(var(--primary));
+            border-color: rgb(var(--primary));
         }
-
-        /* Hover */
-        .nav-item:hover {
-            color: #016d86;
-            background: rgba(1, 109, 134, 0.05);
+        
+        .nav-item.completed .nav-item-icon, 
+        .nav-item.completed .nav-item-number {
+            color: white;
         }
-
-        /* Bloqueado (no accesible aún) */
-        .nav-item-blocked {
-            animation: shake 0.3s;
+        
+        /* Efecto hover */
+        .nav-item:hover .nav-item-circle {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+        
+        .nav-item:not(.active):hover .nav-item-icon {
+            transform: scale(1.1);
         }
         
         /* Estilos responsivos */
@@ -1066,46 +1028,18 @@ function transferencia_moto_shortcode() {
                 left: 8%;
                 right: 8%;
             }
-
+            
             .nav-items-container {
                 width: 100%;
-                gap: 4px;
             }
-
-            .nav-item {
-                flex-direction: column;
-                padding: 10px 8px;
-                gap: 6px;
-            }
-
+            
             .nav-item-circle {
-                width: 46px;
-                height: 46px;
+                width: 50px;
+                height: 50px;
             }
-
-            .nav-item-icon {
-                font-size: 20px;
-            }
-
-            .nav-item-number {
-                width: 20px;
-                height: 20px;
-                font-size: 11px;
-            }
-
+            
             .nav-item-text {
-                font-size: 11px;
-                text-align: center;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .nav-item-text {
-                display: none;
-            }
-
-            .nav-item {
-                padding: 8px 4px;
+                font-size: 12px;
             }
         }
         
@@ -1191,54 +1125,27 @@ function transferencia_moto_shortcode() {
         
         .button-container {
             display: none;
+            flex-wrap: wrap;
             justify-content: space-between;
-            align-items: center;
-            margin-top: 36px;
-            padding-top: 24px;
-            border-top: 1px solid #e5e7eb;
-            gap: 16px;
+            margin-top: 40px;
+            gap: 15px;
         }
-
+        
         .button-container .button {
-            padding: 14px 32px;
-            font-size: 15px;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: none;
-            min-width: 140px;
-        }
-
-        #prevButton {
-            background: #f3f4f6;
-            color: #374151;
-        }
-
-        #prevButton:hover {
-            background: #e5e7eb;
-        }
-
-        #nextButton {
-            background: #016d86;
-            color: white;
-        }
-
-        #nextButton:hover {
-            background: #015266;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(1, 109, 134, 0.2);
+            flex: 1 1 auto;
+            text-align: center;
+            min-width: 120px;
         }
         
         /* Estilo mejorado para la sección de precio */
         .price-details {
-            margin-top: 20px;
-            font-size: 15px;
+            margin-top: 25px;
+            font-size: 16px;
             background-color: #fbfbfb;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 25px;
+            border-radius: 12px;
             border: 1px solid #eaeaea;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.03);
             transition: transform 0.2s ease;
         }
         
@@ -2644,85 +2551,104 @@ function transferencia_moto_shortcode() {
         
         /* Estilos mejorados para el popup del ITP */
         .calculation-section {
-            background-color: #f9fafb;
-            border-radius: 8px;
-            padding: 20px;
-            border: 1px solid #e5e7eb;
+            background-color: rgba(var(--neutral-50), 0.7);
+            border-radius: var(--radius-md);
+            padding: 18px 20px;
+            border: 1px solid rgba(var(--neutral-300), 0.3);
             position: relative;
-            margin-bottom: 16px;
+            margin-bottom: 15px;
         }
-
+        
         .calculation-section h4 {
-            margin: 0 0 16px 0;
-            font-size: 16px;
-            color: #016d86;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #e6f7fa;
+            margin: 0 0 15px 0;
+            font-size: 17px;
+            color: rgb(var(--primary));
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(var(--primary), 0.15);
             font-weight: 600;
         }
-
-        .calculation-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            color: #4b5563;
-            font-size: 14px;
-        }
-
+        
         .calculation-item.highlight-item {
-            background-color: #e6f7fa;
-            margin: 12px -12px 0;
-            padding: 14px 12px;
-            border-radius: 6px;
-            border-left: 4px solid #016d86;
+            background-color: rgba(var(--primary), 0.03);
+            margin: 15px -10px 0;
+            padding: 12px 10px;
+            border-radius: var(--radius-md);
+            border-left: 3px solid rgba(var(--primary), 0.4);
         }
-
+        
         .calculation-item.highlight-item span:last-child {
-            background-color: white;
+            background-color: rgba(var(--primary), 0.1);
             font-weight: 700;
-            color: #016d86;
         }
-
-        .calculation-item span:first-child {
-            font-weight: 500;
-        }
-
+        
         .calculation-item span:last-child {
             font-weight: 600;
-            color: #1f2937;
-            background-color: white;
-            padding: 6px 12px;
+            color: rgb(var(--primary-dark));
+            background-color: rgba(var(--primary), 0.05);
+            padding: 6px 14px;
             border-radius: 6px;
             min-width: 90px;
             text-align: right;
-            border: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
+        }
+        
+        .calculation-item:hover span:last-child {
+            background-color: rgba(var(--primary), 0.1);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
         
         .calculation-result {
             display: flex;
             justify-content: space-between;
-            font-size: 18px;
+            font-size: 20px;
             font-weight: 700;
-            color: white;
-            background: linear-gradient(135deg, #016d86 0%, #014d5e 100%);
-            padding: 20px;
-            border-radius: 8px;
+            color: rgb(var(--primary));
+            background-color: rgba(var(--primary), 0.1);
+            padding: 18px 24px;
+            border-radius: var(--radius-md);
             margin-top: 20px;
-            box-shadow: 0 4px 12px rgba(1, 109, 134, 0.3);
+            box-shadow: 0 4px 8px rgba(var(--primary-dark), 0.1);
             align-items: center;
+            position: relative;
+            overflow: hidden;
         }
-
+        
+        .calculation-result:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 6px;
+            height: 100%;
+            background: linear-gradient(to bottom, rgb(var(--primary)), rgb(var(--primary-light)));
+        }
+        
+        .calculation-result:after {
+            content: '';
+            position: absolute;
+            right: -25px;
+            top: -25px;
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            z-index: 1;
+        }
+        
         .calculation-result span:first-child {
-            font-size: 16px;
+            font-size: 18px;
+            position: relative;
+            z-index: 2;
         }
-
+        
         .calculation-result span:last-child {
-            font-size: 22px;
-            background-color: white;
-            color: #016d86;
-            padding: 10px 18px;
-            border-radius: 6px;
-            font-weight: 700;
+            font-size: 24px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 2;
+            background: none;
+            padding: 0;
         }
         
         #selected-services-summary {
@@ -2841,20 +2767,20 @@ function transferencia_moto_shortcode() {
             font-family: 'Roboto', sans-serif;
         }
         
-        /* Tarjeta principal mejorada - coherente con form sections */
+        /* Tarjeta principal mejorada */
         .price-summary-card {
             background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
             margin-bottom: 30px;
-            border: 1px solid #e0e0e0;
+            border: 1px solid rgba(var(--neutral-300), 0.5);
             overflow: hidden;
             transition: all 0.3s ease;
         }
-
+        
         .price-summary-card:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            border-color: #016d86;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+            transform: translateY(-3px);
         }
         
         .price-summary-header {
@@ -2894,189 +2820,168 @@ function transferencia_moto_shortcode() {
             padding: 0;
         }
         
-        /* Sección principal de gestión - más limpia y coherente */
+        /* Sección principal de gestión */
         .price-summary-main {
-            padding: 28px;
-            border-bottom: 1px solid #e8e8e8;
-            background-color: #fafafa;
+            padding: 25px 28px;
+            border-bottom: 1px solid rgba(var(--neutral-300), 0.3);
         }
-
+        
         .price-summary-title {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
-            padding-bottom: 16px;
-            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed rgba(var(--neutral-400), 0.3);
         }
-
+        
         .price-summary-title span {
-            font-size: 17px;
+            font-size: 18px;
             font-weight: 600;
-            color: #1f2937;
+            color: rgb(var(--primary-dark));
         }
-
+        
         .price-summary-amount {
-            font-size: 19px;
+            font-size: 20px;
             font-weight: 700;
-            color: #016d86;
-            background-color: #e6f7fa;
-            padding: 10px 18px;
-            border-radius: 8px;
-            border: 1px solid #b3e5ef;
+            color: rgb(var(--primary));
+            background-color: rgba(var(--primary), 0.08);
+            padding: 8px 16px;
+            border-radius: 30px;
         }
         
         .price-summary-details {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
         }
-
+        
         .price-summary-row {
             display: flex;
             justify-content: space-between;
-            padding: 10px 12px;
-            color: #4b5563;
-            background-color: white;
-            border-radius: 6px;
-            font-size: 14px;
+            padding: 8px 0;
+            color: rgb(var(--neutral-700));
         }
-
+        
         .price-summary-row i {
-            color: #10b981;
+            color: rgb(var(--success));
             margin-right: 8px;
         }
-
-        .price-summary-row span:first-child {
-            font-weight: 500;
+        
+        .price-summary-row:not(:last-child) {
+            border-bottom: 1px dotted rgba(var(--neutral-400), 0.2);
         }
-
-        .price-summary-row span:last-child {
-            font-weight: 600;
-            color: #1f2937;
-        }
-
-        /* Sección de impuestos - estilo coherente */
+        
+        /* Sección de impuestos */
         .price-summary-tax {
-            padding: 28px;
-            border-bottom: 1px solid #e8e8e8;
-            background-color: #f9fafb;
+            padding: 25px 28px;
+            border-bottom: 1px solid rgba(var(--neutral-300), 0.3);
+            background-color: rgba(var(--primary), 0.02);
         }
         
         .price-summary-help {
-            margin-top: 16px;
+            margin-top: 15px;
             text-align: center;
         }
-
+        
         .info-button-sm {
-            background-color: white;
-            color: #016d86;
-            border: 2px solid #016d86;
-            padding: 10px 18px;
-            border-radius: 8px;
+            background-color: transparent;
+            color: rgb(var(--primary));
+            border: 1px solid rgb(var(--primary));
+            padding: 8px 15px;
+            border-radius: 20px;
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 500;
             display: inline-flex;
             align-items: center;
             gap: 8px;
             cursor: pointer;
             transition: all 0.2s ease;
         }
-
+        
         .info-button-sm:hover {
-            background-color: #016d86;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(1, 109, 134, 0.2);
+            background-color: rgba(var(--primary), 0.08);
+            transform: translateY(-1px);
         }
         
-        /* Acordeón para secciones opcionales - estilo mejorado */
+        /* Acordeón para secciones opcionales */
         .price-summary-accordion {
-            border-bottom: 1px solid #e8e8e8;
+            border-bottom: 1px solid rgba(var(--neutral-300), 0.3);
         }
-
+        
         .accordion-toggle-header {
-            padding: 22px 28px;
+            padding: 20px 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
-            background-color: #f5f5f5;
+            background-color: rgba(var(--neutral-100), 0.5);
             transition: all 0.2s ease;
-            border-top: 1px solid #e8e8e8;
         }
-
+        
         .accordion-toggle-header:hover {
-            background-color: #e6f7fa;
+            background-color: rgba(var(--primary), 0.05);
         }
-
+        
         .accordion-toggle-header span {
             font-weight: 600;
-            color: #374151;
+            color: rgb(var(--neutral-700));
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 15px;
         }
-
+        
         .accordion-toggle-header span i {
-            color: #016d86;
-            font-size: 16px;
+            color: rgb(var(--primary));
         }
-
+        
         .accordion-icon {
-            color: #016d86;
+            color: rgb(var(--primary));
             transition: transform 0.3s ease;
-            font-size: 18px;
         }
-
-        .accordion-toggle-header.active {
-            background-color: #e6f7fa;
-        }
-
+        
         .accordion-toggle-header.active .accordion-icon {
             transform: rotate(180deg);
         }
-
+        
         .accordion-content-section {
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease-out;
             background-color: white;
         }
-
+        
         .accordion-content-section.active {
             max-height: 500px;
-            padding: 24px 28px;
-            border-top: 2px solid #016d86;
+            padding: 20px 28px;
         }
         
-        /* Servicios adicionales dentro del acordeón - mejorado */
+        /* Servicios adicionales dentro del acordeón */
         .additional-service-item {
-            margin-bottom: 16px;
-            padding: 14px;
-            border-radius: 8px;
-            background-color: #f9fafb;
-            border: 1px solid #e5e7eb;
-            transition: all 0.2s ease;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed rgba(var(--neutral-300), 0.4);
         }
-
+        
         .additional-service-item:last-child {
             margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
         }
-
-        .additional-service-item:hover {
-            border-color: #016d86;
-            background-color: #f0f9fa;
-        }
-
+        
         .service-checkbox {
             display: flex;
             align-items: center;
             cursor: pointer;
-            padding: 0;
+            padding: 8px;
+            border-radius: var(--radius-md);
+            transition: background-color 0.2s ease;
         }
-
+        
+        .service-checkbox:hover {
+            background-color: rgba(var(--primary), 0.05);
+        }
+        
         .service-info {
             display: flex;
             justify-content: space-between;
@@ -3084,89 +2989,83 @@ function transferencia_moto_shortcode() {
             flex: 1;
             margin-left: 12px;
         }
-
+        
         .service-name {
             font-weight: 500;
-            color: #1f2937;
-            font-size: 14px;
-        }
-
-        .service-price {
-            font-weight: 700;
-            color: #016d86;
-            background-color: #e6f7fa;
-            padding: 6px 14px;
-            border-radius: 6px;
-            font-size: 14px;
-            border: 1px solid #b3e5ef;
-        }
-
-        .additional-input {
-            margin: 12px 0 0 28px;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .additional-input input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 14px;
-            background-color: white;
-            transition: all 0.2s ease;
-        }
-
-        .additional-input input:focus {
-            border-color: #016d86;
-            box-shadow: 0 0 0 3px rgba(1, 109, 134, 0.1);
-            outline: none;
+            color: rgb(var(--neutral-800));
         }
         
-        /* Cupón dentro del acordeón - Rediseño coherente */
+        .service-price {
+            font-weight: 600;
+            color: rgb(var(--primary));
+            background-color: rgba(var(--primary), 0.08);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .additional-input {
+            margin: 15px 0 5px 35px;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* Cupón dentro del acordeón - Rediseño */
         .coupon-container {
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            background-color: #fafafa;
+            gap: 15px;
+            background-color: white;
             padding: 20px;
-            border-radius: 8px;
-            border: 2px dashed #d1d5db;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(var(--primary), 0.12);
             position: relative;
+            overflow: hidden;
         }
-
+        
+        .coupon-container:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(to bottom, rgb(var(--primary)), rgb(var(--primary-light)));
+        }
+        
         .coupon-title {
-            color: #016d86;
+            color: rgb(var(--primary));
             font-weight: 600;
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 15px;
-            padding-bottom: 0;
-            border-bottom: none;
-            margin-bottom: 0;
+            font-size: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(var(--neutral-300), 0.4);
+            margin-bottom: 5px;
         }
-
+        
         .coupon-input-wrapper {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             position: relative;
         }
-
+        
         .coupon-input-wrapper input {
             flex: 1;
-            padding: 12px 14px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 14px;
+            padding: 14px 16px;
+            border: 2px solid rgba(var(--neutral-300), 0.8);
+            border-radius: var(--radius-md);
+            font-size: 15px;
             background-color: white;
-            transition: all 0.2s ease;
+            transition: all 0.25s ease;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
         }
-
+        
         .coupon-input-wrapper input:focus {
-            border-color: #016d86;
-            box-shadow: 0 0 0 3px rgba(1, 109, 134, 0.1);
+            border-color: rgb(var(--primary));
+            box-shadow: 0 0 0 3px rgba(var(--primary), 0.15);
             outline: none;
-            background-color: white;
         }
         
         /* Estado de validación del cupón */
@@ -3194,129 +3093,131 @@ function transferencia_moto_shortcode() {
         }
         
         .coupon-button {
-            background-color: #016d86;
+            background-color: rgb(var(--primary));
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
+            padding: 0 24px;
+            border-radius: var(--radius-md);
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            font-size: 14px;
+            box-shadow: 0 3px 6px rgba(var(--primary-dark), 0.3);
         }
-
+        
         .coupon-button:hover {
-            background-color: #014d5e;
+            background-color: rgb(var(--primary-dark));
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(1, 109, 134, 0.3);
+            box-shadow: 0 4px 8px rgba(var(--primary-dark), 0.4);
         }
-
+        
         .coupon-button:active {
             transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(1, 109, 134, 0.2);
+            box-shadow: 0 2px 4px rgba(var(--primary-dark), 0.3);
         }
         
         .coupon-message {
-            padding: 10px 14px;
-            border-radius: 6px;
+            padding: 12px 15px;
+            border-radius: var(--radius-md);
             font-weight: 500;
-            font-size: 13px;
+            font-size: 14px;
             line-height: 1.4;
             display: flex;
             align-items: center;
             gap: 8px;
         }
-
+        
         .coupon-message.hidden {
             display: none;
         }
-
+        
         .coupon-message.success {
-            background-color: #d1fae5;
-            color: #065f46;
-            border: 1px solid #6ee7b7;
+            background-color: rgba(var(--success), 0.1);
+            color: rgb(var(--success));
+            border: 1px solid rgba(var(--success), 0.3);
         }
-
+        
         .coupon-message.success:before {
             content: '✓';
             font-weight: bold;
             font-size: 16px;
         }
-
+        
         .coupon-message.error-message {
-            background-color: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fca5a5;
+            background-color: rgba(var(--error), 0.1);
+            color: rgb(var(--error));
+            border: 1px solid rgba(var(--error), 0.3);
         }
-
+        
         .coupon-message.error-message:before {
             content: '!';
             font-weight: bold;
-            font-size: 14px;
+            font-size: 16px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             width: 18px;
             height: 18px;
             border-radius: 50%;
-            background-color: #dc2626;
+            background-color: rgb(var(--error));
             color: white;
         }
-
-        .coupon-message.loading {
-            background-color: #f3f4f6;
-            color: #6b7280;
-            border: 1px solid #d1d5db;
+            border: 1px solid rgba(var(--error), 0.3);
         }
         
-        /* Total a pagar - diseño prominente y profesional */
+        .coupon-message.loading {
+            background-color: rgba(var(--neutral-500), 0.1);
+            color: rgb(var(--neutral-600));
+            border: 1px solid rgba(var(--neutral-500), 0.3);
+        }
+        
+        /* Total a pagar mejorado */
         .price-summary-total {
-            padding: 32px 28px;
-            background: linear-gradient(135deg, #016d86 0%, #014d5e 100%);
+            padding: 28px;
+            background: linear-gradient(to right, rgba(var(--primary), 0.02), rgba(var(--primary), 0.08));
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-
+        
         .price-summary-total-label {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
-
+        
         .price-summary-total-label span {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 700;
-            color: white;
+            color: rgb(var(--neutral-800));
         }
-
+        
         .price-summary-guarantees {
             display: flex;
-            gap: 18px;
+            gap: 15px;
             font-size: 13px;
-            color: rgba(255, 255, 255, 0.9);
+            color: rgb(var(--neutral-600));
         }
-
+        
         .price-summary-guarantees span {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             font-size: 13px;
-            font-weight: 500;
+            font-weight: normal;
         }
-
+        
         .price-summary-guarantees i {
-            color: #b3e5ef;
+            color: rgb(var(--primary));
         }
-
+        
         .price-summary-total-amount {
-            font-size: 36px;
+            font-size: 32px;
             font-weight: 700;
-            color: #016d86;
+            color: rgb(var(--primary));
             background-color: white;
-            padding: 16px 28px;
-            border-radius: 8px;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
+            box-shadow: 0 4px 15px rgba(var(--primary), 0.15);
         }
         
         /* Beneficios del servicio */
@@ -3429,53 +3330,37 @@ function transferencia_moto_shortcode() {
 
         .tramitfy-layout-wrapper {
             max-width: 1400px;
-            width: 95%;
-            margin: 40px auto;
+            margin: 0 auto;
             padding: 0;
         }
 
         .tramitfy-two-column {
-            display: grid !important;
-            grid-template-columns: 320px 1fr !important;
-            grid-template-areas: "sidebar content" !important;
-            gap: 0;
-            align-items: stretch;
-            background: white;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-            min-height: 600px;
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 30px;
+            align-items: start;
         }
 
         /* Panel Lateral Izquierdo */
         .tramitfy-sidebar {
-            grid-area: sidebar;
-            position: relative;
-            background: linear-gradient(180deg, #016d86 0%, #014d5f 100%);
-            border-radius: 16px 0 0 16px;
-            padding: 28px 20px;
-            box-shadow: none;
-            border: none;
-            backdrop-filter: none;
-            min-height: 100%;
-            overflow-y: auto;
-            overflow-x: hidden;
-            color: #ffffff;
-            display: flex;
-            flex-direction: column;
+            position: sticky;
+            top: 20px;
+            background: linear-gradient(135deg, rgba(1, 109, 134, 0.05) 0%, rgba(1, 109, 134, 0.02) 100%);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(1, 109, 134, 0.08);
+            border: 1px solid rgba(1, 109, 134, 0.1);
+            backdrop-filter: blur(10px);
+            min-height: 500px;
         }
 
         .sidebar-content {
             display: none;
             animation: fadeInUp 0.4s ease-out;
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
         }
 
         .sidebar-content.active {
-            display: flex;
-            flex-direction: column;
+            display: block;
         }
 
         @keyframes fadeInUp {
@@ -3492,24 +3377,23 @@ function transferencia_moto_shortcode() {
         .sidebar-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.15);
-            flex-shrink: 0;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(1, 109, 134, 0.15);
         }
 
         .sidebar-icon {
-            width: 38px;
-            height: 38px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 10px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 19px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            font-size: 22px;
+            box-shadow: 0 4px 12px rgba(var(--primary), 0.3);
         }
 
         .sidebar-title {
@@ -3517,40 +3401,36 @@ function transferencia_moto_shortcode() {
         }
 
         .sidebar-title h3 {
-            margin: 0 0 3px 0;
-            color: #ffffff;
-            font-size: 16px;
+            margin: 0 0 5px 0;
+            color: rgb(var(--primary-dark));
+            font-size: 20px;
             font-weight: 700;
-            line-height: 1.2;
         }
 
         .sidebar-title p {
             margin: 0;
-            color: rgba(255, 255, 255, 0.85);
-            font-size: 11px;
-            line-height: 1.2;
+            color: rgb(var(--neutral-600));
+            font-size: 13px;
         }
 
         .sidebar-body {
-            margin-bottom: 12px;
-            flex: 1;
-            min-height: 0;
+            margin-bottom: 25px;
         }
 
         .sidebar-info-box {
-            background: rgba(255, 255, 255, 0.12);
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            border-left: 3px solid rgba(255, 255, 255, 0.4);
+            background: white;
+            padding: 18px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            border-left: 3px solid rgb(var(--primary));
         }
 
         .sidebar-info-box p {
-            margin: 0 0 4px 0;
-            color: rgba(255, 255, 255, 0.95);
-            font-size: 12px;
-            line-height: 1.4;
+            margin: 0 0 8px 0;
+            color: rgb(var(--neutral-700));
+            font-size: 14px;
+            line-height: 1.6;
         }
 
         .sidebar-info-box p:last-child {
@@ -3558,22 +3438,21 @@ function transferencia_moto_shortcode() {
         }
 
         .sidebar-info-box strong {
-            color: #ffffff;
-            font-weight: 600;
+            color: rgb(var(--primary-dark));
         }
 
         .sidebar-checklist {
             background: white;
-            padding: 12px;
-            border-radius: 8px;
+            padding: 20px;
+            border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
 
         .sidebar-checklist-item {
             display: flex;
             align-items: start;
-            gap: 8px;
-            padding: 6px 0;
+            gap: 12px;
+            padding: 12px 0;
             border-bottom: 1px dashed rgba(var(--neutral-300), 0.5);
         }
 
@@ -3582,15 +3461,15 @@ function transferencia_moto_shortcode() {
         }
 
         .sidebar-check-icon {
-            width: 18px;
-            height: 18px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             background: rgba(var(--success), 0.1);
             color: rgb(var(--success));
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
+            font-size: 12px;
             flex-shrink: 0;
             margin-top: 2px;
         }
@@ -3598,20 +3477,20 @@ function transferencia_moto_shortcode() {
         .sidebar-checklist-text {
             flex: 1;
             color: rgb(var(--neutral-700));
-            font-size: 11px;
-            line-height: 1.3;
+            font-size: 14px;
+            line-height: 1.5;
         }
 
         .sidebar-tips {
-            background: rgba(255, 193, 7, 0.15);
-            padding: 10px;
-            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, rgba(255, 193, 7, 0.03) 100%);
+            padding: 18px;
+            border-radius: 10px;
             border-left: 3px solid #FFC107;
         }
 
         .sidebar-tips h4 {
-            margin: 0 0 6px 0;
-            color: #FFC107;
+            margin: 0 0 12px 0;
+            color: #F57C00;
             font-size: 14px;
             font-weight: 700;
             display: flex;
@@ -3629,7 +3508,7 @@ function transferencia_moto_shortcode() {
         }
 
         .sidebar-tips li {
-            color: rgba(255, 255, 255, 0.95);
+            color: rgb(var(--neutral-700));
             font-size: 13px;
             line-height: 1.6;
             margin-bottom: 8px;
@@ -3640,15 +3519,13 @@ function transferencia_moto_shortcode() {
         }
 
         .sidebar-price-highlight {
-            background: rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
             color: white;
             padding: 25px;
             border-radius: 12px;
             text-align: center;
             margin-bottom: 20px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(10px);
+            box-shadow: 0 6px 20px rgba(var(--primary), 0.25);
         }
 
         .sidebar-price-label {
@@ -3681,77 +3558,31 @@ function transferencia_moto_shortcode() {
             margin-top: 12px;
         }
 
-        /* Panel Derecho - Formulario - maximizado */
+        /* Panel Derecho - Formulario */
         .tramitfy-main-form {
-            grid-area: content;
             background: white;
-            border-radius: 0 16px 16px 0;
+            border-radius: 16px;
             padding: 0;
-            box-shadow: none;
-            max-width: none !important;
-            width: auto !important;
-            overflow-x: visible;
-            overflow-y: auto;
-            min-width: 0;
-        }
-
-        /* Páginas del formulario sin restricciones de ancho */
-        .form-page {
-            width: 100%;
-            max-width: 100% !important;
-            padding: 32px 40px;
-        }
-
-        /* Transiciones para los pasos del precio */
-        .precio-step {
-            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        #page-pago {
-            width: 100%;
-            max-width: 100% !important;
-            padding: 32px 40px !important;
-        }
-
-        #page-pago > * {
-            max-width: 100% !important;
-        }
-
-        /* Panel de admin */
-        .admin-autofill-panel {
-            margin: 24px 40px 0 40px !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
         }
 
         /* Responsive */
         @media (max-width: 1024px) {
             .tramitfy-two-column {
-                grid-template-columns: 1fr !important;
-                grid-template-areas: "sidebar" "content" !important;
-                gap: 0;
+                grid-template-columns: 1fr;
+                gap: 20px;
             }
 
             .tramitfy-sidebar {
                 position: relative;
                 top: auto;
-                min-height: auto;
-                height: auto;
-            }
-
-            .tramitfy-main-form {
-                padding: 30px 25px;
+                order: -1;
             }
         }
 
         @media (max-width: 768px) {
             .tramitfy-layout-wrapper {
                 padding: 0;
-                margin: 15px;
-            }
-
-            .tramitfy-two-column {
-                border-radius: 12px;
             }
 
             .tramitfy-sidebar {
@@ -3917,377 +3748,7 @@ function transferencia_moto_shortcode() {
             color: rgb(var(--primary));
             border: 1px solid rgba(var(--primary), 0.3);
         }
-
-        /* Estilos para formulario en sidebar */
-        .sidebar-form-section {
-            margin-bottom: 15px;
-        }
-
-        .sidebar-form-group {
-            margin-bottom: 10px;
-        }
-
-        .sidebar-form-group label {
-            display: block;
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 11px;
-            font-weight: 600;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .sidebar-input {
-            width: 100%;
-            padding: 8px 10px;
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            font-size: 12px;
-            font-family: 'Roboto', sans-serif;
-            transition: all 0.2s ease;
-            box-sizing: border-box;
-        }
-
-        .sidebar-input::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-
-        .sidebar-input:focus {
-            outline: none;
-            background: rgba(255, 255, 255, 0.25);
-            border-color: rgba(255, 255, 255, 0.5);
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar-doc-preview {
-            margin-top: 15px;
-        }
-
-        .sidebar-doc-card {
-            background: white;
-            border-radius: 8px;
-            padding: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            margin-top: 8px;
-        }
-
-        /* Nuevos estilos simplificados para página de precio */
-        .price-section-simple {
-            background: white;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            border: 1px solid #e5e7eb;
-            overflow: hidden;
-        }
-
-        .price-section-header {
-            padding: 20px 24px;
-            background: linear-gradient(135deg, #016d86 0%, #014d5f 100%);
-            color: white;
-        }
-
-        .price-section-header h3 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: white;
-        }
-
-        .price-section-header h3 i {
-            color: white;
-            font-size: 16px;
-        }
-
-        .price-section-collapsible {
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.2s;
-        }
-
-        .price-section-collapsible:hover {
-            background: linear-gradient(135deg, #01829e 0%, #015770 100%);
-        }
-
-        .price-section-collapsible .accordion-icon {
-            transition: transform 0.3s;
-        }
-
-        .price-section-content {
-            padding: 24px;
-        }
-
-        .price-explanation {
-            color: #6b7280;
-            font-size: 14px;
-            line-height: 1.6;
-            margin: 0 0 20px 0;
-            padding: 12px;
-            background: #f9fafb;
-            border-left: 3px solid #016d86;
-            border-radius: 4px;
-        }
-
-        .price-item-main {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px;
-            background: #f9fafb;
-            border-radius: 8px;
-            margin-bottom: 12px;
-        }
-
-        .price-item-left {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .price-item-name {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1f2937;
-        }
-
-        .price-item-desc {
-            font-size: 13px;
-            color: #6b7280;
-        }
-
-        .price-item-right {
-            font-size: 20px;
-            font-weight: 700;
-            color: #016d86;
-        }
-
-        .price-item-secondary {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 16px;
-            font-size: 14px;
-            color: #6b7280;
-        }
-
-        .price-section-highlight {
-            border: 2px solid #016d86;
-            box-shadow: 0 4px 12px rgba(1, 109, 134, 0.1);
-        }
-
-        .btn-link-simple {
-            background: transparent;
-            border: none;
-            color: #016d86;
-            font-size: 14px;
-            cursor: pointer;
-            padding: 8px 0;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .btn-link-simple:hover {
-            color: #014d5f;
-            gap: 8px;
-        }
-
-        .checkbox-option-simple {
-            margin-top: 16px;
-            padding: 12px;
-            background: #fef3c7;
-            border-radius: 6px;
-            border: 1px solid #fcd34d;
-        }
-
-        .checkbox-option-simple label {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            margin: 0;
-        }
-
-        .checkbox-option-simple input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-
-        .checkbox-label {
-            font-size: 14px;
-            color: #92400e;
-            font-weight: 500;
-        }
-
-        .service-option-simple {
-            padding: 16px;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            transition: all 0.2s;
-        }
-
-        .service-option-simple:hover {
-            border-color: #016d86;
-            background: #f9fafb;
-        }
-
-        .service-option-simple label {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            margin: 0;
-        }
-
-        .service-option-simple input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-
-        .service-option-content {
-            flex: 1;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .service-option-info {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .service-option-name {
-            font-size: 15px;
-            font-weight: 600;
-            color: #1f2937;
-        }
-
-        .service-option-desc {
-            font-size: 13px;
-            color: #6b7280;
-        }
-
-        .service-option-price {
-            font-size: 16px;
-            font-weight: 700;
-            color: #016d86;
-        }
-
-        .coupon-input-simple {
-            display: flex;
-            gap: 10px;
-        }
-
-        .coupon-input-simple input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 15px;
-            transition: all 0.2s;
-        }
-
-        .coupon-input-simple input:focus {
-            outline: none;
-            border-color: #016d86;
-        }
-
-        .btn-apply-coupon {
-            padding: 12px 24px;
-            background: #016d86;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-apply-coupon:hover {
-            background: #014d5f;
-        }
-
-        .price-total-simple {
-            background: linear-gradient(135deg, #016d86 0%, #014d5f 100%);
-            color: white;
-            padding: 24px;
-            border-radius: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 8px 20px rgba(1, 109, 134, 0.3);
-        }
-
-        .price-total-label {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .price-total-label > span {
-            font-size: 16px;
-            font-weight: 600;
-            opacity: 0.95;
-        }
-
-        .price-total-badges {
-            display: flex;
-            gap: 12px;
-            font-size: 13px;
-            opacity: 0.9;
-        }
-
-        .price-total-badges i {
-            margin-right: 4px;
-        }
-
-        .price-total-amount {
-            font-size: 32px;
-            font-weight: 700;
-            color: white;
-        }
-
-        @media (max-width: 768px) {
-            .price-section-header h3 {
-                font-size: 16px;
-            }
-
-            .price-item-name {
-                font-size: 14px;
-            }
-
-            .price-item-right {
-                font-size: 18px;
-            }
-
-            .price-total-simple {
-                flex-direction: column;
-                text-align: center;
-                gap: 16px;
-            }
-
-            .price-total-amount {
-                font-size: 28px;
-            }
-
-            .service-option-content {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-        }
-
+        
         .payment-modal h3 {
             color: rgb(var(--primary));
             font-size: 24px;
@@ -4414,31 +3875,214 @@ function transferencia_moto_shortcode() {
                 <!-- Panel Lateral Izquierdo -->
                 <aside class="tramitfy-sidebar">
 
-                    <!-- Contenido dinámico por página -->
-                    <div id="sidebar-dynamic-content" style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.2);">
-                        <!-- Se actualizará dinámicamente con JavaScript -->
+                    <!-- Contenido: PASO 1 - Vehículo -->
+                    <div class="sidebar-content" data-step="page-vehiculo">
+                        <div class="sidebar-header">
+                            <div class="sidebar-icon">
+                                <i class="fa-solid fa-water"></i>
+                            </div>
+                            <div class="sidebar-title">
+                                <h3>Datos de tu moto de agua</h3>
+                                <p>Paso 1 de 6</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-body">
+                            <div class="sidebar-info-box">
+                                <p><strong>Necesitaremos información básica</strong> de tu moto de agua para iniciar el trámite.</p>
+                                <p>Puedes buscar por <strong>fabricante y modelo</strong> en nuestra base de datos, o introducir los datos manualmente si no lo encuentras.</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-tips">
+                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
+                            <ul>
+                                <li>La <strong>fecha de matriculación</strong> es importante para calcular el ITP</li>
+                                <li>La encontrarás en el <strong>Tarjeta de la Moto</strong></li>
+                                <li>Si no encuentras tu modelo, márcalo y rellena manualmente</li>
+                            </ul>
+                        </div>
                     </div>
 
-                    <!-- Contenido universal del sidebar -->
-                    <div class="sidebar-content active" data-step="all">
-                        <div class="sidebar-body">
-
-                            <!-- TrustIndex Widget de Trustpilot -->
-                            <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
-                                <script defer async src='https://cdn.trustindex.io/loader.js?f4fbfd341d12439e0c86fae7fc2'></script>
+                    <!-- Contenido: PASO 2 - Precio -->
+                    <div class="sidebar-content" data-step="page-precio">
+                        <div class="sidebar-header">
+                            <div class="sidebar-icon">
+                                <i class="fa-solid fa-calculator"></i>
                             </div>
+                            <div class="sidebar-title">
+                                <h3>Impuestos y Servicios</h3>
+                                <p>Paso 2 de 6</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-body">
+                            <div class="sidebar-price-highlight">
+                                <div class="sidebar-price-label">Tu tramitación completa</div>
+                                <div class="sidebar-price-amount">134,95€</div>
+                                <div class="sidebar-price-includes">
+                                    ✓ Tasas oficiales de Capitanía<br>
+                                    ✓ Honorarios profesionales<br>
+                                    ✓ IVA incluido
+                                </div>
+                                <div class="sidebar-badge">
+                                    <i class="fa-solid fa-lock"></i> Pago 100% seguro
+                                </div>
+                            </div>
+                            <div class="sidebar-info-box">
+                                <p><strong>El ITP se calcula automáticamente</strong> según el valor fiscal y la comunidad autónoma.</p>
+                                <p>Recuerda que el <strong>ITP no está incluido</strong> en el precio y se abona directamente a Hacienda.</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-tips">
+                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
+                            <ul>
+                                <li>Puedes aplicar un <strong>cupón de descuento</strong> si lo tienes</li>
+                                <li>El ITP varía según cada <strong>comunidad autónoma</strong></li>
+                                <li>Los servicios opcionales agilizarán tu trámite</li>
+                            </ul>
+                        </div>
+                    </div>
 
-                            <!-- Garantías de servicio -->
-                            <div style="background: rgba(255,255,255,0.08); padding: 16px; border-radius: 8px;">
-                                <div style="color: #fff; font-weight: 600; font-size: 14px; margin-bottom: 12px;">
-                                    Nuestro compromiso
+                    <!-- Contenido: PASO 3 - Documentos -->
+                    <div class="sidebar-content" data-step="page-documentos">
+                        <div class="sidebar-header">
+                            <div class="sidebar-icon">
+                                <i class="fa-solid fa-file-circle-check"></i>
+                            </div>
+                            <div class="sidebar-title">
+                                <h3>Tu documentación</h3>
+                                <p>Paso 3 de 6</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-body">
+                            <div class="sidebar-checklist">
+                                <div class="sidebar-checklist-item">
+                                    <div class="sidebar-check-icon">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <div class="sidebar-checklist-text">
+                                        <strong>Hoja de asiento</strong><br>
+                                        Del Tarjeta de la Moto
+                                    </div>
                                 </div>
-                                <div style="color: rgba(255,255,255,0.9); font-size: 13px; line-height: 1.7;">
-                                    <div style="margin-bottom: 8px;">- Gestores profesionales titulados</div>
-                                    <div style="margin-bottom: 8px;">- Pago seguro con Stripe</div>
-                                    <div style="margin-bottom: 8px;">- Documentación en 24-48h</div>
-                                    <div>- Soporte durante todo el trámite</div>
+                                <div class="sidebar-checklist-item">
+                                    <div class="sidebar-check-icon">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <div class="sidebar-checklist-text">
+                                        <strong>DNI del comprador</strong><br>
+                                        Por ambas caras
+                                    </div>
                                 </div>
+                                <div class="sidebar-checklist-item">
+                                    <div class="sidebar-check-icon">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <div class="sidebar-checklist-text">
+                                        <strong>DNI del vendedor</strong><br>
+                                        Por ambas caras
+                                    </div>
+                                </div>
+                                <div class="sidebar-checklist-item">
+                                    <div class="sidebar-check-icon">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <div class="sidebar-checklist-text">
+                                        <strong>Contrato de compraventa</strong><br>
+                                        Firmado por ambas partes
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sidebar-tips">
+                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
+                            <ul>
+                                <li>Puedes subir <strong>múltiples archivos</strong> en cada campo</li>
+                                <li>Acepta <strong>fotos o PDFs</strong></li>
+                                <li>En móvil puedes usar la <strong>cámara directamente</strong></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Contenido: PASO 4 - Datos Personales -->
+                    <div class="sidebar-content" data-step="page-datos">
+                        <div class="sidebar-header">
+                            <div class="sidebar-icon">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <div class="sidebar-title">
+                                <h3>Tus datos de contacto</h3>
+                                <p>Paso 4 de 6</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-body">
+                            <div class="sidebar-info-box">
+                                <p><strong>Necesitamos tus datos</strong> para la tramitación oficial y para mantenerte informado del progreso.</p>
+                                <p>Toda tu información es <strong>100% confidencial</strong> y segura.</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-tips">
+                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
+                            <ul>
+                                <li>Usaremos tu <strong>email</strong> para enviarte actualizaciones</li>
+                                <li>El DNI debe coincidir con el del <strong>documento subido</strong></li>
+                                <li>Revisa bien el nuevo nombre de tu moto de agua</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Contenido: PASO 5 - Firma -->
+                    <div class="sidebar-content" data-step="page-firma">
+                        <div class="sidebar-header">
+                            <div class="sidebar-icon">
+                                <i class="fa-solid fa-pen-nib"></i>
+                            </div>
+                            <div class="sidebar-title">
+                                <h3>Autorización final</h3>
+                                <p>Paso 5 de 6</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-body">
+                            <div class="sidebar-info-box">
+                                <p><strong>Necesitamos tu firma electrónica</strong> para la autorización de transferencia.</p>
+                                <p>Este documento tiene <strong>validez legal</strong> y será incluido en tu tramitación.</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-tips">
+                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
+                            <ul>
+                                <li>Firma con el <strong>ratón</strong> o con el <strong>dedo</strong> en móvil</li>
+                                <li>Si no te gusta, puedes <strong>borrar y firmar de nuevo</strong></li>
+                                <li>Asegúrate de que la firma sea clara y legible</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Contenido: PASO 6 - Resumen y Pago -->
+                    <div class="sidebar-content" data-step="page-resumen">
+                        <div class="sidebar-header">
+                            <div class="sidebar-icon">
+                                <i class="fa-solid fa-credit-card"></i>
+                            </div>
+                            <div class="sidebar-title">
+                                <h3>Confirma y paga</h3>
+                                <p>Paso 6 de 6</p>
+                            </div>
+                        </div>
+                        <div class="sidebar-body">
+                            <div class="sidebar-price-highlight">
+                                <div class="sidebar-price-label">Total a pagar ahora</div>
+                                <div class="sidebar-price-amount" id="sidebar-final-amount">134,95€</div>
+                                <div class="sidebar-price-includes">
+                                    ✓ Gestión completa<br>
+                                    ✓ Tasas + Honorarios + IVA<br>
+                                    ✗ ITP (se paga a Hacienda)
+                                </div>
+                                <div class="sidebar-badge">
+                                    <i class="fa-solid fa-shield-halved"></i> Conexión cifrada SSL
+                                </div>
+                            </div>
+                            <div class="sidebar-info-box">
+                                <p><strong>Revisa todos los datos</strong> antes de proceder al pago.</p>
+                                <p>Recibirás confirmación por <strong>email inmediatamente</strong>.</p>
                             </div>
                         </div>
                     </div>
@@ -4467,7 +4111,7 @@ function transferencia_moto_shortcode() {
         <?php endif; ?>
 
         <!-- Navegación del formulario mejorada -->
-        <div id="form-navigation">
+        <div id="form-navigation" style="display: none;">
             <div class="nav-progress-bar">
                 <div class="nav-progress-indicator"></div>
             </div>
@@ -4475,49 +4119,39 @@ function transferencia_moto_shortcode() {
                 <a href="#" class="nav-item" data-page-id="page-vehiculo">
                     <div class="nav-item-circle">
                         <div class="nav-item-icon">
-                            <i class="fa-solid fa-water"></i>
+                            <i class="fa-solid fa-car-side"></i>
                         </div>
                         <div class="nav-item-number">1</div>
                     </div>
                     <span class="nav-item-text">Vehículo</span>
                 </a>
-
-                <a href="#" class="nav-item" data-page-id="page-datos">
-                    <div class="nav-item-circle">
-                        <div class="nav-item-icon">
-                            <i class="fa-solid fa-user"></i>
-                        </div>
-                        <div class="nav-item-number">2</div>
-                    </div>
-                    <span class="nav-item-text">Datos</span>
-                </a>
-
+                
                 <a href="#" class="nav-item" data-page-id="page-precio">
                     <div class="nav-item-circle">
                         <div class="nav-item-icon">
                             <i class="fa-solid fa-tag"></i>
                         </div>
-                        <div class="nav-item-number">3</div>
+                        <div class="nav-item-number">2</div>
                     </div>
                     <span class="nav-item-text">Precio</span>
                 </a>
-
+                
                 <a href="#" class="nav-item" data-page-id="page-documentos">
                     <div class="nav-item-circle">
                         <div class="nav-item-icon">
-                            <i class="fa-solid fa-file-signature"></i>
+                            <i class="fa-solid fa-file-alt"></i>
                         </div>
-                        <div class="nav-item-number">4</div>
+                        <div class="nav-item-number">3</div>
                     </div>
                     <span class="nav-item-text">Documentos</span>
                 </a>
-
+                
                 <a href="#" class="nav-item" data-page-id="page-pago">
                     <div class="nav-item-circle">
                         <div class="nav-item-icon">
                             <i class="fa-solid fa-credit-card"></i>
                         </div>
-                        <div class="nav-item-number">5</div>
+                        <div class="nav-item-number">4</div>
                     </div>
                     <span class="nav-item-text">Pago</span>
                 </a>
@@ -4556,18 +4190,18 @@ function transferencia_moto_shortcode() {
 
         <!-- Página Vehículo -->
         <div id="page-vehiculo" class="form-page form-section-compact">
-            <h2 style="margin-bottom: 10px;">Información de tu Moto</h2>
-            <p style="margin-bottom: 25px; font-size: 15px; color: #666; line-height: 1.6;">Necesitamos estos datos para identificar tu vehículo ante Capitanía Marítima y calcular el ITP según la comunidad autónoma.</p>
+            <h2 style="margin-bottom: 10px;">Transferencia de Propiedad</h2>
+            <h3 style="margin-bottom: 25px; font-size: 18px; color: #666;">Información de la Moto</h3>
             <!-- Tipo de vehículo fijo: Barco -->
             <input type="hidden" name="vehicle_type" value="Barco">
 
-            <!-- Fabricante y Modelo en fila -->
+            <!-- Fabricante y Modelo en fila compacta -->
             <div id="vehicle-csv-section">
                 <div class="form-compact-row">
                     <div class="form-group">
                         <label for="manufacturer">Fabricante</label>
                         <select id="manufacturer" name="manufacturer">
-                            <option value="">Seleccione fabricante</option>
+                            <option value="">Seleccione un fabricante</option>
                             <?php foreach (array_keys($datos_fabricantes) as $fabricante): ?>
                                 <option value="<?php echo esc_attr($fabricante); ?>"><?php echo esc_html($fabricante); ?></option>
                             <?php endforeach; ?>
@@ -4577,21 +4211,24 @@ function transferencia_moto_shortcode() {
                     <div class="form-group">
                         <label for="model">Modelo</label>
                         <select id="model" name="model">
-                            <option value="">Seleccione modelo</option>
+                            <option value="">Seleccione un modelo</option>
                         </select>
                     </div>
                 </div>
             </div>
 
-            <!-- "No encuentro mi modelo" - compacto -->
-            <div id="no-encuentro-wrapper" style="margin: 12px 0;">
-                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
+            <!-- "No encuentro mi modelo" -->
+            <div id="no-encuentro-wrapper">
+                <label>
                     <input type="checkbox" id="no_encuentro_checkbox" name="no_encuentro_checkbox">
-                    <span>No encuentro mi modelo</span>
+                    No encuentro mi modelo
                 </label>
-
+                <p style="font-size: 13px; color: #666; margin: 8px 0 15px 0;">
+                    Marque esta casilla si su moto de agua no aparece en la lista anterior.
+                    El cálculo del ITP se basará únicamente en el <strong>precio de compra</strong>.
+                </p>
                 <!-- Campos de marca/modelo manual en 2 columnas -->
-                <div id="manual-fields" style="display: none; margin-top: 10px;">
+                <div id="manual-fields" style="display: none;">
                     <div class="form-compact-row">
                         <div class="form-group">
                             <label for="manual_manufacturer">Marca (manual)</label>
@@ -4606,357 +4243,233 @@ function transferencia_moto_shortcode() {
                 </div>
             </div>
 
-            <!-- Fecha, Precio y Comunidad Autónoma en fila de 3 -->
-            <div class="form-compact-triple">
-                <div class="form-group">
-                    <label for="matriculation_date" id="matriculation_date_label">Fecha Matriculación</label>
-                    <input type="date" id="matriculation_date" name="matriculation_date" max="<?php echo date('Y-m-d'); ?>" required>
-                </div>
-
+            <!-- Precio y Fecha en fila compacta -->
+            <div class="form-compact-row">
                 <div class="form-group">
                     <label for="purchase_price">Precio de Compra (€)</label>
-                    <input type="number" id="purchase_price" name="purchase_price" placeholder="Ej: 12000" required />
+                    <input type="number" id="purchase_price" name="purchase_price" placeholder="Precio de compra" required />
                 </div>
 
                 <div class="form-group">
-                    <label for="region">Comunidad Autónoma</label>
-                    <select id="region" name="region" required>
-                        <option value="">Seleccione comunidad</option>
-                        <option value="Andalucía">Andalucía</option>
-                        <option value="Aragón">Aragón</option>
-                        <option value="Asturias">Asturias</option>
-                        <option value="Islas Baleares">Islas Baleares</option>
-                        <option value="Canarias">Canarias</option>
-                        <option value="Cantabria">Cantabria</option>
-                        <option value="Castilla-La Mancha">Castilla-La Mancha</option>
-                        <option value="Castilla y León">Castilla y León</option>
-                        <option value="Cataluña">Cataluña</option>
-                        <option value="Comunidad Valenciana">Comunidad Valenciana</option>
-                        <option value="Galicia">Galicia</option>
-                        <option value="Madrid">Madrid</option>
-                        <option value="Murcia">Murcia</option>
-                        <option value="Navarra">Navarra</option>
-                        <option value="País Vasco">País Vasco</option>
-                        <option value="La Rioja">La Rioja</option>
-                        <option value="Ceuta">Ceuta</option>
-                        <option value="Melilla">Melilla</option>
-                    </select>
+                    <label for="matriculation_date" id="matriculation_date_label">Fecha de Matriculación</label>
+                    <input type="date" id="matriculation_date" name="matriculation_date" max="<?php echo date('Y-m-d'); ?>" required>
                 </div>
+            </div>
+
+            <!-- Comunidad Autónoma (ancho completo) -->
+            <div class="form-group">
+                <label for="region">Comunidad Autónoma del comprador</label>
+                <select id="region" name="region" required>
+                    <option value="">Seleccione una comunidad autónoma</option>
+                    <option value="Andalucía">Andalucía</option>
+                    <option value="Aragón">Aragón</option>
+                    <option value="Asturias">Asturias</option>
+                    <option value="Islas Baleares">Islas Baleares</option>
+                    <option value="Canarias">Canarias</option>
+                    <option value="Cantabria">Cantabria</option>
+                    <option value="Castilla-La Mancha">Castilla-La Mancha</option>
+                    <option value="Castilla y León">Castilla y León</option>
+                    <option value="Cataluña">Cataluña</option>
+                    <option value="Comunidad Valenciana">Comunidad Valenciana</option>
+                    <option value="Galicia">Galicia</option>
+                    <option value="Madrid">Madrid</option>
+                    <option value="Murcia">Murcia</option>
+                    <option value="Navarra">Navarra</option>
+                    <option value="País Vasco">País Vasco</option>
+                    <option value="La Rioja">La Rioja</option>
+                    <option value="Ceuta">Ceuta</option>
+                    <option value="Melilla">Melilla</option>
+                </select>
             </div>
 
         </div> <!-- Fin page-vehiculo -->
 
-        <!-- Página Datos -->
-        <div id="page-datos" class="form-page form-section-compact hidden">
-            <h2>Tus Datos Personales</h2>
-            <p class="section-intro">Introduce tus datos personales para la gestión del trámite. Estos datos aparecerán en el documento de autorización.</p>
-
-            <div class="form-compact-row">
-                <div class="form-group">
-                    <label for="customer_name">Nombre y Apellidos</label>
-                    <input type="text" id="customer_name" name="customer_name" required />
-                    <span class="input-hint">Tal como aparece en su DNI</span>
-                </div>
-
-                <div class="form-group">
-                    <label for="customer_dni">DNI</label>
-                    <input type="text" id="customer_dni" name="customer_dni" required />
-                    <span class="input-hint">Formato: 12345678X</span>
-                </div>
-            </div>
-
-            <div class="form-compact-row">
-                <div class="form-group">
-                    <label for="customer_email">Correo Electrónico</label>
-                    <input type="email" id="customer_email" name="customer_email" required />
-                    <span class="input-hint">Recibirás notificaciones del trámite</span>
-                </div>
-
-                <div class="form-group">
-                    <label for="customer_phone">Teléfono</label>
-                    <input type="tel" id="customer_phone" name="customer_phone" required />
-                    <span class="input-hint">Para contactarte si es necesario</span>
-                </div>
-            </div>
-
-        </div> <!-- Fin page-datos -->
-
-        <!-- Página Precio - NUEVO FLUJO LIMPIO -->
+        <!-- Página Precio - REDISEÑADA -->
         <div id="page-precio" class="form-page form-section-compact hidden">
-
-            <!-- PASO 1: Información inicial de precios -->
-            <div id="precio-step-1" class="precio-step">
-                <h2 id="precio-titulo">Precio del Trámite</h2>
-                <p id="precio-subtitulo" style="color: #666; margin-bottom: 32px; font-size: 15px; line-height: 1.6;">Todo lo que necesitas para completar tu transferencia de forma legal y sin complicaciones.</p>
-
-                <!-- Tramitación Completa -->
-                <div id="tramitacion-completa-box" style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; padding: 28px; margin-bottom: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <div>
-                            <div style="font-size: 20px; font-weight: 700; color: #1f2937;">Tramitación Completa</div>
-                            <div style="font-size: 14px; color: #6b7280; margin-top: 6px;">Todo incluido para tu tranquilidad</div>
-                        </div>
-                        <div style="font-size: 32px; font-weight: 700; color: #016d86;" id="tramitacion_price">134.99 €</div>
-                    </div>
-                    <div style="border-top: 1px solid #e5e7eb; padding-top: 16px; margin-top: 16px;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px; color: #4b5563;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-check-circle" style="color: #10b981;"></i>
-                                <span>Gestión completa</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-check-circle" style="color: #10b981;"></i>
-                                <span>Tasas incluidas</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-check-circle" style="color: #10b981;"></i>
-                                <span>Pago del ITP</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-check-circle" style="color: #10b981;"></i>
-                                <span>IVA incluido</span>
-                            </div>
-                        </div>
-                    </div>
+            <h2>Resumen del Trámite</h2>
+            
+            <!-- Tarjeta principal mejorada con todos los detalles del trámite -->
+            <div class="price-summary-card">
+                <div class="price-summary-header">
+                    <h3><i class="fa-solid fa-receipt"></i> Desglose del Trámite</h3>
+                    <div class="price-summary-badge">Precio transparente</div>
                 </div>
-
-                <!-- ITP (Impuesto) -->
-                <div id="itp-info-box" style="background: #eff6ff; border: 2px solid #016d86; border-radius: 12px; padding: 28px; margin-bottom: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <div>
-                            <div style="font-size: 20px; font-weight: 700; color: #016d86;">Impuesto (ITP)</div>
-                            <div style="font-size: 14px; color: #016d86; margin-top: 6px;">Obligatorio ante Hacienda</div>
+                
+                <div class="price-summary-body">
+                    <!-- Servicio principal -->
+                    <div class="price-summary-main">
+                        <div class="price-summary-title">
+                            <span>Cambio de Titularidad</span>
+                            <div class="price-summary-amount" id="cambio_nombre_price">134.99 €</div>
                         </div>
-                        <div style="font-size: 32px; font-weight: 700; color: #016d86;" id="transfer_tax_step1">0 €</div>
-                    </div>
-                    <div style="border-top: 1px solid #016d86; padding-top: 16px; margin-top: 16px;">
-                        <button type="button" id="ver-calculo-itp" style="background: #016d86; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%;">
-                            <i class="fa-solid fa-calculator"></i> Ver cómo se calcula el ITP
-                        </button>
-                    </div>
-
-                    <!-- Detalle del cálculo (inicialmente oculto) -->
-                    <div id="calculo-itp-detail" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 2px dashed #016d86;">
-                        <div style="font-size: 15px; color: #014d5f; margin-bottom: 16px; line-height: 1.6;">
-                            <strong>¿Cómo se calcula?</strong> El ITP se aplica sobre el mayor valor entre:
-                        </div>
-                        <div style="display: grid; gap: 12px; font-size: 14px;">
-                            <div style="display: flex; justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.7); border-radius: 6px;">
-                                <span style="color: #014d5f;">Precio de compra:</span>
-                                <strong id="precio-compra-calc">0 €</strong>
+                        <div class="price-summary-details">
+                            <div class="price-summary-row">
+                                <span><i class="fa-solid fa-check"></i> Tasas capitanía marítima + Gestión</span>
+                                <span id="tasas_honorarios_display">114.87 €</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.7); border-radius: 6px;">
-                                <span style="color: #014d5f;">Valor fiscal:</span>
-                                <strong id="valor-fiscal-calc">0 €</strong>
+                            <div class="price-summary-row">
+                                <span><i class="fa-solid fa-check"></i> IVA</span>
+                                <span id="iva_display">20.12 €</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; padding: 12px; background: white; border-radius: 6px; border: 2px solid #016d86;">
-                                <span style="color: #016d86; font-weight: 600;">Base imponible:</span>
-                                <strong style="color: #016d86;" id="base-imponible-calc">0 €</strong>
+                            <div class="price-summary-row">
+                                <span><i class="fa-solid fa-check"></i> Comisión bancaria (1.5% del ITP)</span>
+                                <span id="extra_fee_includes_display">0 €</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.7); border-radius: 6px;">
-                                <span style="color: #014d5f;">Tipo impositivo (<span id="region-name-calc">-</span>):</span>
-                                <strong id="tipo-impositivo-calc">4%</strong>
+                            <div class="price-summary-row discount-row" id="discount-li" style="display:none;">
+                                <span><i class="fa-solid fa-tag"></i> Descuento aplicado</span>
+                                <span id="discount-amount" class="discount-text">0 €</span>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Pregunta ITP Pagado -->
-                <div id="itp-question-container" style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; padding: 24px; text-align: center; transition: all 0.3s ease;">
-                    <h3 style="margin: 0 0 8px 0; font-size: 18px; color: #1f2937;">¿Ya has pagado el ITP?</h3>
-                    <p style="margin: 0 0 20px 0; font-size: 14px; color: #6b7280;">Selecciona tu situación</p>
-                    <div style="display: flex; gap: 12px; justify-content: center;">
-                        <button type="button" id="itp-si" class="itp-choice-btn" style="flex: 1; max-width: 200px; padding: 16px 24px; border: 2px solid #10b981; background: white; color: #10b981; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
-                            Sí, ya lo pagué
-                        </button>
-                        <button type="button" id="itp-no" class="itp-choice-btn" style="flex: 1; max-width: 200px; padding: 16px 24px; border: 2px solid #e5e7eb; background: white; color: #6b7280; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
-                            No, necesito pagarlo
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Flujo: ITP Ya Pagado (oculto inicialmente) -->
-                <div id="itp-ya-pagado-flow" style="display: none; margin-top: 20px; background: #f0fdf4; border: 2px solid #10b981; border-radius: 12px; padding: 24px; text-align: center;">
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 20px;">
-                        <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 28px;"></i>
-                        <h4 style="margin: 0; font-size: 18px; color: #065f46;">Perfecto, ya tienes el ITP pagado</h4>
-                    </div>
-                    <button type="button" id="btn-ver-desglose-si" style="background: #10b981; color: white; border: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-                        <i class="fa-solid fa-file-invoice-dollar" style="margin-right: 8px;"></i>
-                        Ver desglose de precio
-                    </button>
-                    <p style="margin: 16px 0 0 0; font-size: 13px; color: #059669;">
-                        📄 Recuerda: Necesitarás el Modelo 620 en el paso de documentos
-                    </p>
-                </div>
-
-                <!-- Flujo: ITP No Pagado - Gestión (oculto inicialmente) -->
-                <div id="itp-no-pagado-flow" style="display: none; margin-top: 20px;">
-                    <!-- Opción de gestión -->
-                    <div style="background: #eff6ff; border: 2px solid #016d86; border-radius: 12px; padding: 24px; margin-bottom: 20px;">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                            <i class="fa-solid fa-hand-holding-dollar" style="color: #016d86; font-size: 24px;"></i>
-                            <h4 style="margin: 0; font-size: 17px; color: #014d5f;">¿Quieres que lo gestionemos nosotros?</h4>
+                    
+                    <!-- Impuesto de transmisiones -->
+                    <div class="price-summary-tax">
+                        <div class="price-summary-title">
+                            <span>Impuesto de Transmisiones Patrimoniales</span>
+                            <div class="price-summary-amount" id="transfer_tax_display">0 €</div>
                         </div>
-                        <p style="margin: 0 0 20px 0; font-size: 15px; color: #0369a1; line-height: 1.6;">
-                            Podemos pagarlo y gestionarlo por ti. Tú decides cómo pagarlo:
-                        </p>
-
-                        <!-- Opciones de gestión -->
-                        <div style="display: grid; gap: 12px;">
-                            <!-- Opción: Lo pago yo -->
-                            <label style="display: flex; align-items: flex-start; gap: 12px; padding: 16px; background: white; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s;" class="itp-gestion-option" data-option="yo-pago">
-                                <input type="radio" name="itp_gestion" value="yo-pago" style="margin-top: 4px; width: 18px; height: 18px;">
-                                <div style="flex: 1;">
-                                    <div style="font-size: 15px; font-weight: 600; color: #1f2937; margin-bottom: 4px;">Lo pago yo mismo</div>
-                                    <div style="font-size: 13px; color: #6b7280; line-height: 1.4;">
-                                        Pagas el ITP por tu cuenta y nos aportas el modelo 620. Nosotros gestionamos la transferencia cuando lo recibamos.
-                                    </div>
-                                </div>
-                            </label>
-
-                            <!-- Opción: Lo gestionan ustedes -->
-                            <label style="display: flex; align-items: flex-start; gap: 12px; padding: 16px; background: white; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s;" class="itp-gestion-option" data-option="gestionan-ustedes">
-                                <input type="radio" name="itp_gestion" value="gestionan-ustedes" style="margin-top: 4px; width: 18px; height: 18px;">
-                                <div style="flex: 1;">
-                                    <div style="font-size: 15px; font-weight: 600; color: #1f2937; margin-bottom: 4px;">Lo gestionan ustedes</div>
-                                    <div style="font-size: 13px; color: #6b7280; line-height: 1.4; margin-bottom: 8px;">
-                                        Nosotros pagamos y gestionamos el ITP. Tú abonas el importe del ITP ahora.
-                                    </div>
-                                    <!-- Submétodos de pago (ocultos hasta seleccionar esta opción) -->
-                                    <div id="metodos-pago-itp" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
-                                        <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: 600; color: #374151;">¿Cómo prefieres pagarlo?</p>
-                                        <div style="display: grid; gap: 8px;">
-                                            <!-- Tarjeta -->
-                                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; font-size: 13px;">
-                                                <input type="radio" name="metodo_pago_itp" value="tarjeta" style="width: 16px; height: 16px;">
-                                                <div style="flex: 1;">
-                                                    <span style="font-weight: 600; color: #1f2937;">Tarjeta</span>
-                                                    <span style="color: #dc2626; margin-left: 6px;">(+2% comisión bancaria)</span>
-                                                </div>
-                                            </label>
-                                            <!-- Transferencia -->
-                                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; font-size: 13px;">
-                                                <input type="radio" name="metodo_pago_itp" value="transferencia" style="width: 16px; height: 16px;">
-                                                <div style="flex: 1;">
-                                                    <span style="font-weight: 600; color: #1f2937;">Transferencia bancaria</span>
-                                                    <span style="color: #059669; margin-left: 6px;">(sin comisión)</span>
-                                                </div>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Botón para ver desglose cuando elige "lo pago yo" (oculto inicialmente) -->
-                    <div id="btn-container-yo-pago" style="display: none; margin-top: 20px; text-align: center;">
-                        <button type="button" id="btn-ver-desglose-yo-pago" style="background: #6b7280; color: white; border: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);">
-                            <i class="fa-solid fa-file-invoice-dollar" style="margin-right: 8px;"></i>
-                            Ver desglose de precio
-                        </button>
-                        <p style="margin: 16px 0 0 0; font-size: 13px; color: #6b7280;">
-                            📄 Recuerda: Necesitarás el Modelo 620 en el paso de documentos
-                        </p>
-                    </div>
-
-                    <!-- Resumen del ITP a pagar (aparece al seleccionar método de pago cuando gestionamos nosotros) -->
-                    <div id="itp-pago-resumen" style="display: none; background: white; border: 2px solid #016d86; border-radius: 12px; padding: 20px; margin-top: 20px;">
-                        <h4 style="margin: 0 0 16px 0; font-size: 16px; color: #014d5f;">💰 Resumen del pago ITP</h4>
-                        <div style="display: grid; gap: 10px; font-size: 14px;">
-                            <div style="display: flex; justify-content: space-between;">
-                                <span style="color: #6b7280;">ITP base:</span>
-                                <strong id="itp-base-display">0 €</strong>
-                            </div>
-                            <div id="comision-tarjeta-row" style="display: none;">
-                                <div style="display: flex; justify-content: space-between; color: #dc2626;">
-                                    <span>Comisión tarjeta (2%):</span>
-                                    <strong id="comision-tarjeta-display">0 €</strong>
-                                </div>
-                            </div>
-                            <div style="border-top: 1px solid #e5e7eb; padding-top: 10px; display: flex; justify-content: space-between; font-size: 16px;">
-                                <span style="font-weight: 600; color: #014d5f;">Total ITP a pagar:</span>
-                                <strong style="color: #016d86;" id="itp-total-display">0 €</strong>
-                            </div>
-                        </div>
-                        <button type="button" id="btn-ver-desglose-gestionamos" style="margin-top: 20px; width: 100%; background: #016d86; color: white; border: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(1, 109, 134, 0.3);">
-                            <i class="fa-solid fa-file-invoice-dollar" style="margin-right: 8px;"></i>
-                            Ver desglose de precio
-                        </button>
-                        <p id="metodo-pago-info" style="margin: 16px 0 0 0; font-size: 13px; color: #0369a1; text-align: center;">
-                            <!-- Se actualizará dinámicamente con el método de pago seleccionado -->
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- PASO 2: Resumen final con llamado a acción (oculto inicialmente) -->
-            <div id="precio-step-2" class="precio-step" style="display: none;">
-
-                <!-- Servicios Extra (Opcional) -->
-                <div style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; margin-bottom: 20px; overflow: hidden;">
-                    <button type="button" id="toggle-servicios-extras" style="width: 100%; padding: 20px; background: white; border: none; display: flex; justify-content: space-between; align-items: center; cursor: pointer; text-align: left;">
-                        <div>
-                            <div style="font-size: 18px; font-weight: 700; color: #1f2937;">Servicios Extra</div>
-                            <div style="font-size: 14px; color: #6b7280; margin-top: 4px;">Opcional - Añade más servicios si lo necesitas</div>
-                        </div>
-                        <i class="fa-solid fa-chevron-down" id="servicios-icon" style="color: #6b7280; font-size: 18px; transition: transform 0.3s;"></i>
-                    </button>
-                    <div id="servicios-extras-content" style="display: none; padding: 20px; border-top: 1px solid #e5e7eb;">
-                        <label style="display: flex; justify-content: space-between; align-items: center; padding: 16px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; margin-bottom: 12px; transition: all 0.2s;">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <input type="checkbox" class="extra-option" data-price="40" value="Cambio de nombre" style="width: 20px; height: 20px;">
-                                <div>
-                                    <div style="font-size: 15px; font-weight: 600; color: #1f2937;">Cambio de nombre</div>
-                                    <div style="font-size: 13px; color: #6b7280;">Cambia el nombre de tu moto</div>
-                                </div>
-                            </div>
-                            <span style="font-weight: 700; color: #016d86; font-size: 18px;">+40 €</span>
-                        </label>
-                        <div class="additional-input" id="nombre-input" style="display: none; margin: -6px 0 16px 0;">
-                            <input type="text" id="nuevo_nombre" name="nuevo_nombre" placeholder="Escribe el nuevo nombre" style="width: 100%; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 15px;">
-                        </div>
-
-                        <label style="display: flex; justify-content: space-between; align-items: center; padding: 16px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <input type="checkbox" class="extra-option" data-price="40" value="Cambio de puerto base" style="width: 20px; height: 20px;">
-                                <div>
-                                    <div style="font-size: 15px; font-weight: 600; color: #1f2937;">Cambio de puerto base</div>
-                                    <div style="font-size: 13px; color: #6b7280;">Modifica el puerto de amarre</div>
-                                </div>
-                            </div>
-                            <span style="font-weight: 700; color: #016d86; font-size: 18px;">+40 €</span>
-                        </label>
-                        <div class="additional-input" id="puerto-input" style="display: none; margin-top: 12px;">
-                            <input type="text" id="nuevo_puerto" name="nuevo_puerto" placeholder="Escribe el nuevo puerto" style="width: 100%; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 15px;">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Cupón -->
-                <div style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
-                    <button type="button" id="toggle-cupon" style="width: 100%; padding: 20px; background: white; border: none; display: flex; justify-content: space-between; align-items: center; cursor: pointer; text-align: left;">
-                        <div>
-                            <div style="font-size: 18px; font-weight: 700; color: #1f2937;">¿Tienes un cupón?</div>
-                            <div style="font-size: 14px; color: #6b7280; margin-top: 4px;">Aplica tu descuento aquí</div>
-                        </div>
-                        <i class="fa-solid fa-chevron-down" id="cupon-icon" style="color: #6b7280; font-size: 18px; transition: transform 0.3s;"></i>
-                    </button>
-                    <div id="cupon-content" style="display: none; padding: 20px; border-top: 1px solid #e5e7eb;">
-                        <div style="display: flex; gap: 8px;">
-                            <input type="text" id="coupon_code" name="coupon_code" placeholder="Escribe tu código" style="flex: 1; padding: 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 15px;">
-                            <button type="button" id="apply-coupon" style="padding: 12px 24px; background: #016d86; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 15px;">
-                                Aplicar
+                        <div class="price-summary-help">
+                            <button type="button" id="info-link" class="info-button-sm">
+                                <i class="fa-solid fa-info-circle"></i> <span id="info-button-text">Ver detalle del cálculo del ITP</span>
                             </button>
                         </div>
-                        <p id="coupon-message" style="margin: 12px 0 0 0; font-size: 14px;"></p>
+                        <!-- Opción para ITP ya pagado -->
+                        <div class="itp-paid-option">
+                            <label class="service-checkbox">
+                                <input type="checkbox" id="itp_already_paid" name="itp_already_paid">
+                                <span class="checkbox-custom"></span>
+                                <div class="service-info">
+                                    <span class="service-name">Ya tengo pagado el ITP</span>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <!-- Detalle del ITP (inline ahora, no modal) - Diseño mejorado -->
+                        <div id="itp-detail-container" class="itp-detail-section" style="display:none;">
+                            <h3>Cálculo del Impuesto de Transmisiones</h3>
+                            
+                            <p class="info-description">El <strong>Impuesto sobre Transmisiones Patrimoniales (ITP)</strong> es un tributo que el comprador debe abonar a Hacienda en los cambios de titularidad de un vehículo entre particulares. Se calcula en base al mayor valor entre el precio de compra y el valor fiscal con depreciación.</p>
+                            
+                            <div class="calculation-detail">
+                                <div class="calculation-section">
+                                    <h4>Datos del vehículo</h4>
+                                    <div class="calculation-item">
+                                        <span>Valor fiscal base:</span>
+                                        <span id="base_value_display">0 €</span>
+                                    </div>
+                                    <div class="calculation-item">
+                                        <span>Antigüedad del vehículo:</span>
+                                        <span id="vehicle_age_display">0 años</span>
+                                    </div>
+                                    <div class="calculation-item">
+                                        <span>Porcentaje de depreciación:</span>
+                                        <span id="depreciation_percentage_display">0 %</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="calculation-section">
+                                    <h4>Cálculo de la base imponible</h4>
+                                    <div class="calculation-item">
+                                        <span>Valor fiscal con depreciación:</span>
+                                        <span id="fiscal_value_display">0 €</span>
+                                    </div>
+                                    <div class="calculation-item">
+                                        <span>Precio de compra declarado:</span>
+                                        <span id="purchase_price_display">0 €</span>
+                                    </div>
+                                    <div class="calculation-item highlight-item">
+                                        <span>Base imponible (mayor valor):</span>
+                                        <span id="tax_base_display">0 €</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="calculation-section">
+                                    <h4>Impuesto aplicable</h4>
+                                    <div class="calculation-item">
+                                        <span>Tipo impositivo aplicado:</span>
+                                        <span id="tax_rate_display">0 %</span>
+                                    </div>
+                                    
+                                    <div class="calculation-result">
+                                        <span>ITP a pagar:</span>
+                                        <span id="calculated_itp_display">0 €</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Elemento adicional para mostrar servicios seleccionados -->
+                                <div id="selected-services-summary" style="display:none; margin-top:15px; padding:12px; background-color:rgba(var(--primary), 0.05); border-radius:var(--radius-md); text-align:center; color:rgb(var(--primary-dark));"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Desplegables para secciones opcionales -->
+                    <!-- Servicios adicionales - ahora como acordeón -->
+                    <div class="price-summary-accordion" id="services-accordion">
+                        <div class="accordion-toggle-header">
+                            <span><i class="fa-solid fa-plus-circle"></i> Servicios Adicionales Opcionales</span>
+                            <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                        </div>
+                        <div class="accordion-content-section">
+                            <div class="additional-service-item">
+                                <label class="service-checkbox">
+                                    <input type="checkbox" class="extra-option" data-price="40" value="Cambio de nombre">
+                                    <span class="checkbox-custom"></span>
+                                    <div class="service-info">
+                                        <span class="service-name">Cambiar el nombre de la moto de agua</span>
+                                        <span class="service-price">40 €</span>
+                                    </div>
+                                </label>
+                                <div class="additional-input" id="nombre-input" style="display: none;">
+                                    <input type="text" id="nuevo_nombre" name="nuevo_nombre" placeholder="Ingrese el nuevo nombre de la moto de agua" />
+                                </div>
+                            </div>
+                            
+                            <div class="additional-service-item">
+                                <label class="service-checkbox">
+                                    <input type="checkbox" class="extra-option" data-price="40" value="Cambio de puerto base">
+                                    <span class="checkbox-custom"></span>
+                                    <div class="service-info">
+                                        <span class="service-name">Cambio de puerto base</span>
+                                        <span class="service-price">40 €</span>
+                                    </div>
+                                </label>
+                                <div class="additional-input" id="puerto-input" style="display: none;">
+                                    <input type="text" id="nuevo_puerto" name="nuevo_puerto" placeholder="Ingrese el nuevo puerto" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cupón - ahora como acordeón -->
+                    <div class="price-summary-accordion" id="coupon-accordion">
+                        <div class="accordion-toggle-header">
+                            <span><i class="fa-solid fa-tag"></i> ¿Tienes un cupón de descuento?</span>
+                            <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                        </div>
+                        <div class="accordion-content-section">
+                            <div class="coupon-container">
+                                <div class="coupon-input-wrapper">
+                                    <input type="text" id="coupon_code" name="coupon_code" placeholder="Introduce tu código de descuento" />
+                                    <button type="button" id="apply-coupon" class="coupon-button">Aplicar</button>
+                                </div>
+                                <p id="coupon-message" class="coupon-message"></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Total con distintivo visual -->
+                    <div class="price-summary-total">
+                        <div class="price-summary-total-label">
+                            <span>Total a Pagar</span>
+                            <div class="price-summary-guarantees">
+                                <span><i class="fa-solid fa-lock"></i> Pago seguro</span>
+                                <span><i class="fa-solid fa-shield-alt"></i> Garantía de servicio</span>
+                            </div>
+                        </div>
+                        <div class="price-summary-total-amount" id="final-amount">134.99 €</div>
                     </div>
                 </div>
-
             </div>
-
-        </div> <!-- Fin page-precio -->
             <!-- Ya no necesitamos el modal, ahora es inline -->
             <!-- 
             <div id="info-popup" class="info-modal">
@@ -5011,18 +4524,56 @@ function transferencia_moto_shortcode() {
 
         <!-- Página Documentos -->
         <div id="page-documentos" class="form-page form-section-compact hidden">
-            <h2>Documentación y Firma</h2>
-            <p style="color: #666; margin-bottom: 25px; font-size: 15px; line-height: 1.6;">Sube las fotos o PDFs de tu DNI, tarjeta de la moto y contrato. Luego firma la autorización digitalmente para que podamos representarte ante la administración.</p>
-
-            <!-- Sección acordeón para documentación -->
-            <div class="accordion-section" id="section-documentos">
+            <h2>Documentos</h2>
+            
+            <!-- Sección acordeón para datos personales -->
+            <div class="accordion-section" id="section-datos">
                 <div class="accordion-header active">
                     <span class="accordion-number">1</span>
-                    <h3>Adjunta tu documentación</h3>
+                    <h3>Introduce tus datos</h3>
                     <span class="accordion-status">Pendiente</span>
                     <span class="accordion-toggle"><i class="fa-solid fa-chevron-down"></i></span>
                 </div>
                 <div class="accordion-content active">
+                    <div class="form-compact-row">
+                        <div class="form-group">
+                            <label for="customer_name">Nombre y Apellidos</label>
+                            <input type="text" id="customer_name" name="customer_name" required />
+                            <span class="input-hint">Tal como aparece en su DNI</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="customer_dni">DNI</label>
+                            <input type="text" id="customer_dni" name="customer_dni" required />
+                            <span class="input-hint">Formato: 12345678X</span>
+                        </div>
+                    </div>
+
+                    <div class="form-compact-row">
+                        <div class="form-group">
+                            <label for="customer_email">Correo Electrónico</label>
+                            <input type="email" id="customer_email" name="customer_email" required />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="customer_phone">Teléfono</label>
+                            <input type="tel" id="customer_phone" name="customer_phone" required />
+                        </div>
+                    </div>
+
+                    <button type="button" class="section-next-btn">Continuar</button>
+                </div>
+            </div>
+
+            <!-- Sección acordeón para documentación -->
+            <div class="accordion-section" id="section-documentos">
+                <div class="accordion-header">
+                    <span class="accordion-number">2</span>
+                    <h3>Adjunta tu documentación</h3>
+                    <span class="accordion-status">Pendiente</span>
+                    <span class="accordion-toggle"><i class="fa-solid fa-chevron-down"></i></span>
+                </div>
+                <div class="accordion-content">
                     <p class="section-intro">Por favor, sube los siguientes documentos. Puedes ver un ejemplo haciendo clic en "Ver ejemplo" junto a cada uno.</p>
                     
                     <div class="upload-grid">
@@ -5101,7 +4652,7 @@ function transferencia_moto_shortcode() {
             <!-- Sección acordeón para firma -->
             <div class="accordion-section" id="section-firma">
                 <div class="accordion-header">
-                    <span class="accordion-number">2</span>
+                    <span class="accordion-number">3</span>
                     <h3>Firma</h3>
                     <span class="accordion-status">Pendiente</span>
                     <span class="accordion-toggle"><i class="fa-solid fa-chevron-down"></i></span>
@@ -5132,117 +4683,188 @@ function transferencia_moto_shortcode() {
 
         <!-- Página Pago -->
         <div id="page-pago" class="form-page form-section-compact hidden">
-            <h2 style="margin-bottom: 10px;">Método de Pago</h2>
-            <p style="color: #666; margin-bottom: 25px; font-size: 15px; line-height: 1.6;">Pago seguro con Stripe. Procesamos tu trámite inmediatamente tras la confirmación del pago.</p>
+            <h2 style="margin-bottom: 10px;">Resumen y Pago</h2>
 
-            <!-- Elemento de pago de Stripe directamente en el formulario -->
-            <div id="stripe-container" style="max-width: 100%; margin: 0 auto;">
-                <!-- Spinner de carga mientras se inicializa -->
-                <div id="stripe-loading" style="text-align: center; padding: 40px;">
-                    <div class="stripe-spinner" style="margin: 0 auto 20px;"></div>
-                    <p style="color: #666;">Cargando sistema de pago seguro...</p>
-                </div>
+            <!-- Panel de resumen completo del trámite -->
+            <div class="summary-panel">
+                <h3 style="margin-bottom: 20px;"><i class="fa-solid fa-clipboard-list"></i> Resumen de su trámite</h3>
 
-                <!-- Contenedor donde se montará el elemento de pago -->
-                <div id="payment-element" class="payment-element-container" style="margin-bottom: 30px;"></div>
-
-                <!-- Términos y condiciones -->
-                <div class="terms-container payment-terms" style="margin: 30px 0; text-align: center; padding: 20px; border: 2px solid rgba(var(--primary), 0.3); border-radius: var(--radius-md); background-color: rgba(var(--primary), 0.05);">
-                    <label style="display: flex; align-items: center; justify-content: center; gap: 12px; font-weight: 500; cursor: pointer;">
-                        <div class="custom-checkbox-container" style="position: relative; width: 18px; height: 18px;">
-                            <input type="checkbox" id="terms_accept_pago" name="terms_accept_pago" required style="position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0;">
-                            <div class="checkmark-box" style="position: absolute; top: 0; left: 0; height: 18px; width: 18px; background-color: white; border: 1.5px solid rgb(var(--primary)); border-radius: 3px; transition: all 0.2s ease;"></div>
-                            <div class="checkmark" style="position: absolute; top: 0; left: 0; height: 18px; width: 18px; display: none; z-index: 2;">
-                                <i class="fa-solid fa-check" style="position: absolute; top: 1px; left: 3px; color: white; font-size: 12px;"></i>
+                <div class="summary-grid">
+                    <!-- Columna 1: Datos Personales -->
+                    <div class="summary-section">
+                        <h4><i class="fa-solid fa-user"></i> Datos Personales</h4>
+                        <div class="summary-content">
+                            <p><strong>Nombre:</strong> <span id="summary-name">-</span></p>
+                            <p><strong>DNI:</strong> <span id="summary-dni">-</span></p>
+                            <p><strong>Email:</strong> <span id="summary-email">-</span></p>
+                            <p><strong>Teléfono:</strong> <span id="summary-phone">-</span></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Columna 2: Datos del Vehículo -->
+                    <div class="summary-section">
+                        <h4><i class="fa-solid fa-water"></i> Vehículo</h4>
+                        <div class="summary-content">
+                            <p><strong>Tipo:</strong> <span id="summary-vehicle-type">-</span></p>
+                            <p><strong>Fabricante:</strong> <span id="summary-manufacturer">-</span></p>
+                            <p><strong>Modelo:</strong> <span id="summary-model">-</span></p>
+                            <p><strong>Fecha Matric.:</strong> <span id="summary-matriculation">-</span></p>
+                            <p><strong>Precio Compra:</strong> <span id="summary-purchase-price">-</span></p>
+                            <p><strong>Com. Autónoma:</strong> <span id="summary-region">-</span></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Columna 3: Resumen de Pago -->
+                    <div class="summary-section">
+                        <h4><i class="fa-solid fa-receipt"></i> Resumen de Pago</h4>
+                        <div class="summary-content">
+                            <p><strong>Cambio de titularidad:</strong> <span id="summary-base-price">134.99 €</span></p>
+                            <p style="margin-top: 10px; font-size: 0.9em; color: #666;"><strong>Incluye:</strong></p>
+                            <div style="margin-left: 10px; font-size: 0.9em;">
+                                <p>• Tasas + Gestión: <span id="summary-tasas-gestion">114.87 €</span></p>
+                                <p>• IVA: <span id="summary-iva">20.12 €</span></p>
+                                <p>• Comisión bancaria: <span id="summary-comision">0 €</span></p>
                             </div>
-                        </div>
-                        <span>Acepto los <a href="https://tramitfy.es/terminos-y-condiciones-de-uso/" target="_blank" style="font-weight: 600; text-decoration: underline; color: rgb(var(--primary-dark));">términos y condiciones de pago</a></span>
-                    </label>
-                </div>
-
-                <style>
-                    /* Estilos mejorados para el checkbox personalizado */
-                    .custom-checkbox-container input:checked ~ .checkmark-box {
-                        background-color: rgb(var(--primary)) !important;
-                    }
-
-                    .custom-checkbox-container input:checked ~ .checkmark {
-                        display: block !important;
-                        z-index: 5 !important;
-                    }
-
-                    /* Usar !important para forzar la visualización */
-                    .custom-checkbox-container input:checked + .checkmark,
-                    .custom-checkbox-container input:checked ~ .checkmark {
-                        display: block !important;
-                    }
-
-                    .custom-checkbox-container input:focus ~ .checkmark-box {
-                        box-shadow: 0 0 0 2px rgba(var(--primary), 0.3);
-                    }
-
-                    .custom-checkbox-container .checkmark-box:hover {
-                        border-color: rgb(var(--primary-dark));
-                    }
-
-                    /* Estilos para el spinner de carga de Stripe */
-                    .stripe-spinner {
-                        border: 4px solid #f3f3f3;
-                        border-top: 4px solid #4f46e5;
-                        border-radius: 50%;
-                        width: 40px;
-                        height: 40px;
-                        animation: spin 1s linear infinite;
-                    }
-
-                    @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                    }
-                </style>
-
-                <!-- Indicadores de seguridad -->
-                <div class="payment-security" style="margin: 20px 0; text-align: center; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
-                    <div class="security-badges" style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap;">
-                        <div class="security-badge" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #4b5563;">
-                            <i class="fa-solid fa-lock" style="color: #10b981;"></i>
-                            <span>Pago Seguro</span>
-                        </div>
-                        <div class="security-badge" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #4b5563;">
-                            <i class="fa-solid fa-shield-alt" style="color: #10b981;"></i>
-                            <span>Datos Encriptados</span>
-                        </div>
-                        <div class="security-badge" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #4b5563;">
-                            <i class="fa-brands fa-stripe" style="color: #635bff;"></i>
-                            <span>Powered by Stripe</span>
+                            <p style="margin-top: 10px;"><strong>Impuesto transmisiones:</strong> <span id="summary-transfer-tax-detail">0 €</span></p>
+                            <p id="summary-discount-detail" style="display: none; color: #2e8b57;"><strong>Descuento aplicado:</strong> <span id="summary-discount-amount">0 €</span></p>
+                            
+                            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ddd;">
+                                <p id="summary-extras-detail" style="display: none;"><strong>Servicios adicionales:</strong></p>
+                                <p id="summary-name-change" style="display: none;">• Cambio de Nombre: <span>40 €</span></p>
+                                <p id="summary-port-change" style="display: none;">• Cambio de Puerto: <span>40 €</span></p>
+                                <div id="summary-extras"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
+                
+                <!-- Cupón aplicado (si existe) -->
+                <div id="summary-coupon-container" style="display: none;">
+                    <p><i class="fa-solid fa-tag"></i> <strong>Cupón aplicado:</strong> <span id="summary-coupon">-</span></p>
+                </div>
+            </div>
+            
+            <div class="total-price" style="margin-top: 30px; padding: 15px 20px; background-color: rgba(var(--primary), 0.05); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
+                <span class="total-label" style="font-size: 20px; font-weight: 600; color: rgb(var(--neutral-800));">TOTAL:</span>
+                <span class="total-value" id="final-summary-amount" style="font-size: 24px; font-weight: 700; color: rgb(var(--primary)); background-color: rgba(var(--primary), 0.1); padding: 8px 15px; border-radius: var(--radius-md);">0 €</span>
+            </div>
+            
+            <div class="terms-container payment-terms" style="margin-top: 30px; text-align: center; padding: 20px; border: 2px solid rgba(var(--primary), 0.3); border-radius: var(--radius-md); background-color: rgba(var(--primary), 0.05); box-shadow: 0 4px 8px rgba(0,0,0,0.05);">
+                <label style="display: flex; align-items: center; justify-content: center; gap: 12px; font-weight: 500; cursor: pointer;">
+                    <div class="custom-checkbox-container" style="position: relative; width: 18px; height: 18px;">
+                        <input type="checkbox" id="terms_accept_pago" name="terms_accept_pago" required style="position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0;">
+                        <div class="checkmark-box" style="position: absolute; top: 0; left: 0; height: 18px; width: 18px; background-color: white; border: 1.5px solid rgb(var(--primary)); border-radius: 3px; transition: all 0.2s ease;"></div>
+                        <div class="checkmark" style="position: absolute; top: 0; left: 0; height: 18px; width: 18px; display: none; z-index: 2;">
+                            <i class="fa-solid fa-check" style="position: absolute; top: 1px; left: 3px; color: white; font-size: 12px;"></i>
+                        </div>
+                    </div>
+                    <span>Acepto los <a href="https://tramitfy.es/terminos-y-condiciones-de-uso/" target="_blank" style="font-weight: 600; text-decoration: underline; color: rgb(var(--primary-dark));">términos y condiciones de pago</a></span>
+                </label>
+            </div>
 
-                <!-- Mensajes de estado del pago -->
-                <div id="payment-message" class="hidden" style="margin: 20px 0; padding: 15px; border-radius: 8px; text-align: center; font-weight: 500;"></div>
+            <style>
+                /* Estilos mejorados para el checkbox personalizado */
+                .custom-checkbox-container input:checked ~ .checkmark-box {
+                    background-color: rgb(var(--primary)) !important;
+                }
+                
+                .custom-checkbox-container input:checked ~ .checkmark {
+                    display: block !important;
+                    z-index: 5 !important;
+                }
+                
+                /* Usar !important para forzar la visualización */
+                .custom-checkbox-container input:checked + .checkmark,
+                .custom-checkbox-container input:checked ~ .checkmark {
+                    display: block !important;
+                }
+                
+                .custom-checkbox-container input:focus ~ .checkmark-box {
+                    box-shadow: 0 0 0 2px rgba(var(--primary), 0.3);
+                }
+                
+                .custom-checkbox-container .checkmark-box:hover {
+                    border-color: rgb(var(--primary-dark));
+                }
+                
+                /* Estilo adicional para el checkbox dentro del modal */
+                #modal-terms-accept:checked + label,
+                label.checked {
+                    color: rgb(var(--primary));
+                    font-weight: 600;
+                }
+                
+                /* Estilos mejorados para el botón de pago */
+                .payment-button {
+                    transition: all 0.3s ease;
+                    transform: translateY(0);
+                    box-shadow: 0 4px 12px rgba(var(--primary-dark), 0.2);
+                }
+                .payment-button:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 8px 16px rgba(var(--primary-dark), 0.3);
+                }
+                .payment-button:active {
+                    transform: translateY(1px);
+                    box-shadow: 0 2px 8px rgba(var(--primary-dark), 0.2);
+                }
+            </style>
 
-                <!-- Botón de pago -->
-                <button type="button" id="submit-payment" class="btn-primary" style="width: 100%; padding: 16px; font-size: 18px; font-weight: 600; background: linear-gradient(135deg, #016d86 0%, #015266 100%); color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px; transition: all 0.3s ease; box-shadow: 0 4px 6px -1px rgba(1, 109, 134, 0.3), 0 2px 4px -1px rgba(1, 109, 134, 0.2);">
-                    <i class="fa-solid fa-lock"></i> Pagar Ahora
+            <!-- Nuevo botón de pago -->
+            <div class="payment-button-container" style="margin-top: 40px;">
+                <button type="button" id="show-payment-modal" class="payment-button" style="font-size: 18px; font-weight: 600; padding: 14px 28px; border-radius: 8px; background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%); color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; max-width: 400px; margin: 0 auto;">
+                    <i class="fa-solid fa-credit-card"></i> Realizar Pago Seguro
                 </button>
+            </div>
+        </div>
 
-                <style>
-                    #submit-payment:hover {
-                        background: linear-gradient(135deg, #015266 0%, #013d4d 100%);
-                        box-shadow: 0 6px 8px -1px rgba(1, 109, 134, 0.4), 0 4px 6px -1px rgba(1, 109, 134, 0.3);
-                        transform: translateY(-1px);
-                    }
-                    #submit-payment:active {
-                        transform: translateY(0);
-                        box-shadow: 0 2px 4px -1px rgba(1, 109, 134, 0.3);
-                    }
-                    #submit-payment:disabled {
-                        background: #9ca3af;
-                        cursor: not-allowed;
-                        box-shadow: none;
-                    }
-                </style>
+        <!-- Modal de pago -->
+        <div id="payment-modal" class="payment-modal">
+            <div class="payment-modal-content">
+                <span class="close-modal">&times;</span>
+                <h3><i class="fa-solid fa-lock"></i> Realizar Pago Seguro</h3>
+                
+                <div id="stripe-container">
+                    <!-- Spinner de carga mientras se inicializa -->
+                    <div id="stripe-loading">
+                        <div class="stripe-spinner"></div>
+                        <p>Cargando sistema de pago...</p>
+                    </div>
+                    
+                    <!-- Contenedor donde se montará el elemento de pago -->
+                    <div id="payment-element" class="payment-element-container"></div>
+                    
+                    <!-- Indicadores de seguridad -->
+                    <div class="payment-security">
+                        <div class="security-badges">
+                            <div class="security-badge">
+                                <i class="fa-solid fa-lock"></i>
+                                <span>Pago Seguro</span>
+                            </div>
+                            <div class="security-badge">
+                                <i class="fa-solid fa-shield-alt"></i>
+                                <span>Datos Encriptados</span>
+                            </div>
+                            <div class="security-badge">
+                                <i class="fa-brands fa-stripe"></i>
+                                <span>Stripe</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mensajes de estado del pago -->
+                    <div id="payment-message" class="hidden"></div>
+                </div>
+                
+                <!-- Nota de términos ya aceptados (reemplaza el checkbox) -->
+                <div class="terms-reminder" style="margin: 20px 0; text-align: center; font-size: 14px; color: rgb(var(--neutral-600));">
+                    <i class="fa-solid fa-check-circle" style="color: rgb(var(--success)); margin-right: 5px;"></i>
+                    <span>Términos y condiciones aceptados</span>
+                </div>
+                
+                <button type="button" id="confirm-payment-button" class="confirm-payment-button">
+                    <i class="fa-solid fa-check-circle"></i> Confirmar Pago
+                </button>
             </div>
         </div>
 
@@ -5277,95 +4899,7 @@ function transferencia_moto_shortcode() {
 
     <!-- JavaScript para la lógica del formulario -->
     <script>
-    // ============================================
-    // SISTEMA DE LOGGING AVANZADO PARA F12
-    // ============================================
-    const TRAMITFY_DEBUG = true; // Cambiar a false en producción
-
-    const LOG_LEVELS = {
-        DEBUG: { color: '#6b7280', emoji: '🔍', enabled: TRAMITFY_DEBUG },
-        INFO: { color: '#3b82f6', emoji: 'ℹ️', enabled: true },
-        SUCCESS: { color: '#10b981', emoji: '✅', enabled: true },
-        WARNING: { color: '#f59e0b', emoji: '⚠️', enabled: true },
-        ERROR: { color: '#ef4444', emoji: '❌', enabled: true },
-        CRITICAL: { color: '#dc2626', emoji: '🔥', enabled: true }
-    };
-
-    // Función de logging principal
-    function log(level, context, message, data = null) {
-        const config = LOG_LEVELS[level];
-        if (!config || !config.enabled) return;
-
-        const timestamp = new Date().toLocaleTimeString('es-ES', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
-        const prefix = `${config.emoji} [${timestamp}] [${level}] [${context}]`;
-        const styles = `color: ${config.color}; font-weight: bold; font-size: 11px;`;
-
-        if (data !== null && typeof data === 'object') {
-            console.groupCollapsed(`%c${prefix} ${message}`, styles);
-            console.log('📦 Datos:', data);
-            console.log('🕐 Timestamp:', new Date().toISOString());
-            if (level === 'ERROR' || level === 'CRITICAL') {
-                console.trace('📍 Stack trace');
-            }
-            console.groupEnd();
-        } else if (data !== null) {
-            console.log(`%c${prefix} ${message}`, styles, data);
-        } else {
-            console.log(`%c${prefix} ${message}`, styles);
-        }
-
-        // Guardar en array para debug posterior
-        if (!window.tramitfyLogs) window.tramitfyLogs = [];
-        window.tramitfyLogs.push({ timestamp, level, context, message, data });
-    }
-
-    // Atajos convenientes
-    const logDebug = (ctx, msg, data) => log('DEBUG', ctx, msg, data);
-    const logInfo = (ctx, msg, data) => log('INFO', ctx, msg, data);
-    const logSuccess = (ctx, msg, data) => log('SUCCESS', ctx, msg, data);
-    const logWarning = (ctx, msg, data) => log('WARNING', ctx, msg, data);
-    const logError = (ctx, msg, data) => log('ERROR', ctx, msg, data);
-    const logCritical = (ctx, msg, data) => log('CRITICAL', ctx, msg, data);
-
-    // Monitor de performance
-    const perfMarks = {};
-    function perfStart(label) {
-        perfMarks[label] = performance.now();
-        logDebug('PERF', `⏱️ Inicio medición: ${label}`);
-    }
-    function perfEnd(label) {
-        if (perfMarks[label]) {
-            const duration = (performance.now() - perfMarks[label]).toFixed(2);
-            const color = duration < 100 ? 'SUCCESS' : duration < 500 ? 'WARNING' : 'ERROR';
-            log(color, 'PERF', `⏱️ ${label}: ${duration}ms`);
-            delete perfMarks[label];
-            return parseFloat(duration);
-        }
-    }
-
-    // Helper para exportar logs
-    window.exportTramitfyLogs = function() {
-        const logs = window.tramitfyLogs || [];
-        const blob = new Blob([JSON.stringify(logs, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `tramitfy-logs-${new Date().toISOString()}.json`;
-        a.click();
-        logSuccess('LOGS', `📥 Exportados ${logs.length} logs`);
-    };
-
-    // Inicialización del sistema
-    logInfo('INIT', '========== TRAMITFY MOTO FORM v1.8 ==========');
-    logInfo('INIT', `🌐 User Agent: ${navigator.userAgent.substring(0, 100)}...`);
-    logInfo('INIT', `📱 Viewport: ${window.innerWidth}x${window.innerHeight}`);
-    logInfo('INIT', `🔗 URL: ${window.location.href}`);
-    logInfo('INIT', `⏰ Timestamp: ${new Date().toISOString()}`);
-    logDebug('INIT', '🚀 Sistema de logging inicializado correctamente');
-
     document.addEventListener('DOMContentLoaded', function() {
-        logDebug('DOM', '✅ DOMContentLoaded ejecutado');
-
         // Variables globales y configuración
         const itpRates = {
             "Andalucía": 0.04, "Aragón": 0.04, "Asturias": 0.04, "Islas Baleares": 0.04,
@@ -5407,10 +4941,6 @@ function transferencia_moto_shortcode() {
         let elements;
         let finalAmount = BASE_TRANSFER_PRICE;
         let purchaseDetails = {};
-
-        // Variables del flujo de precio (necesarias globalmente para actualizarSidebarPrecio)
-        let itpPagado = null; // null, true (sí pagado), false (no pagado)
-        let precioStep = 1; // 1 o 2
 
         // Referencias a elementos del DOM
         const formPages = document.querySelectorAll('.form-page');
@@ -5567,10 +5097,23 @@ function transferencia_moto_shortcode() {
                 page.classList.toggle('hidden', index !== currentPage);
             });
 
-            // Actualizar sidebar dinámico según la página activa
-            if (formPages[currentPage]) {
-                actualizarSidebarDinamico(formPages[currentPage].id);
+            // ===== ACTUALIZAR SIDEBAR SEGÚN PASO ACTUAL =====
+            const currentPageElement = formPages[currentPage];
+            if (currentPageElement) {
+                const currentPageId = currentPageElement.id;
+
+                // Ocultar todos los contenidos del sidebar
+                document.querySelectorAll('.sidebar-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+
+                // Mostrar el contenido correspondiente al paso actual
+                const activeSidebarContent = document.querySelector(`.sidebar-content[data-step="${currentPageId}"]`);
+                if (activeSidebarContent) {
+                    activeSidebarContent.classList.add('active');
+                }
             }
+            // ================================================
 
             // Si estamos pasando a la página de documentos, inicializar el acordeón
             if (formPages[currentPage] && formPages[currentPage].id === 'page-documentos') {
@@ -5629,16 +5172,7 @@ function transferencia_moto_shortcode() {
             }
             
             if (formPages[currentPage].id === 'page-pago') {
-                updateTotal(); // Actualizar totales primero para incluir ITP
                 updatePaymentSummary();
-                // Inicializar Stripe cuando se muestra la página de pago
-                setTimeout(() => {
-                    try {
-                        initializeStripe(finalAmount);
-                    } catch (error) {
-                        console.error("Error al inicializar Stripe:", error);
-                    }
-                }, 300);
             }
             
             updateTermsCheckbox();
@@ -5744,54 +5278,16 @@ function transferencia_moto_shortcode() {
                     return;
                 }
 
-                // Configurar la apariencia de Stripe con los colores de la marca
+                // Configurar la apariencia de Stripe
                 const appearance = {
                     theme: 'stripe',
                     variables: {
                         colorPrimary: '#016d86',
                         colorBackground: '#ffffff',
-                        colorText: '#1f2937',
-                        colorDanger: '#dc2626',
-                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                        fontSizeBase: '16px',
-                        spacingUnit: '4px',
-                        borderRadius: '8px',
-                        colorTextSecondary: '#6b7280',
-                        colorTextPlaceholder: '#9ca3af',
-                    },
-                    rules: {
-                        '.Input': {
-                            border: '1px solid #d1d5db',
-                            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-                            padding: '12px',
-                            fontSize: '16px',
-                        },
-                        '.Input:focus': {
-                            border: '1px solid #016d86',
-                            boxShadow: '0 0 0 3px rgba(1, 109, 134, 0.1)',
-                            outline: 'none',
-                        },
-                        '.Label': {
-                            fontSize: '14px',
-                            fontWeight: '500',
-                            color: '#374151',
-                            marginBottom: '8px',
-                        },
-                        '.Tab': {
-                            border: '1px solid #e5e7eb',
-                            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-                        },
-                        '.Tab:hover': {
-                            backgroundColor: '#f9fafb',
-                        },
-                        '.Tab--selected': {
-                            backgroundColor: '#016d86',
-                            color: '#ffffff',
-                            borderColor: '#016d86',
-                        },
-                        '.Tab--selected:hover': {
-                            backgroundColor: '#015266',
-                        },
+                        colorText: '#333333',
+                        fontFamily: 'Roboto, sans-serif',
+                        borderRadius: '4px',
+                        colorDanger: '#e74c3c',
                     }
                 };
                 
@@ -5847,57 +5343,33 @@ function transferencia_moto_shortcode() {
         }
 
         function calculateFiscalValue() {
-            logDebug('FISCAL', '💰 Calculando valor fiscal');
             const matriculationDate = new Date(matriculationDateInput.value);
             const today = new Date();
             let yearsDifference = today.getFullYear() - matriculationDate.getFullYear();
             const monthsDifference = today.getMonth() - matriculationDate.getMonth();
-
-            logDebug('FISCAL', 'Fecha matriculación:', matriculationDateInput.value);
-            logDebug('FISCAL', 'Años diferencia (inicial):', yearsDifference);
-
+            
             if (monthsDifference < 0 || (monthsDifference === 0 && today.getDate() < matriculationDate.getDate())) {
                 yearsDifference--;
-                logDebug('FISCAL', 'Ajuste por meses/días, años:', yearsDifference);
             }
-
+            
             yearsDifference = (yearsDifference < 0) ? 0 : yearsDifference;
             const depreciationPercentage = calculateDepreciationPercentage(yearsDifference);
             const fiscalValue = basePrice * (depreciationPercentage / 100);
-
-            logDebug('FISCAL', 'Resultado:', {
-                yearsDifference,
-                depreciationPercentage,
-                basePrice,
-                fiscalValue
-            });
-
+            
             return { fiscalValue, depreciationPercentage, yearsDifference };
         }
 
         function calculateTransferTax() {
-            logDebug('ITP', '📊 Calculando ITP');
             const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
             const { fiscalValue, depreciationPercentage, yearsDifference } = calculateFiscalValue();
             const region = regionSelect.value;
             const rate = itpRates[region] || 0;
             const isItpAlreadyPaid = document.getElementById('itp_already_paid').checked;
 
-            logDebug('ITP', 'Datos entrada:', {
-                purchasePrice,
-                fiscalValue,
-                region,
-                rate,
-                isItpAlreadyPaid
-            });
-
             const baseValue = Math.max(purchasePrice, fiscalValue);
             const itp = isItpAlreadyPaid ? 0 : baseValue * rate;
             const extraFee = itp * 0.015;
 
-            logDebug('ITP', 'Resultado cálculo:', { baseValue, itp, extraFee });
-
-            // Actualizar elementos de la página de detalle ITP
             baseValueDisplay.textContent = basePrice.toFixed(2) + ' €';
             depreciationPercentageDisplay.textContent = depreciationPercentage + ' %';
             fiscalValueDisplay.textContent = fiscalValue.toFixed(2) + ' €';
@@ -5906,21 +5378,6 @@ function transferencia_moto_shortcode() {
             taxBaseDisplay.textContent = baseValue.toFixed(2) + ' €';
             taxRateDisplay.textContent = (rate * 100).toFixed(2) + ' %';
             calculatedItpDisplay.textContent = itp.toFixed(2) + ' €';
-
-            // Actualizar elementos del sidebar "Desglose del trámite"
-            const sidebarPurchasePrice = document.getElementById('sidebar-purchase-price');
-            const sidebarFiscalValue = document.getElementById('sidebar-fiscal-value');
-            const sidebarTaxBase = document.getElementById('sidebar-tax-base');
-            const sidebarTaxRate = document.getElementById('sidebar-tax-rate');
-            const sidebarItpAmount = document.getElementById('sidebar-itp-amount');
-            const sidebarRegionName = document.getElementById('sidebar-region-name');
-
-            if (sidebarPurchasePrice) sidebarPurchasePrice.textContent = purchasePrice.toFixed(2) + '€';
-            if (sidebarFiscalValue) sidebarFiscalValue.textContent = fiscalValue > 0 ? fiscalValue.toFixed(2) + '€' : '-';
-            if (sidebarTaxBase) sidebarTaxBase.textContent = baseValue.toFixed(2) + '€';
-            if (sidebarTaxRate) sidebarTaxRate.textContent = (rate * 100).toFixed(0) + '%';
-            if (sidebarItpAmount) sidebarItpAmount.textContent = itp.toFixed(2) + '€';
-            if (sidebarRegionName) sidebarRegionName.textContent = region || '-';
 
             return { itp, extraFee };
         }
@@ -6027,7 +5484,7 @@ function transferencia_moto_shortcode() {
             // Obtenemos el ITP y su comisión bancaria
             const { itp, extraFee } = calculateTransferTax();
             currentTransferTax = itp;
-            currentExtraFee = extraFee; // Actualizar variable global, no crear nueva local
+            let currentExtraFee = extraFee;
 
             // Base para aplicar descuento (solo sobre transferFee)
             const discountBase = transferFee; 
@@ -6042,7 +5499,7 @@ function transferencia_moto_shortcode() {
             const discountedHonorarios = baseHonorarios * (1 - discountRatio);
             const newIva = discountedHonorarios * 0.21;
 
-            // Guardar valores globalmente para poder acceder en el submit
+            // Guardar valores globalmente
             window.currentTasas = baseTasas;
             window.currentHonorarios = discountedHonorarios;
             window.currentIva = newIva;
@@ -6146,116 +5603,74 @@ function transferencia_moto_shortcode() {
 
         // Actualizar resumen para pago
         function updatePaymentSummary() {
-            // Actualizar datos personales (sidebar y página resumen)
-            const summaryNameElements = document.querySelectorAll('#summary-name');
-            const summaryDniElements = document.querySelectorAll('#summary-dni');
-            const summaryEmailElements = document.querySelectorAll('#summary-email');
-            const summaryPhoneElements = document.querySelectorAll('#summary-phone');
-
-            summaryNameElements.forEach(el => el.textContent = customerNameInput.value || '-');
-            summaryDniElements.forEach(el => el.textContent = customerDniInput.value || '-');
-            summaryEmailElements.forEach(el => el.textContent = customerEmailInput.value || '-');
-            summaryPhoneElements.forEach(el => el.textContent = customerPhoneInput.value || '-');
-
-            const vehicleType = 'Moto de Agua';
-            const summaryVehicleTypeElements = document.querySelectorAll('#summary-vehicle-type');
-            summaryVehicleTypeElements.forEach(el => el.textContent = vehicleType);
-
+            document.getElementById('summary-name').textContent = customerNameInput.value || '-';
+            document.getElementById('summary-dni').textContent = customerDniInput.value || '-';
+            document.getElementById('summary-email').textContent = customerEmailInput.value || '-';
+            document.getElementById('summary-phone').textContent = customerPhoneInput.value || '-';
+            
+            const vehicleType = 'Moto de Agua'; // Fijo para transferencia de barcos
+            document.getElementById('summary-vehicle-type').textContent = vehicleType;
+            
             const noEncuentro = noEncuentroCheckbox.checked;
-            const summaryManufacturerElements = document.querySelectorAll('#summary-manufacturer');
-            const summaryModelElements = document.querySelectorAll('#summary-model');
-            const summaryMatriculationElements = document.querySelectorAll('#summary-matriculation');
-
             if (noEncuentro) {
-                summaryManufacturerElements.forEach(el => el.textContent = document.getElementById('manual_manufacturer').value || '-');
-                summaryModelElements.forEach(el => el.textContent = document.getElementById('manual_model').value || '-');
-                summaryMatriculationElements.forEach(el => el.textContent = 'No aplica');
+                document.getElementById('summary-manufacturer').textContent = document.getElementById('manual_manufacturer').value || '-';
+                document.getElementById('summary-model').textContent = document.getElementById('manual_model').value || '-';
+                document.getElementById('summary-matriculation').textContent = 'No aplica';
             } else {
-                summaryManufacturerElements.forEach(el => el.textContent = manufacturerSelect.value || '-');
-                summaryModelElements.forEach(el => el.textContent = modelSelect.value || '-');
-                summaryMatriculationElements.forEach(el => el.textContent = matriculationDateInput.value || '-');
+                document.getElementById('summary-manufacturer').textContent = manufacturerSelect.value || '-';
+                document.getElementById('summary-model').textContent = modelSelect.value || '-';
+                document.getElementById('summary-matriculation').textContent = matriculationDateInput.value || '-';
             }
-
-            const summaryPurchasePriceElements = document.querySelectorAll('#summary-purchase-price');
-            const summaryRegionElements = document.querySelectorAll('#summary-region');
-            summaryPurchasePriceElements.forEach(el => el.textContent = purchasePriceInput.value + ' €' || '-');
-            summaryRegionElements.forEach(el => el.textContent = regionSelect.value || '-');
-
-            // Obtener valores actuales (con validación para evitar null)
-            const cambioNombrePrice = cambioNombrePriceDisplay ? cambioNombrePriceDisplay.textContent : '134.99 €';
-            const tasasHonorariosEl = document.getElementById('tasas_honorarios_display');
-            const ivaEl = document.getElementById('iva_display');
-            const tasasHonorarios = tasasHonorariosEl ? tasasHonorariosEl.textContent : '114.87 €';
-            const iva = ivaEl ? ivaEl.textContent : '20.12 €';
-
-            // Usar variables globales para ITP y comisión (más fiables que DOM)
-            const comisionBancaria = currentExtraFee ? currentExtraFee.toFixed(2) + ' €' : '0 €';
-            const transferTax = currentTransferTax ? currentTransferTax.toFixed(2) + ' €' : '0 €';
-
-            console.log('updatePaymentSummary - ITP:', currentTransferTax, 'Comisión:', currentExtraFee, 'Total:', finalAmount);
-
-            const summaryBasePriceElements = document.querySelectorAll('#summary-base-price');
-            const summaryTasasGestionElements = document.querySelectorAll('#summary-tasas-gestion');
-            const summaryIvaElements = document.querySelectorAll('#summary-iva');
-            const summaryComisionElements = document.querySelectorAll('#summary-comision');
-            const summaryTransferTaxElements = document.querySelectorAll('#summary-transfer-tax, #summary-transfer-tax-detail');
-            const summaryFinalAmountElements = document.querySelectorAll('#summary-final-amount');
-
-            console.log('Elementos ITP encontrados:', summaryTransferTaxElements.length, 'Valor a asignar:', transferTax);
-
-            summaryBasePriceElements.forEach(el => el.textContent = cambioNombrePrice);
-            summaryTasasGestionElements.forEach(el => el.textContent = tasasHonorarios);
-            summaryIvaElements.forEach(el => el.textContent = iva);
-            summaryComisionElements.forEach(el => el.textContent = comisionBancaria);
-            summaryTransferTaxElements.forEach(el => {
-                console.log('Actualizando elemento ITP:', el.id, 'con valor:', transferTax);
-                el.textContent = transferTax;
-            });
-            summaryFinalAmountElements.forEach(el => el.textContent = finalAmount.toFixed(2) + ' €');
-
-            const summaryNameChange = document.getElementById('summary-name-change');
-            const summaryPortChange = document.getElementById('summary-port-change');
-            if (summaryNameChange) summaryNameChange.style.display = 'none';
-            if (summaryPortChange) summaryPortChange.style.display = 'none';
-
+            
+            document.getElementById('summary-purchase-price').textContent = purchasePriceInput.value + ' €' || '-';
+            document.getElementById('summary-region').textContent = regionSelect.value || '-';
+            
+            const cambioNombrePrice = cambioNombrePriceDisplay.textContent;
+            const tasasHonorarios = document.getElementById('tasas_honorarios_display').textContent;
+            const iva = document.getElementById('iva_display').textContent;
+            const comisionBancaria = extraFeeIncludesDisplay.textContent;
+            const transferTax = transferTaxDisplay.textContent;
+            
+            document.getElementById('summary-base-price').textContent = cambioNombrePrice;
+            document.getElementById('summary-tasas-gestion').textContent = tasasHonorarios;
+            document.getElementById('summary-iva').textContent = iva;
+            document.getElementById('summary-comision').textContent = comisionBancaria;
+            document.getElementById('summary-transfer-tax-detail').textContent = transferTax;
+            
+            document.getElementById('summary-name-change').style.display = 'none';
+            document.getElementById('summary-port-change').style.display = 'none';
+            
             const extraOptions = document.querySelectorAll('.extra-option');
             let hasExtras = false;
-
+            
             extraOptions.forEach(option => {
                 if (option.checked) {
                     hasExtras = true;
-                    if (option.value === 'Cambio de nombre' && summaryNameChange) {
-                        summaryNameChange.style.display = 'block';
-                    } else if (option.value === 'Cambio de puerto base' && summaryPortChange) {
-                        summaryPortChange.style.display = 'block';
+                    if (option.value === 'Cambio de nombre') {
+                        document.getElementById('summary-name-change').style.display = 'block';
+                    } else if (option.value === 'Cambio de puerto base') {
+                        document.getElementById('summary-port-change').style.display = 'block';
                     }
                 }
             });
-
-            const summaryExtrasDetail = document.getElementById('summary-extras-detail');
-            if (summaryExtrasDetail) summaryExtrasDetail.style.display = hasExtras ? 'block' : 'none';
-
+            
+            document.getElementById('summary-extras-detail').style.display = hasExtras ? 'block' : 'none';
+            
             const couponCode = couponCodeInput.value;
-            const summaryCouponContainer = document.getElementById('summary-coupon-container');
-            const summaryCoupon = document.getElementById('summary-coupon');
-            const summaryDiscountDetail = document.getElementById('summary-discount-detail');
-            const summaryDiscountAmount = document.getElementById('summary-discount-amount');
-
             if (couponCode && couponDiscountPercent > 0) {
-                if (summaryCouponContainer) summaryCouponContainer.style.display = 'block';
-                if (summaryCoupon) summaryCoupon.textContent = couponCode + ' (' + couponDiscountPercent + '% descuento)';
-
-                if (summaryDiscountDetail) summaryDiscountDetail.style.display = 'block';
+                document.getElementById('summary-coupon-container').style.display = 'block';
+                document.getElementById('summary-coupon').textContent = couponCode + ' (' + couponDiscountPercent + '% descuento)';
+                
+                document.getElementById('summary-discount-detail').style.display = 'block';
                 const discountBase = BASE_TRANSFER_PRICE;
                 const discountAmount = (couponDiscountPercent / 100) * discountBase;
-                if (summaryDiscountAmount) summaryDiscountAmount.textContent = discountAmount.toFixed(2) + ' €';
+                document.getElementById('summary-discount-amount').textContent = discountAmount.toFixed(2) + ' €';
             } else {
-                if (summaryCouponContainer) summaryCouponContainer.style.display = 'none';
-                if (summaryDiscountDetail) summaryDiscountDetail.style.display = 'none';
+                document.getElementById('summary-coupon-container').style.display = 'none';
+                document.getElementById('summary-discount-detail').style.display = 'none';
             }
-
-            const finalSummaryAmount = document.getElementById('final-summary-amount');
-            if (finalSummaryAmount) finalSummaryAmount.textContent = finalAmount.toFixed(2) + ' €';
+            
+            document.getElementById('final-summary-amount').textContent = finalAmount.toFixed(2) + ' €';
         }
 
         // Validación y firma
@@ -6761,7 +6176,7 @@ function transferencia_moto_shortcode() {
 
             // VERSIÓN AJAX REAL - Backend activado
             const formData = new FormData();
-            formData.append('action', 'tpm_validate_coupon');
+            formData.append('action', 'validate_coupon_code_XXX');
             formData.append('coupon', code);
 
             fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
@@ -6888,7 +6303,7 @@ function transferencia_moto_shortcode() {
                 return;
             }
 
-            // IMPORTANTE: Actualizar el total para asegurar que las variables globales estén correctas
+            // Actualizar total para garantizar valores globales correctos
             updateTotal();
 
             // Mantener visible el overlay en lugar de mostrarlo de nuevo
@@ -6905,24 +6320,9 @@ function transferencia_moto_shortcode() {
             formData.append('final_amount', finalAmount.toFixed(2));
             formData.append('current_transfer_tax', currentTransferTax.toFixed(2));
             formData.append('current_extra_fee', currentExtraFee.toFixed(2));
-
-            // Leer valores calculados de las variables globales
-            // Estos valores se acaban de actualizar en updateTotal() arriba
-            const tasasValue = window.currentTasas || 0;
-            const ivaValue = window.currentIva || 0;
-            const honorariosValue = window.currentHonorarios || 0;
-
-            console.log('Valores económicos a enviar:', {
-                tasas: tasasValue,
-                iva: ivaValue,
-                honorarios: honorariosValue,
-                itp: currentTransferTax,
-                total: finalAmount
-            });
-
-            formData.append('tasas_hidden', tasasValue.toFixed(2));
-            formData.append('iva_hidden', ivaValue.toFixed(2));
-            formData.append('honorarios_hidden', honorariosValue.toFixed(2));
+            formData.append('tasas_hidden', (window.currentTasas || 0).toFixed(2));
+            formData.append('iva_hidden', (window.currentIva || 0).toFixed(2));
+            formData.append('honorarios_hidden', (window.currentHonorarios || 0).toFixed(2));
 
             if (signaturePad) {
                 formData.append('signature', signaturePad.toDataURL());
@@ -6941,9 +6341,6 @@ function transferencia_moto_shortcode() {
             })
             .then(response => response.json())
             .then(data => {
-                console.log('Respuesta del servidor:', data);
-                console.log('data.success =', data.success);
-                console.log('tracking_url =', data.data?.tracking_url);
                 if (data.success) {
                     alertMessageText.textContent = '¡Formulario enviado con éxito! Redirigiendo...';
                     
@@ -6982,44 +6379,18 @@ function transferencia_moto_shortcode() {
         // Funcionalidad para el "No encuentro mi modelo"
         function updateNoEncuentroBehavior() {
             if (noEncuentroCheckbox.checked) {
-                // Ocultar campos CSV
                 vehicleCsvSection.style.display = 'none';
                 basePrice = 0;
-
-                // Mostrar campos manuales con animación
                 manualFields.style.display = 'block';
-                manualFields.style.opacity = '0';
-                setTimeout(() => {
-                    manualFields.style.transition = 'opacity 0.3s ease';
-                    manualFields.style.opacity = '1';
-                }, 50);
-
-                // Ocultar fecha matriculación y su contenedor completo
-                const matriculationContainer = matriculationDateInput?.closest('.form-group');
-                if (matriculationContainer) {
-                    matriculationContainer.style.display = 'none';
-                }
+                matriculationDateLabel.style.display = 'none';
+                matriculationDateInput.style.display = 'none';
                 matriculationDateInput.removeAttribute('required');
-
-                // Limpiar selecciones anteriores
-                manufacturerSelect.value = '';
-                modelSelect.value = '';
-                modelSelect.innerHTML = '<option value="">Seleccione un modelo</option>';
             } else {
-                // Mostrar campos CSV
                 vehicleCsvSection.style.display = 'block';
                 manualFields.style.display = 'none';
-
-                // Mostrar fecha matriculación
-                const matriculationContainer = matriculationDateInput?.closest('.form-group');
-                if (matriculationContainer) {
-                    matriculationContainer.style.display = 'block';
-                }
+                matriculationDateLabel.style.display = 'block';
+                matriculationDateInput.style.display = 'block';
                 matriculationDateInput.setAttribute('required', 'required');
-
-                // Limpiar campos manuales
-                document.getElementById('manual_manufacturer').value = '';
-                document.getElementById('manual_model').value = '';
 
                 const selectedOption = modelSelect.options[modelSelect.selectedIndex];
                 basePrice = selectedOption && selectedOption.dataset.price ? parseFloat(selectedOption.dataset.price) : 0;
@@ -7028,13 +6399,10 @@ function transferencia_moto_shortcode() {
 
         function updateVehicleSelection() {
             document.querySelectorAll('.radio-group label').forEach(label => label.classList.remove('selected'));
-            // Buscar el radio button de "Moto de Agua" o "Barco" y seleccionar su label
-            const vehicleRadios = document.querySelectorAll('input[name="vehicle_type"]');
-            vehicleRadios.forEach(radio => {
-                if (radio.checked && radio.parentElement) {
-                    radio.parentElement.classList.add('selected');
-                }
-            });
+            const selectedRadio = {value: 'Moto de Agua'}; // Fijo para transferencia de barcos
+            if (selectedRadio) {
+                selectedRadio.parentElement.classList.add('selected');
+            }
         }
 
         function updateAdditionalInputs() {
@@ -7115,39 +6483,20 @@ function transferencia_moto_shortcode() {
         }
 
         function populateManufacturers() {
-            logDebug('CSV', '📥 Iniciando carga de fabricantes desde CSV');
-            const vehicleType = 'Moto de Agua';
-            const csvFile = 'MOTO.csv';
-            const csvUrl = '<?php echo get_template_directory_uri(); ?>/' + csvFile;
-            logDebug('CSV', 'URL del CSV:', csvUrl);
-
-            fetch(csvUrl)
-                .then(response => {
-                    logDebug('CSV', 'Respuesta recibida, status:', response.status);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.text();
-                })
+            const vehicleType = 'Moto de Agua'; // Fijo para transferencia de barcos
+            const csvFile = 'MOTO.csv'; // Fijo para barcos
+            fetch('<?php echo get_template_directory_uri(); ?>/' + csvFile)
+                .then(response => response.text())
                 .then(data => {
-                    logDebug('CSV', 'Datos CSV recibidos, longitud:', data.length);
                     const manufacturers = {};
                     const rows = data.split('\n').slice(1);
-                    logDebug('CSV', 'Número de filas (sin header):', rows.length);
-
-                    rows.forEach((row, index) => {
+                    rows.forEach(row => {
                         const [fabricante, modelo, precio] = row.split(',');
-                        if (fabricante && fabricante.trim()) {
-                            if (!manufacturers[fabricante]) {
-                                manufacturers[fabricante] = [];
-                                logDebug('CSV', `Nuevo fabricante encontrado: ${fabricante}`);
-                            }
-                            manufacturers[fabricante].push({ modelo, precio });
+                        if (!manufacturers[fabricante]) {
+                            manufacturers[fabricante] = [];
                         }
+                        manufacturers[fabricante].push({ modelo, precio });
                     });
-
-                    logDebug('CSV', 'Fabricantes procesados:', Object.keys(manufacturers).length);
-
                     manufacturerSelect.innerHTML = '<option value="">Seleccione un fabricante</option>';
                     Object.keys(manufacturers).forEach(fab => {
                         const option = document.createElement('option');
@@ -7155,11 +6504,6 @@ function transferencia_moto_shortcode() {
                         option.textContent = fab;
                         manufacturerSelect.appendChild(option);
                     });
-
-                    logDebug('CSV', '✅ Fabricantes cargados en el select');
-                })
-                .catch(error => {
-                    logError('CSV', '❌ Error al cargar fabricantes:', error);
                 });
         }
 
@@ -7393,84 +6737,46 @@ function transferencia_moto_shortcode() {
             updateTotal();
         }));
 
-        if (manufacturerSelect) {
-            logInfo('MANUFACTURER', '✅ Event listener añadido a manufacturerSelect');
-            manufacturerSelect.addEventListener('change', function() {
-                perfStart('manufacturer-change');
-                const selectedFabricante = this.value;
-                logInfo('MANUFACTURER', `📦 Fabricante seleccionado: ${selectedFabricante}`);
+        // Tipo de vehículo fijo, no necesario detectar cambios
+        // document.querySelectorAll('input[name="vehicle_type"]').forEach(input => {
+        //     input.addEventListener('change', () => {
+        //         populateManufacturers();
+        //         manufacturerSelect.innerHTML = '<option value="">Seleccione un fabricante</option>';
+        //         modelSelect.innerHTML = '<option value="">Seleccione un modelo</option>';
+        //         basePrice = 0;
+        //         onInputChange();
+        //         updateVehicleSelection();
+        //         updateDocumentLabels();
+        //     });
+        // });
 
-                modelSelect.innerHTML = '<option value="">Seleccione un modelo</option>';
-                basePrice = 0;
-                onInputChange();
-
-                if (selectedFabricante) {
-                    logDebug('MANUFACTURER', 'Cargando modelos desde PHP...', { fabricante: selectedFabricante });
-                // Cargar modelos desde PHP (ya tenemos los datos CSV en PHP)
-                <?php
-                // Cargar CSV y generar estructura JS
-                // Primero intentar desde el directorio del tema, si no desde el directorio actual
-                $csv_file = get_template_directory() . '/MOTO.csv';
-                if (!file_exists($csv_file)) {
-                    // Si no está en el tema, buscar en el directorio del formulario
-                    $csv_file = dirname(__FILE__) . '/MOTO.csv';
-                }
-
-                $modelos_por_fabricante = array();
-
-                if (file_exists($csv_file) && ($handle = fopen($csv_file, 'r')) !== false) {
-                    // NO saltar encabezado porque no hay
-                    while (($row = fgetcsv($handle, 1000, ',')) !== false) {
-                        if (count($row) >= 3) {
-                            $fab = trim($row[0]);
-                            $mod = trim($row[1]);
-                            $precio = trim($row[2]);
-                            if (!isset($modelos_por_fabricante[$fab])) {
-                                $modelos_por_fabricante[$fab] = array();
+        manufacturerSelect.addEventListener('change', function() {
+            const selectedFabricante = this.value;
+            modelSelect.innerHTML = '<option value="">Seleccione un modelo</option>';
+            basePrice = 0;
+            onInputChange();
+            
+            if (selectedFabricante) {
+                const csvFile = 'MOTO.csv'; // Fijo para barcos
+                fetch('<?php echo get_template_directory_uri(); ?>/' + csvFile)
+                    .then(response => response.text())
+                    .then(data => {
+                        const rows = data.split('\n').slice(1);
+                        rows.forEach(row => {
+                            const [fab, mod, precio] = row.split(',');
+                            if (fab === selectedFabricante) {
+                                const option = document.createElement('option');
+                                option.value = mod;
+                                option.textContent = mod;
+                                option.dataset.price = precio;
+                                modelSelect.appendChild(option);
                             }
-                            $modelos_por_fabricante[$fab][] = array('modelo' => $mod, 'precio' => $precio);
-                        }
-                    }
-                    fclose($handle);
-                }
-                ?>
-
-                // Datos de modelos cargados desde PHP
-                const modelosData = <?php echo json_encode($modelos_por_fabricante); ?>;
-
-                logDebug('MANUFACTURER', `📊 Total fabricantes en CSV: ${Object.keys(modelosData).length}`);
-
-                if (modelosData[selectedFabricante]) {
-                    const modelos = modelosData[selectedFabricante];
-                    logSuccess('MANUFACTURER', `✅ ${modelos.length} modelos encontrados para ${selectedFabricante}`);
-
-                    modelos.forEach((item, index) => {
-                        const option = document.createElement('option');
-                        option.value = item.modelo;
-                        option.textContent = item.modelo;
-                        option.dataset.price = item.precio;
-                        modelSelect.appendChild(option);
-
-                        if (index < 3) {
-                            logDebug('MANUFACTURER', `  → Modelo ${index + 1}: ${item.modelo} (${item.precio}€)`);
-                        }
+                        });
                     });
-
-                    logInfo('MANUFACTURER', `Modelos cargados en el select`);
-                } else {
-                    logWarning('MANUFACTURER', `⚠️ No se encontraron modelos para: ${selectedFabricante}`);
-                }
-
-                perfEnd('manufacturer-change');
             }
-            });
-        } else {
-            logError('MANUFACTURER', '❌ manufacturerSelect no encontrado');
-        }
+        });
 
-        if (modelSelect) {
-            logInfo('MODEL', '✅ Event listener añadido a modelSelect');
-            modelSelect.addEventListener('change', function() {
+        modelSelect.addEventListener('change', function() {
             if (!noEncuentroCheckbox.checked) {
                 const selectedOption = this.options[this.selectedIndex];
                 basePrice = selectedOption ? parseFloat(selectedOption.dataset.price) : 0;
@@ -7481,22 +6787,8 @@ function transferencia_moto_shortcode() {
         });
 
         noEncuentroCheckbox.addEventListener('change', () => {
-            const checked = noEncuentroCheckbox.checked;
-            logInfo('NO-ENCUENTRO', `🔄 Checkbox cambiado: ${checked ? 'ACTIVADO' : 'DESACTIVADO'}`);
-
-            perfStart('no-encuentro-toggle');
             updateNoEncuentroBehavior();
             onInputChange();
-
-            // Actualizar sidebar cuando cambia el checkbox
-            const currentPageId = formPages[currentPage]?.id;
-            if (currentPageId === 'page-vehiculo') {
-                actualizarSidebarDinamico('page-vehiculo');
-                logDebug('NO-ENCUENTRO', 'Sidebar actualizado');
-            }
-
-            perfEnd('no-encuentro-toggle');
-            logSuccess('NO-ENCUENTRO', checked ? '✅ Modo manual activado' : '✅ Modo CSV activado');
         });
 
         couponCodeInput.addEventListener('input', debounceValidateCoupon);
@@ -7513,60 +6805,6 @@ function transferencia_moto_shortcode() {
         customerEmailInput.addEventListener('input', onDocumentFieldsInput);
         customerPhoneInput.addEventListener('input', onDocumentFieldsInput);
 
-        // Actualizar vista previa del documento en sidebar cuando cambian los datos
-        customerNameInput.addEventListener('input', function() {
-            const previewNameEl = document.getElementById('preview-name-sidebar');
-            if (previewNameEl) {
-                previewNameEl.textContent = this.value || '_____________';
-            }
-        });
-
-        customerDniInput.addEventListener('input', function() {
-            const previewDniEl = document.getElementById('preview-dni-sidebar');
-            if (previewDniEl) {
-                previewDniEl.textContent = this.value || '_____________';
-            }
-        });
-
-        // Actualizar resumen de vehículo en sidebar de página Datos
-        function updateVehicleSummary() {
-            const sidebarFabricanteEl = document.getElementById('sidebar-datos-fabricante');
-            const sidebarModeloEl = document.getElementById('sidebar-datos-modelo');
-            const sidebarFechaEl = document.getElementById('sidebar-datos-fecha');
-            const sidebarPrecioEl = document.getElementById('sidebar-datos-precio');
-
-            if (sidebarFabricanteEl) {
-                const fabricante = noEncuentroCheckbox.checked
-                    ? document.getElementById('manual_manufacturer').value
-                    : manufacturerSelect.value;
-                sidebarFabricanteEl.textContent = fabricante || '-';
-            }
-
-            if (sidebarModeloEl) {
-                const modelo = noEncuentroCheckbox.checked
-                    ? document.getElementById('manual_model').value
-                    : modelSelect.value;
-                sidebarModeloEl.textContent = modelo || '-';
-            }
-
-            if (sidebarFechaEl) {
-                const fecha = matriculationDateInput.value;
-                sidebarFechaEl.textContent = fecha ? new Date(fecha).toLocaleDateString('es-ES') : '-';
-            }
-
-            if (sidebarPrecioEl) {
-                const precio = purchasePriceInput.value;
-                sidebarPrecioEl.textContent = precio ? precio + ' €' : '-';
-            }
-        }
-
-        manufacturerSelect.addEventListener('change', updateVehicleSummary);
-        modelSelect.addEventListener('change', updateVehicleSummary);
-        matriculationDateInput.addEventListener('change', updateVehicleSummary);
-        purchasePriceInput.addEventListener('input', updateVehicleSummary);
-        document.getElementById('manual_manufacturer').addEventListener('input', updateVehicleSummary);
-        document.getElementById('manual_model').addEventListener('input', updateVehicleSummary);
-
         document.getElementById('clear-signature').addEventListener('click', function() {
             if (signaturePad) {
                 signaturePad.clear();
@@ -7577,121 +6815,181 @@ function transferencia_moto_shortcode() {
             }
         });
 
-        // Event listener para el botón de pago directo en la página
-        const submitPaymentBtn = document.getElementById('submit-payment');
-        if (submitPaymentBtn) {
-            submitPaymentBtn.addEventListener('click', async (e) => {
-                e.preventDefault();
-
-                if (!document.querySelector('input[name="terms_accept_pago"]').checked) {
-                    const paymentMessage = document.getElementById('payment-message');
-                    if (paymentMessage) {
-                        paymentMessage.textContent = 'Debe aceptar los términos y condiciones de pago para continuar.';
-                        paymentMessage.className = 'error';
-                        paymentMessage.style.display = 'block';
-                        paymentMessage.style.backgroundColor = '#fee2e2';
-                        paymentMessage.style.color = '#991b1b';
-                        paymentMessage.style.border = '1px solid #fca5a5';
-                    }
+        document.getElementById('show-payment-modal').addEventListener('click', function() {
+            const termsCheckbox = document.querySelector('input[name="terms_accept_pago"]');
+            const customerEmail = document.getElementById('customer_email').value.trim();
+            
+            // Verificar términos y condiciones
+            if (!termsCheckbox || !termsCheckbox.checked) {
+                alert('Debe aceptar los términos y condiciones de pago para continuar.');
+                return;
+            }
+            
+            // Verificar que se haya ingresado el email
+            if (!customerEmail) {
+                alert('Debe ingresar su correo electrónico en la sección de datos personales para continuar.');
+                return;
+            }
+            
+            // Verificar que se haya firmado el documento
+            if (signaturePad && signaturePad.isEmpty()) {
+                alert('Debe firmar el documento de autorización antes de continuar con el pago.');
+                return;
+            }
+            
+            // Mostrar el modal
+            document.getElementById('payment-modal').classList.add('show');
+            
+            // Inicializar Stripe después de un pequeño retraso para que la animación del modal termine
+            setTimeout(() => {
+                try {
+                    initializeStripe(finalAmount);
+                } catch (error) {
+                    console.error("Error al inicializar Stripe:", error);
+                    document.getElementById('payment-message').textContent = 'Error al inicializar el sistema de pago: ' + error.message;
+                    document.getElementById('payment-message').className = 'error';
+                    document.getElementById('stripe-loading').style.display = 'none';
+                }
+            }, 500);
+            
+            // La validación del botón de confirmación de pago está en un listener separado
+            // abajo para evitar duplicados
+        });
+        
+        document.querySelector('.close-modal').addEventListener('click', function() {
+            document.getElementById('payment-modal').classList.remove('show');
+        });
+        
+        document.getElementById('payment-modal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                this.classList.remove('show');
+            }
+        });
+        
+        document.getElementById('confirm-payment-button').addEventListener('click', async function() {
+            // Mostrar overlay de carga y deshabilitar el botón
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.style.display = 'flex';
+            this.disabled = true;
+            
+            // Activar el primer paso (payment)
+            updateLoadingStep('payment');
+            
+            // Limpiar mensajes anteriores
+            const paymentMessage = document.getElementById('payment-message');
+            paymentMessage.className = 'hidden';
+            paymentMessage.textContent = '';
+            
+            try {
+                // Verificar que Stripe esté inicializado correctamente
+                if (!stripe || !elements) {
+                    console.error("Error: Stripe no está inicializado correctamente");
+                    paymentMessage.textContent = 'Error: El sistema de pago no está inicializado correctamente. Por favor, recargue la página e intente nuevamente.';
+                    paymentMessage.className = 'error';
+                    loadingOverlay.style.display = 'none';
+                    this.disabled = false;
                     return;
                 }
-
-                document.getElementById('loading-overlay').style.display = 'flex';
-                submitPaymentBtn.disabled = true;
-                submitPaymentBtn.textContent = 'Procesando...';
-
-                const paymentMessage = document.getElementById('payment-message');
-                paymentMessage.classList.remove('success', 'error');
-                paymentMessage.classList.add('hidden');
-                paymentMessage.style.display = 'none';
-
-                try {
-                    if (!stripe || !elements) {
-                        console.error("Stripe no ha sido inicializado correctamente");
-                        throw new Error("Error en la configuración del sistema de pago");
-                    }
-
-                    const { error, paymentIntent } = await stripe.confirmPayment({
-                        elements,
-                        confirmParams: {
-                            return_url: window.location.href,
-                            payment_method_data: {
-                                billing_details: {
-                                    name: customerNameInput.value.trim(),
-                                    email: customerEmailInput.value.trim(),
-                                    phone: customerPhoneInput.value.trim(),
-                                },
+                
+                // Mostrar mensaje de procesamiento
+                paymentMessage.textContent = 'Procesando su pago...';
+                paymentMessage.className = 'processing';
+                
+                // Confirmar el pago
+                const { error, paymentIntent } = await stripe.confirmPayment({
+                    elements,
+                    confirmParams: {
+                        // URL de retorno en caso de autenticación 3D Secure
+                        return_url: window.location.href,
+                        payment_method_data: {
+                            billing_details: {
+                                name: customerNameInput.value.trim(),
+                                email: customerEmailInput.value.trim(),
+                                phone: customerPhoneInput.value.trim(),
                             },
                         },
-                        redirect: 'if_required'
-                    });
-
-                    if (error) {
-                        console.error("Error en el pago:", error);
-                        paymentMessage.textContent = error.message;
-                        paymentMessage.style.display = 'block';
-                        paymentMessage.style.backgroundColor = '#fee2e2';
-                        paymentMessage.style.color = '#991b1b';
-                        paymentMessage.style.border = '1px solid #fca5a5';
-                        document.getElementById('loading-overlay').style.display = 'none';
-                        submitPaymentBtn.disabled = false;
-                        submitPaymentBtn.innerHTML = '<i class="fa-solid fa-lock"></i> Pagar Ahora';
-                        return;
+                    },
+                    redirect: 'if_required'
+                });
+                
+                // Manejar errores de pago
+                if (error) {
+                    console.error("Error en el pago:", error);
+                    
+                    // Mensaje de error en español
+                    let errorMessage;
+                    switch (error.type) {
+                        case 'card_error':
+                            errorMessage = 'Error con la tarjeta: ' + error.message;
+                            break;
+                        case 'validation_error':
+                            errorMessage = 'Por favor, revise los datos de su tarjeta: ' + error.message;
+                            break;
+                        default:
+                            errorMessage = 'Ha ocurrido un error en el procesamiento del pago: ' + error.message;
                     }
-
-                    paymentMessage.textContent = '¡Pago realizado con éxito!';
-                    paymentMessage.style.display = 'block';
-                    paymentMessage.style.backgroundColor = '#d1fae5';
-                    paymentMessage.style.color = '#065f46';
-                    paymentMessage.style.border = '1px solid #6ee7b7';
-
-                    paymentCompleted = true;
-
-                    purchaseDetails = {
-                        totalAmount: finalAmount.toFixed(2),
-                        options: Array.from(extraOptions).filter(opt => opt.checked).map(opt => opt.value),
-                        transferTax: currentTransferTax.toFixed(2),
-                        customerName: customerNameInput.value.trim(),
-                        customerEmail: customerEmailInput.value.trim(),
-                        customerPhone: customerPhoneInput.value.trim(),
-                        customerDNI: customerDniInput.value.trim(),
-                        nuevoNombre: document.getElementById('nuevo_nombre').value.trim(),
-                        nuevoPuerto: document.getElementById('nuevo_puerto').value.trim(),
-                        couponUsed: couponValue,
-                        tramite_id: '<?php echo $tramite_id; ?>',
-                        paymentIntentId: paymentIntent.id
-                    };
-
-                    sendEmails();
-                    handleFinalSubmission();
-
-                } catch (err) {
-                    console.error("Error inesperado:", err);
-                    paymentMessage.textContent = 'Ocurrió un error al procesar el pago: ' + err.message;
-                    paymentMessage.style.display = 'block';
-                    paymentMessage.style.backgroundColor = '#fee2e2';
-                    paymentMessage.style.color = '#991b1b';
-                    paymentMessage.style.border = '1px solid #fca5a5';
-                    document.getElementById('loading-overlay').style.display = 'none';
-                    submitPaymentBtn.disabled = false;
-                    submitPaymentBtn.innerHTML = '<i class="fa-solid fa-lock"></i> Pagar Ahora';
+                    
+                    paymentMessage.textContent = errorMessage;
+                    paymentMessage.className = 'error';
+                    loadingOverlay.style.display = 'none';
+                    this.disabled = false;
+                    return;
                 }
-            });
-        }
+                
+                // Pago exitoso
+                paymentMessage.textContent = 'Pago realizado con éxito. Procesando su solicitud...';
+                paymentMessage.className = 'success';
+                
+                // Activar el segundo paso (documents)
+                updateLoadingStep('documents');
+                
+                // Esperar un momento antes de continuar (para mostrar visualmente el progreso)
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                paymentCompleted = true;
+                
+                purchaseDetails = {
+                    totalAmount: finalAmount.toFixed(2),
+                    options: Array.from(extraOptions).filter(opt => opt.checked).map(opt => opt.value),
+                    transferTax: currentTransferTax.toFixed(2),
+                    customerName: customerNameInput.value.trim(),
+                    customerEmail: customerEmailInput.value.trim(),
+                    customerPhone: customerPhoneInput.value.trim(),
+                    customerDNI: customerDniInput.value.trim(),
+                    nuevoNombre: document.getElementById('nuevo_nombre').value.trim(),
+                    nuevoPuerto: document.getElementById('nuevo_puerto').value.trim(),
+                    couponUsed: couponValue,
+                    tramite_id: '<?php echo $tramite_id; ?>' // Añadimos el ID de trámite
+                };
+
+                // Activar el tercer paso (complete) después de un momento
+                setTimeout(() => {
+                    updateLoadingStep('complete');
+                    // Esperar un momento y luego enviar el form final
+                    setTimeout(() => {
+                        handleFinalSubmission();
+                    }, 1000);
+                }, 2000);
+                
+            } catch (err) {
+                console.error("Error inesperado:", err);
+                paymentMessage.textContent = 'Ocurrió un error al procesar el pago: ' + err.message;
+                paymentMessage.classList.add('error');
+                loadingOverlay.style.display = 'none';
+                this.disabled = false;
+            }
+        });
 
         // Inicialización
-        logDebug('INIT', '⚙️ Iniciando configuración del formulario');
         currentPage = 0; // Empezamos en la página de vehículo (primera página del formulario)
         document.querySelector('.button-container').style.display = 'flex'; // Mostrar botones navegación desde el inicio
-        logDebug('INIT', 'Página actual:', currentPage);
-
+        
         populateManufacturers();
         updateForm();
         updateVehicleSelection();
         updateAdditionalInputs();
         initializeSignaturePad();
         updateNoEncuentroBehavior();
-        logDebug('INIT', '✅ Funciones principales ejecutadas');
         
         // Inicializar dropdowns mejorados para opciones adicionales y cupones
         initAdditionalOptionsDropdown();
@@ -7701,16 +6999,14 @@ function transferencia_moto_shortcode() {
         setTimeout(() => {
             updateTotal();
             updatePaymentSummary();
-            logDebug('INIT', '💰 Precios actualizados');
         }, 300);
-
+        
         // Configuración para inicializar acordeón cuando sea necesario
-        // Ya estamos dentro de DOMContentLoaded, no es necesario otro listener
-        if (document.getElementById('page-documentos') && !document.getElementById('page-documentos').classList.contains('hidden')) {
-            initAccordionSections();
-        }
-
-        logDebug('INIT', '🎉 ¡Formulario Tramitfy completamente inicializado!');
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('page-documentos') && !document.getElementById('page-documentos').classList.contains('hidden')) {
+                initAccordionSections();
+            }
+        });
         
         // Función para inicializar el dropdown de opciones adicionales
         function initAdditionalOptionsDropdown() {
@@ -7963,31 +7259,33 @@ function transferencia_moto_shortcode() {
         }
         
         // Corregir el comportamiento del checkbox de términos en la página de pago
-        // Ya estamos dentro de DOMContentLoaded
-        const paymentCheckbox = document.getElementById('terms_accept_pago');
-        if (paymentCheckbox) {
-            paymentCheckbox.addEventListener('change', function() {
-                const checkmark = this.closest('.custom-checkbox-container').querySelector('.checkmark');
-                if (checkmark) {
-                    if (this.checked) {
-                        checkmark.style.display = 'block';
-                    } else {
-                        checkmark.style.display = 'none';
+        document.addEventListener('DOMContentLoaded', function() {
+            const paymentCheckbox = document.getElementById('terms_accept_pago');
+            if (paymentCheckbox) {
+                paymentCheckbox.addEventListener('change', function() {
+                    const checkmark = this.closest('.custom-checkbox-container').querySelector('.checkmark');
+                    if (checkmark) {
+                        if (this.checked) {
+                            checkmark.style.display = 'block';
+                        } else {
+                            checkmark.style.display = 'none';
+                        }
                     }
-                }
-            });
-        }
-
-        // También añadir para el checkbox del modal
-        const modalCheckbox = document.getElementById('modal-terms-accept');
-        if (modalCheckbox) {
-            modalCheckbox.addEventListener('change', function() {
-                const container = this.closest('label');
-                if (container) {
-                    container.classList.toggle('checked', this.checked);
-                }
-            });
-        }
+                });
+            }
+            
+            // También añadir para el checkbox del modal
+            const modalCheckbox = document.getElementById('modal-terms-accept');
+            if (modalCheckbox) {
+                modalCheckbox.addEventListener('change', function() {
+                    const container = this.closest('label');
+                    if (container) {
+                        container.classList.toggle('checked', this.checked);
+                    }
+                });
+            }
+        });
+    });
 
     <?php if (current_user_can('administrator')): ?>
     // Auto-rellenado para administradores
@@ -8077,1127 +7375,6 @@ function transferencia_moto_shortcode() {
     });
     <?php endif; ?>
 
-
-    // ============================================
-    // NUEVO FLUJO DE PÁGINA DE PRECIO
-    // ============================================
-
-    logDebug('PRECIO-INIT', '🎯 Inicializando flujo de página de precio');
-
-    // Variables del flujo de precio ya definidas globalmente (líneas 5412-5413)
-    // let itpPagado = null;
-    // let precioStep = 1;
-
-    // Elementos del nuevo flujo
-    const precioStep1 = document.getElementById('precio-step-1');
-    const precioStep2 = document.getElementById('precio-step-2');
-    const verCalculoBtn = document.getElementById('ver-calculo-itp');
-    const calculoDetail = document.getElementById('calculo-itp-detail');
-    const itpSiBtn = document.getElementById('itp-si');
-    const itpNoBtn = document.getElementById('itp-no');
-    const toggleServiciosBtn = document.getElementById('toggle-servicios-extras');
-    const serviciosContent = document.getElementById('servicios-extras-content');
-    const serviciosIcon = document.getElementById('servicios-icon');
-    const toggleCuponBtn = document.getElementById('toggle-cupon');
-    const cuponContent = document.getElementById('cupon-content');
-    const cuponIcon = document.getElementById('cupon-icon');
-
-    logDebug('PRECIO-INIT', 'Elementos encontrados:', {
-        precioStep1: !!precioStep1,
-        precioStep2: !!precioStep2,
-        verCalculoBtn: !!verCalculoBtn,
-        calculoDetail: !!calculoDetail,
-        itpSiBtn: !!itpSiBtn,
-        itpNoBtn: !!itpNoBtn,
-        toggleServiciosBtn: !!toggleServiciosBtn,
-        serviciosContent: !!serviciosContent,
-        toggleCuponBtn: !!toggleCuponBtn,
-        cuponContent: !!cuponContent
-    });
-
-    // Botón ver cálculo ITP
-    if (verCalculoBtn) {
-        logDebug('PRECIO-INIT', '✅ Event listener añadido a botón ver cálculo');
-        verCalculoBtn.addEventListener('click', function() {
-            if (calculoDetail.style.display === 'none') {
-                calculoDetail.style.display = 'block';
-                verCalculoBtn.innerHTML = '<i class="fa-solid fa-eye-slash"></i> Ocultar cálculo';
-                logDebug('PRECIO-FLOW', '👁️ Cálculo ITP mostrado');
-            } else {
-                calculoDetail.style.display = 'none';
-                verCalculoBtn.innerHTML = '<i class="fa-solid fa-calculator"></i> Ver cómo se calcula el ITP';
-                logDebug('PRECIO-FLOW', '🙈 Cálculo ITP ocultado');
-            }
-        });
-    } else {
-        logError('PRECIO-INIT', '❌ No se encontró botón ver cálculo');
-    }
-
-    // Actualizar valores del cálculo ITP en step 1
-    function actualizarCalculoITPStep1() {
-        logDebug('ITP-STEP1', '🔄 Actualizando cálculo ITP en paso 1');
-
-        const purchasePrice = parseFloat(document.getElementById('purchase_price')?.value) || 0;
-        const region = document.getElementById('region')?.value || '';
-
-        logDebug('ITP-STEP1', 'Precio compra:', purchasePrice);
-        logDebug('ITP-STEP1', 'Región:', region);
-
-        try {
-            // Calcular valor fiscal
-            const { fiscalValue, depreciationPercentage, yearsDifference } = calculateFiscalValue();
-
-            // Base imponible es el mayor entre precio compra y valor fiscal
-            const baseImponible = Math.max(purchasePrice, fiscalValue);
-
-            // Obtener tipo impositivo
-            const taxRate = (itpRates[region] || 0.04);
-            const taxRatePercent = taxRate * 100;
-
-            // Calcular ITP
-            const itp = baseImponible * taxRate;
-
-            logDebug('ITP-STEP1', 'Resultado:', {
-                fiscalValue,
-                baseImponible,
-                taxRate,
-                itp
-            });
-
-            // Actualizar display principal del ITP
-            const transferTaxStep1 = document.getElementById('transfer_tax_step1');
-            if (transferTaxStep1) {
-                transferTaxStep1.textContent = itp.toFixed(2) + ' €';
-                logDebug('ITP-STEP1', '✅ Display principal actualizado');
-            } else {
-                logError('ITP-STEP1', '❌ Elemento transfer_tax_step1 no encontrado');
-            }
-
-            // Actualizar displays en el detalle del cálculo
-            const precioCompraCalc = document.getElementById('precio-compra-calc');
-            const valorFiscalCalc = document.getElementById('valor-fiscal-calc');
-            const baseImponibleCalc = document.getElementById('base-imponible-calc');
-            const regionNameCalc = document.getElementById('region-name-calc');
-            const tipoImpositivoCalc = document.getElementById('tipo-impositivo-calc');
-
-            if (precioCompraCalc) precioCompraCalc.textContent = purchasePrice.toFixed(2) + ' €';
-            if (valorFiscalCalc) valorFiscalCalc.textContent = fiscalValue.toFixed(2) + ' €';
-            if (baseImponibleCalc) baseImponibleCalc.textContent = baseImponible.toFixed(2) + ' €';
-            if (regionNameCalc) regionNameCalc.textContent = region || '-';
-            if (tipoImpositivoCalc) tipoImpositivoCalc.textContent = taxRatePercent.toFixed(0) + '%';
-
-            logDebug('ITP-STEP1', '✅ Todos los displays actualizados');
-        } catch (error) {
-            logError('ITP-STEP1', '❌ Error en cálculo:', error);
-        }
-    }
-
-    // Variables para el nuevo flujo
-    let itpGestionSeleccionada = null; // 'yo-pago' o 'gestionan-ustedes'
-    let itpMetodoPago = null; // 'tarjeta' o 'transferencia'
-    let itpBaseAmount = 0;
-    let itpComisionTarjeta = 0;
-    let itpTotalAmount = 0;
-
-    // Botones ITP pagado/no pagado
-    if (itpSiBtn && itpNoBtn) {
-        logDebug('PRECIO-FLOW', '✅ Botones ITP encontrados');
-
-        itpSiBtn.addEventListener('click', function() {
-            logDebug('PRECIO-FLOW', '✅ Usuario seleccionó: ITP YA PAGADO');
-            itpPagado = true;
-
-            // Estilos activo
-            itpSiBtn.style.background = '#10b981';
-            itpSiBtn.style.color = 'white';
-            itpSiBtn.style.borderColor = '#10b981';
-
-            itpNoBtn.style.background = 'white';
-            itpNoBtn.style.color = '#6b7280';
-            itpNoBtn.style.borderColor = '#e5e7eb';
-
-            // Ocultar título, subtítulo y cajas superiores con animación
-            const precioTitulo = document.getElementById('precio-titulo');
-            const precioSubtitulo = document.getElementById('precio-subtitulo');
-            const tramitacionBox = document.getElementById('tramitacion-completa-box');
-            const itpInfoBox = document.getElementById('itp-info-box');
-
-            // Animación de desaparición
-            [precioTitulo, precioSubtitulo, tramitacionBox, itpInfoBox].forEach(elem => {
-                if (elem) {
-                    elem.style.transition = 'all 0.3s ease';
-                    elem.style.opacity = '0';
-                    elem.style.transform = 'translateY(-20px)';
-                }
-            });
-
-            // Reducir tamaño del selector
-            const questionContainer = document.getElementById('itp-question-container');
-            questionContainer.style.padding = '12px 16px';
-            questionContainer.querySelector('h3').style.fontSize = '14px';
-            questionContainer.querySelector('h3').style.margin = '0';
-            questionContainer.querySelector('p').style.display = 'none';
-            questionContainer.querySelectorAll('.itp-choice-btn').forEach(btn => {
-                btn.style.padding = '8px 16px';
-                btn.style.fontSize = '13px';
-                btn.style.maxWidth = '150px';
-            });
-
-            setTimeout(() => {
-                // Ocultar elementos superiores
-                [precioTitulo, precioSubtitulo, tramitacionBox, itpInfoBox].forEach(elem => {
-                    if (elem) elem.style.display = 'none';
-                });
-
-                // Mostrar flujo "ya pagado"
-                document.getElementById('itp-no-pagado-flow').style.display = 'none';
-                const yaPagadoFlow = document.getElementById('itp-ya-pagado-flow');
-                yaPagadoFlow.style.display = 'block';
-                yaPagadoFlow.style.opacity = '0';
-                yaPagadoFlow.style.transform = 'translateY(20px)';
-
-                setTimeout(() => {
-                    yaPagadoFlow.style.transition = 'all 0.3s ease';
-                    yaPagadoFlow.style.opacity = '1';
-                    yaPagadoFlow.style.transform = 'translateY(0)';
-                }, 50);
-
-                // Actualizar sidebar
-                actualizarSidebarPrecio();
-            }, 300);
-        });
-
-        itpNoBtn.addEventListener('click', function() {
-            logDebug('PRECIO-FLOW', '❌ Usuario seleccionó: ITP NO PAGADO');
-            itpPagado = false;
-
-            // Estilos activo
-            itpNoBtn.style.background = '#016d86';
-            itpNoBtn.style.color = 'white';
-            itpNoBtn.style.borderColor = '#016d86';
-
-            itpSiBtn.style.background = 'white';
-            itpSiBtn.style.color = '#6b7280';
-            itpSiBtn.style.borderColor = '#e5e7eb';
-
-            // Ocultar título, subtítulo y cajas superiores con animación (IGUAL QUE EL BOTÓN SÍ)
-            const precioTitulo = document.getElementById('precio-titulo');
-            const precioSubtitulo = document.getElementById('precio-subtitulo');
-            const tramitacionBox = document.getElementById('tramitacion-completa-box');
-            const itpInfoBox = document.getElementById('itp-info-box');
-
-            // Animación de desaparición de elementos superiores
-            [precioTitulo, precioSubtitulo, tramitacionBox, itpInfoBox].forEach(elem => {
-                if (elem) {
-                    elem.style.transition = 'all 0.3s ease';
-                    elem.style.opacity = '0';
-                    elem.style.transform = 'translateY(-20px)';
-                }
-            });
-
-            // Reducir tamaño del selector (IGUAL QUE EL BOTÓN SÍ)
-            const questionContainer = document.getElementById('itp-question-container');
-            questionContainer.style.padding = '12px 16px';
-            questionContainer.querySelector('h3').style.fontSize = '14px';
-            questionContainer.querySelector('h3').style.margin = '0';
-            questionContainer.querySelector('p').style.display = 'none';
-            questionContainer.querySelectorAll('.itp-choice-btn').forEach(btn => {
-                btn.style.padding = '8px 16px';
-                btn.style.fontSize = '13px';
-                btn.style.maxWidth = '150px';
-            });
-
-            // Después de la animación, ocultar completamente y mostrar flujo "no pagado"
-            setTimeout(() => {
-                // Ocultar elementos superiores
-                [precioTitulo, precioSubtitulo, tramitacionBox, itpInfoBox].forEach(elem => {
-                    if (elem) {
-                        elem.style.display = 'none';
-                    }
-                });
-
-                // Mostrar flujo "no pagado" con animación
-                document.getElementById('itp-ya-pagado-flow').style.display = 'none';
-                const noPagadoFlow = document.getElementById('itp-no-pagado-flow');
-                noPagadoFlow.style.display = 'block';
-                noPagadoFlow.style.opacity = '0';
-                noPagadoFlow.style.transform = 'translateY(20px)';
-
-                setTimeout(() => {
-                    noPagadoFlow.style.transition = 'all 0.3s ease';
-                    noPagadoFlow.style.opacity = '1';
-                    noPagadoFlow.style.transform = 'translateY(0)';
-                }, 50);
-
-                // Actualizar sidebar
-                actualizarSidebarPrecio();
-            }, 300);
-
-            // Calcular ITP base
-            itpBaseAmount = currentTransferTax || 0;
-            logDebug('PRECIO-FLOW', 'ITP base calculado:', itpBaseAmount);
-        });
-    } else {
-        logError('PRECIO-FLOW', '❌ No se encontraron botones ITP');
-    }
-
-    // Gestión de opciones ITP (lo pago yo / lo gestionan ustedes)
-    document.querySelectorAll('input[name="itp_gestion"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            itpGestionSeleccionada = this.value;
-            logDebug('PRECIO-FLOW', 'Gestión ITP seleccionada:', itpGestionSeleccionada);
-
-            // Actualizar estilos de las opciones
-            document.querySelectorAll('.itp-gestion-option').forEach(opt => {
-                if (opt.querySelector('input').checked) {
-                    opt.style.borderColor = '#016d86';
-                    opt.style.background = '#eff6ff';
-                } else {
-                    opt.style.borderColor = '#e5e7eb';
-                    opt.style.background = 'white';
-                }
-            });
-
-            if (itpGestionSeleccionada === 'gestionan-ustedes') {
-                // Mostrar métodos de pago
-                document.getElementById('metodos-pago-itp').style.display = 'block';
-                document.getElementById('btn-container-yo-pago').style.display = 'none';
-                document.getElementById('itp-pago-resumen').style.display = 'none';
-            } else if (itpGestionSeleccionada === 'yo-pago') {
-                // Mostrar botón de ver desglose para "lo pago yo"
-                document.getElementById('metodos-pago-itp').style.display = 'none';
-                document.getElementById('itp-pago-resumen').style.display = 'none';
-                document.getElementById('btn-container-yo-pago').style.display = 'block';
-
-                // Actualizar sidebar
-                actualizarSidebarPrecio();
-            }
-        });
-    });
-
-    // Métodos de pago ITP
-    document.querySelectorAll('input[name="metodo_pago_itp"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            itpMetodoPago = this.value;
-            logDebug('PRECIO-FLOW', 'Método pago ITP seleccionado:', itpMetodoPago);
-
-            // Calcular totales
-            if (itpMetodoPago === 'tarjeta') {
-                itpComisionTarjeta = itpBaseAmount * 0.02;
-                itpTotalAmount = itpBaseAmount + itpComisionTarjeta;
-            } else {
-                itpComisionTarjeta = 0;
-                itpTotalAmount = itpBaseAmount;
-            }
-
-            // Actualizar displays
-            document.getElementById('itp-base-display').textContent = itpBaseAmount.toFixed(2) + ' €';
-            document.getElementById('comision-tarjeta-display').textContent = itpComisionTarjeta.toFixed(2) + ' €';
-            document.getElementById('itp-total-display').textContent = itpTotalAmount.toFixed(2) + ' €';
-
-            // Mostrar/ocultar fila de comisión
-            const comisionRow = document.getElementById('comision-tarjeta-row');
-            comisionRow.style.display = (itpMetodoPago === 'tarjeta') ? 'block' : 'none';
-
-            // Mostrar resumen
-            document.getElementById('itp-pago-resumen').style.display = 'block';
-
-            // Actualizar mensaje del método de pago
-            const metodoPagoInfo = document.getElementById('metodo-pago-info');
-            if (itpMetodoPago === 'tarjeta') {
-                metodoPagoInfo.innerHTML = '💳 Pago con tarjeta <strong>(al momento)</strong> - incluye comisión del 2%';
-            } else {
-                metodoPagoInfo.innerHTML = '🏦 Pago por transferencia bancaria - sin comisión adicional';
-            }
-
-            logDebug('PRECIO-FLOW', 'Cálculo ITP:', {
-                base: itpBaseAmount,
-                comision: itpComisionTarjeta,
-                total: itpTotalAmount
-            });
-
-            // Actualizar sidebar
-            actualizarSidebarPrecio();
-        });
-    });
-
-    // Event listeners para los botones de ver desglose
-    const btnVerDesgloseSi = document.getElementById('btn-ver-desglose-si');
-    if (btnVerDesgloseSi) {
-        btnVerDesgloseSi.addEventListener('click', function() {
-            logDebug('PRECIO-FLOW', '📋 Ver desglose - ITP ya pagado');
-            mostrarPrecioStep2();
-        });
-    }
-
-    const btnVerDesgloseYoPago = document.getElementById('btn-ver-desglose-yo-pago');
-    if (btnVerDesgloseYoPago) {
-        btnVerDesgloseYoPago.addEventListener('click', function() {
-            logDebug('PRECIO-FLOW', '📋 Ver desglose - ITP lo pago yo');
-            mostrarPrecioStep2();
-        });
-    }
-
-    const btnVerDesgloseGestionamos = document.getElementById('btn-ver-desglose-gestionamos');
-    if (btnVerDesgloseGestionamos) {
-        btnVerDesgloseGestionamos.addEventListener('click', function() {
-            logDebug('PRECIO-FLOW', '📋 Ver desglose - ITP gestionado por nosotros');
-            mostrarPrecioStep2();
-        });
-    }
-
-    // Función para mostrar step 2
-    function mostrarPrecioStep2() {
-        logDebug('PRECIO-FLOW', '🔄 Iniciando transición a paso 2');
-        logDebug('PRECIO-FLOW', 'Estado ITP pagado:', itpPagado);
-
-        if (precioStep1 && precioStep2) {
-            logDebug('PRECIO-FLOW', '✅ Elementos step1 y step2 encontrados');
-
-            // Fade out del step 1
-            precioStep1.style.opacity = '0';
-            precioStep1.style.transform = 'translateY(-20px)';
-            logDebug('PRECIO-FLOW', '↗️ Fade out aplicado al paso 1');
-
-            setTimeout(() => {
-                // Ocultar step 1 completamente
-                precioStep1.style.display = 'none';
-                logDebug('PRECIO-FLOW', '❌ Paso 1 oculto');
-
-                // Mostrar step 2 con fade in
-                precioStep2.style.display = 'block';
-                precioStep2.style.opacity = '0';
-                precioStep2.style.transform = 'translateY(20px)';
-
-                // Forzar reflow
-                precioStep2.offsetHeight;
-
-                // Aplicar animación fade in
-                precioStep2.style.transition = 'opacity 0.4s ease-out, transform 0.4s ease-out';
-                precioStep2.style.opacity = '1';
-                precioStep2.style.transform = 'translateY(0)';
-                logDebug('PRECIO-FLOW', '✅ Paso 2 mostrado con fade in');
-
-                precioStep = 2;
-
-                // Actualizar lo que incluye según ITP
-                const incluyeItpSi = document.getElementById('incluye-itp-si');
-                const incluyeItpNo = document.getElementById('incluye-itp-no');
-
-                if (itpPagado === true) {
-                    incluyeItpSi.style.display = 'block';
-                    incluyeItpNo.style.display = 'none';
-                    logDebug('PRECIO-FLOW', '✅ Mostrado: ITP ya pagado');
-                } else {
-                    if (itpGestionSeleccionada === 'yo-pago') {
-                        incluyeItpSi.style.display = 'block';
-                        incluyeItpNo.style.display = 'none';
-                        logDebug('PRECIO-FLOW', '✅ Mostrado: Usuario paga ITP por su cuenta');
-                    } else {
-                        incluyeItpSi.style.display = 'none';
-                        incluyeItpNo.style.display = 'block';
-                        logDebug('PRECIO-FLOW', '✅ Mostrado: Pago de ITP incluido (gestionamos nosotros)');
-                    }
-                }
-
-                // Actualizar precio total
-                actualizarPrecioFinal();
-
-                // Actualizar resumen en sidebar
-                actualizarSidebarPrecio();
-
-                logDebug('PRECIO-FLOW', '✅ Transición completada');
-            }, 300);
-        } else {
-            logError('PRECIO-FLOW', '❌ No se encontraron elementos step1 o step2');
-        }
-    }
-
-    // Toggle servicios extras
-    if (toggleServiciosBtn) {
-        toggleServiciosBtn.addEventListener('click', function() {
-            if (serviciosContent.style.display === 'none') {
-                serviciosContent.style.display = 'block';
-                serviciosIcon.style.transform = 'rotate(180deg)';
-            } else {
-                serviciosContent.style.display = 'none';
-                serviciosIcon.style.transform = 'rotate(0deg)';
-            }
-        });
-    }
-
-    // Toggle cupón
-    if (toggleCuponBtn) {
-        toggleCuponBtn.addEventListener('click', function() {
-            if (cuponContent.style.display === 'none') {
-                cuponContent.style.display = 'block';
-                cuponIcon.style.transform = 'rotate(180deg)';
-            } else {
-                cuponContent.style.display = 'none';
-                cuponIcon.style.transform = 'rotate(0deg)';
-            }
-        });
-    }
-
-    // Actualizar resumen en sidebar
-    function actualizarSidebarPrecio() {
-        logDebug('SIDEBAR-PRECIO', '💰 Actualizando asistente de cálculo');
-
-        const sidebarPrecioContent = document.getElementById('sidebar-precio-content');
-        if (!sidebarPrecioContent) {
-            logError('SIDEBAR-PRECIO', 'Contenedor no encontrado');
-            return;
-        }
-
-        let contenido = '';
-
-        // 1. Datos del vehículo (clickable para volver)
-        const purchasePrice = parseFloat(document.getElementById('purchase_price')?.value) || 0;
-        const region = document.getElementById('region')?.value || '';
-
-        contenido += `
-            <div class="sidebar-price-section" data-section="vehiculo" style="cursor: pointer; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 10px; border-left: 3px solid ${purchasePrice && region ? '#10b981' : '#f59e0b'}; transition: all 0.2s;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <span style="font-size: 12px; color: rgba(255,255,255,0.7);">1. Datos del vehículo</span>
-                    ${purchasePrice && region ? '<i class="fa-solid fa-check-circle" style="color: #10b981; font-size: 14px;"></i>' : '<i class="fa-solid fa-exclamation-circle" style="color: #f59e0b; font-size: 14px;"></i>'}
-                </div>
-                <div style="font-size: 13px; color: white; font-weight: 600;">
-                    ${purchasePrice ? purchasePrice.toFixed(2) + ' € · ' : 'Precio pendiente · '}${region || 'Región pendiente'}
-                </div>
-            </div>
-        `;
-
-        // 2. Cálculo del ITP
-        const transferTax = currentTransferTax || 0;
-        const taxRate = region ? ((itpRates[region] || 0.04) * 100) : 0;
-
-        contenido += `
-            <div style="padding: 10px; background: rgba(251, 191, 36, 0.1); border-radius: 6px; margin-bottom: 10px; border-left: 3px solid #f59e0b;">
-                <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 6px;">2. Impuesto (ITP)</div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 13px; color: white;">${taxRate.toFixed(0)}% sobre ${purchasePrice ? purchasePrice.toFixed(2) : '0'} €</span>
-                    <strong style="font-size: 15px; color: #fbbf24;">${transferTax.toFixed(2)} €</strong>
-                </div>
-            </div>
-        `;
-
-        // 3. Estado del ITP (clickable para modificar)
-        if (itpPagado !== null) {
-            let estadoTexto = '';
-            let estadoColor = '';
-            let estadoIcon = '';
-
-            if (itpPagado === true) {
-                estadoTexto = 'Ya pagado';
-                estadoColor = '#10b981';
-                estadoIcon = 'fa-check-circle';
-            } else {
-                if (itpGestionSeleccionada === 'gestionan-ustedes') {
-                    estadoTexto = 'Lo gestionamos (incluido)';
-                    estadoColor = '#016d86';
-                    estadoIcon = 'fa-building';
-                } else if (itpGestionSeleccionada === 'yo-pago') {
-                    estadoTexto = 'Lo pagas tú (no incluido)';
-                    estadoColor = '#6b7280';
-                    estadoIcon = 'fa-user';
-                }
-            }
-
-            contenido += `
-                <div class="sidebar-price-section" data-section="itp-decision" style="cursor: pointer; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 10px; border-left: 3px solid ${estadoColor}; transition: all 0.2s;">
-                    <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 6px;">3. Gestión del ITP</div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <i class="fa-solid ${estadoIcon}" style="color: ${estadoColor}; font-size: 14px;"></i>
-                        <span style="font-size: 13px; color: white; font-weight: 600;">${estadoTexto}</span>
-                    </div>
-                </div>
-            `;
-
-            // 4. Si lo gestionamos nosotros, mostrar método de pago ITP
-            if (itpPagado === false && itpGestionSeleccionada === 'gestionan-ustedes' && itpMetodoPago) {
-                const metodoTexto = itpMetodoPago === 'tarjeta' ? 'Tarjeta (+2% comisión)' : 'Transferencia (sin comisión)';
-                const comision = itpMetodoPago === 'tarjeta' ? itpComisionTarjeta : 0;
-
-                contenido += `
-                    <div style="padding: 10px; background: rgba(255,255,255,0.08); border-radius: 6px; margin-bottom: 10px; margin-left: 16px; border-left: 2px solid rgba(255,255,255,0.3);">
-                        <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 4px;">Método de pago ITP:</div>
-                        <div style="font-size: 12px; color: white; font-weight: 600;">${metodoTexto}</div>
-                        ${comision > 0 ? `<div style="font-size: 11px; color: #fca5a5; margin-top: 4px;">+${comision.toFixed(2)} € comisión</div>` : ''}
-                    </div>
-                `;
-            }
-        }
-
-        // 5. Precio base tramitación
-        contenido += `
-            <div style="padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 10px; border-left: 3px solid #8b5cf6;">
-                <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 6px;">4. Tramitación</div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 13px; color: white;">Gestión completa</span>
-                    <strong style="font-size: 15px; color: white;">${BASE_TRANSFER_PRICE.toFixed(2)} €</strong>
-                </div>
-            </div>
-        `;
-
-        // 6. Servicios extra (si hay alguno seleccionado)
-        const extrasSeleccionados = document.querySelectorAll('.extra-option:checked');
-        if (extrasSeleccionados.length > 0) {
-            let totalExtras = 0;
-            let extrasHTML = '';
-            extrasSeleccionados.forEach(checkbox => {
-                const precio = parseFloat(checkbox.dataset.price);
-                totalExtras += precio;
-                extrasHTML += `
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,0.85); margin-bottom: 4px;">
-                        <span>${checkbox.value}</span>
-                        <span>+${precio.toFixed(2)} €</span>
-                    </div>
-                `;
-            });
-
-            contenido += `
-                <div style="padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 10px; border-left: 3px solid #06b6d4;">
-                    <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 8px;">5. Servicios extra</div>
-                    ${extrasHTML}
-                    <div style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 6px; margin-top: 6px; display: flex; justify-content: space-between;">
-                        <span style="font-size: 12px; color: white; font-weight: 600;">Subtotal:</span>
-                        <strong style="font-size: 13px; color: white;">+${totalExtras.toFixed(2)} €</strong>
-                    </div>
-                </div>
-            `;
-        }
-
-        // 7. TOTAL FINAL
-        let totalFinal = BASE_TRANSFER_PRICE;
-        if (itpPagado === false && itpGestionSeleccionada === 'gestionan-ustedes') {
-            totalFinal += itpTotalAmount;
-        }
-        extrasSeleccionados.forEach(checkbox => {
-            totalFinal += parseFloat(checkbox.dataset.price);
-        });
-        if (couponDiscountPercent > 0) {
-            totalFinal = totalFinal * (1 - couponDiscountPercent / 100);
-        }
-
-        contenido += `
-            <div style="padding: 14px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2)); border-radius: 8px; border: 2px solid #10b981; margin-top: 16px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 14px; color: white; font-weight: 600;">TOTAL</span>
-                    <strong style="font-size: 20px; color: #10b981;">${totalFinal.toFixed(2)} €</strong>
-                </div>
-                ${couponDiscountPercent > 0 ? `<div style="font-size: 11px; color: #6ee7b7; margin-top: 6px;">Cupón aplicado: -${couponDiscountPercent}%</div>` : ''}
-            </div>
-        `;
-
-        sidebarPrecioContent.innerHTML = contenido;
-
-        // Event listeners para navegación
-        setTimeout(() => {
-            document.querySelectorAll('.sidebar-price-section').forEach(section => {
-                section.addEventListener('click', function() {
-                    const sectionType = this.dataset.section;
-                    if (sectionType === 'vehiculo') {
-                        // Navegar a página de vehículo
-                        goToPage(0);
-                    } else if (sectionType === 'itp-decision') {
-                        // Scroll al selector de ITP
-                        const itpSelector = document.getElementById('itp-question-container');
-                        if (itpSelector) {
-                            itpSelector.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-                    }
-                });
-                // Hover effect
-                section.addEventListener('mouseenter', function() {
-                    this.style.background = 'rgba(255,255,255,0.12)';
-                });
-                section.addEventListener('mouseleave', function() {
-                    this.style.background = 'rgba(255,255,255,0.05)';
-                });
-            });
-        }, 100);
-
-        logDebug('SIDEBAR-PRECIO', '✅ Asistente actualizado');
-    }
-
-    // Función para volver al paso 1 de precio
-    function volverAPaso1Precio() {
-        logDebug('PRECIO-FLOW', '🔙 Volviendo al paso 1 de precio');
-
-        // Fade out del paso 2
-        if (precioStep2) {
-            precioStep2.style.opacity = '0';
-            precioStep2.style.transform = 'translateY(20px)';
-
-            setTimeout(() => {
-                precioStep2.style.display = 'none';
-
-                // Mostrar paso 1
-                precioStep1.style.display = 'block';
-                precioStep1.style.opacity = '0';
-                precioStep1.style.transform = 'translateY(-20px)';
-
-                // Forzar reflow
-                precioStep1.offsetHeight;
-
-                // Fade in
-                precioStep1.style.opacity = '1';
-                precioStep1.style.transform = 'translateY(0)';
-
-                precioStep = 1;
-
-                // Restaurar tamaño del selector
-                const questionContainer = document.getElementById('itp-question-container');
-                questionContainer.style.padding = '24px';
-                questionContainer.querySelector('h3').style.fontSize = '18px';
-                questionContainer.querySelector('h3').style.margin = '0 0 8px 0';
-                const subtitleP = questionContainer.querySelector('p');
-                if (subtitleP) subtitleP.style.display = 'block';
-                questionContainer.querySelectorAll('.itp-choice-btn').forEach(btn => {
-                    btn.style.padding = '16px 24px';
-                    btn.style.fontSize = '16px';
-                    btn.style.maxWidth = '200px';
-                });
-
-                // Ocultar flujos
-                document.getElementById('itp-ya-pagado-flow').style.display = 'none';
-                document.getElementById('itp-no-pagado-flow').style.display = 'none';
-
-                logDebug('PRECIO-FLOW', '✅ Vuelto al paso 1');
-            }, 300);
-        }
-    }
-
-    // Actualizar precio final en step 2
-    function actualizarPrecioFinal() {
-        logDebug('PRECIO-FINAL', '💰 Calculando precio final');
-
-        let total = BASE_TRANSFER_PRICE;
-
-        // Añadir ITP según selección
-        if (itpPagado === false && itpGestionSeleccionada === 'gestionan-ustedes') {
-            // Si lo gestionamos nosotros, añadir el ITP (con comisión si es tarjeta)
-            total += itpTotalAmount;
-            logDebug('PRECIO-FINAL', 'ITP incluido (gestionamos):', itpTotalAmount);
-        }
-        // Si ya está pagado o lo paga el usuario, no se añade al total
-
-        // Añadir servicios extras
-        document.querySelectorAll('.extra-option:checked').forEach(function(checkbox) {
-            total += parseFloat(checkbox.dataset.price);
-        });
-
-        // Aplicar descuento de cupón
-        if (couponDiscountPercent > 0) {
-            total = total * (1 - couponDiscountPercent / 100);
-        }
-
-        // Actualizar display
-        const totalFinalEl = document.getElementById('total-final-precio');
-        if (totalFinalEl) {
-            totalFinalEl.textContent = total.toFixed(2) + ' €';
-        }
-
-        // También actualizar el total general (para mantener compatibilidad)
-        finalAmount = total;
-        const finalAmountEl = document.getElementById('final-amount');
-        if (finalAmountEl) {
-            finalAmountEl.textContent = total.toFixed(2) + ' €';
-        }
-    }
-
-    // Event listeners para servicios extras
-    document.querySelectorAll('.extra-option').forEach(function(checkbox) {
-        checkbox.addEventListener('change', function() {
-            actualizarPrecioFinal();
-            actualizarSidebarPrecio();
-
-            // Mostrar/ocultar input adicional
-            if (this.value === 'Cambio de nombre') {
-                document.getElementById('nombre-input').style.display = this.checked ? 'block' : 'none';
-            } else if (this.value === 'Cambio de puerto base') {
-                document.getElementById('puerto-input').style.display = this.checked ? 'block' : 'none';
-            }
-        });
-    });
-
-    // Resetear flujo cuando se vuelve a página de precio
-    function resetearFlujoPrecio() {
-        if (precioStep1 && precioStep2) {
-            precioStep1.style.display = 'block';
-            precioStep2.style.display = 'none';
-            precioStep = 1;
-            itpPagado = null;
-
-            // Resetear botones ITP
-            if (itpSiBtn) {
-                itpSiBtn.style.background = 'white';
-                itpSiBtn.style.color = '#10b981';
-                itpSiBtn.style.borderColor = '#10b981';
-            }
-            if (itpNoBtn) {
-                itpNoBtn.style.background = 'white';
-                itpNoBtn.style.color = '#6b7280';
-                itpNoBtn.style.borderColor = '#e5e7eb';
-            }
-        }
-    }
-
-    // Detectar cuando se muestra la página de precio para resetear el flujo
-    // Esto se manejará automáticamente cuando el usuario vuelva a la página
-
-    // ============================================
-    // SISTEMA DE SIDEBAR DINÁMICO POR PÁGINA
-    // ============================================
-
-    function actualizarSidebarDinamico(pageId) {
-        logDebug('SIDEBAR-DYN', '🔄 Actualizando sidebar para página:', pageId);
-
-        const sidebarDynamic = document.getElementById('sidebar-dynamic-content');
-        if (!sidebarDynamic) {
-            logError('SIDEBAR-DYN', 'Contenedor dinámico no encontrado');
-            return;
-        }
-
-        let contenido = '';
-
-        switch(pageId) {
-            case 'page-vehiculo':
-                // Obtener datos del formulario
-                const vehicleType = document.getElementById('vehicle_type')?.value || '';
-                const manufacturer = document.getElementById('manufacturer')?.value || '';
-                const model = document.getElementById('model')?.value || '';
-                const matriculationDate = document.getElementById('matriculation_date')?.value || '';
-                const purchasePrice = document.getElementById('purchase_price')?.value || '';
-                const region = document.getElementById('region')?.value || '';
-                const noEncuentro = document.getElementById('no_encuentro_checkbox')?.checked || false;
-                const manualManufacturer = document.getElementById('manual_manufacturer')?.value || '';
-                const manualModel = document.getElementById('manual_model')?.value || '';
-
-                const displayManufacturer = noEncuentro ? manualManufacturer : manufacturer;
-                const displayModel = noEncuentro ? manualModel : model;
-
-                contenido = `
-                    <div style="background: rgba(255,255,255,0.1); padding: 14px; border-radius: 8px;">
-                        <h4 style="color: white; font-size: 14px; margin: 0 0 14px 0; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px;">
-                            Datos del Vehículo
-                        </h4>
-                        <div style="display: grid; gap: 10px;">
-                            <div class="sidebar-field" data-field="vehicle_type" style="cursor: pointer; padding: 8px; border-radius: 4px; background: ${vehicleType ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.05)'}; border-left: 3px solid ${vehicleType ? '#10b981' : 'transparent'}; transition: all 0.2s;">
-                                <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 3px;">Tipo de vehículo</div>
-                                <div style="font-size: 13px; color: white; font-weight: ${vehicleType ? '600' : '400'};">
-                                    ${vehicleType || 'Pendiente'}
-                                </div>
-                            </div>
-                            <div class="sidebar-field" data-field="manufacturer" style="cursor: pointer; padding: 8px; border-radius: 4px; background: ${displayManufacturer ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.05)'}; border-left: 3px solid ${displayManufacturer ? '#10b981' : 'transparent'}; transition: all 0.2s;">
-                                <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 3px;">Fabricante</div>
-                                <div style="font-size: 13px; color: white; font-weight: ${displayManufacturer ? '600' : '400'};">
-                                    ${displayManufacturer || 'Pendiente'}
-                                </div>
-                            </div>
-                            <div class="sidebar-field" data-field="model" style="cursor: pointer; padding: 8px; border-radius: 4px; background: ${displayModel ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.05)'}; border-left: 3px solid ${displayModel ? '#10b981' : 'transparent'}; transition: all 0.2s;">
-                                <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 3px;">Modelo</div>
-                                <div style="font-size: 13px; color: white; font-weight: ${displayModel ? '600' : '400'};">
-                                    ${displayModel || 'Pendiente'}
-                                </div>
-                            </div>
-                            ${!noEncuentro ? `
-                            <div class="sidebar-field" data-field="matriculation_date" style="cursor: pointer; padding: 8px; border-radius: 4px; background: ${matriculationDate ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.05)'}; border-left: 3px solid ${matriculationDate ? '#10b981' : 'transparent'}; transition: all 0.2s;">
-                                <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 3px;">Fecha matriculación</div>
-                                <div style="font-size: 13px; color: white; font-weight: ${matriculationDate ? '600' : '400'};">
-                                    ${matriculationDate || 'Pendiente'}
-                                </div>
-                            </div>
-                            ` : ''}
-                            <div class="sidebar-field" data-field="purchase_price" style="cursor: pointer; padding: 8px; border-radius: 4px; background: ${purchasePrice ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.05)'}; border-left: 3px solid ${purchasePrice ? '#10b981' : 'transparent'}; transition: all 0.2s;">
-                                <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 3px;">Precio de compra</div>
-                                <div style="font-size: 13px; color: white; font-weight: ${purchasePrice ? '600' : '400'};">
-                                    ${purchasePrice ? purchasePrice + ' €' : 'Pendiente'}
-                                </div>
-                            </div>
-                            <div class="sidebar-field" data-field="region" style="cursor: pointer; padding: 8px; border-radius: 4px; background: ${region ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.05)'}; border-left: 3px solid ${region ? '#10b981' : 'transparent'}; transition: all 0.2s;">
-                                <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 3px;">Comunidad Autónoma</div>
-                                <div style="font-size: 13px; color: white; font-weight: ${region ? '600' : '400'};">
-                                    ${region || 'Pendiente'}
-                                </div>
-                            </div>
-                        </div>
-                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.15); font-size: 11px; color: rgba(255,255,255,0.65); line-height: 1.5;">
-                            <i class="fa-solid fa-lightbulb" style="margin-right: 4px;"></i> Haz click en cualquier campo para editarlo
-                        </div>
-                    </div>
-                `;
-                break;
-
-            case 'page-datos':
-                // Obtener datos del comprador
-                const customerName = document.getElementById('customer_name')?.value || '';
-                const customerDni = document.getElementById('customer_dni')?.value || '';
-                const customerEmail = document.getElementById('customer_email')?.value || '';
-                const customerPhone = document.getElementById('customer_phone')?.value || '';
-
-                // Vendedor solo mencionamos si tiene DNI adjunto
-                const sellerDniFile = document.querySelector('input[name="seller_dni_file"]');
-                const sellerDniAdjunto = sellerDniFile && sellerDniFile.files.length > 0;
-
-                contenido = `
-                    <div style="background: rgba(255,255,255,0.1); padding: 14px; border-radius: 8px;">
-                        <h4 style="color: white; font-size: 14px; margin: 0 0 14px 0; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px;">
-                            Datos del Comprador
-                        </h4>
-                        <div style="display: grid; gap: 10px;">
-                            <div class="sidebar-field" data-field="customer_name" style="cursor: pointer; padding: 8px; border-radius: 4px; background: ${customerName ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.05)'}; border-left: 3px solid ${customerName ? '#10b981' : 'transparent'}; transition: all 0.2s;">
-                                <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 3px;">Nombre completo</div>
-                                <div style="font-size: 13px; color: white; font-weight: ${customerName ? '600' : '400'};">
-                                    ${customerName || 'Pendiente'}
-                                </div>
-                            </div>
-                            <div class="sidebar-field" data-field="customer_dni" style="cursor: pointer; padding: 8px; border-radius: 4px; background: ${customerDni ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.05)'}; border-left: 3px solid ${customerDni ? '#10b981' : 'transparent'}; transition: all 0.2s;">
-                                <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 3px;">DNI/NIE</div>
-                                <div style="font-size: 13px; color: white; font-weight: ${customerDni ? '600' : '400'};">
-                                    ${customerDni || 'Pendiente'}
-                                </div>
-                            </div>
-                            <div class="sidebar-field" data-field="customer_email" style="cursor: pointer; padding: 8px; border-radius: 4px; background: ${customerEmail ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.05)'}; border-left: 3px solid ${customerEmail ? '#10b981' : 'transparent'}; transition: all 0.2s;">
-                                <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 3px;">Email</div>
-                                <div style="font-size: 13px; color: white; font-weight: ${customerEmail ? '600' : '400'};">
-                                    ${customerEmail || 'Pendiente'}
-                                </div>
-                            </div>
-                            <div class="sidebar-field" data-field="customer_phone" style="cursor: pointer; padding: 8px; border-radius: 4px; background: ${customerPhone ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.05)'}; border-left: 3px solid ${customerPhone ? '#10b981' : 'transparent'}; transition: all 0.2s;">
-                                <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 3px;">Teléfono</div>
-                                <div style="font-size: 13px; color: white; font-weight: ${customerPhone ? '600' : '400'};">
-                                    ${customerPhone || 'Pendiente'}
-                                </div>
-                            </div>
-                        </div>
-                        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.15);">
-                            <div style="font-size: 12px; color: rgba(255,255,255,0.75); margin-bottom: 6px; font-weight: 600;">
-                                Vendedor
-                            </div>
-                            <div style="font-size: 11px; color: rgba(255,255,255,0.65); padding: 8px; background: rgba(255,255,255,0.05); border-radius: 4px;">
-                                DNI adjunto: ${sellerDniAdjunto ? '<span style="color: #10b981;">✓ Sí</span>' : '<span style="color: #f59e0b;">Pendiente</span>'}
-                            </div>
-                        </div>
-                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.15); font-size: 11px; color: rgba(255,255,255,0.65); line-height: 1.5;">
-                            <i class="fa-solid fa-lightbulb" style="margin-right: 4px;"></i> Haz click en cualquier campo para editarlo
-                        </div>
-                    </div>
-                `;
-                break;
-
-            case 'page-precio':
-                contenido = `
-                    <div style="background: rgba(255,255,255,0.1); padding: 14px; border-radius: 8px;">
-                        <h4 style="color: white; font-size: 14px; margin: 0 0 14px 0; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px;">
-                            Asistente de Cálculo
-                        </h4>
-                        <div id="sidebar-precio-content">
-                            <!-- Se actualizará dinámicamente con actualizarSidebarPrecio() -->
-                        </div>
-                    </div>
-                `;
-                break;
-
-            case 'page-documentos':
-                contenido = `
-                    <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
-                        <h4 style="color: white; font-size: 15px; margin: 0 0 12px 0; font-weight: 600;">
-                            Documentación necesaria
-                        </h4>
-                        <div style="font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.6;">
-                            <p style="margin: 0 0 12px 0;">
-                                Documentación legal para tramitar la transferencia ante las autoridades marítimas.
-                            </p>
-
-                            <div style="background: rgba(255,255,255,0.08); padding: 12px; border-radius: 6px; margin-bottom: 10px;">
-                                <div style="font-size: 12px; margin-bottom: 8px; font-weight: 600; color: white;">
-                                    Documentos obligatorios
-                                </div>
-                                <div style="font-size: 12px; color: rgba(255,255,255,0.85); line-height: 1.5;">
-                                    - Tarjeta de navegación<br>
-                                    - DNI/NIE comprador (ambas caras)<br>
-                                    - DNI/NIE vendedor (ambas caras)<br>
-                                    - Contrato de compraventa firmado
-                                </div>
-                            </div>
-
-                            <div style="background: rgba(255,255,255,0.08); padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-                                <div style="font-size: 12px; margin-bottom: 6px; font-weight: 600; color: white;">
-                                    Formatos aceptados
-                                </div>
-                                <div style="font-size: 12px; color: rgba(255,255,255,0.85);">
-                                    Fotos desde móvil, escaneos o PDF. Todos los datos deben ser legibles.
-                                </div>
-                            </div>
-
-                            <div style="font-size: 12px; color: rgba(255,255,255,0.8); line-height: 1.5;">
-                                Tras subir los documentos, firmarás la autorización digital para que representemos al comprador.
-                            </div>
-                        </div>
-                    </div>
-                `;
-                break;
-
-            case 'page-pago':
-                const precioBase = BASE_TRANSFER_PRICE || 134.99;
-                const itpIncluido = (itpPagado === false && itpGestionSeleccionada === 'gestionan-ustedes') ? itpTotalAmount : 0;
-                const totalEstimado = precioBase + itpIncluido;
-
-                contenido = `
-                    <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
-                        <h4 style="color: white; font-size: 15px; margin: 0 0 12px 0; font-weight: 600;">
-                            Resumen del pedido
-                        </h4>
-                        <div style="font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.6;">
-                            <p style="margin: 0 0 12px 0;">
-                                Verifica el resumen y procede al pago seguro.
-                            </p>
-
-                            <div style="background: rgba(255,255,255,0.08); padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-                                <div style="font-size: 12px; margin-bottom: 10px; font-weight: 600; color: white;">
-                                    Desglose del pago
-                                </div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; color: rgba(255,255,255,0.85);">
-                                    <span>Gestión tramitación:</span>
-                                    <strong>${precioBase.toFixed(2)} €</strong>
-                                </div>
-                                ${itpIncluido > 0 ? `
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; color: rgba(255,255,255,0.85);">
-                                    <span>ITP (gestionado):</span>
-                                    <strong>${itpIncluido.toFixed(2)} €</strong>
-                                </div>
-                                ` : ''}
-                                <div style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 8px; margin-top: 8px; display: flex; justify-content: space-between;">
-                                    <span style="font-weight: 600; color: white;">TOTAL:</span>
-                                    <strong style="font-size: 16px; color: white;">${totalEstimado.toFixed(2)} €</strong>
-                                </div>
-                            </div>
-
-                            <div style="font-size: 12px; color: rgba(255,255,255,0.8); line-height: 1.5; margin-bottom: 10px;">
-                                Pago 100% seguro con Stripe. Tus datos bancarios están encriptados y protegidos.
-                            </div>
-
-                            <div style="font-size: 12px; color: rgba(255,255,255,0.8); line-height: 1.5;">
-                                Tras el pago recibirás un email de confirmación y comenzaremos con tu trámite.
-                            </div>
-                        </div>
-                    </div>
-                `;
-                break;
-
-            default:
-                contenido = '';
-        }
-
-        sidebarDynamic.innerHTML = contenido;
-        logDebug('SIDEBAR-DYN', '✅ Sidebar actualizado');
-
-        // Añadir event listeners para navegación por click
-        setTimeout(() => {
-            document.querySelectorAll('.sidebar-field').forEach(field => {
-                field.addEventListener('click', function() {
-                    const fieldName = this.dataset.field;
-                    const input = document.getElementById(fieldName);
-                    if (input) {
-                        input.focus();
-                        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        // Resaltar temporalmente
-                        input.style.transition = 'all 0.3s';
-                        input.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.3)';
-                        setTimeout(() => {
-                            input.style.boxShadow = '';
-                        }, 1500);
-                    }
-                });
-                // Hover effect
-                field.addEventListener('mouseenter', function() {
-                    this.style.background = this.querySelector('[style*="font-weight: 600"]') ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255,255,255,0.1)';
-                });
-                field.addEventListener('mouseleave', function() {
-                    const hasValue = this.querySelector('[style*="font-weight: 600"]');
-                    this.style.background = hasValue ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.05)';
-                });
-            });
-        }, 100);
-
-        // Si estamos en página de precio, actualizar contenido de precio
-        if (pageId === 'page-precio') {
-            actualizarSidebarPrecio();
-        }
-    }
-
-    // ============================================
-    // FIN SISTEMA DE SIDEBAR DINÁMICO
-    // ============================================
-
-    // Actualizar cálculos cuando cambien datos del vehículo
-    // purchasePriceInput, matriculationDateInput, regionSelect ya están definidos arriba (líneas 5414-5416)
-
-    logDebug('PRECIO-INIT', 'Inputs encontrados:', {
-        purchasePriceInput: !!purchasePriceInput,
-        matriculationDateInput: !!matriculationDateInput,
-        regionSelect: !!regionSelect
-    });
-
-    if (purchasePriceInput) {
-        purchasePriceInput.addEventListener('change', function() {
-            logDebug('PRECIO-FLOW', '💰 Precio de compra cambiado:', this.value);
-            actualizarCalculoITPStep1();
-            actualizarSidebarDinamico('page-vehiculo');
-            actualizarSidebarPrecio();
-        });
-        purchasePriceInput.addEventListener('input', function() {
-            actualizarSidebarDinamico('page-vehiculo');
-        });
-        logDebug('PRECIO-INIT', '✅ Event listener añadido a precio compra');
-    }
-    if (matriculationDateInput) {
-        matriculationDateInput.addEventListener('change', function() {
-            logDebug('PRECIO-FLOW', '📅 Fecha matriculación cambiada:', this.value);
-            actualizarCalculoITPStep1();
-            actualizarSidebarDinamico('page-vehiculo');
-            actualizarSidebarPrecio();
-        });
-        logDebug('PRECIO-INIT', '✅ Event listener añadido a fecha matriculación');
-    }
-    if (regionSelect) {
-        regionSelect.addEventListener('change', function() {
-            logDebug('PRECIO-FLOW', '🗺️ Región cambiada:', this.value);
-            actualizarCalculoITPStep1();
-            actualizarSidebarDinamico('page-vehiculo');
-            actualizarSidebarPrecio();
-        });
-        logDebug('PRECIO-INIT', '✅ Event listener añadido a región');
-    }
-
-    // Event listeners para actualizar sidebar en tiempo real en todas las páginas
-    ['vehicle_type', 'manufacturer', 'model', 'manual_manufacturer', 'manual_model', 'customer_name', 'customer_dni', 'customer_email', 'customer_phone'].forEach(fieldId => {
-        const input = document.getElementById(fieldId);
-        if (input) {
-            input.addEventListener('input', function() {
-                const currentPageId = formPages[currentPage]?.id;
-                if (currentPageId) {
-                    actualizarSidebarDinamico(currentPageId);
-                }
-            });
-            // También en change para selects
-            input.addEventListener('change', function() {
-                const currentPageId = formPages[currentPage]?.id;
-                if (currentPageId) {
-                    actualizarSidebarDinamico(currentPageId);
-                }
-            });
-        }
-    });
-
-    logDebug('PRECIO-INIT', '✅ Flujo de precio inicializado correctamente');
-
-    // ============================================
-    // FIN NUEVO FLUJO DE PÁGINA DE PRECIO
-    // ============================================
-
-    }); // FIN document.addEventListener('DOMContentLoaded')
     </script>
     <?php
     return ob_get_clean();
@@ -9270,7 +7447,7 @@ function tpm_create_payment_intent() {
 /**
  * 2. VALIDAR CUPÓN DE DESCUENTO
  */
-add_action('wp_ajax_tpm_validate_coupon', 'tpm_validate_coupon_code');
+add_action('wp_ajax_validate_coupon_code_XXX', 'tpm_validate_coupon_code');
 
 /**
  * Procesamiento manual de pago (para situaciones donde Stripe API falla)
@@ -9329,7 +7506,7 @@ function tpm_process_payment_manual() {
     wp_send_json_success('Solicitud procesada correctamente');
     wp_die();
 }
-add_action('wp_ajax_nopriv_tpm_validate_coupon', 'tpm_validate_coupon_code');
+add_action('wp_ajax_nopriv_validate_coupon_code_XXX', 'tpm_validate_coupon_code');
 function tpm_validate_coupon_code() {
     $raw_coupon = isset($_POST['coupon']) ? sanitize_text_field($_POST['coupon']) : '';
     $coupon_clean = strtoupper(preg_replace('/\s+/', '', $raw_coupon));
@@ -9549,842 +7726,507 @@ function tpm_send_emails() {
 }
 
 /**
- * Helper function to log debug messages to a file we can access
- */
-function tpm_debug_log($message) {
-    $debug_log = get_template_directory() . '/tramitfy-moto-debug.log';
-    $timestamp = date('Y-m-d H:i:s');
-    file_put_contents($debug_log, "[$timestamp] $message\n", FILE_APPEND);
-    error_log($message);
-}
-
-/**
  * 4. SUBMIT FINAL FORM (documentos + firma)
  */
 add_action('wp_ajax_submit_moto_form_tpm', 'tpm_submit_form');
 add_action('wp_ajax_nopriv_submit_moto_form_tpm', 'tpm_submit_form');
 function tpm_submit_form() {
-    tpm_debug_log('[TPM] INICIO tpm_submit_form');
-    tramitfy_log('========== INICIO SUBMIT FORMULARIO ==========', 'SUBMIT', 'INFO');
-    tramitfy_log('POST recibido: ' . count($_POST) . ' campos, FILES: ' . count($_FILES), 'SUBMIT', 'INFO');
+    $customer_name = sanitize_text_field($_POST['customer_name']);
+    $customer_dni = sanitize_text_field($_POST['customer_dni']);
+    $customer_email = sanitize_email($_POST['customer_email']);
+    $customer_phone = sanitize_text_field($_POST['customer_phone']);
+    $vehicle_type = sanitize_text_field($_POST['vehicle_type']);
+    $no_encuentro = isset($_POST['no_encuentro_checkbox']) && $_POST['no_encuentro_checkbox'] === 'on';
+    $manufacturer = sanitize_text_field($_POST['manufacturer']);
+    $model = sanitize_text_field($_POST['model']);
+    $manual_manufacturer = sanitize_text_field($_POST['manual_manufacturer']);
+    $manual_model = sanitize_text_field($_POST['manual_model']);
+    $matriculation_date = sanitize_text_field($_POST['matriculation_date']);
+    $purchase_price = floatval($_POST['purchase_price']);
+    $region = sanitize_text_field($_POST['region']);
+    $nuevo_nombre = isset($_POST['nuevo_nombre']) ? sanitize_text_field($_POST['nuevo_nombre']) : '';
+    $nuevo_puerto = isset($_POST['nuevo_puerto']) ? sanitize_text_field($_POST['nuevo_puerto']) : '';
+    $coupon_used = isset($_POST['coupon_used']) ? sanitize_text_field($_POST['coupon_used']) : '';
+    $signature = $_POST['signature'];
 
-    try {
-        tramitfy_log('Procesando datos del cliente', 'SUBMIT', 'INFO');
-        $customer_name = sanitize_text_field($_POST['customer_name']);
-        tramitfy_log('Cliente: ' . $customer_name, 'SUBMIT', 'INFO');
-        $customer_dni = sanitize_text_field($_POST['customer_dni']);
-        $customer_email = sanitize_email($_POST['customer_email']);
-        $customer_phone = sanitize_text_field($_POST['customer_phone']);
-        $vehicle_type = sanitize_text_field($_POST['vehicle_type']);
-        $no_encuentro = isset($_POST['no_encuentro_checkbox']) && $_POST['no_encuentro_checkbox'] === 'on';
-        $manufacturer = sanitize_text_field($_POST['manufacturer']);
-        $model = sanitize_text_field($_POST['model']);
-        $manual_manufacturer = sanitize_text_field($_POST['manual_manufacturer']);
-        $manual_model = sanitize_text_field($_POST['manual_model']);
-        $matriculation_date = sanitize_text_field($_POST['matriculation_date']);
-        $purchase_price = floatval($_POST['purchase_price']);
-        $region = sanitize_text_field($_POST['region']);
-        $nuevo_nombre = isset($_POST['nuevo_nombre']) ? sanitize_text_field($_POST['nuevo_nombre']) : '';
-        $nuevo_puerto = isset($_POST['nuevo_puerto']) ? sanitize_text_field($_POST['nuevo_puerto']) : '';
-        $coupon_used = isset($_POST['coupon_used']) ? sanitize_text_field($_POST['coupon_used']) : '';
-        $signature = $_POST['signature'];
-    
-        tpm_debug_log('[TPM] Datos básicos procesados');
+    $final_amount = isset($_POST['final_amount']) ? floatval($_POST['final_amount']) : 0;
+    $current_transfer_tax = isset($_POST['current_transfer_tax']) ? floatval($_POST['current_transfer_tax']) : 0;
+    $current_extra_fee = isset($_POST['current_extra_fee']) ? floatval($_POST['current_extra_fee']) : 0;
+    $tasas_hidden = isset($_POST['tasas_hidden']) ? floatval($_POST['tasas_hidden']) : 0;
+    $iva_hidden = isset($_POST['iva_hidden']) ? floatval($_POST['iva_hidden']) : 0;
+    $honorarios_hidden = isset($_POST['honorarios_hidden']) ? floatval($_POST['honorarios_hidden']) : 0;
 
-        $final_amount = isset($_POST['final_amount']) ? floatval($_POST['final_amount']) : 0;
-        $current_transfer_tax = isset($_POST['current_transfer_tax']) ? floatval($_POST['current_transfer_tax']) : 0;
-        $current_extra_fee = isset($_POST['current_extra_fee']) ? floatval($_POST['current_extra_fee']) : 0;
-        $tasas_hidden = isset($_POST['tasas_hidden']) ? floatval($_POST['tasas_hidden']) : 0;
-        $iva_hidden = isset($_POST['iva_hidden']) ? floatval($_POST['iva_hidden']) : 0;
-        $honorarios_hidden = isset($_POST['honorarios_hidden']) ? floatval($_POST['honorarios_hidden']) : 0;
+    // Generar TRÁMITE ID para Transferencia
+    $prefix = 'TMA-TRANS';
+    $counter_option = 'tma_trans_counter';
+    $current_cnt = get_option($counter_option, 0);
+    $current_cnt++;
+    update_option($counter_option, $current_cnt);
 
-        tpm_debug_log('[TPM] Valores económicos recibidos: finalAmount=' . $final_amount . ', ITP=' . $current_transfer_tax . ', tasas=' . $tasas_hidden . ', iva=' . $iva_hidden . ', honorarios=' . $honorarios_hidden);
-    
-        // Generar TRÁMITE ID para Transferencia
-        $prefix = 'TMA-TRANS';
-        $counter_option = 'tma_trans_counter';
-        $current_cnt = get_option($counter_option, 0);
-        $current_cnt++;
-        update_option($counter_option, $current_cnt);
-    
-        $date_part = date('Ymd');
-        $secuencial = str_pad($current_cnt, 6, '0', STR_PAD_LEFT);
-        $tramite_id = $prefix . '-' . $date_part . '-' . $secuencial;
-    
-        // Procesar la imagen de la firma en PNG
-        tpm_debug_log('[TPM] Procesando firma');
-        $signature_data = str_replace('data:image/png;base64,', '', $signature);
-        $signature_data = str_replace(' ', '+', $signature_data);
-        $signature_data = base64_decode($signature_data);
-        $upload_dir = wp_upload_dir();
-        $signature_image_name = 'signature_' . time() . '.png';
-        $signature_image_path = $upload_dir['path'] . '/' . $signature_image_name;
-        file_put_contents($signature_image_path, $signature_data);
-        tpm_debug_log('[TPM] Firma guardada: ' . $signature_image_path);
-    
-        // Obtener base_price desde CSV si es necesario
-        $base_price = 0;
-        if (!$no_encuentro && $vehicle_type !== 'Moto de Agua') {
-            $csv_file = ($vehicle_type === 'Moto de Agua') ? 'MOTO.csv' : 'MOTO.csv';
-            $csv_path = get_template_directory() . '/' . $csv_file;
-            if (($handle = fopen($csv_path, 'r')) !== false) {
-                fgetcsv($handle, 1000, ','); // Saltar encabezado
-                while (($row = fgetcsv($handle, 1000, ',')) !== false) {
-                    list($csv_manufacturer, $csv_model, $csv_price) = $row;
-                    if ($csv_manufacturer === $manufacturer && $csv_model === $model) {
-                        $base_price = floatval($csv_price);
-                        break;
-                    }
+    $date_part = date('Ymd');
+    $secuencial = str_pad($current_cnt, 6, '0', STR_PAD_LEFT);
+    $tramite_id = $prefix . '-' . $date_part . '-' . $secuencial;
+
+    // Procesar la imagen de la firma en PNG
+    $signature_data = str_replace('data:image/png;base64,', '', $signature);
+    $signature_data = str_replace(' ', '+', $signature_data);
+    $signature_data = base64_decode($signature_data);
+    $upload_dir = wp_upload_dir();
+    $signature_image_name = 'signature_' . time() . '.png';
+    $signature_image_path = $upload_dir['path'] . '/' . $signature_image_name;
+    file_put_contents($signature_image_path, $signature_data);
+
+    // Obtener base_price desde CSV si es necesario
+    $base_price = 0;
+    if (!$no_encuentro && $vehicle_type !== 'Moto de Agua') {
+        $csv_file = ($vehicle_type === 'Moto de Agua') ? 'MOTO.csv' : 'MOTO.csv';
+        $csv_path = get_template_directory() . '/' . $csv_file;
+        if (($handle = fopen($csv_path, 'r')) !== false) {
+            fgetcsv($handle, 1000, ','); // Saltar encabezado
+            while (($row = fgetcsv($handle, 1000, ',')) !== false) {
+                list($csv_manufacturer, $csv_model, $csv_price) = $row;
+                if ($csv_manufacturer === $manufacturer && $csv_model === $model) {
+                    $base_price = floatval($csv_price);
+                    break;
                 }
-                fclose($handle);
             }
+            fclose($handle);
         }
-    
-        // Crear PDF de autorización profesional
-        tpm_debug_log('[TPM] Creando PDF autorización');
-        require_once get_template_directory() . '/vendor/fpdf/fpdf.php';
-        $pdf = new FPDF();
-        $pdf->AddPage();
-        $pdf->SetAutoPageBreak(true, 20);
-    
-        // Colores corporativos (RGB)
-        $colorPrimario = array(1, 109, 134);  // #016d86
-        $colorGris = array(85, 85, 85);       // #555
-    
-        // === ENCABEZADO ===
-        // Logo (si existe en el servidor)
-        $logo_path = get_template_directory() . '/assets/img/logo.png';
-        if (file_exists($logo_path)) {
-            $pdf->Image($logo_path, 15, 12, 40);
-        }
-    
-        // Línea superior decorativa
-        $pdf->SetFillColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
-        $pdf->Rect(0, 0, 210, 3, 'F');
-    
-        // Información del documento (lado derecho)
-        $pdf->SetXY(130, 15);
+    }
+
+    // Crear PDF de autorización profesional
+    require_once get_template_directory() . '/vendor/fpdf/fpdf.php';
+    $pdf = new FPDF();
+    $pdf->AddPage();
+    $pdf->SetAutoPageBreak(true, 20);
+
+    // Colores corporativos (RGB)
+    $colorPrimario = array(1, 109, 134);  // #016d86
+    $colorGris = array(85, 85, 85);       // #555
+
+    // === ENCABEZADO ===
+    // Logo (si existe en el servidor)
+    $logo_path = get_template_directory() . '/assets/img/logo.png';
+    if (file_exists($logo_path)) {
+        $pdf->Image($logo_path, 15, 12, 40);
+    }
+
+    // Línea superior decorativa
+    $pdf->SetFillColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
+    $pdf->Rect(0, 0, 210, 3, 'F');
+
+    // Información del documento (lado derecho)
+    $pdf->SetXY(130, 15);
+    $pdf->SetFont('Arial', 'B', 11);
+    $pdf->SetTextColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
+    $pdf->Cell(65, 5, utf8_decode('DOCUMENTO OFICIAL'), 0, 1, 'R');
+
+    $pdf->SetFont('Arial', '', 9);
+    $pdf->SetTextColor(100, 100, 100);
+    $pdf->SetX(130);
+    $pdf->Cell(65, 5, utf8_decode('Fecha: ') . date('d/m/Y'), 0, 1, 'R');
+    $pdf->SetX(130);
+    $pdf->Cell(65, 5, utf8_decode('ID: ') . $tramite_id, 0, 1, 'R');
+
+    $pdf->Ln(15);
+
+    // === TÍTULO PRINCIPAL ===
+    $pdf->SetFont('Arial', 'B', 18);
+    $pdf->SetTextColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
+    $pdf->Cell(0, 8, utf8_decode('AUTORIZACIÓN PARA TRANSFERENCIA'), 0, 1, 'C');
+    $pdf->SetFont('Arial', 'B', 16);
+    $pdf->Cell(0, 8, utf8_decode('DE PROPIEDAD'), 0, 1, 'C');
+
+    $pdf->Ln(10);
+
+    // === TEXTO INTRODUCTORIO ===
+    $pdf->SetFont('Arial', '', 11);
+    $pdf->SetTextColor(0, 0, 0);
+    $texto = "Yo, $customer_name, con DNI $customer_dni y correo electrónico $customer_email, autorizo expresamente a TRAMITFY S.L. (CIF B55388557) para que, actuando en mi nombre y representación, realice todas las gestiones necesarias para la transferencia de propiedad del siguiente vehículo:";
+    $pdf->MultiCell(0, 6, utf8_decode($texto), 0, 'J');
+    $pdf->Ln(8);
+
+    // === SECCIÓN: DATOS DEL VEHÍCULO ===
+    // Encabezado de sección
+    $pdf->SetFillColor(240, 240, 240);
+    $pdf->SetFont('Arial', 'B', 12);
+    $pdf->SetTextColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
+    $pdf->Cell(0, 8, utf8_decode('  DATOS DEL VEHÍCULO'), 0, 1, 'L', true);
+    $pdf->Ln(2);
+
+    // Contenido de la sección
+    $pdf->SetFont('Arial', '', 11);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->Cell(50, 6, utf8_decode('Tipo de Vehículo:'), 0, 0);
+    $pdf->SetFont('Arial', 'B', 11);
+    $pdf->Cell(0, 6, utf8_decode($vehicle_type), 0, 1);
+
+    $pdf->SetFont('Arial', '', 11);
+    if (!$no_encuentro) {
+        $pdf->Cell(50, 6, utf8_decode('Fabricante:'), 0, 0);
         $pdf->SetFont('Arial', 'B', 11);
-        $pdf->SetTextColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
-        $pdf->Cell(65, 5, utf8_decode('DOCUMENTO OFICIAL'), 0, 1, 'R');
-    
-        $pdf->SetFont('Arial', '', 9);
-        $pdf->SetTextColor(100, 100, 100);
-        $pdf->SetX(130);
-        $pdf->Cell(65, 5, utf8_decode('Fecha: ') . date('d/m/Y'), 0, 1, 'R');
-        $pdf->SetX(130);
-        $pdf->Cell(65, 5, utf8_decode('ID: ') . $tramite_id, 0, 1, 'R');
-    
-        $pdf->Ln(15);
-    
-        // === TÍTULO PRINCIPAL ===
-        $pdf->SetFont('Arial', 'B', 18);
-        $pdf->SetTextColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
-        $pdf->Cell(0, 8, utf8_decode('AUTORIZACIÓN PARA TRANSFERENCIA'), 0, 1, 'C');
-        $pdf->SetFont('Arial', 'B', 16);
-        $pdf->Cell(0, 8, utf8_decode('DE PROPIEDAD'), 0, 1, 'C');
-    
-        $pdf->Ln(10);
-    
-        // === TEXTO INTRODUCTORIO ===
+        $pdf->Cell(0, 6, utf8_decode($manufacturer), 0, 1);
+
         $pdf->SetFont('Arial', '', 11);
+        $pdf->Cell(50, 6, utf8_decode('Modelo:'), 0, 0);
+        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->Cell(0, 6, utf8_decode($model), 0, 1);
+
+        $pdf->SetFont('Arial', '', 11);
+        $pdf->Cell(50, 6, utf8_decode('Fecha Matriculación:'), 0, 0);
+        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->Cell(0, 6, utf8_decode($matriculation_date), 0, 1);
+    } else {
+        $pdf->Cell(50, 6, utf8_decode('Fabricante:'), 0, 0);
+        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->Cell(0, 6, utf8_decode($manual_manufacturer), 0, 1);
+
+        $pdf->SetFont('Arial', '', 11);
+        $pdf->Cell(50, 6, utf8_decode('Modelo:'), 0, 0);
+        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->Cell(0, 6, utf8_decode($manual_model), 0, 1);
+
+        $pdf->SetFont('Arial', 'I', 10);
+        $pdf->SetTextColor(100, 100, 100);
+        $pdf->Cell(0, 6, utf8_decode('(Fecha de matriculación no disponible)'), 0, 1);
         $pdf->SetTextColor(0, 0, 0);
-        $texto = "Yo, $customer_name, con DNI $customer_dni y correo electrónico $customer_email, autorizo expresamente a TRAMITFY S.L. (CIF B55388557) para que, actuando en mi nombre y representación, realice todas las gestiones necesarias para la transferencia de propiedad del siguiente vehículo:";
-        $pdf->MultiCell(0, 6, utf8_decode($texto), 0, 'J');
+    }
+
+    // === SERVICIOS ADICIONALES (si los hay) ===
+    if (!empty($nuevo_nombre) || !empty($nuevo_puerto)) {
         $pdf->Ln(8);
-    
-        // === SECCIÓN: DATOS DEL VEHÍCULO ===
-        // Encabezado de sección
         $pdf->SetFillColor(240, 240, 240);
         $pdf->SetFont('Arial', 'B', 12);
         $pdf->SetTextColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
-        $pdf->Cell(0, 8, utf8_decode('  DATOS DEL VEHÍCULO'), 0, 1, 'L', true);
+        $pdf->Cell(0, 8, utf8_decode('  SERVICIOS ADICIONALES SOLICITADOS'), 0, 1, 'L', true);
         $pdf->Ln(2);
-    
-        // Contenido de la sección
+
         $pdf->SetFont('Arial', '', 11);
         $pdf->SetTextColor(0, 0, 0);
-        $pdf->Cell(50, 6, utf8_decode('Tipo de Vehículo:'), 0, 0);
-        $pdf->SetFont('Arial', 'B', 11);
-        $pdf->Cell(0, 6, utf8_decode($vehicle_type), 0, 1);
-    
-        $pdf->SetFont('Arial', '', 11);
-        if (!$no_encuentro) {
-            $pdf->Cell(50, 6, utf8_decode('Fabricante:'), 0, 0);
+        if (!empty($nuevo_nombre)) {
+            $pdf->Cell(50, 6, utf8_decode('Cambio de Nombre:'), 0, 0);
             $pdf->SetFont('Arial', 'B', 11);
-            $pdf->Cell(0, 6, utf8_decode($manufacturer), 0, 1);
-    
-            $pdf->SetFont('Arial', '', 11);
-            $pdf->Cell(50, 6, utf8_decode('Modelo:'), 0, 0);
-            $pdf->SetFont('Arial', 'B', 11);
-            $pdf->Cell(0, 6, utf8_decode($model), 0, 1);
-    
-            $pdf->SetFont('Arial', '', 11);
-            $pdf->Cell(50, 6, utf8_decode('Fecha Matriculación:'), 0, 0);
-            $pdf->SetFont('Arial', 'B', 11);
-            $pdf->Cell(0, 6, utf8_decode($matriculation_date), 0, 1);
-        } else {
-            $pdf->Cell(50, 6, utf8_decode('Fabricante:'), 0, 0);
-            $pdf->SetFont('Arial', 'B', 11);
-            $pdf->Cell(0, 6, utf8_decode($manual_manufacturer), 0, 1);
-    
-            $pdf->SetFont('Arial', '', 11);
-            $pdf->Cell(50, 6, utf8_decode('Modelo:'), 0, 0);
-            $pdf->SetFont('Arial', 'B', 11);
-            $pdf->Cell(0, 6, utf8_decode($manual_model), 0, 1);
-    
-            $pdf->SetFont('Arial', 'I', 10);
-            $pdf->SetTextColor(100, 100, 100);
-            $pdf->Cell(0, 6, utf8_decode('(Fecha de matriculación no disponible)'), 0, 1);
-            $pdf->SetTextColor(0, 0, 0);
+            $pdf->Cell(0, 6, utf8_decode($nuevo_nombre), 0, 1);
         }
-    
-        // === SERVICIOS ADICIONALES (si los hay) ===
-        if (!empty($nuevo_nombre) || !empty($nuevo_puerto)) {
-            $pdf->Ln(8);
-            $pdf->SetFillColor(240, 240, 240);
-            $pdf->SetFont('Arial', 'B', 12);
-            $pdf->SetTextColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
-            $pdf->Cell(0, 8, utf8_decode('  SERVICIOS ADICIONALES SOLICITADOS'), 0, 1, 'L', true);
-            $pdf->Ln(2);
-    
+        if (!empty($nuevo_puerto)) {
             $pdf->SetFont('Arial', '', 11);
-            $pdf->SetTextColor(0, 0, 0);
-            if (!empty($nuevo_nombre)) {
-                $pdf->Cell(50, 6, utf8_decode('Cambio de Nombre:'), 0, 0);
-                $pdf->SetFont('Arial', 'B', 11);
-                $pdf->Cell(0, 6, utf8_decode($nuevo_nombre), 0, 1);
-            }
-            if (!empty($nuevo_puerto)) {
-                $pdf->SetFont('Arial', '', 11);
-                $pdf->Cell(50, 6, utf8_decode('Cambio de Puerto Base:'), 0, 0);
-                $pdf->SetFont('Arial', 'B', 11);
-                $pdf->Cell(0, 6, utf8_decode($nuevo_puerto), 0, 1);
-            }
+            $pdf->Cell(50, 6, utf8_decode('Cambio de Puerto Base:'), 0, 0);
+            $pdf->SetFont('Arial', 'B', 11);
+            $pdf->Cell(0, 6, utf8_decode($nuevo_puerto), 0, 1);
         }
-    
-        $pdf->Ln(8);
-    
-        // === DECLARACIÓN ===
-        $pdf->SetFont('Arial', '', 10);
-        $pdf->SetTextColor(0, 0, 0);
-        $declaracion = "Esta autorización incluye la presentación de documentación, pago de tasas administrativas, y cualquier otra gestión requerida por la autoridad competente para completar la transferencia.";
-        $pdf->MultiCell(0, 5, utf8_decode($declaracion), 0, 'J');
-    
-        $pdf->Ln(5);
-        $pdf->SetFont('Arial', 'B', 10);
-        $declaracion2 = "DECLARO QUE: Los datos proporcionados son veraces y me comprometo a facilitar cualquier documentación adicional que sea requerida para completar el trámite.";
-        $pdf->MultiCell(0, 5, utf8_decode($declaracion2), 0, 'J');
-    
-        // === FIRMA ===
-        $pdf->Ln(12);
-        $pdf->SetFont('Arial', 'B', 11);
-        $pdf->SetTextColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
-        $pdf->Cell(0, 6, utf8_decode('FIRMA DEL SOLICITANTE'), 0, 1, 'C');
-        $pdf->SetFont('Arial', 'I', 9);
-        $pdf->SetTextColor(100, 100, 100);
-        $pdf->Cell(0, 5, utf8_decode('(La firma electrónica tiene la misma validez legal que una firma manuscrita)'), 0, 1, 'C');
-        $pdf->Ln(5);
-    
-        // Insertar imagen de firma centrada
-        $signatureWidth = 60;
-        $signatureHeight = 30;
-        $xPos = ($pdf->GetPageWidth() - $signatureWidth) / 2;
-        $pdf->Image($signature_image_path, $xPos, $pdf->GetY(), $signatureWidth, $signatureHeight);
-        $pdf->Ln($signatureHeight + 5);
-    
-        // Línea de firma
-        $pdf->SetDrawColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
-        $pdf->Line(60, $pdf->GetY(), 150, $pdf->GetY());
-        $pdf->Ln(2);
-        $pdf->SetFont('Arial', 'B', 10);
-        $pdf->SetTextColor(0, 0, 0);
-        $pdf->Cell(0, 5, utf8_decode($customer_name), 0, 1, 'C');
-        $pdf->SetFont('Arial', '', 9);
-        $pdf->SetTextColor(100, 100, 100);
-        $pdf->Cell(0, 5, utf8_decode('DNI: ' . $customer_dni), 0, 1, 'C');
-    
-        // === PIE DE PÁGINA ===
-        $pdf->SetY(-20);
-        $pdf->SetFont('Arial', 'I', 8);
-        $pdf->SetTextColor(120, 120, 120);
-        $pdf->Cell(0, 4, utf8_decode('TRAMITFY S.L. - CIF: B55388557'), 0, 1, 'C');
-        $pdf->Cell(0, 4, utf8_decode('Web: www.tramitfy.es - Email: info@tramitfy.es'), 0, 1, 'C');
-    
-        // Línea inferior decorativa
-        $pdf->SetFillColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
-        $pdf->Rect(0, 294, 210, 3, 'F');
-    
-        // Guardar PDF
-        $authorization_pdf_name = 'autorizacion_' . $tramite_id . '_' . time() . '.pdf';
-        $authorization_pdf_path = $upload_dir['path'] . '/' . $authorization_pdf_name;
-        $pdf->Output('F', $authorization_pdf_path);
-        tpm_debug_log('[TPM] PDF guardado: ' . $authorization_pdf_path);
-    
-        // Borrar imagen temporal de la firma
-        unlink($signature_image_path);
-        tpm_debug_log('[TPM] Firma temporal eliminada');
-    
-        // Manejar archivos subidos (múltiples archivos por campo)
-        tpm_debug_log('[TPM] Procesando archivos adjuntos');
-        $attachments = [$authorization_pdf_path];
-        $upload_fields = [
-            'upload_hoja_asiento',
-            'upload_tarjeta_moto',
-            'upload_dni_comprador',
-            'upload_dni_vendedor',
-            'upload_contrato_compraventa'
-        ];
-    
-        foreach ($upload_fields as $field_name) {
-            if (isset($_FILES[$field_name]) && is_array($_FILES[$field_name]['name'])) {
-                // Múltiples archivos
-                $file_count = count($_FILES[$field_name]['name']);
-                for ($i = 0; $i < $file_count; $i++) {
-                    if ($_FILES[$field_name]['error'][$i] === UPLOAD_ERR_OK) {
-                        $file_array = array(
-                            'name'     => $_FILES[$field_name]['name'][$i],
-                            'type'     => $_FILES[$field_name]['type'][$i],
-                            'tmp_name' => $_FILES[$field_name]['tmp_name'][$i],
-                            'error'    => $_FILES[$field_name]['error'][$i],
-                            'size'     => $_FILES[$field_name]['size'][$i]
-                        );
-                        $uploaded_file = wp_handle_upload($file_array, ['test_form' => false]);
-                        if (isset($uploaded_file['file'])) {
-                            $attachments[] = $uploaded_file['file'];
-                        }
+    }
+
+    $pdf->Ln(8);
+
+    // === DECLARACIÓN ===
+    $pdf->SetFont('Arial', '', 10);
+    $pdf->SetTextColor(0, 0, 0);
+    $declaracion = "Esta autorización incluye la presentación de documentación, pago de tasas administrativas, y cualquier otra gestión requerida por la autoridad competente para completar la transferencia.";
+    $pdf->MultiCell(0, 5, utf8_decode($declaracion), 0, 'J');
+
+    $pdf->Ln(5);
+    $pdf->SetFont('Arial', 'B', 10);
+    $declaracion2 = "DECLARO QUE: Los datos proporcionados son veraces y me comprometo a facilitar cualquier documentación adicional que sea requerida para completar el trámite.";
+    $pdf->MultiCell(0, 5, utf8_decode($declaracion2), 0, 'J');
+
+    // === FIRMA ===
+    $pdf->Ln(12);
+    $pdf->SetFont('Arial', 'B', 11);
+    $pdf->SetTextColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
+    $pdf->Cell(0, 6, utf8_decode('FIRMA DEL SOLICITANTE'), 0, 1, 'C');
+    $pdf->SetFont('Arial', 'I', 9);
+    $pdf->SetTextColor(100, 100, 100);
+    $pdf->Cell(0, 5, utf8_decode('(La firma electrónica tiene la misma validez legal que una firma manuscrita)'), 0, 1, 'C');
+    $pdf->Ln(5);
+
+    // Insertar imagen de firma centrada
+    $signatureWidth = 60;
+    $signatureHeight = 30;
+    $xPos = ($pdf->GetPageWidth() - $signatureWidth) / 2;
+    $pdf->Image($signature_image_path, $xPos, $pdf->GetY(), $signatureWidth, $signatureHeight);
+    $pdf->Ln($signatureHeight + 5);
+
+    // Línea de firma
+    $pdf->SetDrawColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
+    $pdf->Line(60, $pdf->GetY(), 150, $pdf->GetY());
+    $pdf->Ln(2);
+    $pdf->SetFont('Arial', 'B', 10);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->Cell(0, 5, utf8_decode($customer_name), 0, 1, 'C');
+    $pdf->SetFont('Arial', '', 9);
+    $pdf->SetTextColor(100, 100, 100);
+    $pdf->Cell(0, 5, utf8_decode('DNI: ' . $customer_dni), 0, 1, 'C');
+
+    // === PIE DE PÁGINA ===
+    $pdf->SetY(-20);
+    $pdf->SetFont('Arial', 'I', 8);
+    $pdf->SetTextColor(120, 120, 120);
+    $pdf->Cell(0, 4, utf8_decode('TRAMITFY S.L. - CIF: B55388557'), 0, 1, 'C');
+    $pdf->Cell(0, 4, utf8_decode('Web: www.tramitfy.es - Email: info@tramitfy.es'), 0, 1, 'C');
+
+    // Línea inferior decorativa
+    $pdf->SetFillColor($colorPrimario[0], $colorPrimario[1], $colorPrimario[2]);
+    $pdf->Rect(0, 294, 210, 3, 'F');
+
+    // Guardar PDF
+    $authorization_pdf_name = 'autorizacion_' . $tramite_id . '_' . time() . '.pdf';
+    $authorization_pdf_path = $upload_dir['path'] . '/' . $authorization_pdf_name;
+    $pdf->Output('F', $authorization_pdf_path);
+
+    // Borrar imagen temporal de la firma
+    unlink($signature_image_path);
+
+    // Manejar archivos subidos (múltiples archivos por campo)
+    $attachments = [$authorization_pdf_path];
+    $upload_fields = [
+        'upload_hoja_asiento',
+        'upload_tarjeta_moto',
+        'upload_dni_comprador',
+        'upload_dni_vendedor',
+        'upload_contrato_compraventa'
+    ];
+
+    foreach ($upload_fields as $field_name) {
+        if (isset($_FILES[$field_name]) && is_array($_FILES[$field_name]['name'])) {
+            // Múltiples archivos
+            $file_count = count($_FILES[$field_name]['name']);
+            for ($i = 0; $i < $file_count; $i++) {
+                if ($_FILES[$field_name]['error'][$i] === UPLOAD_ERR_OK) {
+                    $file_array = array(
+                        'name'     => $_FILES[$field_name]['name'][$i],
+                        'type'     => $_FILES[$field_name]['type'][$i],
+                        'tmp_name' => $_FILES[$field_name]['tmp_name'][$i],
+                        'error'    => $_FILES[$field_name]['error'][$i],
+                        'size'     => $_FILES[$field_name]['size'][$i]
+                    );
+                    $uploaded_file = wp_handle_upload($file_array, ['test_form' => false]);
+                    if (isset($uploaded_file['file'])) {
+                        $attachments[] = $uploaded_file['file'];
                     }
                 }
             }
         }
-
-        tpm_debug_log('[TPM] Total archivos procesados: ' . count($attachments));
-
-        /*************************************************************/
-        /*** RESPUESTA INMEDIATA AL CLIENTE - Sin esperas largas ***/
-        /*************************************************************/
-    
-        // Guardar datos del trámite en archivo temporal para procesamiento async
-        $async_data = array(
-            'tramite_id' => $tramite_id,
-            'customer_name' => $customer_name,
-            'customer_dni' => $customer_dni,
-            'customer_email' => $customer_email,
-            'customer_phone' => $customer_phone,
-            'vehicle_type' => $vehicle_type,
-            'manufacturer' => $no_encuentro ? $manual_manufacturer : $manufacturer,
-            'model' => $no_encuentro ? $manual_model : $model,
-            'matriculation_date' => $no_encuentro ? '' : $matriculation_date,
-            'purchase_price' => $purchase_price,
-            'region' => $region,
-            'nuevo_nombre' => $nuevo_nombre,
-            'nuevo_puerto' => $nuevo_puerto,
-            'coupon_used' => $coupon_used,
-            'final_amount' => $final_amount,
-            'current_transfer_tax' => $current_transfer_tax,
-            'current_extra_fee' => $current_extra_fee,
-            'tasas_hidden' => $tasas_hidden,
-            'iva_hidden' => $iva_hidden,
-            'honorarios_hidden' => $honorarios_hidden,
-            'attachments' => $attachments,
-            'authorization_pdf_path' => $authorization_pdf_path,
-            'no_encuentro' => $no_encuentro
-        );
-    
-        // Guardar en archivo temporal
-        tpm_debug_log('[TPM] Guardando datos async');
-        $temp_dir = get_temp_dir() . 'tramitfy-async/';
-        if (!file_exists($temp_dir)) {
-            mkdir($temp_dir, 0755, true);
-        }
-        $async_file = $temp_dir . 'barco-' . $tramite_id . '-' . time() . '.json';
-        file_put_contents($async_file, json_encode($async_data));
-        tpm_debug_log('[TPM] Archivo async guardado: ' . $async_file);
-
-        // COMENTADO: El procesamiento async no funciona en shared hosting y no es necesario
-        // $script_path = get_template_directory() . '/process-barco-async.php';
-        // $log_file = get_template_directory() . '/logs/async-barco.log';
-        // $cmd = sprintf('php %s %s >> %s 2>&1 &',
-        //     escapeshellarg($script_path),
-        //     escapeshellarg($async_file),
-        //     escapeshellarg($log_file)
-        // );
-        // exec($cmd);
-        tpm_debug_log('[TPM] Continuando con emails (sin procesamiento async)');
-
-        // Enviar email rápido de confirmación al cliente (sin adjuntos pesados)
-        $customer_email_quick = $customer_email;
-        $subject_customer_quick = 'Pago Recibido - Transferencia de Moto de Agua';
-        $message_customer_quick = "
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset='UTF-8'>
-            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-        </head>
-        <body style='margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif; background-color: #f4f7fa;'>
-            <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #f4f7fa; padding: 40px 20px;'>
-                <tr>
-                    <td align='center'>
-                        <table width='600' cellpadding='0' cellspacing='0' style='background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);'>
-
-                            <!-- Header -->
-                            <tr>
-                                <td style='background: linear-gradient(135deg, #0066cc 0%, #004a99 100%); padding: 40px 40px 35px; text-align: center;'>
-                                    <h1 style='margin: 0; color: #ffffff; font-size: 26px; font-weight: 600; letter-spacing: -0.5px;'>TRAMITFY</h1>
-                                    <p style='margin: 8px 0 0; color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 400;'>Gestión de Trámites Marítimos</p>
-                                </td>
-                            </tr>
-
-                            <!-- Confirmación Pago -->
-                            <tr>
-                                <td style='padding: 40px 40px 30px;'>
-                                    <div style='background-color: #e8f5e9; border-left: 4px solid #4caf50; padding: 16px 20px; border-radius: 4px; margin-bottom: 30px;'>
-                                        <p style='margin: 0; color: #2e7d32; font-size: 15px; font-weight: 600;'>Pago recibido correctamente</p>
-                                    </div>
-
-                                    <p style='margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.6;'>
-                                        Estimado/a <strong>$customer_name</strong>,
-                                    </p>
-                                    <p style='margin: 0 0 30px; color: #555; font-size: 15px; line-height: 1.7;'>
-                                        Hemos recibido su pago y su solicitud de transferencia está siendo procesada. En breve recibirá un segundo email con todos los detalles y el enlace de seguimiento.
-                                    </p>
-
-                                    <!-- Número de Trámite -->
-                                    <div style='background-color: #e3f2fd; border-radius: 8px; padding: 20px 24px; margin-bottom: 30px; text-align: center;'>
-                                        <p style='margin: 0; color: #1565c0; font-size: 15px; font-weight: 600;'>
-                                            Número de Trámite: <span style='color: #0d47a1;'>$tramite_id</span>
-                                        </p>
-                                    </div>
-
-                                    <p style='margin: 0 0 10px; color: #555; font-size: 14px; line-height: 1.7;'>
-                                        Nuestro equipo ha comenzado a procesar su solicitud. Le mantendremos informado en cada paso del proceso.
-                                    </p>
-
-                                </td>
-                            </tr>
-
-                            <!-- Footer -->
-                            <tr>
-                                <td style='background-color: #f8f9fa; padding: 30px 40px; text-align: center; border-top: 1px solid #e0e0e0;'>
-                                    <p style='margin: 0 0 8px; color: #666; font-size: 13px;'>
-                                        Gracias por confiar en nosotros
-                                    </p>
-                                    <p style='margin: 0; color: #0066cc; font-size: 15px; font-weight: 600;'>
-                                        Equipo TRAMITFY
-                                    </p>
-                                    <p style='margin: 16px 0 0; color: #999; font-size: 12px;'>
-                                        Este correo es informativo. Por favor, no responda a este mensaje.
-                                    </p>
-                                </td>
-                            </tr>
-
-                        </table>
-                    </td>
-                </tr>
-            </table>
-        </body>
-        </html>
-        ";
-        $headers_quick = [
-            'Content-Type: text/html; charset=UTF-8',
-            'From: info@tramitfy.es'
-        ];
-        tpm_debug_log('[TPM] Enviando email rápido al cliente: ' . $customer_email_quick);
-        $mail_result = wp_mail($customer_email_quick, $subject_customer_quick, $message_customer_quick, $headers_quick);
-        tpm_debug_log('[TPM] Email cliente resultado: ' . ($mail_result ? 'SUCCESS' : 'FAILED'));
-    
-        // Enviar email al ADMIN con detalles completos
-        $admin_email = 'ipmgroup24@gmail.com';
-        $subject_admin = "🔔 Nuevo Trámite - Transferencia Moto - $tramite_id";
-        $honorarios_netos = round($honorarios_hidden / 1.21, 2);
-        $message_admin = "
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset='UTF-8'>
-            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-        </head>
-        <body style='margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif; background-color: #f4f7fa;'>
-            <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #f4f7fa; padding: 30px 20px;'>
-                <tr>
-                    <td align='center'>
-                        <table width='700' cellpadding='0' cellspacing='0' style='background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);'>
-
-                            <!-- Header Admin -->
-                            <tr>
-                                <td style='background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%); padding: 30px 40px; text-align: center;'>
-                                    <h1 style='margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;'>🔔 NUEVO TRÁMITE</h1>
-                                    <p style='margin: 8px 0 0; color: rgba(255,255,255,0.95); font-size: 15px; font-weight: 500;'>Transferencia de Moto de Agua</p>
-                                </td>
-                            </tr>
-
-                            <!-- ID Trámite -->
-                            <tr>
-                                <td style='padding: 30px 40px 20px;'>
-                                    <div style='background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%); border-radius: 8px; padding: 16px 24px; text-align: center; margin-bottom: 25px;'>
-                                        <p style='margin: 0; color: #ffffff; font-size: 18px; font-weight: 700; letter-spacing: 0.5px;'>$tramite_id</p>
-                                    </div>
-
-                                    <!-- Datos del Cliente -->
-                                    <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #f8f9fa; border-radius: 8px; margin-bottom: 20px; overflow: hidden;'>
-                                        <tr>
-                                            <td style='padding: 20px 24px;'>
-                                                <h3 style='margin: 0 0 14px; color: #d32f2f; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;'>👤 CLIENTE</h3>
-                                                <table width='100%' cellpadding='6' cellspacing='0'>
-                                                    <tr>
-                                                        <td style='color: #666; font-size: 13px; padding: 5px 0; width: 35%;'>Nombre:</td>
-                                                        <td style='color: #222; font-size: 14px; padding: 5px 0; font-weight: 600;'>$customer_name</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td style='color: #666; font-size: 13px; padding: 5px 0;'>DNI:</td>
-                                                        <td style='color: #222; font-size: 14px; padding: 5px 0; font-weight: 600;'>$customer_dni</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td style='color: #666; font-size: 13px; padding: 5px 0;'>Email:</td>
-                                                        <td style='color: #1565c0; font-size: 13px; padding: 5px 0;'><a href='mailto:$customer_email' style='color: #1565c0; text-decoration: none;'>$customer_email</a></td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td style='color: #666; font-size: 13px; padding: 5px 0;'>Teléfono:</td>
-                                                        <td style='color: #222; font-size: 14px; padding: 5px 0; font-weight: 600;'>$customer_phone</td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </table>
-
-                                    <!-- Datos del Vehículo -->
-                                    <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #e3f2fd; border-radius: 8px; margin-bottom: 20px; overflow: hidden;'>
-                                        <tr>
-                                            <td style='padding: 20px 24px;'>
-                                                <h3 style='margin: 0 0 14px; color: #0066cc; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;'>🚤 VEHÍCULO</h3>
-                                                <table width='100%' cellpadding='6' cellspacing='0'>
-                                                    <tr>
-                                                        <td style='color: #666; font-size: 13px; padding: 5px 0; width: 35%;'>Tipo:</td>
-                                                        <td style='color: #222; font-size: 14px; padding: 5px 0; font-weight: 600;'>$vehicle_type</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td style='color: #666; font-size: 13px; padding: 5px 0;'>Fabricante:</td>
-                                                        <td style='color: #222; font-size: 14px; padding: 5px 0; font-weight: 600;'>" . ($no_encuentro ? $manual_manufacturer : $manufacturer) . "</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td style='color: #666; font-size: 13px; padding: 5px 0;'>Modelo:</td>
-                                                        <td style='color: #222; font-size: 14px; padding: 5px 0; font-weight: 600;'>" . ($no_encuentro ? $manual_model : $model) . "</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td style='color: #666; font-size: 13px; padding: 5px 0;'>Precio Compra:</td>
-                                                        <td style='color: #222; font-size: 14px; padding: 5px 0; font-weight: 600;'>" . number_format($purchase_price, 2) . " €</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td style='color: #666; font-size: 13px; padding: 5px 0;'>Región:</td>
-                                                        <td style='color: #222; font-size: 14px; padding: 5px 0; font-weight: 600;'>$region</td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </table>
-
-                                    <!-- Desglose Económico -->
-                                    <table width='100%' cellpadding='0' cellspacing='0' style='background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%); border-radius: 8px; margin-bottom: 25px; overflow: hidden;'>
-                                        <tr>
-                                            <td style='padding: 20px 24px;'>
-                                                <h3 style='margin: 0 0 14px; color: #2e7d32; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;'>💰 DESGLOSE ECONÓMICO</h3>
-                                                <table width='100%' cellpadding='6' cellspacing='0'>
-                                                    <tr>
-                                                        <td style='color: #666; font-size: 14px; padding: 6px 0; width: 50%;'>Precio Total:</td>
-                                                        <td align='right' style='color: #1565c0; font-size: 17px; padding: 6px 0; font-weight: 700;'>" . number_format($final_amount, 2) . " €</td>
-                                                    </tr>
-                                                    <tr style='border-top: 1px solid #ddd;'>
-                                                        <td style='color: #666; font-size: 13px; padding: 6px 0;'>ITP (Impuesto):</td>
-                                                        <td align='right' style='color: #555; font-size: 14px; padding: 6px 0; font-weight: 600;'>" . number_format($current_transfer_tax, 2) . " €</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td style='color: #666; font-size: 13px; padding: 6px 0;'>Tasas:</td>
-                                                        <td align='right' style='color: #555; font-size: 14px; padding: 6px 0; font-weight: 600;'>" . number_format($tasas_hidden, 2) . " €</td>
-                                                    </tr>
-                                                    <tr style='border-top: 2px solid #4caf50; background-color: #f1f8e9;'>
-                                                        <td style='color: #2e7d32; font-size: 14px; padding: 8px 0; font-weight: 700;'>Honorarios (con IVA):</td>
-                                                        <td align='right' style='color: #2e7d32; font-size: 16px; padding: 8px 0; font-weight: 700;'>" . number_format($honorarios_hidden, 2) . " €</td>
-                                                    </tr>
-                                                    <tr style='background-color: #f1f8e9;'>
-                                                        <td style='color: #558b2f; font-size: 13px; padding: 4px 0 8px 20px;'>Base imponible:</td>
-                                                        <td align='right' style='color: #558b2f; font-size: 13px; padding: 4px 0 8px 0;'>" . number_format($honorarios_netos, 2) . " €</td>
-                                                    </tr>
-                                                    <tr style='background-color: #f1f8e9;'>
-                                                        <td style='color: #558b2f; font-size: 13px; padding: 0 0 8px 20px;'>IVA (21%):</td>
-                                                        <td align='right' style='color: #558b2f; font-size: 13px; padding: 0 0 8px 0;'>" . number_format($iva_hidden, 2) . " €</td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </table>
-
-                                    <!-- Botón Dashboard -->
-                                    <div style='text-align: center; margin-top: 25px;'>
-                                        <a href='https://46-202-128-35.sslip.io/tramites' style='display: inline-block; background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px; box-shadow: 0 3px 8px rgba(25,118,210,0.3);'>
-                                            📊 Ver en Dashboard
-                                        </a>
-                                    </div>
-
-                                </td>
-                            </tr>
-
-                            <!-- Footer -->
-                            <tr>
-                                <td style='background-color: #f8f9fa; padding: 20px 40px; text-align: center; border-top: 1px solid #e0e0e0;'>
-                                    <p style='margin: 0; color: #999; font-size: 12px;'>
-                                        Email automático del sistema TRAMITFY
-                                    </p>
-                                </td>
-                            </tr>
-
-                        </table>
-                    </td>
-                </tr>
-            </table>
-        </body>
-        </html>
-        ";
-        tpm_debug_log('[TPM] Enviando email al admin: ' . $admin_email);
-        $admin_mail_result = wp_mail($admin_email, $subject_admin, $message_admin, $headers_quick);
-        tpm_debug_log('[TPM] Email admin resultado: ' . ($admin_mail_result ? 'SUCCESS' : 'FAILED'));
-
-        // Enviar a TRAMITFY API con archivos adjuntos
-        tpm_debug_log('[TPM] Enviando webhook con archivos adjuntos');
-        $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/motos/webhook';
-
-        // Preparar archivos para enviar con CURLFile
-        $file_fields = array();
-        tpm_debug_log('[TPM] Total archivos a enviar: ' . count($attachments));
-        foreach ($attachments as $index => $file_path) {
-            if (file_exists($file_path)) {
-                $cfile = new CURLFile($file_path, mime_content_type($file_path), basename($file_path));
-                $file_fields["files[$index]"] = $cfile;
-                tpm_debug_log('[TPM] Adjuntando archivo ' . $index . ': ' . basename($file_path));
-            } else {
-                tpm_debug_log('[TPM] Archivo NO existe: ' . $file_path);
-            }
-        }
-
-        // Añadir payment_intent_id
-        $payment_intent_id = isset($_POST['payment_intent_id']) ? sanitize_text_field($_POST['payment_intent_id']) : '';
-
-        // Calcular honorarios netos (sin IVA)
-        $honorarios_netos_calc = round(floatval($honorarios_hidden) / 1.21, 2);
-
-        // Preparar datos completos (datos + archivos)
-        // IMPORTANTE: Con multipart/form-data, todos los valores deben ser strings
-        $form_data = array_merge(array(
-            'tramiteId' => (string)$tramite_id,
-            'tramiteType' => 'Transferencia Moto',
-            'customerName' => (string)$customer_name,
-            'customerDni' => (string)$customer_dni,
-            'customerEmail' => (string)$customer_email,
-            'customerPhone' => (string)$customer_phone,
-            'vehicleType' => (string)$vehicle_type,
-            'manufacturer' => (string)($no_encuentro ? $manual_manufacturer : $manufacturer),
-            'model' => (string)($no_encuentro ? $manual_model : $model),
-            'matriculationDate' => (string)($no_encuentro ? '' : $matriculation_date),
-            'purchasePrice' => (string)floatval($purchase_price),
-            'region' => (string)$region,
-            'nuevoNombre' => (string)$nuevo_nombre,
-            'nuevoPuerto' => (string)$nuevo_puerto,
-            'couponUsed' => (string)$coupon_used,
-            'finalAmount' => (string)floatval($final_amount),
-            'transferTax' => (string)floatval($current_transfer_tax),
-            'extraFee' => (string)floatval($current_extra_fee),
-            'tasas' => (string)floatval($tasas_hidden),
-            'iva' => (string)floatval($iva_hidden),
-            'honorarios' => (string)floatval($honorarios_hidden),
-            'honorariosNetos' => (string)$honorarios_netos_calc,
-            'paymentIntentId' => (string)$payment_intent_id,
-            'status' => 'pending'
-        ), $file_fields);
-
-        tpm_debug_log('[TPM] Datos a enviar: tramiteId=' . $tramite_id . ', customerName=' . $customer_name . ', finalAmount=' . $final_amount);
-
-        // Enviar con cURL (multipart/form-data para archivos)
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $tramitfy_api_url);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $form_data);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-        $response = curl_exec($ch);
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        tpm_debug_log('[TPM] Webhook HTTP ' . $http_code . ' - Response: ' . $response);
-    
-        // Parsear la respuesta para obtener el ID del tracking
-        $response_data = json_decode($response, true);
-        $tracking_id = isset($response_data['id']) ? $response_data['id'] : time();
-        $tracking_url = 'https://46-202-128-35.sslip.io/seguimiento/' . $tracking_id;
-        tpm_debug_log('[TPM] Tracking URL: ' . $tracking_url);
-    
-        // Enviar email al cliente con el link de tracking
-        $subject_customer = 'Trámite Registrado - Siga su Transferencia';
-        $display_manufacturer = $no_encuentro ? $manual_manufacturer : $manufacturer;
-        $display_model = $no_encuentro ? $manual_model : $model;
-        $message_customer = "
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset='UTF-8'>
-            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-        </head>
-        <body style='margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif; background-color: #f4f7fa;'>
-            <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #f4f7fa; padding: 40px 20px;'>
-                <tr>
-                    <td align='center'>
-                        <table width='600' cellpadding='0' cellspacing='0' style='background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);'>
-
-                            <!-- Header -->
-                            <tr>
-                                <td style='background: linear-gradient(135deg, #0066cc 0%, #004a99 100%); padding: 40px 40px 35px; text-align: center;'>
-                                    <h1 style='margin: 0; color: #ffffff; font-size: 26px; font-weight: 600; letter-spacing: -0.5px;'>TRAMITFY</h1>
-                                    <p style='margin: 8px 0 0; color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 400;'>Gestión de Trámites Marítimos</p>
-                                </td>
-                            </tr>
-
-                            <!-- Confirmación -->
-                            <tr>
-                                <td style='padding: 40px 40px 30px;'>
-                                    <div style='background-color: #e8f5e9; border-left: 4px solid #4caf50; padding: 16px 20px; border-radius: 4px; margin-bottom: 30px;'>
-                                        <p style='margin: 0; color: #2e7d32; font-size: 15px; font-weight: 600;'>Trámite registrado correctamente</p>
-                                    </div>
-
-                                    <p style='margin: 0 0 20px; color: #333; font-size: 15px; line-height: 1.6;'>
-                                        Estimado/a <strong>{$customer_name}</strong>,
-                                    </p>
-                                    <p style='margin: 0 0 30px; color: #555; font-size: 15px; line-height: 1.7;'>
-                                        Su solicitud de transferencia ha sido registrada en nuestro sistema. Nuestro equipo comenzará a tramitar su solicitud en breve.
-                                    </p>
-
-                                    <!-- Resumen Vehículo -->
-                                    <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #f8f9fa; border-radius: 8px; margin-bottom: 25px; overflow: hidden;'>
-                                        <tr>
-                                            <td style='padding: 20px 24px;'>
-                                                <h3 style='margin: 0 0 16px; color: #0066cc; font-size: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Vehículo</h3>
-                                                <table width='100%' cellpadding='6' cellspacing='0'>
-                                                    <tr>
-                                                        <td style='color: #666; font-size: 14px; padding: 6px 0; width: 35%;'>Tipo:</td>
-                                                        <td style='color: #333; font-size: 14px; padding: 6px 0; font-weight: 600;'>{$vehicle_type}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td style='color: #666; font-size: 14px; padding: 6px 0;'>Marca/Modelo:</td>
-                                                        <td style='color: #333; font-size: 14px; padding: 6px 0; font-weight: 600;'>{$display_manufacturer} {$display_model}</td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </table>
-
-                                    <!-- Seguimiento -->
-                                    <div style='background-color: #e3f2fd; border-radius: 8px; padding: 24px; margin-bottom: 30px; text-align: center;'>
-                                        <p style='margin: 0 0 12px; color: #1565c0; font-size: 15px; font-weight: 600;'>
-                                            Número de Trámite
-                                        </p>
-                                        <p style='margin: 0 0 20px; color: #0d47a1; font-size: 20px; font-weight: 700; letter-spacing: 0.5px;'>
-                                            {$tramite_id}
-                                        </p>
-                                        <p style='margin: 0 0 16px; color: #555; font-size: 14px;'>
-                                            Puede consultar el estado de su trámite en cualquier momento:
-                                        </p>
-                                        <a href='{$tracking_url}' style='display: inline-block; background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px; box-shadow: 0 3px 8px rgba(25,118,210,0.3); margin-bottom: 16px;'>
-                                            Ver Estado del Trámite
-                                        </a>
-                                        <p style='margin: 0; color: #777; font-size: 13px; line-height: 1.5;'>
-                                            O copie este enlace:<br>
-                                            <span style='color: #1565c0; font-size: 12px;'>{$tracking_url}</span>
-                                        </p>
-                                    </div>
-
-                                    <!-- Próximos Pasos -->
-                                    <table width='100%' cellpadding='0' cellspacing='0' style='margin-bottom: 25px;'>
-                                        <tr>
-                                            <td>
-                                                <h3 style='margin: 0 0 16px; color: #333; font-size: 16px; font-weight: 600;'>Próximos pasos:</h3>
-                                                <table width='100%' cellpadding='8' cellspacing='0'>
-                                                    <tr>
-                                                        <td style='padding: 10px 0; border-bottom: 1px solid #e0e0e0;'>
-                                                            <span style='color: #1976d2; font-weight: 700; font-size: 14px; margin-right: 10px;'>1.</span>
-                                                            <span style='color: #555; font-size: 14px;'>Revisaremos su documentación</span>
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td style='padding: 10px 0; border-bottom: 1px solid #e0e0e0;'>
-                                                            <span style='color: #1976d2; font-weight: 700; font-size: 14px; margin-right: 10px;'>2.</span>
-                                                            <span style='color: #555; font-size: 14px;'>Tramitaremos la transferencia ante los organismos competentes</span>
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td style='padding: 10px 0;'>
-                                                            <span style='color: #1976d2; font-weight: 700; font-size: 14px; margin-right: 10px;'>3.</span>
-                                                            <span style='color: #555; font-size: 14px;'>Le enviaremos la documentación final</span>
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </table>
-
-                                    <p style='margin: 0; color: #666; font-size: 13px; line-height: 1.6; padding: 16px; background-color: #fff3cd; border-left: 3px solid #ffc107; border-radius: 4px;'>
-                                        <strong>Importante:</strong> Le notificaremos por email cualquier actualización o si necesitamos información adicional.
-                                    </p>
-
-                                </td>
-                            </tr>
-
-                            <!-- Footer -->
-                            <tr>
-                                <td style='background-color: #f8f9fa; padding: 30px 40px; text-align: center; border-top: 1px solid #e0e0e0;'>
-                                    <p style='margin: 0 0 8px; color: #666; font-size: 13px;'>
-                                        Gracias por confiar en nosotros
-                                    </p>
-                                    <p style='margin: 0; color: #0066cc; font-size: 15px; font-weight: 600;'>
-                                        Equipo TRAMITFY
-                                    </p>
-                                    <p style='margin: 16px 0 0; color: #999; font-size: 12px;'>
-                                        Este correo es informativo. Por favor, no responda a este mensaje.
-                                    </p>
-                                </td>
-                            </tr>
-
-                        </table>
-                    </td>
-                </tr>
-            </table>
-        </body>
-        </html>";
-    
-        $headers_customer = array('Content-Type: text/html; charset=UTF-8', 'From: Tramitfy <info@tramitfy.es>');
-        tpm_debug_log('[TPM] Enviando email tracking al cliente: ' . $customer_email);
-        $tracking_mail_result = wp_mail($customer_email, $subject_customer, $message_customer, $headers_customer);
-        tpm_debug_log('[TPM] Email tracking resultado: ' . ($tracking_mail_result ? 'SUCCESS' : 'FAILED'));
-    
-        // RESPONDER AL CLIENTE CON LA URL DE TRACKING
-        tpm_debug_log('[TPM] Enviando respuesta JSON al cliente');
-        wp_send_json_success(array(
-            'message' => 'Formulario procesado correctamente',
-            'tramite_id' => $tramite_id,
-            'tracking_id' => $tracking_id,
-            'tracking_url' => $tracking_url
-        ));
-        tpm_debug_log('[TPM] FIN tpm_submit_form');
-
-    } catch (Exception $e) {
-        tpm_debug_log('[TPM] ERROR CRÍTICO: ' . $e->getMessage());
-        tpm_debug_log('[TPM] Archivo: ' . $e->getFile() . ' Línea: ' . $e->getLine());
-        tpm_debug_log('[TPM] Stack trace: ' . $e->getTraceAsString());
-        wp_send_json_error([
-            'message' => 'Error procesando formulario: ' . $e->getMessage(),
-            'file' => basename($e->getFile()),
-            'line' => $e->getLine(),
-            'debug' => WP_DEBUG ? $e->getTraceAsString() : ''
-        ]);
     }
 
+    /*************************************************************/
+    /*** RESPUESTA INMEDIATA AL CLIENTE - Sin esperas largas ***/
+    /*************************************************************/
+
+    // Guardar datos del trámite en archivo temporal para procesamiento async
+    $async_data = array(
+        'tramite_id' => $tramite_id,
+        'customer_name' => $customer_name,
+        'customer_dni' => $customer_dni,
+        'customer_email' => $customer_email,
+        'customer_phone' => $customer_phone,
+        'vehicle_type' => $vehicle_type,
+        'manufacturer' => $no_encuentro ? $manual_manufacturer : $manufacturer,
+        'model' => $no_encuentro ? $manual_model : $model,
+        'matriculation_date' => $no_encuentro ? '' : $matriculation_date,
+        'purchase_price' => $purchase_price,
+        'region' => $region,
+        'nuevo_nombre' => $nuevo_nombre,
+        'nuevo_puerto' => $nuevo_puerto,
+        'coupon_used' => $coupon_used,
+        'final_amount' => $final_amount,
+        'current_transfer_tax' => $current_transfer_tax,
+        'current_extra_fee' => $current_extra_fee,
+        'tasas_hidden' => $tasas_hidden,
+        'iva_hidden' => $iva_hidden,
+        'honorarios_hidden' => $honorarios_hidden,
+        'attachments' => $attachments,
+        'authorization_pdf_path' => $authorization_pdf_path,
+        'no_encuentro' => $no_encuentro
+    );
+
+    // Guardar en archivo temporal
+    $temp_dir = get_temp_dir() . 'tramitfy-async/';
+    if (!file_exists($temp_dir)) {
+        mkdir($temp_dir, 0755, true);
+    }
+    $async_file = $temp_dir . 'barco-' . $tramite_id . '-' . time() . '.json';
+    file_put_contents($async_file, json_encode($async_data));
+
+    // Lanzar procesamiento asíncrono en background (no bloqueante)
+    $script_path = get_template_directory() . '/process-barco-async.php';
+    $log_file = get_template_directory() . '/logs/async-barco.log';
+    $cmd = sprintf('php %s %s >> %s 2>&1 &',
+        escapeshellarg($script_path),
+        escapeshellarg($async_file),
+        escapeshellarg($log_file)
+    );
+    exec($cmd);
+
+    // Enviar email rápido de confirmación al cliente (sin adjuntos pesados)
+    tpm_debug_log('[TPM] Preparando email rápido al cliente');
+    $customer_email_quick = $customer_email;
+    $subject_customer_quick = 'Confirmación de pago recibido - Tramitfy';
+    $message_customer_quick = "
+    <html>
+    <head><meta charset='UTF-8'></head>
+    <body style='font-family: Arial, sans-serif;'>
+        <div style='max-width:600px;margin:auto;padding:20px;background:#f9f9f9;'>
+            <div style='text-align:center;'>
+                <img src='https://www.tramitfy.es/wp-content/uploads/LOGO.png' alt='Tramitfy Logo' style='max-width:200px;'>
+                <h2 style='color:#016d86;'>¡Pago Recibido Exitosamente!</h2>
+            </div>
+            <div style='background:#fff;padding:20px;border-radius:8px;'>
+                <p>Hola <strong>$customer_name</strong>,</p>
+                <p>Hemos recibido tu pago y tu trámite está siendo procesado.</p>
+                <p><strong>Número de trámite:</strong> $tramite_id</p>
+                <p>En breve recibirás un segundo email con toda la documentación y detalles completos.</p>
+                <p>Gracias por confiar en Tramitfy.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    ";
+    $headers_quick = [
+        'Content-Type: text/html; charset=UTF-8',
+        'From: info@tramitfy.es'
+    ];
+    tpm_debug_log('[TPM] Enviando email rápido al cliente: ' . $customer_email_quick);
+    $mail_result_quick = wp_mail($customer_email_quick, $subject_customer_quick, $message_customer_quick, $headers_quick);
+    tpm_debug_log('[TPM] Email cliente resultado: ' . ($mail_result_quick ? 'SUCCESS' : 'FAILED'));
+
+    // Enviar email al ADMIN con detalles completos
+    tpm_debug_log('[TPM] Preparando email admin');
+    $admin_email = 'ipmgroup24@gmail.com';
+    $subject_admin = "Nuevo trámite de transferencia - $tramite_id";
+    $message_admin = "
+    <html>
+    <head><meta charset='UTF-8'></head>
+    <body style='font-family: Arial, sans-serif;'>
+        <div style='max-width:600px;margin:auto;padding:20px;background:#f9f9f9;'>
+            <div style='text-align:center;'>
+                <img src='https://www.tramitfy.es/wp-content/uploads/LOGO.png' alt='Tramitfy Logo' style='max-width:200px;'>
+                <h2 style='color:#016d86;'>Nuevo Trámite Recibido</h2>
+            </div>
+            <div style='background:#fff;padding:20px;border-radius:8px;'>
+                <h3>Trámite ID: $tramite_id</h3>
+                <h4>Datos del Cliente:</h4>
+                <table style='width:100%;border-collapse:collapse;'>
+                    <tr><th style='text-align:left;padding:8px;'>Nombre:</th><td style='padding:8px;'>$customer_name</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>DNI:</th><td style='padding:8px;'>$customer_dni</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>Email:</th><td style='padding:8px;'>$customer_email</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>Teléfono:</th><td style='padding:8px;'>$customer_phone</td></tr>
+                </table>
+                <h4>Datos del Vehículo:</h4>
+                <table style='width:100%;border-collapse:collapse;'>
+                    <tr><th style='text-align:left;padding:8px;'>Tipo:</th><td style='padding:8px;'>$vehicle_type</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>Fabricante:</th><td style='padding:8px;'>" . ($no_encuentro ? $manual_manufacturer : $manufacturer) . "</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>Modelo:</th><td style='padding:8px;'>" . ($no_encuentro ? $manual_model : $model) . "</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>Precio Compra:</th><td style='padding:8px;'>" . number_format($purchase_price, 2) . " €</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>Región:</th><td style='padding:8px;'>$region</td></tr>
+                </table>
+                <h4>Desglose Económico:</h4>
+                <table style='width:100%;border-collapse:collapse;'>
+                    <tr><th style='text-align:left;padding:8px;'>Precio Total:</th><td style='padding:8px;'>" . number_format($final_amount, 2) . " €</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>ITP:</th><td style='padding:8px;'>" . number_format($current_transfer_tax, 2) . " €</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>Tasas:</th><td style='padding:8px;'>" . number_format($tasas_hidden, 2) . " €</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>Honorarios:</th><td style='padding:8px;'>" . number_format($honorarios_hidden, 2) . " €</td></tr>
+                    <tr><th style='text-align:left;padding:8px;'>IVA:</th><td style='padding:8px;'>" . number_format($iva_hidden, 2) . " €</td></tr>
+                </table>
+                <p><a href='https://46-202-128-35.sslip.io/tramites' style='background:#016d86;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;display:inline-block;margin-top:20px;'>Ver en Dashboard</a></p>
+            </div>
+        </div>
+    </body>
+    </html>
+    ";
+    tpm_debug_log('[TPM] Enviando email admin');
+    $mail_result_admin = wp_mail($admin_email, $subject_admin, $message_admin, $headers_quick);
+    tpm_debug_log('[TPM] Email admin resultado: ' . ($mail_result_admin ? 'SUCCESS' : 'FAILED'));
+
+    // Enviar a TRAMITFY API inmediatamente (solo datos, sin archivos pesados)
+    $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/motos/webhook';
+    $tramitfy_quick_data = array(
+        'tramiteId' => $tramite_id,
+        'tramiteType' => 'Transferencia Moto',
+        'customerName' => $customer_name,
+        'customerDni' => $customer_dni,
+        'customerEmail' => $customer_email,
+        'customerPhone' => $customer_phone,
+        'vehicleType' => $vehicle_type,
+        'manufacturer' => $no_encuentro ? $manual_manufacturer : $manufacturer,
+        'model' => $no_encuentro ? $manual_model : $model,
+        'matriculationDate' => $no_encuentro ? '' : $matriculation_date,
+        'purchasePrice' => floatval($purchase_price),
+        'region' => $region,
+        'nuevoNombre' => $nuevo_nombre,
+        'nuevoPuerto' => $nuevo_puerto,
+        'couponUsed' => $coupon_used,
+        'finalAmount' => floatval($final_amount),
+        'transferTax' => floatval($current_transfer_tax),
+        'extraFee' => floatval($current_extra_fee),
+        'tasas' => floatval($tasas_hidden),
+        'iva' => floatval($iva_hidden),
+        'honorarios' => floatval($honorarios_hidden),
+        'status' => 'pending',
+        'notes' => 'Archivos en proceso de subida'
+    );
+
+    // Añadir payment_intent_id a los datos
+    $payment_intent_id = isset($_POST['payment_intent_id']) ? sanitize_text_field($_POST['payment_intent_id']) : '';
+    $tramitfy_quick_data['paymentIntentId'] = $payment_intent_id;
+
+    // Enviar datos básicos inmediatamente y capturar respuesta
+    tpm_debug_log('[TPM] Enviando datos al webhook');
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $tramitfy_api_url);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($tramitfy_quick_data));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    tpm_debug_log('[TPM] Webhook HTTP ' . $http_code . ' - Response: ' . $response);
+
+    // Parsear la respuesta para obtener el ID del tracking
+    $response_data = json_decode($response, true);
+    $tracking_id = isset($response_data['id']) ? $response_data['id'] : time();
+    $tracking_url = 'https://46-202-128-35.sslip.io/seguimiento/' . $tracking_id;
+    tpm_debug_log('[TPM] Tracking URL: ' . $tracking_url);
+
+    // Enviar email al cliente con el link de tracking
+    tpm_debug_log('[TPM] Preparando email tracking al cliente');
+    $subject_customer = 'Confirmación de su solicitud - Tramitfy';
+    $message_customer = "
+    <html>
+    <body style='font-family: Arial, sans-serif;'>
+        <div style='max-width:600px; margin:auto; padding:20px; background:#f9f9f9; border:1px solid #e0e0e0; border-radius:10px;'>
+            <div style='text-align:center;'>
+                <img src='https://www.tramitfy.es/wp-content/uploads/LOGO.png' alt='Tramitfy' style='max-width:200px;'>
+            </div>
+            <h2 style='color:#016d86;'>¡Su solicitud ha sido recibida!</h2>
+            <p>Estimado/a {$customer_name},</p>
+            <p>Hemos recibido su solicitud de transferencia de moto de agua con el ID: <strong>{$tramite_id}</strong></p>
+            <p>Puede hacer seguimiento de su trámite en cualquier momento usando el siguiente enlace:</p>
+            <div style='text-align:center; margin:30px 0;'>
+                <a href='{$tracking_url}' style='background:#016d86; color:white; padding:15px 30px; text-decoration:none; border-radius:5px; display:inline-block;'>Ver Estado del Trámite</a>
+            </div>
+            <p>También puede copiar este enlace: {$tracking_url}</p>
+            <p>Recibirá notificaciones por email cuando haya actualizaciones en su trámite.</p>
+            <p>Saludos cordiales,<br>El equipo de Tramitfy</p>
+        </div>
+    </body>
+    </html>";
+
+    $headers_customer = array('Content-Type: text/html; charset=UTF-8', 'From: Tramitfy <info@tramitfy.es>');
+    tpm_debug_log('[TPM] Enviando email tracking al cliente: ' . $customer_email);
+    $mail_result_tracking = wp_mail($customer_email, $subject_customer, $message_customer, $headers_customer);
+    tpm_debug_log('[TPM] Email tracking resultado: ' . ($mail_result_tracking ? 'SUCCESS' : 'FAILED'));
+
+    // RESPONDER AL CLIENTE CON LA URL DE TRACKING
+    tpm_debug_log('[TPM] Enviando respuesta JSON al cliente');
+    wp_send_json_success(array(
+        'message' => 'Formulario procesado correctamente',
+        'tramite_id' => $tramite_id,
+        'tracking_id' => $tracking_id,
+        'tracking_url' => $tracking_url
+    ));
+    tpm_debug_log('[TPM] FIN tpm_submit_form');
     wp_die();
 }
 
@@ -10723,65 +8565,6 @@ function tpm_process_async($async_file) {
         // Manejo de error en Sheets (no detiene el flujo principal)
     }
 
-    /*****************************************/
-    /*** TRAMITFY WEBHOOK INTEGRATION ***/
-    /*****************************************/
-    $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/motos/webhook';
-
-    // Preparar archivos para enviar
-    $file_fields = array();
-    if (!empty($attachments)) {
-        foreach ($attachments as $index => $file_path) {
-            if (file_exists($file_path)) {
-                $cfile = new CURLFile($file_path, mime_content_type($file_path), basename($file_path));
-                $file_fields["files[$index]"] = $cfile;
-            }
-        }
-    }
-
-    // Preparar datos del formulario
-    $form_data = array_merge(array(
-        'tramiteId' => $tramite_id,
-        'tramiteType' => 'Transferencia Moto',
-        'customerName' => $customer_name,
-        'customerDni' => $customer_dni,
-        'customerEmail' => $customer_email,
-        'customerPhone' => $customer_phone,
-        'vehicleType' => $vehicle_type,
-        'manufacturer' => $no_encuentro ? $manual_manufacturer : $manufacturer,
-        'model' => $no_encuentro ? $manual_model : $model,
-        'matriculationDate' => $no_encuentro ? '' : $matriculation_date,
-        'purchasePrice' => floatval($purchase_price),
-        'region' => $region,
-        'nuevoNombre' => $nuevo_nombre,
-        'nuevoPuerto' => $nuevo_puerto,
-        'couponUsed' => $coupon_used,
-        'finalAmount' => floatval($final_amount),
-        'transferTax' => floatval($current_transfer_tax),
-        'extraFee' => floatval($current_extra_fee),
-        'tasas' => floatval($tasas_hidden),
-        'iva' => floatval($iva_hidden),
-        'honorarios' => floatval($honorarios_hidden),
-        'authorizationPdfUrl' => isset($authorization_pdf_path) ? $upload_dir['url'] . '/' . basename($authorization_pdf_path) : '',
-        'driveLinks' => json_encode(isset($uploadedDriveLinks) ? $uploadedDriveLinks : array())
-    ), $file_fields);
-
-    // Enviar con cURL
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $tramitfy_api_url);
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $form_data);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    $tramitfy_response = curl_exec($ch);
-    $tramitfy_http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    // Log para debugging (opcional)
-    error_log('TRAMITFY Response (' . $tramitfy_http_code . '): ' . $tramitfy_response);
-
-    wp_send_json_success('Formulario procesado correctamente.');
-    wp_die();
+    // Webhook y emails están en el bloque principal (líneas 8120-8207)
 }
 

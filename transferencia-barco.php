@@ -139,7 +139,37 @@ function transferencia_barco_shortcode() {
             margin: 0;
             padding: 0;
         }
-        
+
+        /* LAYOUTS COMPACTOS PARA FORMULARIO */
+        .form-compact-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 18px;
+        }
+
+        .form-compact-row .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-compact-triple {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .form-compact-triple .form-group {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 768px) {
+            .form-compact-triple {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+        }
+
         /* Estilos para la pantalla de marketing inicial */
         .marketing-container {
             display: flex;
@@ -711,15 +741,15 @@ function transferencia_barco_shortcode() {
 
         /* Estilos generales mejorados para el formulario */
         #transferencia-form {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 35px;
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0;
+            border: none;
+            border-radius: 16px;
             font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            background-color: #ffffff;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-            transition: box-shadow 0.3s ease;
+            background-color: transparent;
+            box-shadow: none;
+            transition: none;
         }
         
         #transferencia-form:hover {
@@ -2551,87 +2581,87 @@ function transferencia_barco_shortcode() {
         
         /* Estilos mejorados para el popup del ITP */
         .calculation-section {
-            background-color: rgba(var(--neutral-50), 0.7);
-            border-radius: var(--radius-md);
-            padding: 18px 20px;
-            border: 1px solid rgba(var(--neutral-300), 0.3);
+            background-color: #f9fafb;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
             position: relative;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
-        
+
         .calculation-section h4 {
-            margin: 0 0 15px 0;
-            font-size: 17px;
-            color: rgb(var(--primary));
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(var(--primary), 0.15);
+            margin: 0 0 16px 0;
+            font-size: 16px;
+            color: #016d86;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e6f7fa;
             font-weight: 600;
         }
-        
+
+        .calculation-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            color: #4b5563;
+            font-size: 14px;
+        }
+
         .calculation-item.highlight-item {
-            background-color: rgba(var(--primary), 0.03);
-            margin: 15px -10px 0;
-            padding: 12px 10px;
-            border-radius: var(--radius-md);
-            border-left: 3px solid rgba(var(--primary), 0.4);
+            background-color: #e6f7fa;
+            margin: 12px -12px 0;
+            padding: 14px 12px;
+            border-radius: 6px;
+            border-left: 4px solid #016d86;
         }
-        
+
         .calculation-item.highlight-item span:last-child {
-            background-color: rgba(var(--primary), 0.1);
+            background-color: white;
             font-weight: 700;
+            color: #016d86;
         }
-        
+
+        .calculation-item span:first-child {
+            font-weight: 500;
+        }
+
         .calculation-item span:last-child {
             font-weight: 600;
-            color: rgb(var(--primary-dark));
-            background-color: rgba(var(--primary), 0.05);
-            padding: 6px 14px;
+            color: #1f2937;
+            background-color: white;
+            padding: 6px 12px;
             border-radius: 6px;
             min-width: 90px;
             text-align: right;
-            transition: all 0.2s ease;
-        }
-        
-        .calculation-item:hover span:last-child {
-            background-color: rgba(var(--primary), 0.1);
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
         }
         
         .calculation-result {
             display: flex;
             justify-content: space-between;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
-            color: rgb(var(--primary));
-            background-color: rgba(var(--primary), 0.1);
-            padding: 18px 24px;
-            border-radius: var(--radius-md);
+            color: white;
+            background: linear-gradient(135deg, #016d86 0%, #014d5e 100%);
+            padding: 20px;
+            border-radius: 8px;
             margin-top: 20px;
-            box-shadow: 0 4px 8px rgba(var(--primary-dark), 0.1);
+            box-shadow: 0 4px 12px rgba(1, 109, 134, 0.3);
             align-items: center;
-            position: relative;
-            overflow: hidden;
+        }
+
+        .calculation-result span:first-child {
+            font-size: 16px;
+        }
+
+        .calculation-result span:last-child {
+            font-size: 22px;
+            background-color: white;
+            color: #016d86;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: 700;
         }
         
-        .calculation-result:before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 6px;
-            height: 100%;
-            background: linear-gradient(to bottom, rgb(var(--primary)), rgb(var(--primary-light)));
-        }
-        
-        .calculation-result:after {
-            content: '';
-            position: absolute;
-            right: -25px;
-            top: -25px;
-            width: 80px;
-            height: 80px;
-            background: rgba(255, 255, 255, 0.1);
             border-radius: 50%;
             z-index: 1;
         }
@@ -2767,25 +2797,6 @@ function transferencia_barco_shortcode() {
             font-family: 'Roboto', sans-serif;
         }
         
-        /* Tarjeta principal mejorada */
-        .price-summary-card {
-            background-color: #ffffff;
-            border-radius: var(--radius-lg);
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-            margin-bottom: 30px;
-            border: 1px solid rgba(var(--neutral-300), 0.5);
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-        
-        .price-summary-card:hover {
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-            transform: translateY(-3px);
-        }
-        
-        .price-summary-header {
-            background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
-            padding: 22px 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -2820,168 +2831,189 @@ function transferencia_barco_shortcode() {
             padding: 0;
         }
         
-        /* Sección principal de gestión */
+        /* Sección principal de gestión - más limpia y coherente */
         .price-summary-main {
-            padding: 25px 28px;
-            border-bottom: 1px solid rgba(var(--neutral-300), 0.3);
+            padding: 28px;
+            border-bottom: 1px solid #e8e8e8;
+            background-color: #fafafa;
         }
-        
+
         .price-summary-title {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px dashed rgba(var(--neutral-400), 0.3);
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e0e0e0;
         }
-        
+
         .price-summary-title span {
-            font-size: 18px;
+            font-size: 17px;
             font-weight: 600;
-            color: rgb(var(--primary-dark));
+            color: #1f2937;
         }
-        
+
         .price-summary-amount {
-            font-size: 20px;
+            font-size: 19px;
             font-weight: 700;
-            color: rgb(var(--primary));
-            background-color: rgba(var(--primary), 0.08);
-            padding: 8px 16px;
-            border-radius: 30px;
+            color: #016d86;
+            background-color: #e6f7fa;
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: 1px solid #b3e5ef;
         }
         
         .price-summary-details {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
-        
+
         .price-summary-row {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
-            color: rgb(var(--neutral-700));
+            padding: 10px 12px;
+            color: #4b5563;
+            background-color: white;
+            border-radius: 6px;
+            font-size: 14px;
         }
-        
+
         .price-summary-row i {
-            color: rgb(var(--success));
+            color: #10b981;
             margin-right: 8px;
         }
-        
-        .price-summary-row:not(:last-child) {
-            border-bottom: 1px dotted rgba(var(--neutral-400), 0.2);
+
+        .price-summary-row span:first-child {
+            font-weight: 500;
         }
-        
-        /* Sección de impuestos */
+
+        .price-summary-row span:last-child {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        /* Sección de impuestos - estilo coherente */
         .price-summary-tax {
-            padding: 25px 28px;
-            border-bottom: 1px solid rgba(var(--neutral-300), 0.3);
-            background-color: rgba(var(--primary), 0.02);
+            padding: 28px;
+            border-bottom: 1px solid #e8e8e8;
+            background-color: #f9fafb;
         }
         
         .price-summary-help {
-            margin-top: 15px;
+            margin-top: 16px;
             text-align: center;
         }
-        
+
         .info-button-sm {
-            background-color: transparent;
-            color: rgb(var(--primary));
-            border: 1px solid rgb(var(--primary));
-            padding: 8px 15px;
-            border-radius: 20px;
+            background-color: white;
+            color: #016d86;
+            border: 2px solid #016d86;
+            padding: 10px 18px;
+            border-radius: 8px;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
             display: inline-flex;
             align-items: center;
             gap: 8px;
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        
+
         .info-button-sm:hover {
-            background-color: rgba(var(--primary), 0.08);
-            transform: translateY(-1px);
+            background-color: #016d86;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(1, 109, 134, 0.2);
         }
         
-        /* Acordeón para secciones opcionales */
+        /* Acordeón para secciones opcionales - estilo mejorado */
         .price-summary-accordion {
-            border-bottom: 1px solid rgba(var(--neutral-300), 0.3);
+            border-bottom: 1px solid #e8e8e8;
         }
-        
+
         .accordion-toggle-header {
-            padding: 20px 28px;
+            padding: 22px 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
-            background-color: rgba(var(--neutral-100), 0.5);
+            background-color: #f5f5f5;
             transition: all 0.2s ease;
+            border-top: 1px solid #e8e8e8;
         }
-        
+
         .accordion-toggle-header:hover {
-            background-color: rgba(var(--primary), 0.05);
+            background-color: #e6f7fa;
         }
-        
+
         .accordion-toggle-header span {
             font-weight: 600;
-            color: rgb(var(--neutral-700));
+            color: #374151;
             display: flex;
             align-items: center;
             gap: 10px;
+            font-size: 15px;
         }
-        
+
         .accordion-toggle-header span i {
-            color: rgb(var(--primary));
+            color: #016d86;
+            font-size: 16px;
         }
-        
+
         .accordion-icon {
-            color: rgb(var(--primary));
+            color: #016d86;
             transition: transform 0.3s ease;
+            font-size: 18px;
         }
-        
+
+        .accordion-toggle-header.active {
+            background-color: #e6f7fa;
+        }
+
         .accordion-toggle-header.active .accordion-icon {
             transform: rotate(180deg);
         }
-        
+
         .accordion-content-section {
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease-out;
             background-color: white;
         }
-        
+
         .accordion-content-section.active {
             max-height: 500px;
-            padding: 20px 28px;
+            padding: 24px 28px;
+            border-top: 2px solid #016d86;
         }
         
-        /* Servicios adicionales dentro del acordeón */
+        /* Servicios adicionales dentro del acordeón - mejorado */
         .additional-service-item {
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px dashed rgba(var(--neutral-300), 0.4);
+            margin-bottom: 16px;
+            padding: 14px;
+            border-radius: 8px;
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
         }
-        
+
         .additional-service-item:last-child {
             margin-bottom: 0;
-            padding-bottom: 0;
-            border-bottom: none;
         }
-        
+
+        .additional-service-item:hover {
+            border-color: #016d86;
+            background-color: #f0f9fa;
+        }
+
         .service-checkbox {
             display: flex;
             align-items: center;
             cursor: pointer;
-            padding: 8px;
-            border-radius: var(--radius-md);
-            transition: background-color 0.2s ease;
+            padding: 0;
         }
-        
-        .service-checkbox:hover {
-            background-color: rgba(var(--primary), 0.05);
-        }
-        
+
         .service-info {
             display: flex;
             justify-content: space-between;
@@ -2989,83 +3021,89 @@ function transferencia_barco_shortcode() {
             flex: 1;
             margin-left: 12px;
         }
-        
+
         .service-name {
             font-weight: 500;
-            color: rgb(var(--neutral-800));
-        }
-        
-        .service-price {
-            font-weight: 600;
-            color: rgb(var(--primary));
-            background-color: rgba(var(--primary), 0.08);
-            padding: 5px 12px;
-            border-radius: 20px;
+            color: #1f2937;
             font-size: 14px;
         }
-        
+
+        .service-price {
+            font-weight: 700;
+            color: #016d86;
+            background-color: #e6f7fa;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+            border: 1px solid #b3e5ef;
+        }
+
         .additional-input {
-            margin: 15px 0 5px 35px;
+            margin: 12px 0 0 28px;
             animation: fadeIn 0.3s ease;
         }
+
+        .additional-input input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            background-color: white;
+            transition: all 0.2s ease;
+        }
+
+        .additional-input input:focus {
+            border-color: #016d86;
+            box-shadow: 0 0 0 3px rgba(1, 109, 134, 0.1);
+            outline: none;
+        }
         
-        /* Cupón dentro del acordeón - Rediseño */
+        /* Cupón dentro del acordeón - Rediseño coherente */
         .coupon-container {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            background-color: white;
+            gap: 16px;
+            background-color: #fafafa;
             padding: 20px;
-            border-radius: var(--radius-lg);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(var(--primary), 0.12);
+            border-radius: 8px;
+            border: 2px dashed #d1d5db;
             position: relative;
-            overflow: hidden;
         }
-        
-        .coupon-container:before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 5px;
-            height: 100%;
-            background: linear-gradient(to bottom, rgb(var(--primary)), rgb(var(--primary-light)));
-        }
-        
+
         .coupon-title {
-            color: rgb(var(--primary));
+            color: #016d86;
             font-weight: 600;
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 16px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(var(--neutral-300), 0.4);
-            margin-bottom: 5px;
+            font-size: 15px;
+            padding-bottom: 0;
+            border-bottom: none;
+            margin-bottom: 0;
         }
-        
+
         .coupon-input-wrapper {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             position: relative;
         }
-        
+
         .coupon-input-wrapper input {
             flex: 1;
-            padding: 14px 16px;
-            border: 2px solid rgba(var(--neutral-300), 0.8);
-            border-radius: var(--radius-md);
-            font-size: 15px;
+            padding: 12px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
             background-color: white;
-            transition: all 0.25s ease;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
         }
-        
+
         .coupon-input-wrapper input:focus {
-            border-color: rgb(var(--primary));
-            box-shadow: 0 0 0 3px rgba(var(--primary), 0.15);
+            border-color: #016d86;
+            box-shadow: 0 0 0 3px rgba(1, 109, 134, 0.1);
             outline: none;
+            background-color: white;
         }
         
         /* Estado de validación del cupón */
@@ -3093,131 +3131,129 @@ function transferencia_barco_shortcode() {
         }
         
         .coupon-button {
-            background-color: rgb(var(--primary));
+            background-color: #016d86;
             color: white;
             border: none;
-            padding: 0 24px;
-            border-radius: var(--radius-md);
+            padding: 12px 24px;
+            border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 3px 6px rgba(var(--primary-dark), 0.3);
+            font-size: 14px;
         }
-        
+
         .coupon-button:hover {
-            background-color: rgb(var(--primary-dark));
+            background-color: #014d5e;
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(var(--primary-dark), 0.4);
+            box-shadow: 0 4px 8px rgba(1, 109, 134, 0.3);
         }
-        
+
         .coupon-button:active {
             transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(var(--primary-dark), 0.3);
+            box-shadow: 0 2px 4px rgba(1, 109, 134, 0.2);
         }
         
         .coupon-message {
-            padding: 12px 15px;
-            border-radius: var(--radius-md);
+            padding: 10px 14px;
+            border-radius: 6px;
             font-weight: 500;
-            font-size: 14px;
+            font-size: 13px;
             line-height: 1.4;
             display: flex;
             align-items: center;
             gap: 8px;
         }
-        
+
         .coupon-message.hidden {
             display: none;
         }
-        
+
         .coupon-message.success {
-            background-color: rgba(var(--success), 0.1);
-            color: rgb(var(--success));
-            border: 1px solid rgba(var(--success), 0.3);
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
         }
-        
+
         .coupon-message.success:before {
             content: '✓';
             font-weight: bold;
             font-size: 16px;
         }
-        
+
         .coupon-message.error-message {
-            background-color: rgba(var(--error), 0.1);
-            color: rgb(var(--error));
-            border: 1px solid rgba(var(--error), 0.3);
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
         }
-        
+
         .coupon-message.error-message:before {
             content: '!';
             font-weight: bold;
-            font-size: 16px;
+            font-size: 14px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             width: 18px;
             height: 18px;
             border-radius: 50%;
-            background-color: rgb(var(--error));
+            background-color: #dc2626;
             color: white;
         }
-            border: 1px solid rgba(var(--error), 0.3);
-        }
-        
+
         .coupon-message.loading {
-            background-color: rgba(var(--neutral-500), 0.1);
-            color: rgb(var(--neutral-600));
-            border: 1px solid rgba(var(--neutral-500), 0.3);
+            background-color: #f3f4f6;
+            color: #6b7280;
+            border: 1px solid #d1d5db;
         }
         
-        /* Total a pagar mejorado */
+        /* Total a pagar - diseño prominente y profesional */
         .price-summary-total {
-            padding: 28px;
-            background: linear-gradient(to right, rgba(var(--primary), 0.02), rgba(var(--primary), 0.08));
+            padding: 32px 28px;
+            background: linear-gradient(135deg, #016d86 0%, #014d5e 100%);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .price-summary-total-label {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
-        
+
         .price-summary-total-label span {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
-            color: rgb(var(--neutral-800));
+            color: white;
         }
-        
+
         .price-summary-guarantees {
             display: flex;
-            gap: 15px;
+            gap: 18px;
             font-size: 13px;
-            color: rgb(var(--neutral-600));
+            color: rgba(255, 255, 255, 0.9);
         }
-        
+
         .price-summary-guarantees span {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
             font-size: 13px;
-            font-weight: normal;
+            font-weight: 500;
         }
-        
+
         .price-summary-guarantees i {
-            color: rgb(var(--primary));
+            color: #b3e5ef;
         }
-        
+
         .price-summary-total-amount {
-            font-size: 32px;
+            font-size: 36px;
             font-weight: 700;
-            color: rgb(var(--primary));
+            color: #016d86;
             background-color: white;
-            padding: 12px 24px;
-            border-radius: var(--radius-md);
-            box-shadow: 0 4px 15px rgba(var(--primary), 0.15);
+            padding: 16px 28px;
+            border-radius: 8px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
         }
         
         /* Beneficios del servicio */
@@ -3312,12 +3348,6 @@ function transferencia_barco_shortcode() {
         }
         
         /* Clases para destacar el descuento */
-        .discount-row {
-            background-color: rgba(var(--success), 0.08);
-            border-radius: var(--radius-md);
-            padding: 8px 12px;
-            border: 1px dashed rgba(var(--success), 0.4);
-        }
         
         .discount-text {
             font-weight: 600;
@@ -3335,23 +3365,33 @@ function transferencia_barco_shortcode() {
         }
 
         .tramitfy-two-column {
-            display: grid;
-            grid-template-columns: 400px 1fr;
-            gap: 30px;
+
+        .tramitfy-two-column {
+            display: grid !important;
+            grid-template-columns: 340px 1fr !important;
+            grid-template-areas: "sidebar content" !important;
+            gap: 0;
             align-items: start;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
         }
 
-        /* Panel Lateral Izquierdo */
+        /* Panel Lateral Izquierdo - más compacto y sticky */
         .tramitfy-sidebar {
+            grid-area: sidebar;
             position: sticky;
-            top: 20px;
-            background: linear-gradient(135deg, #016d86 0%, #014d5f 100%);
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(1, 109, 134, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            min-height: 500px;
+            top: 0;
+            background: linear-gradient(180deg, #016d86 0%, #014d5f 100%);
+            border-radius: 0;
+            padding: 24px 20px;
+            box-shadow: none;
+            border: none;
+            backdrop-filter: none;
+            min-height: 95vh;
+            height: 95vh;
+            overflow-y: auto;
             color: #ffffff;
         }
 
@@ -3378,23 +3418,23 @@ function transferencia_barco_shortcode() {
         .sidebar-header {
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin-bottom: 25px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.15);
         }
 
         .sidebar-icon {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
-            border-radius: 12px;
+            width: 42px;
+            height: 42px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 22px;
-            box-shadow: 0 4px 12px rgba(var(--primary), 0.3);
+            font-size: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .sidebar-title {
@@ -3402,37 +3442,38 @@ function transferencia_barco_shortcode() {
         }
 
         .sidebar-title h3 {
-            margin: 0 0 5px 0;
+            margin: 0 0 4px 0;
             color: #ffffff;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
+            line-height: 1.2;
         }
 
         .sidebar-title p {
             margin: 0;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 13px;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 12px;
+            line-height: 1.3;
         }
 
         .sidebar-body {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .sidebar-info-box {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 18px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            border-left: 3px solid rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.12);
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 3px solid rgba(255, 255, 255, 0.4);
         }
 
         .sidebar-info-box p {
-            margin: 0 0 8px 0;
+            margin: 0 0 6px 0;
             color: rgba(255, 255, 255, 0.95);
-            font-size: 14px;
-            line-height: 1.6;
+            font-size: 13px;
+            line-height: 1.5;
         }
 
         .sidebar-info-box p:last-child {
@@ -3441,21 +3482,21 @@ function transferencia_barco_shortcode() {
 
         .sidebar-info-box strong {
             color: #ffffff;
-            font-weight: 700;
+            font-weight: 600;
         }
 
         .sidebar-checklist {
             background: white;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 16px;
+            border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
 
         .sidebar-checklist-item {
             display: flex;
             align-items: start;
-            gap: 12px;
-            padding: 12px 0;
+            gap: 10px;
+            padding: 10px 0;
             border-bottom: 1px dashed rgba(var(--neutral-300), 0.5);
         }
 
@@ -3464,15 +3505,15 @@ function transferencia_barco_shortcode() {
         }
 
         .sidebar-check-icon {
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             background: rgba(var(--success), 0.1);
             color: rgb(var(--success));
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 11px;
             flex-shrink: 0;
             margin-top: 2px;
         }
@@ -3480,20 +3521,19 @@ function transferencia_barco_shortcode() {
         .sidebar-checklist-text {
             flex: 1;
             color: rgb(var(--neutral-700));
-            font-size: 14px;
-            line-height: 1.5;
+            font-size: 13px;
+            line-height: 1.4;
         }
 
         .sidebar-tips {
-            background: rgba(255, 193, 7, 0.2);
-            padding: 18px;
-            border-radius: 10px;
+            background: rgba(255, 193, 7, 0.15);
+            padding: 14px;
+            border-radius: 8px;
             border-left: 3px solid #FFC107;
-            backdrop-filter: blur(10px);
         }
 
         .sidebar-tips h4 {
-            margin: 0 0 12px 0;
+            margin: 0 0 10px 0;
             color: #FFC107;
             font-size: 14px;
             font-weight: 700;
@@ -3564,31 +3604,40 @@ function transferencia_barco_shortcode() {
             margin-top: 12px;
         }
 
-        /* Panel Derecho - Formulario */
+        /* Panel Derecho - Formulario - más ancho y espacioso */
         .tramitfy-main-form {
+            grid-area: content;
             background: white;
-            border-radius: 16px;
-            padding: 0;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            border-radius: 0;
+            padding: 40px 50px;
+            box-shadow: none;
         }
 
         /* Responsive */
         @media (max-width: 1024px) {
             .tramitfy-two-column {
-                grid-template-columns: 1fr;
-                gap: 20px;
+                grid-template-columns: 1fr !important;
+                grid-template-areas: "sidebar" "content" !important;
+                gap: 0;
             }
 
             .tramitfy-sidebar {
                 position: relative;
                 top: auto;
-                order: -1;
+                min-height: auto;
+                height: auto;
+            }
+
+            .tramitfy-main-form {
+                padding: 30px 25px;
             }
         }
 
-        @media (max-width: 768px) {
-            .tramitfy-layout-wrapper {
-                padding: 0;
+                margin: 15px;
+            }
+
+            .tramitfy-two-column {
+                border-radius: 12px;
             }
 
             .tramitfy-sidebar {
@@ -3600,25 +3649,6 @@ function transferencia_barco_shortcode() {
                 flex-direction: column;
                 text-align: center;
                 gap: 10px;
-            }
-
-            .sidebar-price-amount {
-                font-size: 28px;
-            }
-        }
-
-        /* Estilos para el modal de pago */
-        .payment-modal {
-            display: none;
-            position: fixed;
-            z-index: 1050;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
             opacity: 0;
             transition: opacity 0.3s ease;
         }
@@ -4258,13 +4288,13 @@ function transferencia_barco_shortcode() {
             <!-- Tipo de vehículo fijo: Barco -->
             <input type="hidden" name="vehicle_type" value="Barco">
 
-            <!-- Fabricante y Modelo en fila compacta -->
+            <!-- Fabricante y Modelo en fila -->
             <div id="vehicle-csv-section">
                 <div class="form-compact-row">
                     <div class="form-group">
                         <label for="manufacturer">Fabricante</label>
                         <select id="manufacturer" name="manufacturer">
-                            <option value="">Seleccione un fabricante</option>
+                            <option value="">Seleccione fabricante</option>
                             <?php foreach (array_keys($datos_fabricantes) as $fabricante): ?>
                                 <option value="<?php echo esc_attr($fabricante); ?>"><?php echo esc_html($fabricante); ?></option>
                             <?php endforeach; ?>
@@ -4274,24 +4304,21 @@ function transferencia_barco_shortcode() {
                     <div class="form-group">
                         <label for="model">Modelo</label>
                         <select id="model" name="model">
-                            <option value="">Seleccione un modelo</option>
+                            <option value="">Seleccione modelo</option>
                         </select>
                     </div>
                 </div>
             </div>
 
-            <!-- "No encuentro mi modelo" -->
-            <div id="no-encuentro-wrapper">
-                <label>
+            <!-- "No encuentro mi modelo" - compacto -->
+            <div id="no-encuentro-wrapper" style="margin: 12px 0;">
+                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
                     <input type="checkbox" id="no_encuentro_checkbox" name="no_encuentro_checkbox">
-                    No encuentro mi modelo
+                    <span>No encuentro mi modelo</span>
                 </label>
-                <p style="font-size: 13px; color: #666; margin: 8px 0 15px 0;">
-                    Marque esta casilla si su moto de agua no aparece en la lista anterior.
-                    El cálculo del ITP se basará únicamente en el <strong>precio de compra</strong>.
-                </p>
+
                 <!-- Campos de marca/modelo manual en 2 columnas -->
-                <div id="manual-fields" style="display: none;">
+                <div id="manual-fields" style="display: none; margin-top: 10px;">
                     <div class="form-compact-row">
                         <div class="form-group">
                             <label for="manual_manufacturer">Marca (manual)</label>
@@ -4306,43 +4333,42 @@ function transferencia_barco_shortcode() {
                 </div>
             </div>
 
-            <!-- Precio y Fecha en fila compacta -->
-            <div class="form-compact-row">
+            <!-- Fecha, Precio y Comunidad Autónoma en fila de 3 -->
+            <div class="form-compact-triple">
                 <div class="form-group">
-                    <label for="purchase_price">Precio de Compra (€)</label>
-                    <input type="number" id="purchase_price" name="purchase_price" placeholder="Precio de compra" required />
-                </div>
-
-                <div class="form-group">
-                    <label for="matriculation_date" id="matriculation_date_label">Fecha de Matriculación</label>
+                    <label for="matriculation_date" id="matriculation_date_label">Fecha Matriculación</label>
                     <input type="date" id="matriculation_date" name="matriculation_date" max="<?php echo date('Y-m-d'); ?>" required>
                 </div>
-            </div>
 
-            <!-- Comunidad Autónoma (ancho completo) -->
-            <div class="form-group">
-                <label for="region">Comunidad Autónoma del comprador</label>
-                <select id="region" name="region" required>
-                    <option value="">Seleccione una comunidad autónoma</option>
-                    <option value="Andalucía">Andalucía</option>
-                    <option value="Aragón">Aragón</option>
-                    <option value="Asturias">Asturias</option>
-                    <option value="Islas Baleares">Islas Baleares</option>
-                    <option value="Canarias">Canarias</option>
-                    <option value="Cantabria">Cantabria</option>
-                    <option value="Castilla-La Mancha">Castilla-La Mancha</option>
-                    <option value="Castilla y León">Castilla y León</option>
-                    <option value="Cataluña">Cataluña</option>
-                    <option value="Comunidad Valenciana">Comunidad Valenciana</option>
-                    <option value="Galicia">Galicia</option>
-                    <option value="Madrid">Madrid</option>
-                    <option value="Murcia">Murcia</option>
-                    <option value="Navarra">Navarra</option>
-                    <option value="País Vasco">País Vasco</option>
-                    <option value="La Rioja">La Rioja</option>
-                    <option value="Ceuta">Ceuta</option>
-                    <option value="Melilla">Melilla</option>
-                </select>
+                <div class="form-group">
+                    <label for="purchase_price">Precio de Compra (€)</label>
+                    <input type="number" id="purchase_price" name="purchase_price" placeholder="Ej: 12000" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="region">Comunidad Autónoma</label>
+                    <select id="region" name="region" required>
+                        <option value="">Seleccione comunidad</option>
+                        <option value="Andalucía">Andalucía</option>
+                        <option value="Aragón">Aragón</option>
+                        <option value="Asturias">Asturias</option>
+                        <option value="Islas Baleares">Islas Baleares</option>
+                        <option value="Canarias">Canarias</option>
+                        <option value="Cantabria">Cantabria</option>
+                        <option value="Castilla-La Mancha">Castilla-La Mancha</option>
+                        <option value="Castilla y León">Castilla y León</option>
+                        <option value="Cataluña">Cataluña</option>
+                        <option value="Comunidad Valenciana">Comunidad Valenciana</option>
+                        <option value="Galicia">Galicia</option>
+                        <option value="Madrid">Madrid</option>
+                        <option value="Murcia">Murcia</option>
+                        <option value="Navarra">Navarra</option>
+                        <option value="País Vasco">País Vasco</option>
+                        <option value="La Rioja">La Rioja</option>
+                        <option value="Ceuta">Ceuta</option>
+                        <option value="Melilla">Melilla</option>
+                    </select>
+                </div>
             </div>
 
         </div> <!-- Fin page-vehiculo -->

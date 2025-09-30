@@ -8,11 +8,11 @@ require_once(get_template_directory() . '/vendor/autoload.php');
 // Configuración de Stripe AL NIVEL GLOBAL (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
 define('NAVIGATION_PERMIT_STRIPE_MODE', 'test'); // 'test' o 'live'
 
-define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'pk_test_SANITIZED_FOR_GIT');
-define('NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY', 'sk_test_SANITIZED_FOR_GIT');
+define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'pk_test_YOUR_STRIPE_TEST_PUBLIC_KEY');
+define('NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY', 'sk_test_YOUR_STRIPE_TEST_SECRET_KEY');
 
-define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_SANITIZED_FOR_GIT');
-define('NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY', 'sk_live_SANITIZED_FOR_GIT');
+define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_YOUR_STRIPE_LIVE_PUBLIC_KEY');
+define('NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY', 'sk_live_YOUR_STRIPE_LIVE_SECRET_KEY');
 
 define('NAVIGATION_PERMIT_SERVICE_PRICE', 65.00);
 define('NAVIGATION_PERMIT_TASA_CERTIFICADO', 15.00);
@@ -108,10 +108,10 @@ function navigation_permit_renewal_form_shortcode() {
         .npn-sidebar {
             background: linear-gradient(180deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
             color: white;
-            padding: 20px 20px;
+            padding: 30px 25px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 24px;
             position: sticky;
             top: 0;
             height: 95vh;
@@ -132,16 +132,16 @@ function navigation_permit_renewal_form_shortcode() {
         }
 
         .npn-headline {
-            font-size: 17px;
-            font-weight: 600;
+            font-size: 23px;
+            font-weight: 700;
             line-height: 1.3;
-            margin-bottom: 4px;
+            margin-bottom: 10px;
         }
 
         .npn-subheadline {
-            font-size: 13px;
-            opacity: 0.92;
-            line-height: 1.4;
+            font-size: 13.5px;
+            opacity: 0.94;
+            line-height: 1.6;
         }
 
         /* Caja de precio destacada */
@@ -149,10 +149,9 @@ function navigation_permit_renewal_form_shortcode() {
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
             border-radius: 12px;
-            padding: 12px;
+            padding: 18px;
             text-align: center;
             border: 1px solid rgba(255, 255, 255, 0.25);
-            margin: 6px 0;
         }
 
         .npn-price-label {
@@ -1320,18 +1319,20 @@ function navigation_permit_renewal_form_shortcode() {
         <div class="npn-sidebar">
             <!-- Contenido por defecto (Páginas 1, 2 y 4) -->
             <div id="sidebar-default">
-                <div class="npn-logo">
-                    <i class="fa-solid fa-ship"></i>
-                    <span>Tramitfy</span>
-                </div>
-
                 <div>
                     <div class="npn-headline">
                         Renovación Permiso de Navegación
                     </div>
                     <div class="npn-subheadline">
-                        Renueva tu permiso de navegación de forma rápida y segura. Gestión completa online sin desplazamientos.
+                        Rellena el formulario paso a paso: datos personales, documentos, firma digital y pago. Nosotros nos encargamos del resto.
                     </div>
+                </div>
+
+                <div style="background: rgba(255,255,255,0.1); padding: 18px; border-radius: 10px; margin-bottom: 20px; backdrop-filter: blur(10px);">
+                    <p style="font-size: 13.5px; line-height: 1.7; margin: 0; color: rgba(255,255,255,0.95);">
+                        <strong style="display: block; margin-bottom: 8px; font-size: 14px;">¿Qué es el Permiso de Navegación?</strong>
+                        Documento oficial obligatorio para navegar embarcaciones de recreo. Debe renovarse cada 5 años para mantener su validez.
+                    </p>
                 </div>
 
                 <div class="npn-price-box">
@@ -1343,49 +1344,26 @@ function navigation_permit_renewal_form_shortcode() {
                 <div class="npn-benefits">
                     <div class="npn-benefit">
                         <i class="fa-solid fa-check"></i>
-                        <span>Certificado de navegabilidad incluido</span>
+                        <span>Presentamos tu solicitud en menos de 24 h desde que la recibimos.</span>
                     </div>
                     <div class="npn-benefit">
                         <i class="fa-solid fa-check"></i>
-                        <span>Emisión oficial del nuevo permiso</span>
+                        <span>Envío de provisional en menos de 24 h.</span>
                     </div>
                     <div class="npn-benefit">
                         <i class="fa-solid fa-check"></i>
-                        <span>Gestión completa ante autoridades</span>
-                    </div>
-                    <div class="npn-benefit">
-                        <i class="fa-solid fa-check"></i>
-                        <span>Tramitación rápida en 5-7 días</span>
-                    </div>
-                    <div class="npn-benefit">
-                        <i class="fa-solid fa-check"></i>
-                        <span>Seguimiento online en tiempo real</span>
+                        <span>Consulta el estado del trámite vía whatsapp.</span>
                     </div>
                 </div>
 
-                <div class="npn-trust-badges">
-                    <div class="npn-badge">
-                        <i class="fa-solid fa-shield-halved"></i>
-                        <span>Pago seguro</span>
-                    </div>
-                    <div class="npn-badge">
-                        <i class="fa-solid fa-lock"></i>
-                        <span>Datos protegidos</span>
-                    </div>
-                    <div class="npn-badge">
-                        <i class="fa-solid fa-headset"></i>
-                        <span>Soporte 24/7</span>
-                    </div>
+                <!-- Widget de reseñas Trustindex -->
+                <div style="margin-top: auto; padding-top: 20px;">
+                    [trustindex data-widget-id=528e73a37d5c907840566b0945b]
                 </div>
             </div>
 
             <!-- Contenido para página de autorización (Página 3) -->
             <div id="sidebar-authorization" style="display: none;">
-                <div class="npn-logo">
-                    <i class="fa-solid fa-file-signature"></i>
-                    <span>Autorización</span>
-                </div>
-
                 <div class="npn-sidebar-auth-doc">
                     <h4 style="font-size: 18px; font-weight: 700; color: white; margin-bottom: 15px;">
                         DOCUMENTO DE AUTORIZACIÓN
@@ -1416,7 +1394,7 @@ function navigation_permit_renewal_form_shortcode() {
             <form id="navigation-permit-renewal-form" action="" method="POST" enctype="multipart/form-data">
                 
                 <div class="npn-form-header">
-                    <h1 class="npn-form-title">Solicitud de Renovación</h1>
+                    <div class="npn-form-title">Solicitud de Renovación</div>
                     <p class="npn-form-subtitle">Complete el formulario para renovar su permiso de navegación</p>
                 </div>
 
@@ -1424,11 +1402,11 @@ function navigation_permit_renewal_form_shortcode() {
                 <?php if (current_user_can('administrator')): ?>
                 <div class="npn-admin-panel">
                     <div class="npn-admin-panel-info">
-                        <div class="npn-admin-panel-title">🔧 Modo Administrador</div>
+                        <div class="npn-admin-panel-title">Modo Administrador</div>
                         <div class="npn-admin-panel-subtitle">Auto-relleno disponible para testing</div>
                     </div>
                     <button type="button" id="admin-autofill-btn" class="npn-admin-autofill-btn">
-                        ⚡ Auto-rellenar
+                        Auto-rellenar
                     </button>
                 </div>
                 <?php endif; ?>
