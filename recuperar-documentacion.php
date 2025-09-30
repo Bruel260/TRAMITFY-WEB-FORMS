@@ -10,11 +10,11 @@ defined('ABSPATH') || exit;
 // Configuración de Stripe
 define('STRIPE_MODE', 'test'); // test o live
 
-define('STRIPE_TEST_PUBLIC_KEY', 'pk_test_YOUR_STRIPE_TEST_PUBLIC_KEY');
-define('STRIPE_TEST_SECRET_KEY', 'sk_test_YOUR_STRIPE_TEST_SECRET_KEY');
+define('STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
+define('STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
 
-define('STRIPE_LIVE_PUBLIC_KEY', 'pk_live_YOUR_STRIPE_LIVE_PUBLIC_KEY');
-define('STRIPE_LIVE_SECRET_KEY', 'sk_live_YOUR_STRIPE_LIVE_SECRET_KEY');
+define('STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
+define('STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
 
 if (STRIPE_MODE === 'test') {
     $stripe_public_key = STRIPE_TEST_PUBLIC_KEY;
@@ -296,14 +296,7 @@ function rdoc_send_to_tramitfy() {
         $tramiteId = $apiResponse['id'] ?? null;
         $tramiteReference = $apiResponse['tramiteId'] ?? null;
 
-        error_log("=== RECUPERAR DOC: Enviando emails ===");
-        error_log("TramiteId: $tramiteId");
-        error_log("TramiteReference: $tramiteReference");
-        error_log("CustomerEmail: {$formData['customerEmail']}");
-
         rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId, $tramiteReference);
-
-        error_log("=== RECUPERAR DOC: Emails enviados (verificar logs de WordPress) ===");
 
         echo json_encode([
             'success' => true,
@@ -322,10 +315,6 @@ function rdoc_send_to_tramitfy() {
 }
 
 function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = null, $tramiteReference = null) {
-    error_log("📧 === FUNCIÓN EMAILS INICIADA ===");
-    error_log("📧 CustomerEmail recibido: " . ($formData['customerEmail'] ?? 'NO DEFINIDO'));
-    error_log("📧 TramiteId: " . ($tramiteId ?? 'NULL'));
-
     $customerEmail = $formData['customerEmail'];
     $customerName = $formData['customerName'];
     $vesselName = $formData['vesselName'] ?? 'No especificado';
@@ -484,16 +473,7 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
     </html>
     ";
 
-    error_log("📧 Enviando email al cliente: $customerEmail");
-    error_log("📧 Asunto: $customerSubject");
-    error_log("📧 Headers: " . print_r($headers, true));
-
-    $result1 = wp_mail($customerEmail, $customerSubject, $customerMessage, $headers);
-
-    error_log("📧 Resultado email cliente: " . ($result1 ? 'ÉXITO' : 'FALLO'));
-    if (!$result1) {
-        error_log("📧 ERROR: wp_mail() falló para cliente. Verificar configuración SMTP de WordPress");
-    }
+    wp_mail($customerEmail, $customerSubject, $customerMessage, $headers);
 
     // ============================================
     // EMAIL A IPMGROUP (Administrativo)
@@ -656,24 +636,7 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
     ";
 
     // Enviar email al administrador
-    error_log("📧 Enviando email al admin: $adminEmail");
-    error_log("📧 Asunto admin: $adminSubject");
-
-    $result2 = wp_mail($adminEmail, $adminSubject, $adminMessage, $headers);
-
-    error_log("📧 Resultado email admin: " . ($result2 ? 'ÉXITO' : 'FALLO'));
-    if (!$result2) {
-        error_log("📧 ERROR: wp_mail() falló para admin. Verificar configuración SMTP de WordPress");
-    }
-
-    error_log("📧 === FUNCIÓN EMAILS COMPLETADA ===");
-    error_log("📧 Resumen: Cliente=" . ($result1 ? 'OK' : 'FALLO') . " | Admin=" . ($result2 ? 'OK' : 'FALLO'));
-
-    // Si wp_mail falla, mostrar advertencia en respuesta
-    if (!$result1 || !$result2) {
-        error_log("⚠️ ADVERTENCIA: WordPress no está configurado correctamente para enviar emails");
-        error_log("⚠️ Solución: Instalar plugin 'WP Mail SMTP' o configurar SMTP en wp-config.php");
-    }
+    wp_mail($adminEmail, $adminSubject, $adminMessage, $headers);
 }
 
 if (isset($_POST['action'])) {
@@ -2233,19 +2196,19 @@ function recuperar_documentacion_form_shortcode() {
 
                     <!-- BOTÓN SIGUIENTE -->
                     <button type="button" id="rdoc-next-btn" class="rdoc-next-btn">
-                        Continuar a Firma y Pago <i class="fas fa-arrow-right"></i>
+                        Siguiente <i class="fas fa-arrow-right"></i>
                     </button>
 
                 </div>
 
-                <!-- PÁGINA 2: FIRMA Y PAGO -->
+                <!-- PÁGINA 2: FIRMA DIGITAL -->
                 <div class="rdoc-page" id="rdoc-page-2">
 
-                    <button type="button" class="rdoc-back-btn-minimal" onclick="rdocGoToPage(1)" title="Volver">
-                        <i class="fas fa-arrow-left"></i>
+                    <button type="button" class="rdoc-back-btn" onclick="rdocGoToPage(1)">
+                        <i class="fas fa-arrow-left"></i> Volver
                     </button>
 
-                    <!-- FIRMA DIGITAL -->
+                    <!-- FIRMA CON DOCUMENTO -->
                     <div class="rdoc-section rdoc-signature-page">
                         <div class="rdoc-signature-layout">
                             <!-- Documento de Autorización -->
@@ -2289,6 +2252,20 @@ function recuperar_documentacion_form_shortcode() {
                             </div>
                         </div>
                     </div>
+
+                    <button type="button" id="rdoc-next-page2-btn" class="rdoc-next-btn rdoc-btn-large">
+                        <span>Continuar al Pago</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+
+                </div>
+
+                <!-- PÁGINA 3: PAGO -->
+                <div class="rdoc-page" id="rdoc-page-3">
+
+                    <button type="button" class="rdoc-back-btn-minimal" onclick="rdocGoToPage(2)" title="Volver">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
 
                     <!-- PAGO -->
                     <div class="rdoc-section">
@@ -2477,17 +2454,6 @@ function recuperar_documentacion_form_shortcode() {
                 rdocInitializeFileUpload();
                 rdocSetupNavigation();
                 rdocSetupPaymentButton();
-                rdocPopulateAuthorizationData();
-                rdocInitializeSignature();
-
-                // Listeners para actualizar preview en tiempo real
-                ['rdoc-name', 'rdoc-dni', 'rdoc-vessel-name', 'rdoc-vessel-registration'].forEach(id => {
-                    const input = document.getElementById(id);
-                    if (input) {
-                        input.addEventListener('input', rdocPopulateAuthorizationData);
-                    }
-                });
-
                 console.log('✅ Inicialización completa');
             }, 300);
         });
@@ -2508,6 +2474,18 @@ function recuperar_documentacion_form_shortcode() {
                 }
             });
 
+            setTimeout(function() {
+                const nextBtnPage2 = document.getElementById('rdoc-next-page2-btn');
+                if (nextBtnPage2) {
+                    nextBtnPage2.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        console.log('Botón página 2 clickeado');
+                        if (rdocValidatePage2()) {
+                            rdocGoToPage(3);
+                        }
+                    });
+                }
+            }, 500);
         }
 
         function rdocGoToPage(pageNumber) {
@@ -2520,8 +2498,15 @@ function recuperar_documentacion_form_shortcode() {
             rdocCurrentPage = pageNumber;
 
             if (pageNumber === 2) {
+                setTimeout(() => {
+                    rdocPopulateAuthorizationData();
+                    rdocInitializeSignature();
+                }, 100);
+            }
+
+            if (pageNumber === 3) {
                 setTimeout(async () => {
-                    console.log('📄 Navegando a página 2 (Pago)');
+                    console.log('📄 Navegando a página 3 (Pago)');
                     console.log('💳 rdocClientSecret:', rdocClientSecret ? 'Existe' : 'No existe');
                     console.log('💳 rdocElements:', rdocElements ? 'Existe' : 'No existe');
 
@@ -2639,6 +2624,22 @@ function recuperar_documentacion_form_shortcode() {
             return isValid;
         }
 
+        // ====== VALIDACIÓN PÁGINA 2 ======
+        function rdocValidatePage2() {
+            console.log('=== VALIDANDO PÁGINA 2 ===');
+
+            if (!rdocHasSignature) {
+                rdocShowNotification(
+                    'Por favor, firma en el recuadro antes de continuar al pago.',
+                    'warning',
+                    'Firma Requerida'
+                );
+                return false;
+            }
+
+            console.log('✅ Validación página 2 exitosa');
+            return true;
+        }
 
         // ====== FIRMA DIGITAL ======
         function rdocInitializeSignature() {
@@ -2963,27 +2964,10 @@ function recuperar_documentacion_form_shortcode() {
             }
         }
 
-        // ====== VALIDACIÓN PÁGINA 2 (PAGO) ======
-        function rdocValidatePage2() {
-            console.log('=== VALIDANDO PÁGINA 2 (FIRMA Y PAGO) ===');
+        // ====== VALIDACIÓN PÁGINA 3 (PAGO) ======
+        function rdocValidatePage3() {
+            console.log('=== VALIDANDO PÁGINA 3 (PAGO) ===');
 
-            // Validar firma digital
-            console.log('Firma presente:', rdocHasSignature);
-            if (!rdocHasSignature) {
-                rdocShowNotification(
-                    'Por favor, firma el documento de autorización antes de continuar con el pago.',
-                    'warning',
-                    'Firma Requerida'
-                );
-                // Scroll a la firma
-                const signatureSection = document.querySelector('.rdoc-signature-page');
-                if (signatureSection) {
-                    signatureSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-                return false;
-            }
-
-            // Validar términos y condiciones
             const consentTerms = document.getElementById('rdoc-consent-terms');
             if (!consentTerms.checked) {
                 rdocShowNotification(
@@ -2994,7 +2978,7 @@ function recuperar_documentacion_form_shortcode() {
                 return false;
             }
 
-            console.log('✅ Validación página 2 exitosa');
+            console.log('✅ Validación página 3 exitosa');
             return true;
         }
 
@@ -3010,7 +2994,7 @@ function recuperar_documentacion_form_shortcode() {
                 e.preventDefault();
                 console.log('💳 Botón de pago clickeado');
 
-                if (!rdocValidatePage2()) return;
+                if (!rdocValidatePage3()) return;
 
                 const submitButton = this;
                 const originalHTML = submitButton.innerHTML;
@@ -3081,7 +3065,6 @@ function recuperar_documentacion_form_shortcode() {
 
         // ====== ENVIAR A TRAMITFY ======
         async function rdocSendToTramitfy() {
-            console.log('📤 Iniciando envío a Tramitfy...');
             const formData = new FormData();
 
             const data = {
@@ -3096,9 +3079,6 @@ function recuperar_documentacion_form_shortcode() {
                 paymentIntentId: rdocClientSecret
             };
 
-            console.log('📦 Datos del formulario:', data);
-            console.log('📁 Archivos DNI:', rdocDniFiles.length);
-
             formData.append('action', 'rdoc_send_to_tramitfy');
             formData.append('formData', JSON.stringify(data));
 
@@ -3106,23 +3086,16 @@ function recuperar_documentacion_form_shortcode() {
                 formData.append('dniDocumento[]', file);
             });
 
-            console.log('🌐 Enviando petición AJAX...');
             const response = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
                 method: 'POST',
                 body: formData
             });
 
-            console.log('📨 Respuesta recibida. Status:', response.status);
-            console.log('📨 Response OK:', response.ok);
-
             const result = await response.json();
-            console.log('📋 Resultado parseado:', result);
-
             if (!result.success) {
                 throw new Error(result.error || 'Error al enviar los datos');
             }
 
-            console.log('✅ Envío completado exitosamente');
             return result;
         }
 
