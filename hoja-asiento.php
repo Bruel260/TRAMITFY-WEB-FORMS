@@ -29,7 +29,7 @@ if (HOJA_ASIENTO_STRIPE_MODE === 'test') {
 /**
  * Shortcode para el formulario de solicitud de permiso de navegación
  */
-function hoja_asiento_renewal_form_shortcode() {
+function hoja_asiento_form_shortcode() {
     global $stripe_public_key, $stripe_secret_key;
 
     // Si estamos en el editor de Elementor, devolver un placeholder
@@ -88,6 +88,7 @@ function hoja_asiento_renewal_form_shortcode() {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
             color: rgb(var(--neutral-800));
+            background: transparent !important;
         }
 
         /* Container principal - Grid de 2 columnas */
@@ -1485,25 +1486,15 @@ function hoja_asiento_renewal_form_shortcode() {
                         </div>
                     </div>
 
-                    <!-- Datos de la embarcación -->
+                    <!-- Datos del Documento -->
                     <h4 style="margin: 30px 0 20px; color: rgb(var(--primary)); font-size: 18px;">
-                        <i class="fa-solid fa-ship"></i> Datos de la Embarcación
+                        <i class="fa-solid fa-id-card"></i> Documento de Identidad
                     </h4>
 
                     <div class="ha-input-grid">
                         <div class="ha-input-group">
-                            <label for="boat_name">Nombre de la Embarcación *</label>
-                            <input type="text" id="boat_name" name="boat_name" placeholder="Ej: Mar Azul" required />
-                        </div>
-
-                        <div class="ha-input-group">
-                            <label for="boat_matricula">Matrícula *</label>
-                            <input type="text" id="boat_matricula" name="boat_matricula" placeholder="Ej: 7-PM-1-23" required />
-                        </div>
-
-                        <div class="ha-input-group">
-                            <label for="boat_nib">NIB (Número de Identificación del Barco) *</label>
-                            <input type="text" id="boat_nib" name="boat_nib" placeholder="Número de Identificación" required />
+                            <label for="document_dni">DNI / NIE *</label>
+                            <input type="text" id="document_dni" name="document_dni" placeholder="Ej: 12345678A" required />
                         </div>
                     </div>
 
@@ -2378,9 +2369,7 @@ function hoja_asiento_renewal_form_shortcode() {
                     emailFormData.append('customerEmail', document.getElementById('customer_email').value);
                     emailFormData.append('customerDni', document.getElementById('customer_dni').value);
                     emailFormData.append('customerPhone', document.getElementById('customer_phone').value);
-                    emailFormData.append('boatName', document.getElementById('boat_name').value);
-                    emailFormData.append('boatMatricula', document.getElementById('boat_matricula').value);
-                    emailFormData.append('boatNib', document.getElementById('boat_nib').value);
+                    emailFormData.append('documentDni', document.getElementById('document_dni').value);
                     emailFormData.append('finalAmount', currentPrice);
                     emailFormData.append('paymentIntentId', paymentIntentId || '');
                     emailFormData.append('tramiteId', result.tramiteId);
@@ -2427,10 +2416,8 @@ function hoja_asiento_renewal_form_shortcode() {
                     document.getElementById('customer_email').value = 'joanpinyol@hotmail.es';
                     document.getElementById('customer_phone').value = '682246937';
 
-                    // Rellenar datos de embarcación
-                    document.getElementById('boat_name').value = 'Test Barco';
-                    document.getElementById('boat_matricula').value = '7-PM-1-23';
-                    document.getElementById('boat_nib').value = 'TEST123456';
+                    // Rellenar DNI del documento
+                    document.getElementById('document_dni').value = '12345678Z';
 
                     // Marcar términos
                     document.querySelector('input[name="terms_accept"]').checked = true;
@@ -2484,9 +2471,7 @@ function send_hoja_asiento_to_tramitfy() {
             'customerDni' => isset($_POST['customer_dni']) ? sanitize_text_field($_POST['customer_dni']) : '',
             'customerEmail' => isset($_POST['customer_email']) ? sanitize_email($_POST['customer_email']) : '',
             'customerPhone' => isset($_POST['customer_phone']) ? sanitize_text_field($_POST['customer_phone']) : '',
-            'boatName' => isset($_POST['boat_name']) ? sanitize_text_field($_POST['boat_name']) : '',
-            'boatMatricula' => isset($_POST['boat_matricula']) ? sanitize_text_field($_POST['boat_matricula']) : '',
-            'boatNib' => isset($_POST['boat_nib']) ? sanitize_text_field($_POST['boat_nib']) : '',
+            'documentDni' => isset($_POST['document_dni']) ? sanitize_text_field($_POST['document_dni']) : '',
             'finalAmount' => isset($_POST['final_amount']) ? floatval($_POST['final_amount']) : 29.95,
             'paymentIntentId' => isset($_POST['payment_intent_id']) ? sanitize_text_field($_POST['payment_intent_id']) : '',
             'hasSignature' => isset($_POST['has_signature']) ? sanitize_text_field($_POST['has_signature']) : '',
@@ -2742,9 +2727,7 @@ function send_hoja_asiento_emails() {
         $customerEmail = isset($_POST['customerEmail']) ? sanitize_email($_POST['customerEmail']) : '';
         $customerDni = isset($_POST['customerDni']) ? sanitize_text_field($_POST['customerDni']) : '';
         $customerPhone = isset($_POST['customerPhone']) ? sanitize_text_field($_POST['customerPhone']) : '';
-        $boatName = isset($_POST['boatName']) ? sanitize_text_field($_POST['boatName']) : '';
-        $boatMatricula = isset($_POST['boatMatricula']) ? sanitize_text_field($_POST['boatMatricula']) : '';
-        $boatNib = isset($_POST['boatNib']) ? sanitize_text_field($_POST['boatNib']) : '';
+        $documentDni = isset($_POST['documentDni']) ? sanitize_text_field($_POST['documentDni']) : '';
         $finalAmount = isset($_POST['finalAmount']) ? floatval($_POST['finalAmount']) : 29.95;
         $paymentIntentId = isset($_POST['paymentIntentId']) ? sanitize_text_field($_POST['paymentIntentId']) : '';
         $tramiteId = isset($_POST['tramiteId']) ? sanitize_text_field($_POST['tramiteId']) : '';
@@ -3134,7 +3117,7 @@ function create_payment_intent_hoja_asiento_renewal() {
 }
 
 // Registrar shortcode y handlers AJAX al nivel global (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
-add_shortcode('hoja_asiento_renewal_form', 'hoja_asiento_renewal_form_shortcode');
+add_shortcode('hoja_asiento_form', 'hoja_asiento_form_shortcode');
 
 add_action('wp_ajax_create_payment_intent_hoja_asiento_renewal', 'create_payment_intent_hoja_asiento_renewal');
 add_action('wp_ajax_nopriv_create_payment_intent_hoja_asiento_renewal', 'create_payment_intent_hoja_asiento_renewal');
