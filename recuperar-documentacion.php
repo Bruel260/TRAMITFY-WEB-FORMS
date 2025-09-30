@@ -12,11 +12,11 @@ error_log("=== RDOC FILE START ===");
 // Configuración de Stripe
 define('STRIPE_MODE', 'test'); // test o live
 
-define('STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY');
-define('STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY');
+define('STRIPE_TEST_PUBLIC_KEY', 'pk_test_YOUR_STRIPE_TEST_PUBLIC_KEY');
+define('STRIPE_TEST_SECRET_KEY', 'sk_test_YOUR_STRIPE_TEST_SECRET_KEY');
 
-define('STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY');
-define('STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY');
+define('STRIPE_LIVE_PUBLIC_KEY', 'pk_live_YOUR_STRIPE_LIVE_PUBLIC_KEY');
+define('STRIPE_LIVE_SECRET_KEY', 'sk_live_YOUR_STRIPE_LIVE_SECRET_KEY');
 
 if (STRIPE_MODE === 'test') {
     $stripe_public_key = STRIPE_TEST_PUBLIC_KEY;
@@ -309,23 +309,16 @@ function rdoc_send_to_tramitfy() {
         error_log("🔄 RDOC: Response: " . substr($response, 0, 500));
 
         $apiResponse = json_decode($response, true);
-        $tramiteId = $apiResponse['id'] ?? null;
-        $tramiteReference = $apiResponse['tramiteId'] ?? null;
+        $tramiteId = $apiResponse['tramiteId'] ?? null;
 
-        error_log("📧 === RECUPERAR DOC: Preparando envío de emails ===");
-        error_log("📧 TramiteId: $tramiteId");
-        error_log("📧 TramiteReference: $tramiteReference");
-        error_log("📧 CustomerEmail: " . $formData['customerEmail']);
-        error_log("📧 Función rdoc_send_confirmation_emails existe: " . (function_exists('rdoc_send_confirmation_emails') ? 'SÍ' : 'NO'));
-
-        error_log("📧 RDOC: Llamando a función de emails...");
-        rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId, $tramiteReference);
-
-        error_log("📧 === RECUPERAR DOC: Función de emails ejecutada ===");
+        error_log("=== RECUPERAR DOC: Datos enviados al API correctamente ===");
+        error_log("TramiteId devuelto: $tramiteId");
+        error_log("HTTP Code: $httpCode");
 
         echo json_encode([
             'success' => true,
             'message' => 'Datos enviados correctamente',
+            'tramiteId' => $tramiteId,
             'apiResponse' => $apiResponse,
             'httpCode' => $httpCode
         ]);
@@ -3084,6 +3077,9 @@ function recuperar_documentacion_form_shortcode() {
                     const tramiteResult = await rdocSendToTramitfy();
                     console.log('✅ Datos guardados, tramiteId:', tramiteResult.tramiteId);
 
+                    // Esperar 2 segundos antes de enviar emails para evitar conflictos
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+
                     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Enviando emails de confirmación...</span>';
                     await rdocSendEmails(tramiteResult.tramiteId);
                     console.log('✅ Emails enviados');
@@ -3120,30 +3116,27 @@ function recuperar_documentacion_form_shortcode() {
         async function rdocSendToTramitfy() {
             const formData = new FormData();
 
-            // Agregar datos del formulario
-            formData.append('customerName', document.getElementById('rdoc-name').value);
-            formData.append('customerDNI', document.getElementById('rdoc-dni').value);
-            formData.append('customerEmail', document.getElementById('rdoc-email').value);
-            formData.append('customerPhone', document.getElementById('rdoc-phone').value);
-            formData.append('vesselName', document.getElementById('rdoc-vessel-name').value);
-            formData.append('vesselRegistration', document.getElementById('rdoc-vessel-registration').value);
-            formData.append('consentTerms', document.getElementById('rdoc-consent-terms').checked);
-            formData.append('paymentIntentId', rdocClientSecret);
+            const data = {
+                customerName: document.getElementById('rdoc-name').value,
+                customerDNI: document.getElementById('rdoc-dni').value,
+                customerEmail: document.getElementById('rdoc-email').value,
+                customerPhone: document.getElementById('rdoc-phone').value,
+                vesselName: document.getElementById('rdoc-vessel-name').value,
+                vesselRegistration: document.getElementById('rdoc-vessel-registration').value,
+                consentTerms: document.getElementById('rdoc-consent-terms').checked,
+                signatureData: rdocGetSignatureDataURL(),
+                paymentIntentId: rdocClientSecret
+            };
 
-            // Agregar archivos DNI
+            formData.append('action', 'rdoc_send_to_tramitfy');
+            formData.append('formData', JSON.stringify(data));
+
             rdocDniFiles.forEach(file => {
-                formData.append('dniDocumento', file);
+                formData.append('dniDocumento[]', file);
             });
 
-            // Agregar firma como archivo
-            const signatureDataURL = rdocGetSignatureDataURL();
-            if (signatureDataURL) {
-                const signatureBlob = await fetch(signatureDataURL).then(r => r.blob());
-                formData.append('signatureData', signatureBlob, 'firma.png');
-            }
-
-            // Enviar directamente al webhook del API
-            const response = await fetch('<?php echo TRAMITFY_API_URL; ?>', {
+            // Enviar a WordPress para que genere el PDF y lo suba al API
+            const response = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
                 method: 'POST',
                 body: formData
             });
@@ -3157,6 +3150,8 @@ function recuperar_documentacion_form_shortcode() {
         }
 
         async function rdocSendEmails(tramiteId) {
+            console.log('📧 Iniciando envío de emails para tramiteId:', tramiteId);
+
             const formData = new FormData();
             formData.append('action', 'rdoc_send_emails');
             formData.append('customerName', document.getElementById('rdoc-name').value);
@@ -3165,14 +3160,19 @@ function recuperar_documentacion_form_shortcode() {
             formData.append('vesselRegistration', document.getElementById('rdoc-vessel-registration').value);
             formData.append('tramiteId', tramiteId);
 
+            console.log('📧 Enviando request a admin-ajax.php...');
             const response = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
                 method: 'POST',
                 body: formData
             });
 
+            console.log('📧 Response status:', response.status);
             const result = await response.json();
+            console.log('📧 Response data:', result);
+
             if (!result.success) {
-                console.warn('Emails no enviados:', result);
+                console.error('❌ Emails no enviados:', result);
+                throw new Error(result.message || 'Error al enviar emails');
             }
             return result;
         }
@@ -3237,10 +3237,11 @@ function rdoc_send_emails() {
     );
 
     $mail_sent_customer = wp_mail($customer_email, $subject_customer, $message_customer, $headers);
-    error_log("Email cliente enviado: " . ($mail_sent_customer ? 'SI' : 'NO'));
+    error_log("Email cliente enviado a $customer_email: " . ($mail_sent_customer ? 'SI' : 'NO'));
 
     // Email al admin
-    $admin_email = 'info@tramitfy.es';
+    $admin_email = 'ipmgroup24@gmail.com';
+    error_log("Preparando email admin para: $admin_email");
     $subject_admin = "Nueva Solicitud - Recuperación de Documentación [$tramite_id]";
     $message_admin = "
     <html>
@@ -3257,11 +3258,14 @@ function rdoc_send_emails() {
     ";
 
     $mail_sent_admin = wp_mail($admin_email, $subject_admin, $message_admin, $headers);
-    error_log("Email admin enviado: " . ($mail_sent_admin ? 'SI' : 'NO'));
+    error_log("Email admin enviado a $admin_email: " . ($mail_sent_admin ? 'SI' : 'NO'));
+    error_log("Resultado final - Cliente: $mail_sent_customer, Admin: $mail_sent_admin");
 
     if ($mail_sent_customer && $mail_sent_admin) {
+        error_log("=== AMBOS EMAILS ENVIADOS CORRECTAMENTE ===");
         wp_send_json_success(['message' => 'Emails enviados correctamente']);
     } else {
+        error_log("=== ERROR: Cliente=$mail_sent_customer, Admin=$mail_sent_admin ===");
         wp_send_json_error(['message' => 'Error al enviar emails']);
     }
 
