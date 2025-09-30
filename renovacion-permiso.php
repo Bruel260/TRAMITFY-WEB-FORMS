@@ -2396,6 +2396,8 @@ function navigation_permit_renewal_form_shortcode() {
 // ==========================================
 function send_navigation_permit_to_tramitfy() {
     try {
+        error_log('=== PERMISO NAVEGACIÓN: Inicio ===');
+
         $uploadDir = wp_upload_dir();
         $baseUploadPath = $uploadDir['basedir'] . '/tramitfy-permiso-navegacion/';
 
@@ -2405,19 +2407,21 @@ function send_navigation_permit_to_tramitfy() {
 
         $timestamp = time();
 
-        // Preparar datos del formulario
+        // Preparar datos del formulario (con isset para evitar errores)
         $formData = array(
-            'customerName' => sanitize_text_field($_POST['customer_name']),
-            'customerDni' => sanitize_text_field($_POST['customer_dni']),
-            'customerEmail' => sanitize_email($_POST['customer_email']),
-            'customerPhone' => sanitize_text_field($_POST['customer_phone']),
-            'renewalType' => sanitize_text_field($_POST['renewal_type']),
-            'finalAmount' => floatval($_POST['final_amount']),
-            'paymentIntentId' => sanitize_text_field($_POST['payment_intent_id']),
-            'hasSignature' => sanitize_text_field($_POST['has_signature']),
-            'couponCode' => sanitize_text_field($_POST['coupon_code']),
-            'termsAccept' => sanitize_text_field($_POST['terms_accept'])
+            'customerName' => isset($_POST['customer_name']) ? sanitize_text_field($_POST['customer_name']) : '',
+            'customerDni' => isset($_POST['customer_dni']) ? sanitize_text_field($_POST['customer_dni']) : '',
+            'customerEmail' => isset($_POST['customer_email']) ? sanitize_email($_POST['customer_email']) : '',
+            'customerPhone' => isset($_POST['customer_phone']) ? sanitize_text_field($_POST['customer_phone']) : '',
+            'renewalType' => isset($_POST['renewal_type']) ? sanitize_text_field($_POST['renewal_type']) : 'renovacion',
+            'finalAmount' => isset($_POST['final_amount']) ? floatval($_POST['final_amount']) : 65.00,
+            'paymentIntentId' => isset($_POST['payment_intent_id']) ? sanitize_text_field($_POST['payment_intent_id']) : '',
+            'hasSignature' => isset($_POST['has_signature']) ? sanitize_text_field($_POST['has_signature']) : '',
+            'couponCode' => isset($_POST['coupon_code']) ? sanitize_text_field($_POST['coupon_code']) : '',
+            'termsAccept' => isset($_POST['terms_accept']) ? sanitize_text_field($_POST['terms_accept']) : ''
         );
+
+        error_log('Datos preparados OK');
 
         // Guardar firma si existe
         $signaturePath = null;
