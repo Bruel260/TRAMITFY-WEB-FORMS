@@ -2,24 +2,37 @@
 // Asegurarse de que el archivo no sea accedido directamente
 defined('ABSPATH') || exit;
 
-// Envolver todo en el hook init para evitar conflictos con Elementor
-add_action('init', 'navigation_permit_init', 999);
+// Cargar Stripe library ANTES de las funciones (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
+require_once(get_template_directory() . '/vendor/autoload.php');
 
-function navigation_permit_init() {
-    // Registrar shortcode - siempre necesario para que aparezca en Elementor
-    add_shortcode('navigation_permit_renewal_form', 'navigation_permit_renewal_form_shortcode');
+// Configuración de Stripe AL NIVEL GLOBAL (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
+define('NAVIGATION_PERMIT_STRIPE_MODE', 'test'); // 'test' o 'live'
 
-    // Registrar AJAX handlers - siempre necesarios
-    add_action('wp_ajax_send_navigation_permit_to_tramitfy', 'send_navigation_permit_to_tramitfy');
-    add_action('wp_ajax_nopriv_send_navigation_permit_to_tramitfy', 'send_navigation_permit_to_tramitfy');
-    add_action('wp_ajax_create_payment_intent_navigation_permit_renewal', 'create_payment_intent_navigation_permit_renewal');
-    add_action('wp_ajax_nopriv_create_payment_intent_navigation_permit_renewal', 'create_payment_intent_navigation_permit_renewal');
+define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'pk_test_YOUR_STRIPE_TEST_PUBLIC_KEY');
+define('NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY', 'sk_test_YOUR_STRIPE_TEST_SECRET_KEY');
+
+define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_YOUR_STRIPE_LIVE_PUBLIC_KEY');
+define('NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY', 'sk_live_YOUR_STRIPE_LIVE_SECRET_KEY');
+
+define('NAVIGATION_PERMIT_SERVICE_PRICE', 65.00);
+define('NAVIGATION_PERMIT_TASA_CERTIFICADO', 15.00);
+define('NAVIGATION_PERMIT_TASA_EMISION', 8.00);
+
+// Seleccionar las claves según el modo (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
+if (NAVIGATION_PERMIT_STRIPE_MODE === 'test') {
+    $stripe_public_key = NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY;
+    $stripe_secret_key = NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY;
+} else {
+    $stripe_public_key = NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY;
+    $stripe_secret_key = NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY;
 }
 
 /**
  * Shortcode para el formulario de renovación de permiso de navegación
  */
 function navigation_permit_renewal_form_shortcode() {
+    global $stripe_public_key, $stripe_secret_key;
+
     // Si estamos en el editor de Elementor, devolver un placeholder
     if (defined('ELEMENTOR_VERSION') &&
         class_exists('\Elementor\Plugin') &&
@@ -29,30 +42,6 @@ function navigation_permit_renewal_form_shortcode() {
                     <h3>Formulario de Renovación de Permiso de Navegación</h3>
                     <p>El formulario se mostrará aquí en el frontend.</p>
                 </div>';
-    }
-
-    // Configuración de Stripe - IGUAL QUE RECUPERAR DOCUMENTACIÓN
-    if (!defined('NAVIGATION_PERMIT_STRIPE_MODE')) {
-        define('NAVIGATION_PERMIT_STRIPE_MODE', 'test'); // 'test' o 'live'
-
-        define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'pk_test_YOUR_STRIPE_TEST_PUBLIC_KEY');
-        define('NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY', 'sk_test_YOUR_STRIPE_TEST_SECRET_KEY');
-
-        define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_YOUR_STRIPE_LIVE_PUBLIC_KEY');
-        define('NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY', 'sk_live_YOUR_STRIPE_LIVE_SECRET_KEY');
-
-        define('NAVIGATION_PERMIT_SERVICE_PRICE', 65.00);
-        define('NAVIGATION_PERMIT_TASA_CERTIFICADO', 15.00);
-        define('NAVIGATION_PERMIT_TASA_EMISION', 8.00);
-    }
-
-    // Seleccionar las claves según el modo (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
-    if (NAVIGATION_PERMIT_STRIPE_MODE === 'test') {
-        $stripe_public_key = NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY;
-        $stripe_secret_key = NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY;
-    } else {
-        $stripe_public_key = NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY;
-        $stripe_secret_key = NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY;
     }
     
     // Encolar los scripts y estilos necesarios
@@ -2810,4 +2799,12 @@ function create_payment_intent_navigation_permit_renewal() {
 
     wp_die();
 }
-?>
+
+// Registrar shortcode y handlers AJAX al nivel global (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
+add_shortcode('navigation_permit_renewal_form', 'navigation_permit_renewal_form_shortcode');
+
+add_action('wp_ajax_create_payment_intent_navigation_permit_renewal', 'create_payment_intent_navigation_permit_renewal');
+add_action('wp_ajax_nopriv_create_payment_intent_navigation_permit_renewal', 'create_payment_intent_navigation_permit_renewal');
+
+add_action('wp_ajax_send_navigation_permit_to_tramitfy', 'send_navigation_permit_to_tramitfy');
+add_action('wp_ajax_nopriv_send_navigation_permit_to_tramitfy', 'send_navigation_permit_to_tramitfy');
