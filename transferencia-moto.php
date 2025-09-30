@@ -3345,11 +3345,11 @@ function transferencia_moto_shortcode() {
         .tramitfy-sidebar {
             position: sticky;
             top: 20px;
-            background: linear-gradient(135deg, rgba(1, 109, 134, 0.05) 0%, rgba(1, 109, 134, 0.02) 100%);
+            background: linear-gradient(135deg, #014d5f 0%, #016d86 100%);
             border-radius: 16px;
             padding: 30px;
-            box-shadow: 0 8px 32px rgba(1, 109, 134, 0.08);
-            border: 1px solid rgba(1, 109, 134, 0.1);
+            box-shadow: 0 8px 32px rgba(1, 77, 95, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             min-height: 500px;
         }
@@ -3380,7 +3380,7 @@ function transferencia_moto_shortcode() {
             gap: 15px;
             margin-bottom: 25px;
             padding-bottom: 20px;
-            border-bottom: 2px solid rgba(1, 109, 134, 0.15);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
         }
 
         .sidebar-icon {
@@ -3402,14 +3402,14 @@ function transferencia_moto_shortcode() {
 
         .sidebar-title h3 {
             margin: 0 0 5px 0;
-            color: rgb(var(--primary-dark));
+            color: #ffffff;
             font-size: 20px;
             font-weight: 700;
         }
 
         .sidebar-title p {
             margin: 0;
-            color: rgb(var(--neutral-600));
+            color: rgba(255, 255, 255, 0.8);
             font-size: 13px;
         }
 
@@ -3418,17 +3418,18 @@ function transferencia_moto_shortcode() {
         }
 
         .sidebar-info-box {
-            background: white;
+            background: rgba(255, 255, 255, 0.15);
             padding: 18px;
             border-radius: 10px;
             margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-            border-left: 3px solid rgb(var(--primary));
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-left: 3px solid rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(10px);
         }
 
         .sidebar-info-box p {
             margin: 0 0 8px 0;
-            color: rgb(var(--neutral-700));
+            color: rgba(255, 255, 255, 0.95);
             font-size: 14px;
             line-height: 1.6;
         }
@@ -3438,7 +3439,7 @@ function transferencia_moto_shortcode() {
         }
 
         .sidebar-info-box strong {
-            color: rgb(var(--primary-dark));
+            color: #ffffff;
         }
 
         .sidebar-checklist {
@@ -3482,15 +3483,16 @@ function transferencia_moto_shortcode() {
         }
 
         .sidebar-tips {
-            background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, rgba(255, 193, 7, 0.03) 100%);
+            background: rgba(255, 255, 255, 0.1);
             padding: 18px;
             border-radius: 10px;
-            border-left: 3px solid #FFC107;
+            border-left: 3px solid rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(10px);
         }
 
         .sidebar-tips h4 {
             margin: 0 0 12px 0;
-            color: #F57C00;
+            color: #ffffff;
             font-size: 14px;
             font-weight: 700;
             display: flex;
@@ -3508,7 +3510,7 @@ function transferencia_moto_shortcode() {
         }
 
         .sidebar-tips li {
-            color: rgb(var(--neutral-700));
+            color: rgba(255, 255, 255, 0.9);
             font-size: 13px;
             line-height: 1.6;
             margin-bottom: 8px;
@@ -3877,23 +3879,31 @@ function transferencia_moto_shortcode() {
 
                     <!-- Contenido: PASO 1 - Vehículo -->
                     <div class="sidebar-content" data-step="page-vehiculo">
-                        <div class="sidebar-header">
-                            <div class="sidebar-icon">
-                                <i class="fa-solid fa-water"></i>
-                            </div>
-                            <div class="sidebar-title">
-                                <h3>Datos de tu moto de agua</h3>
-                                <p>Paso 1 de 6</p>
-                            </div>
-                        </div>
                         <div class="sidebar-body">
+                            <div class="sidebar-info-box" style="background: rgba(255, 255, 255, 0.2); padding: 20px; margin-bottom: 20px;">
+                                <p style="color: #ffffff; font-size: 16px; font-weight: 600; margin: 0;">
+                                    En 24 horas: Entrega en capitanía y documentos provisionales
+                                </p>
+                            </div>
+
+                            <!-- Precio Fijo -->
+                            <div style="background: rgba(255, 255, 255, 0.25); padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                                <div style="color: rgba(255, 255, 255, 0.9); font-size: 14px; margin-bottom: 8px;">Tu tramitación completa</div>
+                                <div style="color: #ffffff; font-size: 32px; font-weight: 700; margin-bottom: 15px;">134,95€</div>
+                                <div style="color: rgba(255, 255, 255, 0.95); font-size: 13px; line-height: 1.8; text-align: left;">
+                                    <div style="margin-bottom: 6px;">✓ Tasas de Capitanía Marítima</div>
+                                    <div style="margin-bottom: 6px;">✓ Gestión y pago ITP</div>
+                                    <div style="margin-bottom: 6px;">✓ Honorarios profesionales</div>
+                                    <div>✓ IVA incluido</div>
+                                </div>
+                            </div>
+
                             <div class="sidebar-info-box">
                                 <p><strong>Necesitaremos información básica</strong> de tu moto de agua para iniciar el trámite.</p>
                                 <p>Puedes buscar por <strong>fabricante y modelo</strong> en nuestra base de datos, o introducir los datos manualmente si no lo encuentras.</p>
                             </div>
                         </div>
                         <div class="sidebar-tips">
-                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
                             <ul>
                                 <li>La <strong>fecha de matriculación</strong> es importante para calcular el ITP</li>
                                 <li>La encontrarás en el <strong>Tarjeta de la Moto</strong></li>
@@ -3904,35 +3914,54 @@ function transferencia_moto_shortcode() {
 
                     <!-- Contenido: PASO 2 - Precio -->
                     <div class="sidebar-content" data-step="page-precio">
-                        <div class="sidebar-header">
-                            <div class="sidebar-icon">
-                                <i class="fa-solid fa-calculator"></i>
-                            </div>
-                            <div class="sidebar-title">
-                                <h3>Impuestos y Servicios</h3>
-                                <p>Paso 2 de 6</p>
-                            </div>
-                        </div>
                         <div class="sidebar-body">
-                            <div class="sidebar-price-highlight">
-                                <div class="sidebar-price-label">Tu tramitación completa</div>
-                                <div class="sidebar-price-amount">134,95€</div>
-                                <div class="sidebar-price-includes">
-                                    ✓ Tasas oficiales de Capitanía<br>
+                            <!-- Nuestros Servicios - ARRIBA -->
+                            <div style="background: rgba(255, 255, 255, 0.25); padding: 20px; border-radius: 10px; color: #ffffff; margin-bottom: 25px;">
+                                <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Nuestros servicios</div>
+                                <div style="font-size: 28px; font-weight: 700; margin-bottom: 12px;">134,95€</div>
+                                <div style="font-size: 12px; line-height: 1.8; opacity: 0.95;">
+                                    ✓ Tasas de Capitanía Marítima<br>
+                                    ✓ Gestión y pago ITP<br>
                                     ✓ Honorarios profesionales<br>
                                     ✓ IVA incluido
                                 </div>
-                                <div class="sidebar-badge">
-                                    <i class="fa-solid fa-lock"></i> Pago 100% seguro
-                                </div>
                             </div>
-                            <div class="sidebar-info-box">
-                                <p><strong>El ITP se calcula automáticamente</strong> según el valor fiscal y la comunidad autónoma.</p>
-                                <p>Recuerda que el <strong>ITP no está incluido</strong> en el precio y se abona directamente a Hacienda.</p>
+
+                            <div style="color: #ffffff; font-size: 18px; font-weight: 600; margin-bottom: 20px;">
+                                Desglose del trámite
+                            </div>
+
+                            <!-- Cálculo dinámico del ITP -->
+                            <div class="sidebar-itp-calculator" id="sidebar-itp-display" style="background: rgba(255, 255, 255, 0.2); padding: 18px; border-radius: 10px; margin-bottom: 20px; backdrop-filter: blur(10px);">
+                                <h4 style="margin: 0 0 12px 0; font-size: 15px; color: #ffffff; font-weight: 600;">Impuesto de Transmisiones Patrimoniales</h4>
+                                <div style="font-size: 13px; color: rgba(255, 255, 255, 0.95);">
+                                    <div style="display: flex; justify-content: space-between; padding: 5px 0;">
+                                        <span>Precio compra:</span>
+                                        <strong id="sidebar-purchase-price" style="color: #ffffff;">0€</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 5px 0;">
+                                        <span>Valor fiscal:</span>
+                                        <strong id="sidebar-fiscal-value" style="color: #ffffff;">-</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid rgba(255, 255, 255, 0.3); margin-top: 6px;">
+                                        <span>Base imponible:</span>
+                                        <strong id="sidebar-tax-base" style="color: #ffffff;">0€</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 5px 0;">
+                                        <span>Tipo (<span id="sidebar-region-name">-</span>):</span>
+                                        <strong id="sidebar-tax-rate" style="color: #ffffff;">4%</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 10px 0; border-top: 2px solid rgba(255, 255, 255, 0.5); margin-top: 8px; font-weight: bold;">
+                                        <span style="color: #ffffff;">ITP a pagar:</span>
+                                        <strong id="sidebar-itp-amount" style="font-size: 18px; color: #ffffff;">0€</strong>
+                                    </div>
+                                </div>
+                                <small style="display: block; margin-top: 10px; color: rgba(255, 255, 255, 0.8); font-size: 11px;">
+                                    ℹ️ Se aplica sobre el mayor valor
+                                </small>
                             </div>
                         </div>
                         <div class="sidebar-tips">
-                            <h4><i class="fa-solid fa-lightbulb"></i> Consejos útiles</h4>
                             <ul>
                                 <li>Puedes aplicar un <strong>cupón de descuento</strong> si lo tienes</li>
                                 <li>El ITP varía según cada <strong>comunidad autónoma</strong></li>
@@ -3943,16 +3972,10 @@ function transferencia_moto_shortcode() {
 
                     <!-- Contenido: PASO 3 - Documentos -->
                     <div class="sidebar-content" data-step="page-documentos">
-                        <div class="sidebar-header">
-                            <div class="sidebar-icon">
-                                <i class="fa-solid fa-file-circle-check"></i>
-                            </div>
-                            <div class="sidebar-title">
-                                <h3>Tu documentación</h3>
-                                <p>Paso 3 de 6</p>
-                            </div>
-                        </div>
                         <div class="sidebar-body">
+                            <div class="sidebar-info-box" style="margin-bottom: 25px;">
+                                <p style="font-size: 16px; font-weight: 600; margin-bottom: 15px;">Estás a un paso de rellenar tus papeles, ten preparada:</p>
+                            </div>
                             <div class="sidebar-checklist">
                                 <div class="sidebar-checklist-item">
                                     <div class="sidebar-check-icon">
@@ -4058,33 +4081,86 @@ function transferencia_moto_shortcode() {
 
                     <!-- Contenido: PASO 6 - Resumen y Pago -->
                     <div class="sidebar-content" data-step="page-resumen">
-                        <div class="sidebar-header">
-                            <div class="sidebar-icon">
-                                <i class="fa-solid fa-credit-card"></i>
-                            </div>
-                            <div class="sidebar-title">
-                                <h3>Confirma y paga</h3>
-                                <p>Paso 6 de 6</p>
-                            </div>
-                        </div>
                         <div class="sidebar-body">
-                            <div class="sidebar-price-highlight">
-                                <div class="sidebar-price-label">Total a pagar ahora</div>
-                                <div class="sidebar-price-amount" id="sidebar-final-amount">134,95€</div>
-                                <div class="sidebar-price-includes">
-                                    ✓ Gestión completa<br>
-                                    ✓ Tasas + Honorarios + IVA<br>
-                                    ✗ ITP (se paga a Hacienda)
+                            <!-- Resumen completo del trámite movido a sidebar -->
+                            <div style="margin-bottom: 25px;">
+                                <h3 style="margin-bottom: 20px; color: #ffffff; font-size: 18px;"><i class="fa-solid fa-clipboard-list"></i> Resumen de su trámite</h3>
+
+                                <!-- Datos Personales -->
+                                <div style="background: rgba(255, 255, 255, 0.15); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                    <h4 style="color: #ffffff; font-size: 14px; margin-bottom: 10px;"><i class="fa-solid fa-user"></i> Datos Personales</h4>
+                                    <div style="font-size: 13px; color: rgba(255, 255, 255, 0.9); line-height: 1.8;">
+                                        <p style="margin: 5px 0;"><strong>Nombre:</strong> <span id="summary-name">-</span></p>
+                                        <p style="margin: 5px 0;"><strong>DNI:</strong> <span id="summary-dni">-</span></p>
+                                        <p style="margin: 5px 0;"><strong>Email:</strong> <span id="summary-email">-</span></p>
+                                        <p style="margin: 5px 0;"><strong>Teléfono:</strong> <span id="summary-phone">-</span></p>
+                                    </div>
                                 </div>
-                                <div class="sidebar-badge">
-                                    <i class="fa-solid fa-shield-halved"></i> Conexión cifrada SSL
+
+                                <!-- Datos del Vehículo -->
+                                <div style="background: rgba(255, 255, 255, 0.15); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                    <h4 style="color: #ffffff; font-size: 14px; margin-bottom: 10px;"><i class="fa-solid fa-motorcycle"></i> Vehículo</h4>
+                                    <div style="font-size: 13px; color: rgba(255, 255, 255, 0.9); line-height: 1.8;">
+                                        <p style="margin: 5px 0;"><strong>Tipo:</strong> <span id="summary-vehicle-type">-</span></p>
+                                        <p style="margin: 5px 0;"><strong>Fabricante:</strong> <span id="summary-manufacturer">-</span></p>
+                                        <p style="margin: 5px 0;"><strong>Modelo:</strong> <span id="summary-model">-</span></p>
+                                        <p style="margin: 5px 0;"><strong>Fecha Matric.:</strong> <span id="summary-matriculation">-</span></p>
+                                        <p style="margin: 5px 0;"><strong>Precio Compra:</strong> <span id="summary-purchase-price">-</span></p>
+                                        <p style="margin: 5px 0;"><strong>Com. Autónoma:</strong> <span id="summary-region">-</span></p>
+                                    </div>
+                                </div>
+
+                                <!-- Resumen de Pago -->
+                                <div style="background: rgba(255, 255, 255, 0.15); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                    <h4 style="color: #ffffff; font-size: 14px; margin-bottom: 10px;"><i class="fa-solid fa-receipt"></i> Resumen de Pago</h4>
+                                    <div style="font-size: 13px; color: rgba(255, 255, 255, 0.9); line-height: 1.8;">
+                                        <p style="margin: 5px 0;"><strong>Cambio de titularidad:</strong> <span id="summary-base-price">134.99 €</span></p>
+                                        <p style="margin: 10px 0 5px 0; font-size: 12px; opacity: 0.8;"><strong>Incluye:</strong></p>
+                                        <div style="margin-left: 10px;">
+                                            <p style="margin: 3px 0;">• Tasas + Gestión: <span id="summary-tasas-gestion">114.87 €</span></p>
+                                            <p style="margin: 3px 0;">• IVA: <span id="summary-iva">20.12 €</span></p>
+                                            <p style="margin: 3px 0;">• Comisión bancaria: <span id="summary-comision">0 €</span></p>
+                                        </div>
+                                        <p style="margin: 10px 0 5px 0;"><strong>Impuesto transmisiones:</strong> <span id="summary-transfer-tax-detail">0 €</span></p>
+                                        <p id="summary-discount-detail" style="display: none; color: #4ade80;"><strong>Descuento aplicado:</strong> <span id="summary-discount-amount">0 €</span></p>
+
+                                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.2);">
+                                            <p id="summary-extras-detail" style="display: none;"><strong>Servicios adicionales:</strong></p>
+                                            <p id="summary-name-change" style="display: none;">• Cambio de Nombre: <span>40 €</span></p>
+                                            <p id="summary-port-change" style="display: none;">• Cambio de Puerto: <span>40 €</span></p>
+                                            <div id="summary-extras"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Cupón aplicado (si existe) -->
+                                <div id="summary-coupon-container" style="display: none; background: rgba(74, 222, 128, 0.2); padding: 10px; border-radius: 6px; margin-bottom: 15px;">
+                                    <p style="margin: 0; color: #ffffff;"><i class="fa-solid fa-tag"></i> <strong>Cupón aplicado:</strong> <span id="summary-coupon">-</span></p>
+                                </div>
+
+                                <!-- Total destacado -->
+                                <div style="background: rgba(255, 255, 255, 0.25); padding: 18px; border-radius: 10px; margin-top: 20px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: 18px; font-weight: 700; color: #ffffff;">TOTAL:</span>
+                                        <span id="final-summary-amount" style="font-size: 26px; font-weight: 700; color: #ffffff;">0 €</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="sidebar-info-box">
+
+                            <div class="sidebar-info-box" style="margin-top: 20px;">
                                 <p><strong>Revisa todos los datos</strong> antes de proceder al pago.</p>
                                 <p>Recibirás confirmación por <strong>email inmediatamente</strong>.</p>
                             </div>
+
+                            <div class="sidebar-badge" style="margin-top: 15px; text-align: center; padding: 12px; background: rgba(255, 255, 255, 0.15); border-radius: 8px;">
+                                <i class="fa-solid fa-shield-halved"></i> Conexión cifrada SSL
+                            </div>
                         </div>
+                    </div>
+
+                    <!-- Widget TrustIndex Reviews - Bottom -->
+                    <div style="margin-top: 30px; padding-top: 25px; border-top: 2px solid rgba(255, 255, 255, 0.2);">
+                        <script defer async src='https://cdn.trustindex.io/loader.js?f4fbfd341d12439e0c86fae7fc2'></script>
                     </div>
 
                 </aside>
@@ -4193,10 +4269,6 @@ function transferencia_moto_shortcode() {
             <h2 style="margin-bottom: 10px;">Transferencia de Propiedad</h2>
             <h3 style="margin-bottom: 25px; font-size: 18px; color: #666;">Información de la Moto</h3>
 
-            <!-- TrustIndex Reviews Widget -->
-            <div style="margin: 20px 0 30px; text-align: center;">
-                <script defer async src='https://cdn.trustindex.io/loader.js?f4fbfd341d12439e0c86fae7fc2'></script>
-            </div>
             <!-- Tipo de vehículo fijo: Barco -->
             <input type="hidden" name="vehicle_type" value="Barco">
 
@@ -4289,19 +4361,14 @@ function transferencia_moto_shortcode() {
 
         </div> <!-- Fin page-vehiculo -->
 
-        <!-- Página Precio - REDISEÑADA -->
+        <!-- Página Precio -->
         <div id="page-precio" class="form-page form-section-compact hidden">
-            <h2>Resumen del Trámite</h2>
-            
-            <!-- Tarjeta principal mejorada con todos los detalles del trámite -->
+
+            <!-- Tarjeta principal -->
             <div class="price-summary-card">
-                <div class="price-summary-header">
-                    <h3><i class="fa-solid fa-receipt"></i> Desglose del Trámite</h3>
-                    <div class="price-summary-badge">Precio transparente</div>
-                </div>
-                
                 <div class="price-summary-body">
-                    <!-- Servicio principal -->
+
+                    <!-- 1. Cambio de Titularidad -->
                     <div class="price-summary-main">
                         <div class="price-summary-title">
                             <span>Cambio de Titularidad</span>
@@ -4309,25 +4376,13 @@ function transferencia_moto_shortcode() {
                         </div>
                         <div class="price-summary-details">
                             <div class="price-summary-row">
-                                <span><i class="fa-solid fa-check"></i> Tasas capitanía marítima + Gestión</span>
-                                <span id="tasas_honorarios_display">114.87 €</span>
-                            </div>
-                            <div class="price-summary-row">
-                                <span><i class="fa-solid fa-check"></i> IVA</span>
-                                <span id="iva_display">20.12 €</span>
-                            </div>
-                            <div class="price-summary-row">
-                                <span><i class="fa-solid fa-check"></i> Comisión bancaria (1.5% del ITP)</span>
+                                <span>Comisión bancaria (1.5% del ITP)</span>
                                 <span id="extra_fee_includes_display">0 €</span>
-                            </div>
-                            <div class="price-summary-row discount-row" id="discount-li" style="display:none;">
-                                <span><i class="fa-solid fa-tag"></i> Descuento aplicado</span>
-                                <span id="discount-amount" class="discount-text">0 €</span>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Impuesto de transmisiones -->
+
+                    <!-- 2. Impuesto de Transmisiones Patrimoniales -->
                     <div class="price-summary-tax">
                         <div class="price-summary-title">
                             <span>Impuesto de Transmisiones Patrimoniales</span>
@@ -4335,10 +4390,11 @@ function transferencia_moto_shortcode() {
                         </div>
                         <div class="price-summary-help">
                             <button type="button" id="info-link" class="info-button-sm">
-                                <i class="fa-solid fa-info-circle"></i> <span id="info-button-text">Ver detalle del cálculo del ITP</span>
+                                Ver detalle del cálculo del ITP
                             </button>
                         </div>
-                        <!-- Opción para ITP ya pagado -->
+
+                        <!-- Opción: Ya tengo pagado el ITP -->
                         <div class="itp-paid-option">
                             <label class="service-checkbox">
                                 <input type="checkbox" id="itp_already_paid" name="itp_already_paid">
@@ -4408,10 +4464,10 @@ function transferencia_moto_shortcode() {
                     </div>
                     
                     <!-- Desplegables para secciones opcionales -->
-                    <!-- Servicios adicionales - ahora como acordeón -->
+                    <!-- 3. Servicios Adicionales Opcionales -->
                     <div class="price-summary-accordion" id="services-accordion">
                         <div class="accordion-toggle-header">
-                            <span><i class="fa-solid fa-plus-circle"></i> Servicios Adicionales Opcionales</span>
+                            <span>Servicios Adicionales Opcionales</span>
                             <i class="fa-solid fa-chevron-down accordion-icon"></i>
                         </div>
                         <div class="accordion-content-section">
@@ -4445,10 +4501,10 @@ function transferencia_moto_shortcode() {
                         </div>
                     </div>
                     
-                    <!-- Cupón - ahora como acordeón -->
+                    <!-- 4. Cupón de descuento -->
                     <div class="price-summary-accordion" id="coupon-accordion">
                         <div class="accordion-toggle-header">
-                            <span><i class="fa-solid fa-tag"></i> ¿Tienes un cupón de descuento?</span>
+                            <span>¿Tienes un cupón de descuento?</span>
                             <i class="fa-solid fa-chevron-down accordion-icon"></i>
                         </div>
                         <div class="accordion-content-section">
@@ -4462,13 +4518,19 @@ function transferencia_moto_shortcode() {
                         </div>
                     </div>
                     
-                    <!-- Total con distintivo visual -->
+                    <!-- Línea de descuento (si aplica) -->
+                    <div class="price-summary-row discount-row" id="discount-li" style="display:none; padding: 15px 0; border-top: 1px solid #eee;">
+                        <span>Descuento aplicado</span>
+                        <span id="discount-amount" class="discount-text" style="color: #16a34a; font-weight: 600;">0 €</span>
+                    </div>
+
+                    <!-- 5. Total a Pagar -->
                     <div class="price-summary-total">
                         <div class="price-summary-total-label">
                             <span>Total a Pagar</span>
                             <div class="price-summary-guarantees">
-                                <span><i class="fa-solid fa-lock"></i> Pago seguro</span>
-                                <span><i class="fa-solid fa-shield-alt"></i> Garantía de servicio</span>
+                                <span>Pago seguro</span>
+                                <span>Garantía de servicio</span>
                             </div>
                         </div>
                         <div class="price-summary-total-amount" id="final-amount">134.99 €</div>
@@ -4688,72 +4750,10 @@ function transferencia_moto_shortcode() {
 
         <!-- Página Pago -->
         <div id="page-pago" class="form-page form-section-compact hidden">
-            <h2 style="margin-bottom: 10px;">Resumen y Pago</h2>
+            <h2 style="margin-bottom: 30px; font-size: 24px; text-align: center;">Pago Seguro</h2>
 
-            <!-- Panel de resumen completo del trámite -->
-            <div class="summary-panel">
-                <h3 style="margin-bottom: 20px;"><i class="fa-solid fa-clipboard-list"></i> Resumen de su trámite</h3>
+            <p style="text-align: center; color: #666; margin-bottom: 40px;">Revisa el resumen de tu trámite en el panel izquierdo antes de continuar.</p>
 
-                <div class="summary-grid">
-                    <!-- Columna 1: Datos Personales -->
-                    <div class="summary-section">
-                        <h4><i class="fa-solid fa-user"></i> Datos Personales</h4>
-                        <div class="summary-content">
-                            <p><strong>Nombre:</strong> <span id="summary-name">-</span></p>
-                            <p><strong>DNI:</strong> <span id="summary-dni">-</span></p>
-                            <p><strong>Email:</strong> <span id="summary-email">-</span></p>
-                            <p><strong>Teléfono:</strong> <span id="summary-phone">-</span></p>
-                        </div>
-                    </div>
-                    
-                    <!-- Columna 2: Datos del Vehículo -->
-                    <div class="summary-section">
-                        <h4><i class="fa-solid fa-water"></i> Vehículo</h4>
-                        <div class="summary-content">
-                            <p><strong>Tipo:</strong> <span id="summary-vehicle-type">-</span></p>
-                            <p><strong>Fabricante:</strong> <span id="summary-manufacturer">-</span></p>
-                            <p><strong>Modelo:</strong> <span id="summary-model">-</span></p>
-                            <p><strong>Fecha Matric.:</strong> <span id="summary-matriculation">-</span></p>
-                            <p><strong>Precio Compra:</strong> <span id="summary-purchase-price">-</span></p>
-                            <p><strong>Com. Autónoma:</strong> <span id="summary-region">-</span></p>
-                        </div>
-                    </div>
-                    
-                    <!-- Columna 3: Resumen de Pago -->
-                    <div class="summary-section">
-                        <h4><i class="fa-solid fa-receipt"></i> Resumen de Pago</h4>
-                        <div class="summary-content">
-                            <p><strong>Cambio de titularidad:</strong> <span id="summary-base-price">134.99 €</span></p>
-                            <p style="margin-top: 10px; font-size: 0.9em; color: #666;"><strong>Incluye:</strong></p>
-                            <div style="margin-left: 10px; font-size: 0.9em;">
-                                <p>• Tasas + Gestión: <span id="summary-tasas-gestion">114.87 €</span></p>
-                                <p>• IVA: <span id="summary-iva">20.12 €</span></p>
-                                <p>• Comisión bancaria: <span id="summary-comision">0 €</span></p>
-                            </div>
-                            <p style="margin-top: 10px;"><strong>Impuesto transmisiones:</strong> <span id="summary-transfer-tax-detail">0 €</span></p>
-                            <p id="summary-discount-detail" style="display: none; color: #2e8b57;"><strong>Descuento aplicado:</strong> <span id="summary-discount-amount">0 €</span></p>
-                            
-                            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ddd;">
-                                <p id="summary-extras-detail" style="display: none;"><strong>Servicios adicionales:</strong></p>
-                                <p id="summary-name-change" style="display: none;">• Cambio de Nombre: <span>40 €</span></p>
-                                <p id="summary-port-change" style="display: none;">• Cambio de Puerto: <span>40 €</span></p>
-                                <div id="summary-extras"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Cupón aplicado (si existe) -->
-                <div id="summary-coupon-container" style="display: none;">
-                    <p><i class="fa-solid fa-tag"></i> <strong>Cupón aplicado:</strong> <span id="summary-coupon">-</span></p>
-                </div>
-            </div>
-            
-            <div class="total-price" style="margin-top: 30px; padding: 15px 20px; background-color: rgba(var(--primary), 0.05); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
-                <span class="total-label" style="font-size: 20px; font-weight: 600; color: rgb(var(--neutral-800));">TOTAL:</span>
-                <span class="total-value" id="final-summary-amount" style="font-size: 24px; font-weight: 700; color: rgb(var(--primary)); background-color: rgba(var(--primary), 0.1); padding: 8px 15px; border-radius: var(--radius-md);">0 €</span>
-            </div>
-            
             <div class="terms-container payment-terms" style="margin-top: 30px; text-align: center; padding: 20px; border: 2px solid rgba(var(--primary), 0.3); border-radius: var(--radius-md); background-color: rgba(var(--primary), 0.05); box-shadow: 0 4px 8px rgba(0,0,0,0.05);">
                 <label style="display: flex; align-items: center; justify-content: center; gap: 12px; font-weight: 500; cursor: pointer;">
                     <div class="custom-checkbox-container" style="position: relative; width: 18px; height: 18px;">
@@ -5383,6 +5383,21 @@ function transferencia_moto_shortcode() {
             taxBaseDisplay.textContent = baseValue.toFixed(2) + ' €';
             taxRateDisplay.textContent = (rate * 100).toFixed(2) + ' %';
             calculatedItpDisplay.textContent = itp.toFixed(2) + ' €';
+
+            // Actualizar sidebar
+            const sidebarPurchasePrice = document.getElementById('sidebar-purchase-price');
+            const sidebarFiscalValue = document.getElementById('sidebar-fiscal-value');
+            const sidebarTaxBase = document.getElementById('sidebar-tax-base');
+            const sidebarTaxRate = document.getElementById('sidebar-tax-rate');
+            const sidebarItpAmount = document.getElementById('sidebar-itp-amount');
+            const sidebarRegionName = document.getElementById('sidebar-region-name');
+
+            if (sidebarPurchasePrice) sidebarPurchasePrice.textContent = purchasePrice.toFixed(2) + '€';
+            if (sidebarFiscalValue) sidebarFiscalValue.textContent = fiscalValue.toFixed(2) + '€';
+            if (sidebarTaxBase) sidebarTaxBase.textContent = baseValue.toFixed(2) + '€';
+            if (sidebarTaxRate) sidebarTaxRate.textContent = (rate * 100).toFixed(0) + '%';
+            if (sidebarItpAmount) sidebarItpAmount.textContent = itp.toFixed(2) + '€';
+            if (sidebarRegionName) sidebarRegionName.textContent = region || '-';
 
             return { itp, extraFee };
         }
