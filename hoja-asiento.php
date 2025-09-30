@@ -1,24 +1,26 @@
-<?php 
+<?php
 // Asegurarse de que el archivo no sea accedido directamente
 defined('ABSPATH') || exit;
 
-/**
- * [MODO TEST/PRODUCCIÓN]
- * Cambia a false en producción.
- */
-$is_test_mode = true; // true = usa claves de prueba, false = usa claves en vivo.
-$publishable_key_test = 'pk_test_YOUR_STRIPE_TEST_PUBLIC_KEY';
-$publishable_key_live = 'pk_live_YOUR_STRIPE_LIVE_PUBLIC_KEY';
-$secret_key_test = 'sk_test_YOUR_STRIPE_TEST_SECRET_KEY';
-$secret_key_live = 'sk_live_YOUR_STRIPE_LIVE_SECRET_KEY';
+// Cargar Stripe library ANTES de las funciones (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
+require_once(get_template_directory() . '/vendor/autoload.php');
+
+// Configuración de Stripe AL NIVEL GLOBAL (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
+define('HOJA_ASIENTO_STRIPE_MODE', 'test'); // 'test' o 'live'
+
+define('HOJA_ASIENTO_STRIPE_TEST_PUBLIC_KEY', 'pk_test_YOUR_STRIPE_TEST_PUBLIC_KEY');
+define('HOJA_ASIENTO_STRIPE_TEST_SECRET_KEY', 'sk_test_YOUR_STRIPE_TEST_SECRET_KEY');
+
+define('HOJA_ASIENTO_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_YOUR_STRIPE_LIVE_PUBLIC_KEY');
+define('HOJA_ASIENTO_STRIPE_LIVE_SECRET_KEY', 'sk_live_YOUR_STRIPE_LIVE_SECRET_KEY');
+
+define('HOJA_ASIENTO_PRECIO_BASE', 29.95);
+define('HOJA_ASIENTO_API_URL', 'https://46-202-128-35.sslip.io/api/herramientas/hoja-asiento/webhook');
 
 /**
  * Función principal para generar y mostrar el formulario en el frontend
  */
 function hoja_asiento_form_shortcode() {
-    // Variables globales
-    global $is_test_mode, $publishable_key_test, $publishable_key_live;
-
     // Encolar scripts y estilos
     wp_enqueue_style('hoja-asiento-form-style', get_template_directory_uri() . '/style.css', array(), filemtime(get_template_directory() . '/style.css'));
     wp_enqueue_script('stripe', 'https://js.stripe.com/v3/', array(), null, false);
@@ -27,7 +29,7 @@ function hoja_asiento_form_shortcode() {
 
     // Generar ID de trámite
     $prefix = 'TMA-HOJA';
-    $counter_option = $is_test_mode ? 'tma_hoja_counter_test' : 'tma_hoja_counter';
+    $counter_option = (HOJA_ASIENTO_STRIPE_MODE === 'test') ? 'tma_hoja_counter_test' : 'tma_hoja_counter';
     $date_part = date('Ymd');
     $current_cnt = get_option($counter_option, 0);
     $current_cnt++;
@@ -5540,10 +5542,13 @@ console.log('Navegación sin desplazamiento automático');
             modalPaymentElement.innerHTML = '';
             modalMessageElement.className = 'hidden';
 
-            // Inicializar Stripe con la clave pública correcta según el modo
-            const stripeKey = '<?php echo ($is_test_mode ? $publishable_key_test : $publishable_key_live); ?>';
-            console.log("Modo de Stripe: <?php echo ($is_test_mode ? 'TEST' : 'LIVE'); ?>");
-            stripe = Stripe(stripeKey);
+            // Inicializar Stripe con la clave pública (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
+            console.log('💳 Inicializando Stripe con clave pública...');
+            const stripePublicKey = '<?php echo (HOJA_ASIENTO_STRIPE_MODE === "test") ? HOJA_ASIENTO_STRIPE_TEST_PUBLIC_KEY : HOJA_ASIENTO_STRIPE_LIVE_PUBLIC_KEY; ?>';
+            console.log('💳 Usando clave:', stripePublicKey.substring(0, 15) + '...');
+            console.log('💳 Modo:', '<?php echo HOJA_ASIENTO_STRIPE_MODE; ?>');
+            stripe = Stripe(stripePublicKey);
+            console.log('✅ Stripe object creado:', stripe);
 
             try {
                 // Crear el payment intent
@@ -9168,40 +9173,51 @@ function toggleHeaderVisibility(isFormVisible) {
 add_action('wp_ajax_create_payment_intent_hoja_asiento', 'create_payment_intent_hoja_asiento');
 add_action('wp_ajax_nopriv_create_payment_intent_hoja_asiento', 'create_payment_intent_hoja_asiento');
 function create_payment_intent_hoja_asiento() {
-    // Usar las claves según el modo configurado
-    global $is_test_mode, $secret_key_test, $secret_key_live;
+    // Usar constantes (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
+    if (HOJA_ASIENTO_STRIPE_MODE === 'test') {
+        $stripe_secret_key = HOJA_ASIENTO_STRIPE_TEST_SECRET_KEY;
+    } else {
+        $stripe_secret_key = HOJA_ASIENTO_STRIPE_LIVE_SECRET_KEY;
+    }
 
-    // Incluir Stripe PHP
-    require_once __DIR__ . '/vendor/stripe/stripe-php/init.php';
-
-    // Usar la clave correcta según el modo
-    $secret_key = $is_test_mode ? $secret_key_test : $secret_key_live;
-    \Stripe\Stripe::setApiKey($secret_key);
-
-    // Debug
-    error_log('HOJA_ASIENTO Payment Intent - Modo: ' . ($is_test_mode ? 'TEST' : 'LIVE'));
-    error_log('HOJA_ASIENTO Payment Intent - Clave: ' . substr($secret_key, 0, 30) . '...');
-
-    $amount = isset($_POST['amount']) ? intval($_POST['amount']) : 0;
+    header('Content-Type: application/json');
+    require_once get_template_directory() . '/vendor/autoload.php';
 
     try {
-        // Crear el PaymentIntent en Stripe (siempre en modo producción)
-        $payment_intent_options = [
+        error_log('=== HOJA ASIENTO PAYMENT INTENT ===');
+        error_log('STRIPE MODE: ' . HOJA_ASIENTO_STRIPE_MODE);
+        error_log('Using Stripe key starting with: ' . substr($stripe_secret_key, 0, 25));
+
+        \Stripe\Stripe::setApiKey($stripe_secret_key);
+
+        $currentKey = \Stripe\Stripe::getApiKey();
+        error_log('Stripe API Key confirmed: ' . substr($currentKey, 0, 25));
+
+        $amount = isset($_POST['amount']) ? intval($_POST['amount']) : 0;
+
+        $paymentIntent = \Stripe\PaymentIntent::create([
             'amount' => $amount,
             'currency' => 'eur',
-            'payment_method_types' => ['card'],
-        ];
-
-        // Crear el PaymentIntent con las opciones configuradas
-        $paymentIntent = \Stripe\PaymentIntent::create($payment_intent_options);
+            'automatic_payment_methods' => ['enabled' => true],
+            'description' => 'Hoja de Asiento - Trámite Marítimo',
+            'metadata' => [
+                'service' => 'Hoja de Asiento',
+                'source' => 'tramitfy_web',
+                'form' => 'hoja_asiento',
+                'mode' => HOJA_ASIENTO_STRIPE_MODE
+            ]
+        ]);
 
         echo json_encode([
             'clientSecret' => $paymentIntent->client_secret,
+            'debug' => [
+                'mode' => HOJA_ASIENTO_STRIPE_MODE,
+                'paymentIntentId' => $paymentIntent->id
+            ]
         ]);
     } catch (Exception $e) {
-        echo json_encode([
-            'error' => $e->getMessage(),
-        ]);
+        error_log('Error creating payment intent: ' . $e->getMessage());
+        echo json_encode(['error' => $e->getMessage()]);
     }
 
     wp_die();
