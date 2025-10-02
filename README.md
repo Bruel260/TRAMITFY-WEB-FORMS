@@ -5,6 +5,7 @@
 ### 📋 Formularios Incluidos:
 - **`renovacion-permiso.php`** - Renovación Permiso de Navegación
 - **`hoja-asiento.php`** - Hoja de Asiento Marítima
+- **`recuperar-documentacion.php`** - Recuperación de Documentación
 
 ---
 
@@ -43,6 +44,12 @@
 - **Precio**: 29.99€ (servicio completo)
 - **Documentos**: Solo DNI (diseño discreto)
 - **Shortcode**: `[hoja_asiento_form]`
+
+### Recuperar Documentación:
+- **Precio**: 94.95€ (servicios + tasas)
+- **Documentos**: Datos embarcación
+- **Shortcode**: `[recuperar_documentacion_form]`
+- **Emails**: Profesionales HTML moderno
 
 ---
 
