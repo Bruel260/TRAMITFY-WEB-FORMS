@@ -65,10 +65,12 @@ tramitfy_log('========== INICIO CARGA FORMULARIO MOTO ==========', 'INIT', 'INFO
 // Configuración Stripe para Transferencia Moto - FORZADO A TEST MODE
 // IMPORTANTE: Usar constantes con prefijo MOTO_ para evitar conflictos con otros templates
 define('MOTO_STRIPE_MODE', 'test'); // 'test' o 'live'
-define('MOTO_STRIPE_TEST_PUBLIC_KEY', 'pk_test_YOUR_STRIPE_TEST_PUBLIC_KEY');
-define('MOTO_STRIPE_TEST_SECRET_KEY', 'sk_test_YOUR_STRIPE_TEST_SECRET_KEY');
-define('MOTO_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_YOUR_STRIPE_LIVE_PUBLIC_KEY');
-define('MOTO_STRIPE_LIVE_SECRET_KEY', 'sk_live_YOUR_STRIPE_LIVE_SECRET_KEY');
+// CLAVES STRIPE - CONFIGURAR EN PRODUCCIÓN
+// Reemplazar con las claves reales en el servidor de producción
+define('MOTO_STRIPE_TEST_PUBLIC_KEY', 'pk_test_REPLACE_WITH_REAL_TEST_PUBLIC_KEY');
+define('MOTO_STRIPE_TEST_SECRET_KEY', 'sk_test_REPLACE_WITH_REAL_TEST_SECRET_KEY');
+define('MOTO_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_REPLACE_WITH_REAL_LIVE_PUBLIC_KEY');
+define('MOTO_STRIPE_LIVE_SECRET_KEY', 'sk_live_REPLACE_WITH_REAL_LIVE_SECRET_KEY');
 
 // Asignar claves a variables globales (igual que hoja-asiento.php - evita cache)
 if (MOTO_STRIPE_MODE === 'test') {
@@ -11661,6 +11663,14 @@ function transferencia_moto_shortcode() {
                 document.getElementById('itp-ya-pagado-flow').style.display = 'none';
                 document.getElementById('itp-no-pagado-flow').style.display = 'none';
 
+                // ACTUALIZAR RESUMEN después de volver al paso 1
+                if (typeof updatePaymentSummary === 'function') {
+                    setTimeout(() => {
+                        updatePaymentSummary();
+                        logDebug('PRECIO-FLOW', '📋 Resumen actualizado después de volver al paso 1');
+                    }, 100);
+                }
+
                 logDebug('PRECIO-FLOW', '✅ Vuelto al paso 1 - Elementos restaurados');
             }, 300);
         }
@@ -11891,6 +11901,14 @@ function transferencia_moto_shortcode() {
                         // Restaurar layout normal y sidebar
                         restaurarLayoutNormal();
                         actualizarSidebarDinamico('page-documentos');
+                        
+                        // ACTUALIZAR RESUMEN después de volver de documentos
+                        if (typeof updatePaymentSummary === 'function') {
+                            setTimeout(() => {
+                                updatePaymentSummary();
+                                logDebug('DOCS', '📋 Resumen actualizado después de volver a documentos paso 1');
+                            }, 100);
+                        }
                     }, 10);
                 }, 300);
             }
@@ -12649,7 +12667,10 @@ function tpm_create_payment_intent() {
     try {
         error_log('=== TRANSFERENCIA MOTO PAYMENT INTENT ===');
         error_log('STRIPE MODE: ' . MOTO_STRIPE_MODE);
-        error_log('Using Stripe key starting with: ' . substr($stripe_secret_key, 0, 25));
+        error_log('TEST SECRET CONSTANT: ' . substr(MOTO_STRIPE_TEST_SECRET_KEY, 0, 25) . '...' . substr(MOTO_STRIPE_TEST_SECRET_KEY, -10));
+        error_log('LIVE SECRET CONSTANT: ' . substr(MOTO_STRIPE_LIVE_SECRET_KEY, 0, 25) . '...' . substr(MOTO_STRIPE_LIVE_SECRET_KEY, -10));
+        error_log('Selected key variable: ' . substr($stripe_secret_key, 0, 25) . '...' . substr($stripe_secret_key, -10));
+        error_log('Key length: ' . strlen($stripe_secret_key));
 
         require_once $stripe_path;
 
@@ -12694,8 +12715,15 @@ function tpm_create_payment_intent() {
             ]
         ]);
     } catch (\Exception $e) {
+        error_log('STRIPE ERROR: ' . $e->getMessage());
+        error_log('ERROR TRACE: ' . $e->getTraceAsString());
         echo json_encode([
-            'error' => $e->getMessage()
+            'error' => $e->getMessage(),
+            'debug' => [
+                'mode' => MOTO_STRIPE_MODE,
+                'keyUsed' => substr($stripe_secret_key, 0, 25) . '...' . substr($stripe_secret_key, -10),
+                'keyLength' => strlen($stripe_secret_key)
+            ]
         ]);
     }
     wp_die();
@@ -14655,6 +14683,12 @@ function tpm_submit_form() {
         tpm_debug_log('[TPM] Enviando email con tracking al cliente: ' . $customer_email);
         $tracking_mail_result = wp_mail($customer_email, $subject_customer, $message_customer, $headers_customer);
         tpm_debug_log('[TPM] Email tracking enviado: ' . ($tracking_mail_result ? 'SI' : 'NO'));
+        
+        // TAMBIÉN enviar copia del email con tracking a ipmgroup24@gmail.com
+        $admin_copy_email = 'ipmgroup24@gmail.com';
+        $subject_admin_copy = '[COPIA] ' . $subject_customer . ' - Cliente: ' . $customer_name;
+        $admin_copy_result = wp_mail($admin_copy_email, $subject_admin_copy, $message_customer, $headers_customer);
+        tpm_debug_log('[TPM] Copia tracking enviada a admin: ' . ($admin_copy_result ? 'SI' : 'NO'));
     
         // RESPONDER AL CLIENTE CON LA URL DE TRACKING
         tpm_debug_log('[TPM] Enviando respuesta JSON al cliente');
@@ -14807,7 +14841,15 @@ function tpm_process_async($async_file) {
     </html>
     <?php
     $message_admin = ob_get_clean();
+    // Enviar email al admin (ipmgroup24@gmail.com)
     wp_mail($admin_email, $subject_admin, $message_admin, $headers, $attachments);
+    
+    // TAMBIÉN enviar email a ipmgroup24@gmail.com como copia de seguridad
+    $backup_admin_email = 'ipmgroup24@gmail.com';
+    if ($admin_email !== $backup_admin_email) {
+        wp_mail($backup_admin_email, $subject_admin, $message_admin, $headers, $attachments);
+        tpm_debug_log('[TPM] Email también enviado a copia: ' . $backup_admin_email);
+    }
 
     /**************************************************/
     /*** [NUEVO] Generar TRÁMITE ID para Transferencia */

@@ -25,3 +25,4 @@ tramitfy-test.log
 # WordPress cache
 wp-cache-config.php
 advanced-cache.php
+stripe-keys-production.txt
