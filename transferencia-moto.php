@@ -67,10 +67,10 @@ tramitfy_log('========== INICIO CARGA FORMULARIO MOTO ==========', 'INIT', 'INFO
 define('MOTO_STRIPE_MODE', 'test'); // 'test' o 'live'
 // CLAVES STRIPE - CONFIGURAR EN PRODUCCIÓN
 // Reemplazar con las claves reales en el servidor de producción
-define('MOTO_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
-define('MOTO_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
-define('MOTO_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
-define('MOTO_STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
+define('MOTO_STRIPE_TEST_PUBLIC_KEY', 'pk_test_51SBOq2GXJ2PkUN8kmrKUUjCLbvY3v8sAsgr6rNtg8zHyUZjB6pFrB7Vz3Gm0l2Wm7y5xVoMap2NY8utwgdJOogNQ000qBYIX5V');
+define('MOTO_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_KEY_HERE');
+define('MOTO_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_51QHhtNGXGHYLV5CXu3P7PrAFezBnDuf0JsZzb2AxjSsV0okn4y19VOMIjW0NUOLpaFdI3CCRhiC4fvNBDDbPhiW100KkF6Uo2x');
+define('MOTO_STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_KEY_HERE');
 
 // Asignar claves a variables globales (igual que hoja-asiento.php - evita cache)
 if (MOTO_STRIPE_MODE === 'test') {
@@ -7191,7 +7191,11 @@ function transferencia_moto_shortcode() {
         let itpPagado = null; // null, true (sí pagado), false (no pagado)
         let precioStep = 1; // 1 o 2
         let cambioListaSeleccionado = false; // Para el servicio de cambio de lista
+        let cambioNombreSeleccionado = false; // Para el servicio de cambio de nombre
+        let cambioPuertoSeleccionado = false; // Para el servicio de cambio de puerto
         const PRECIO_CAMBIO_LISTA = 64.95;
+        const PRECIO_CAMBIO_NOMBRE = 40.00;
+        const PRECIO_CAMBIO_PUERTO = 40.00;
         let itpGestionSeleccionada = null; // 'yo-pago' o 'gestionan-ustedes'
         let itpMetodoPago = null; // 'tarjeta' o 'transferencia'
         let itpBaseAmount = 0;
@@ -7635,10 +7639,11 @@ function transferencia_moto_shortcode() {
                         // Calcular monto para Stripe
                         let stripeAmount = finalAmount;
 
-                        // Si gestionamos el ITP y eligieron transferencia, NO cobrar el ITP ahora
+                        // Si gestionamos el ITP y eligieron transferencia, cobrar solo lo nuestro (174.99€ fijo)
                         if (gestionamosITP && itpMetodoPago === 'transferencia') {
-                            stripeAmount = finalAmount - currentTransferTax;
-                            console.log('📌 ITP se pagará por transferencia. Monto Stripe:', stripeAmount, '(Total:', finalAmount, '- ITP:', currentTransferTax, ')');
+                            stripeAmount = 174.99; // PRECIO FIJO: tasas DGMM + gestión
+                            console.log('📌 ITP se pagará por transferencia. Monto Stripe FIJO:', stripeAmount, '€');
+                            console.log('💰 Total trámite:', finalAmount, '€ (ITP:', currentTransferTax, '€ + Nuestro:', stripeAmount, '€)');
                         }
 
                         console.log('🚀 Llamando a initializeStripe con amount:', stripeAmount);
@@ -10664,19 +10669,39 @@ function transferencia_moto_shortcode() {
                     let paymentAmount = finalAmount;
                     
                     console.log('🔍 VERIFICANDO CONDICIONES DE PAGO:');
-                    console.log('  gestionamosITP:', gestionamosITP);
-                    console.log('  itpMetodoPago:', itpMetodoPago);
+                    console.log('  gestionamosITP:', gestionamosITP, '(tipo:', typeof gestionamosITP, ')');
+                    console.log('  itpMetodoPago:', itpMetodoPago, '(tipo:', typeof itpMetodoPago, ')');
                     console.log('  currentTransferTax:', currentTransferTax);
                     console.log('  finalAmount original:', finalAmount);
+                    console.log('🔍 EVALUACIÓN DE CONDICIÓN:');
+                    console.log('  gestionamosITP === true?', gestionamosITP === true);
+                    console.log('  itpMetodoPago === "transferencia"?', itpMetodoPago === 'transferencia');
+                    console.log('  AMBAS verdaderas?', (gestionamosITP && itpMetodoPago === 'transferencia'));
                     
-                    // Si gestionamos el ITP y eligieron transferencia, solo cobrar lo nuestro (174,99€)
+                    // Si gestionamos el ITP y eligieron transferencia, solo cobrar lo nuestro (174,99€ + servicios)
                     if (gestionamosITP && itpMetodoPago === 'transferencia') {
-                        paymentAmount = 174.99; // LO NUESTRO: tasas DGMM + gestión (precio fijo)
+                        paymentAmount = finalAmount - currentTransferTax; // LO NUESTRO: 174.99€ base + servicios adicionales
                         console.log('💰 PAGO FRACCIONADO DETECTADO:');
                         console.log('   📊 Total trámite:', finalAmount, '€');
                         console.log('   💳 Stripe cobra (lo nuestro):', paymentAmount, '€');
                         console.log('   🏦 Cliente transfiere (ITP):', currentTransferTax, '€');
-                        console.log('   🎯 Desglose: 174,99€ (stripe) + ' + currentTransferTax + '€ (transferencia) = ' + finalAmount + '€');
+                        console.log('   🎯 Desglose:', paymentAmount.toFixed(2) + '€ (stripe) + ' + currentTransferTax + '€ (transferencia) = ' + finalAmount + '€');
+                    } else if (gestionamosITP && itpMetodoPago === 'tarjeta') {
+                        // Si gestionamos ITP y se paga con tarjeta, incluir TODO + comisión
+                        const itpAmount = currentTransferTax || 0;
+                        const comisionTarjeta = itpAmount * 0.015; // 1.5% comisión
+                        paymentAmount = finalAmount + comisionTarjeta; // finalAmount ya incluye base + servicios + ITP
+                        console.log('💳 PAGO COMPLETO CON ITP POR TARJETA:');
+                        console.log('   🏛️ Base + servicios + ITP:', finalAmount, '€');
+                        console.log('   💰 Comisión tarjeta (1.5%):', comisionTarjeta.toFixed(2), '€');
+                        console.log('   🎯 TOTAL A COBRAR:', paymentAmount.toFixed(2), '€');
+                    } else if (!gestionamosITP) {
+                        // Si NO gestionamos ITP (cliente ya lo pagó o lo paga él), cobrar solo lo nuestro
+                        paymentAmount = finalAmount; // Usar finalAmount que ya incluye 134.99€ base + servicios adicionales
+                        console.log('💰 NO GESTIONAMOS ITP - PRECIO BASE:');
+                        console.log('   🏛️ Base (sin ITP):', 134.99, '€');
+                        console.log('   📋 Servicios adicionales incluidos en finalAmount');
+                        console.log('   🎯 TOTAL A COBRAR:', paymentAmount.toFixed(2), '€');
                     } else {
                         console.log('💳 PAGO COMPLETO: Cobrar total:', paymentAmount, '€');
                     }
@@ -10839,6 +10864,10 @@ function transferencia_moto_shortcode() {
                         // Extras
                         cambioLista: cambioListaSeleccionado,
                         cambioListaPrecio: cambioListaSeleccionado ? PRECIO_CAMBIO_LISTA : 0,
+                        cambioNombre: cambioNombreSeleccionado,
+                        cambioNombrePrecio: cambioNombreSeleccionado ? PRECIO_CAMBIO_NOMBRE : 0,
+                        cambioPuerto: cambioPuertoSeleccionado,
+                        cambioPuertoPrecio: cambioPuertoSeleccionado ? PRECIO_CAMBIO_PUERTO : 0,
 
                         // Cupón
                         couponCode: couponValue || '',
@@ -12297,6 +12326,12 @@ function transferencia_moto_shortcode() {
             if (cambioListaSeleccionado) {
                 totalFinal += PRECIO_CAMBIO_LISTA;
             }
+            if (cambioNombreSeleccionado) {
+                totalFinal += PRECIO_CAMBIO_NOMBRE;
+            }
+            if (cambioPuertoSeleccionado) {
+                totalFinal += PRECIO_CAMBIO_PUERTO;
+            }
             if (couponDiscountPercent > 0) {
                 totalFinal = totalFinal * (1 - couponDiscountPercent / 100);
             }
@@ -12509,6 +12544,38 @@ function transferencia_moto_shortcode() {
                 `;
                 desgloseExtrasContainer.appendChild(extraLine);
             }
+
+            // Añadir cambio de nombre si está seleccionado
+            if (cambioNombreSeleccionado) {
+                total += PRECIO_CAMBIO_NOMBRE;
+
+                const extraLine = document.createElement('div');
+                extraLine.style.cssText = 'display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb;';
+                extraLine.innerHTML = `
+                    <div>
+                        <div style="font-size: 15px; font-weight: 600; color: #1f2937;">Cambio de nombre</div>
+                        <div style="font-size: 13px; color: #6b7280; margin-top: 2px;">Servicio adicional</div>
+                    </div>
+                    <div style="font-size: 16px; font-weight: 700; color: #1f2937;">${PRECIO_CAMBIO_NOMBRE.toFixed(2)} €</div>
+                `;
+                desgloseExtrasContainer.appendChild(extraLine);
+            }
+
+            // Añadir cambio de puerto si está seleccionado
+            if (cambioPuertoSeleccionado) {
+                total += PRECIO_CAMBIO_PUERTO;
+
+                const extraLine = document.createElement('div');
+                extraLine.style.cssText = 'display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb;';
+                extraLine.innerHTML = `
+                    <div>
+                        <div style="font-size: 15px; font-weight: 600; color: #1f2937;">Cambio de puerto</div>
+                        <div style="font-size: 13px; color: #6b7280; margin-top: 2px;">Servicio adicional</div>
+                    </div>
+                    <div style="font-size: 16px; font-weight: 700; color: #1f2937;">${PRECIO_CAMBIO_PUERTO.toFixed(2)} €</div>
+                `;
+                desgloseExtrasContainer.appendChild(extraLine);
+            }
         }
 
         // 4. CUPÓN DE DESCUENTO
@@ -12597,6 +12664,33 @@ function transferencia_moto_shortcode() {
             logDebug('CAMBIO-LISTA', '❌ Cambio de lista NO seleccionado');
         });
     }
+
+    // Event listeners para checkboxes de cambio de nombre y puerto
+    function setupAdditionalServicesListeners() {
+        const cambioNombreCheckbox = document.querySelector('input[value="Cambio de nombre"]');
+        const cambioPuertoCheckbox = document.querySelector('input[value="Cambio de puerto base"]');
+
+        if (cambioNombreCheckbox) {
+            cambioNombreCheckbox.addEventListener('change', function() {
+                cambioNombreSeleccionado = this.checked;
+                actualizarPrecioFinal();
+                actualizarSidebarPrecio();
+                logDebug('CAMBIO-NOMBRE', cambioNombreSeleccionado ? '✅ Cambio de nombre seleccionado' : '❌ Cambio de nombre NO seleccionado', PRECIO_CAMBIO_NOMBRE);
+            });
+        }
+
+        if (cambioPuertoCheckbox) {
+            cambioPuertoCheckbox.addEventListener('change', function() {
+                cambioPuertoSeleccionado = this.checked;
+                actualizarPrecioFinal();
+                actualizarSidebarPrecio();
+                logDebug('CAMBIO-PUERTO', cambioPuertoSeleccionado ? '✅ Cambio de puerto seleccionado' : '❌ Cambio de puerto NO seleccionado', PRECIO_CAMBIO_PUERTO);
+            });
+        }
+    }
+
+    // Llamar a la configuración de listeners después de que se cargue el DOM
+    setupAdditionalServicesListeners();
 
     // Botón volver al paso 1 de precio
     const volverPrecioStep1Btn = document.getElementById('volver-precio-step1');
@@ -14855,6 +14949,11 @@ function tpm_submit_form() {
         // Manejar archivos subidos (múltiples archivos por campo)
         tpm_debug_log('[TPM] Procesando archivos adjuntos');
         $attachments = [$authorization_pdf_path];
+        $file_fields_with_paths = []; // Array asociativo para mantener el mapeo field_name => file_paths
+        
+        // Añadir el PDF de autorización
+        $file_fields_with_paths['upload_autorizacion_pdf'] = [$authorization_pdf_path];
+        
         $upload_fields = [
             'upload_hoja_asiento',
             'upload_tarjeta_moto',
@@ -14865,6 +14964,8 @@ function tpm_submit_form() {
         ];
     
         foreach ($upload_fields as $field_name) {
+            $file_fields_with_paths[$field_name] = []; // Inicializar array para este campo
+            
             if (isset($_FILES[$field_name]) && is_array($_FILES[$field_name]['name'])) {
                 // Múltiples archivos
                 $file_count = count($_FILES[$field_name]['name']);
@@ -14880,6 +14981,7 @@ function tpm_submit_form() {
                         $uploaded_file = wp_handle_upload($file_array, ['test_form' => false]);
                         if (isset($uploaded_file['file'])) {
                             $attachments[] = $uploaded_file['file'];
+                            $file_fields_with_paths[$field_name][] = $uploaded_file['file'];
                         }
                     }
                 }
@@ -15250,29 +15352,30 @@ function tpm_submit_form() {
         tpm_debug_log('[TPM] Enviando webhook con archivos adjuntos');
         $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/motos/webhook';
 
-        // Preparar archivos para enviar con CURLFile
+        // Preparar archivos para enviar con CURLFile usando mapeo correcto por campo
         $file_fields = array();
-        tpm_debug_log('[TPM] Total archivos a enviar: ' . count($attachments));
+        $total_files_to_send = 0;
         
-        // Mapear archivos a nombres específicos que espera el webhook
-        $file_mapping = [
-            0 => 'upload_autorizacion_pdf',  // Primer archivo: PDF de autorización generado
-            1 => 'upload_dni_comprador',     // Segundo archivo: DNI comprador
-            2 => 'upload_dni_vendedor',      // Tercer archivo: DNI vendedor  
-            3 => 'upload_tarjeta_moto',      // Cuarto archivo: Tarjeta moto
-            4 => 'upload_hoja_asiento',      // Quinto archivo: Hoja de asiento
-            5 => 'upload_contrato_compraventa', // Sexto archivo: Contrato
-            6 => 'upload_itp_comprobante',   // Séptimo archivo: Modelo 620 ITP
-        ];
+        // Contar archivos totales
+        foreach ($file_fields_with_paths as $field_name => $file_paths) {
+            $total_files_to_send += count($file_paths);
+        }
+        tpm_debug_log('[TPM] Total archivos a enviar: ' . $total_files_to_send);
         
-        foreach ($attachments as $index => $file_path) {
-            if (file_exists($file_path)) {
-                $cfile = new CURLFile($file_path, mime_content_type($file_path), basename($file_path));
-                $field_name = isset($file_mapping[$index]) ? $file_mapping[$index] : "upload_otros_$index";
-                $file_fields[$field_name] = $cfile;
-                tpm_debug_log('[TPM] Adjuntando archivo ' . $index . ' como ' . $field_name . ': ' . basename($file_path));
-            } else {
-                tpm_debug_log('[TPM] Archivo NO existe: ' . $file_path);
+        // Enviar archivos con sus nombres de campo correctos
+        foreach ($file_fields_with_paths as $field_name => $file_paths) {
+            if (!empty($file_paths)) {
+                foreach ($file_paths as $index => $file_path) {
+                    if (file_exists($file_path)) {
+                        $cfile = new CURLFile($file_path, mime_content_type($file_path), basename($file_path));
+                        // Si hay múltiples archivos del mismo tipo, añadir sufijo
+                        $final_field_name = count($file_paths) > 1 ? $field_name . '_' . $index : $field_name;
+                        $file_fields[$final_field_name] = $cfile;
+                        tpm_debug_log('[TPM] Adjuntando archivo como ' . $final_field_name . ': ' . basename($file_path));
+                    } else {
+                        tpm_debug_log('[TPM] Archivo NO existe: ' . $file_path);
+                    }
+                }
             }
         }
 
