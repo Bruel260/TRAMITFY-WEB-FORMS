@@ -15489,7 +15489,7 @@ function tpm_submit_form() {
                                             <!-- Total -->
                                             <div style='background-color: #e3f2fd; padding: 18px; border-radius: 8px; border: 2px solid #2196f3; text-align: center;'>
                                                 <p style='margin: 0 0 6px; color: #1565c0; font-size: 14px; font-weight: 700; text-transform: uppercase;'>💰 TOTAL DEL TRÁMITE</p>
-                                                <p style='margin: 0; color: #0d47a1; font-size: 24px; font-weight: 700;'>" . number_format($final_amount, 2, ',', '.') . " €</p>
+                                                <p style='margin: 0; color: #0d47a1; font-size: 24px; font-weight: 700;'>" . number_format(174.99 + $current_transfer_tax, 2, ',', '.') . " €</p>
                                             </div>
                                         </div>
                                         
