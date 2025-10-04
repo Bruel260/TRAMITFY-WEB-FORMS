@@ -254,10 +254,10 @@ function polish_registration_form_shortcode() {
     // Configuración de Stripe - movido dentro de la función para evitar conflictos con Elementor
     if (!defined('POLISH_REGISTRATION_STRIPE_MODE')) {
         define('POLISH_REGISTRATION_STRIPE_MODE', 'test'); // 'test' o 'live'
-        define('POLISH_REGISTRATION_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
-        define('POLISH_REGISTRATION_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
-        define('POLISH_REGISTRATION_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
-        define('POLISH_REGISTRATION_STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
+        define('POLISH_REGISTRATION_STRIPE_TEST_PUBLIC_KEY', 'STRIPE_PUBLIC_KEY_PLACEHOLDER');
+        define('POLISH_REGISTRATION_STRIPE_TEST_SECRET_KEY', 'STRIPE_SECRET_KEY_PLACEHOLDER');
+        define('POLISH_REGISTRATION_STRIPE_LIVE_PUBLIC_KEY', 'STRIPE_LIVE_PUBLIC_KEY_PLACEHOLDER');
+        define('POLISH_REGISTRATION_STRIPE_LIVE_SECRET_KEY', 'STRIPE_LIVE_SECRET_KEY_PLACEHOLDER');
         define('POLISH_REGISTRATION_TRAMITFY_API_URL', 'https://46-202-128-35.sslip.io/api/herramientas/polaca/webhook');
     }
 
@@ -271,6 +271,7 @@ function polish_registration_form_shortcode() {
     wp_enqueue_style('polish-registration-form-style', get_template_directory_uri() . '/style.css', array(), $version);
     wp_enqueue_script('stripe', 'https://js.stripe.com/v3/', array(), null, false);
     wp_enqueue_script('signature-pad', 'https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js', array(), null, false);
+    wp_enqueue_script('jspdf', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', array(), null, false);
 
     // Iniciar el buffering de salida
     ob_start();
@@ -3910,51 +3911,6 @@ Auto-rellenar Formulario Completo (Modo TEST)
                             </div>
                         </div>
 
-                        <!-- Paso 6: Resumen final -->
-                        <div id="step-summary" class="pr-selection-step">
-                            <h3>Resumen de su selección</h3>
-                            <p>Revise todos los servicios seleccionados antes de continuar:</p>
-                            
-                            <div class="pr-summary-container">
-                                <div class="pr-summary-section">
-                                    <h4>Trámite principal</h4>
-                                    <div id="summary-tramite" class="pr-summary-item"></div>
-                                </div>
-
-                                <div class="pr-summary-section" id="summary-boat-section" style="display: none;">
-                                    <h4>Embarcación</h4>
-                                    <div id="summary-boatsize" class="pr-summary-item"></div>
-                                </div>
-
-                                <div class="pr-summary-section" id="summary-mmsi-section" style="display: none;">
-                                    <h4>Servicio MMSI</h4>
-                                    <div id="summary-mmsi" class="pr-summary-item"></div>
-                                </div>
-
-                                <div class="pr-summary-section" id="summary-extras-section" style="display: none;">
-                                    <h4>Servicios adicionales</h4>
-                                    <div id="summary-extras" class="pr-summary-list"></div>
-                                </div>
-
-                                <div class="pr-summary-section">
-                                    <h4>Entrega</h4>
-                                    <div id="summary-delivery" class="pr-summary-item"></div>
-                                </div>
-
-                                <div class="pr-summary-total">
-                                    <div class="pr-total-line">
-                                        <span>Total a pagar:</span>
-                                        <span id="summary-total-price" class="pr-total-amount">€ 0.00</span>
-                                    </div>
-                                </div>
-
-                                <div class="pr-summary-actions">
-                                    <button type="button" class="pr-btn pr-btn-light" onclick="resetToStep(0)">
-                                        Modificar selección
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- BOTONES DE NAVEGACIÓN -->
@@ -4248,13 +4204,13 @@ Auto-rellenar Formulario Completo (Modo TEST)
         // TEST - Verificar ejecución JavaScript
         console.log('🚨 SCRIPT INICIADO - Polaca JS ejecutándose');
         
-        // Error handler global para detectar problemas JavaScript
+        // Error handler global para detectar problemas JavaScript  
         window.addEventListener('error', function(e) {
             console.error('🚨 ERROR JAVASCRIPT DETECTADO:', e.error);
             console.error('  Archivo:', e.filename);
             console.error('  Línea:', e.lineno);
             console.error('  Mensaje:', e.message);
-            alert('ERROR JS: ' + e.message + ' en línea ' + e.lineno);
+            // alert('ERROR JS: ' + e.message + ' en línea ' + e.lineno); // Comentado para evitar popups
         });
         
         console.log('🚀 SCRIPT POLACO INICIADO');
@@ -4336,11 +4292,7 @@ Auto-rellenar Formulario Completo (Modo TEST)
                     { id: 'mmsi_unlicensed', label: 'MMSI Unlicensed', description: 'Número MMSI para uso recreativo sin licencia comercial', price: 170, icon: 'fas fa-anchor' },
                     { id: 'mmsi_company', label: 'MMSI Company', description: 'Número MMSI para empresa o uso corporativo', price: 170, icon: 'fas fa-building' }
                 ],
-                extraServices: [
-                    { id: 'apostilla', label: 'Apostilla de documentos', description: 'Legalización internacional de documentos', price: 85, icon: 'fas fa-certificate' },
-                    { id: 'extracto_registro', label: 'Extracto del registro', description: 'Certificado oficial del registro marítimo', price: 45, icon: 'fas fa-file-alt' },
-                    { id: 'bandera_fisica', label: 'Bandera polaca física', description: 'Bandera oficial 65x40 cm con ojales metálicos', price: 35, icon: 'fas fa-flag' }
-                ]
+                extraServices: []
             },
             'cambio_titularidad': {
                 title: 'Cambio de Titularidad - Bandera Polaca',
@@ -4365,11 +4317,7 @@ Auto-rellenar Formulario Completo (Modo TEST)
                     { id: 'mmsi_unlicensed', label: 'MMSI Unlicensed', description: 'Transferir/Asignar MMSI para uso recreativo', price: 170, icon: 'fas fa-anchor' },
                     { id: 'mmsi_company', label: 'MMSI Company', description: 'Transferir/Asignar MMSI para empresa', price: 170, icon: 'fas fa-building' }
                 ],
-                extraServices: [
-                    { id: 'apostilla', label: 'Apostilla de documentos', description: 'Legalización internacional del cambio de titularidad', price: 85, icon: 'fas fa-certificate' },
-                    { id: 'extracto_registro', label: 'Extracto del nuevo registro', description: 'Certificado oficial con el nuevo propietario', price: 45, icon: 'fas fa-file-alt' },
-                    { id: 'certificado_transmision', label: 'Certificado de transmisión', description: 'Documento oficial del cambio de propiedad', price: 60, icon: 'fas fa-clipboard' }
-                ]
+                extraServices: []
             },
             'mmsi': {
                 title: 'Solicitud de Número MMSI Polaco',
@@ -4390,11 +4338,7 @@ Auto-rellenar Formulario Completo (Modo TEST)
                     { id: 'mmsi_unlicensed', label: 'MMSI Unlicensed', description: 'Número MMSI para uso recreativo sin licencia comercial', price: 0, icon: 'fas fa-anchor', baseService: true },
                     { id: 'mmsi_company', label: 'MMSI Company', description: 'Número MMSI para empresa o flota comercial', price: 0, icon: 'fas fa-building', baseService: true }
                 ],
-                extraServices: [
-                    { id: 'configuracion_radio', label: 'Configuración de radio', description: 'Programación del equipo VHF con el nuevo MMSI', price: 75, icon: 'fas fa-wrench' },
-                    { id: 'certificado_mmsi', label: 'Certificado MMSI oficial', description: 'Documento oficial del número MMSI asignado', price: 35, icon: 'fas fa-scroll' },
-                    { id: 'licencia_operador', label: 'Tramitación licencia de operador', description: 'Gestión de licencia de radiooperador si es necesaria', price: 120, icon: 'fas fa-graduation-cap' }
-                ]
+                extraServices: []
             }
         };
 
@@ -5319,7 +5263,7 @@ Auto-rellenar Formulario Completo (Modo TEST)
             updateSignatureDocument();
         }
 
-        // Modificar función de confirmar firma para actualizar el estado
+        // Función de confirmar firma para el canvas principal (overlay)
         function confirmSignature() {
             if (signaturePad && !signaturePad.isEmpty()) {
                 signatureConfirmed = true; // Marcar firma como confirmada
@@ -5328,16 +5272,20 @@ Auto-rellenar Formulario Completo (Modo TEST)
                 
                 // Actualizar estado del botón
                 const statusElement = document.getElementById('signature-status');
-                statusElement.textContent = 'Firmado';
-                statusElement.style.background = 'rgba(0, 255, 0, 0.3)';
+                if (statusElement) {
+                    statusElement.textContent = 'Firmado';
+                    statusElement.style.background = 'rgba(0, 255, 0, 0.3)';
+                }
                 
                 const btnElement = document.getElementById('activate-signature-btn');
-                btnElement.style.background = 'rgb(0, 150, 0)';
+                if (btnElement) {
+                    btnElement.style.background = 'rgb(0, 150, 0)';
+                }
                 
                 // Cerrar modo firma
                 closeSignatureMode();
                 
-                alert('Firma confirmada correctamente');
+                console.log('✅ Firma confirmada correctamente desde signaturePad overlay');
             }
         }
 
@@ -5632,11 +5580,6 @@ Auto-rellenar Formulario Completo (Modo TEST)
             }
         }
 
-        function confirmSignature() {
-            if (signaturePad && !signaturePad.isEmpty()) {
-                alert('Firma confirmada correctamente.');
-            }
-        }
 
         function confirmFullscreenSignature() {
             if (signaturePadFullscreen && !signaturePadFullscreen.isEmpty()) {
@@ -6139,7 +6082,250 @@ Auto-rellenar Formulario Completo (Modo TEST)
             return true;
         }
 
-        function processFormSubmission(paymentIntentId) {
+        // Función para generar PDF de autorización
+        async function generateAuthorizationPDF() {
+            try {
+                console.log('📄 Generando PDF de autorización profesional...');
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Datos del formulario
+                const customerName = document.getElementById('customer_name').value;
+                const customerDni = document.getElementById('customer_dni').value;
+                const customerEmail = document.getElementById('customer_email').value;
+                const customerPhone = document.getElementById('customer_phone').value;
+                const tramiteType = progressiveSelection.tramite?.title || 'Registro bajo bandera polaca';
+                const billingAddress = document.getElementById('billing_address')?.value || '';
+                const billingCity = document.getElementById('billing_city')?.value || '';
+                const billingPostalCode = document.getElementById('billing_postal_code')?.value || '';
+                const billingProvince = document.getElementById('billing_province')?.value || '';
+                
+                const today = new Date();
+                const todayFormatted = today.toLocaleDateString('es-ES', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                const timeFormatted = today.toLocaleTimeString('es-ES', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                
+                // CABECERA CORPORATIVA
+                doc.setFillColor(1, 109, 134); // Color #016d86
+                doc.rect(0, 0, 210, 25, 'F');
+                
+                // Logo y nombre empresa
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(20);
+                doc.setFont(undefined, 'bold');
+                doc.text('TRAMITFY', 20, 16);
+                
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                doc.text('Servicios Marítimos Profesionales', 20, 21);
+                
+                // Número de documento
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(8);
+                const docNumber = `DOC-${Date.now()}`;
+                doc.text(`Nº: ${docNumber}`, 150, 16);
+                doc.text(`Fecha: ${todayFormatted} - ${timeFormatted}`, 150, 21);
+                
+                // TÍTULO PRINCIPAL
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(18);
+                doc.setFont(undefined, 'bold');
+                doc.text('AUTORIZACIÓN DE REPRESENTACIÓN', 20, 40);
+                doc.text('PARA TRÁMITES MARÍTIMOS', 20, 48);
+                
+                // Línea decorativa
+                doc.setDrawColor(1, 109, 134);
+                doc.setLineWidth(0.5);
+                doc.line(20, 52, 190, 52);
+                
+                // DATOS DEL SOLICITANTE
+                let yPos = 65;
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(1, 109, 134);
+                doc.text('I. DATOS DEL SOLICITANTE', 20, yPos);
+                
+                // Marco para datos del cliente
+                doc.setDrawColor(200, 200, 200);
+                doc.setLineWidth(0.3);
+                doc.rect(20, yPos + 5, 170, 35);
+                
+                yPos += 15;
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'normal');
+                doc.setTextColor(0, 0, 0);
+                
+                doc.setFont(undefined, 'bold');
+                doc.text('Nombre completo:', 25, yPos);
+                doc.setFont(undefined, 'normal');
+                doc.text(customerName, 65, yPos);
+                
+                yPos += 8;
+                doc.setFont(undefined, 'bold');
+                doc.text('DNI/NIE:', 25, yPos);
+                doc.setFont(undefined, 'normal');
+                doc.text(customerDni, 65, yPos);
+                
+                doc.setFont(undefined, 'bold');
+                doc.text('Teléfono:', 120, yPos);
+                doc.setFont(undefined, 'normal');
+                doc.text(customerPhone, 145, yPos);
+                
+                yPos += 8;
+                doc.setFont(undefined, 'bold');
+                doc.text('Email:', 25, yPos);
+                doc.setFont(undefined, 'normal');
+                doc.text(customerEmail, 65, yPos);
+                
+                // Dirección si está disponible
+                if (billingAddress) {
+                    yPos += 8;
+                    doc.setFont(undefined, 'bold');
+                    doc.text('Dirección:', 25, yPos);
+                    doc.setFont(undefined, 'normal');
+                    const fullAddress = `${billingAddress}, ${billingPostalCode} ${billingCity}, ${billingProvince}`;
+                    doc.text(fullAddress, 65, yPos);
+                }
+                
+                // OBJETO DE LA AUTORIZACIÓN
+                yPos += 20;
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(1, 109, 134);
+                doc.text('II. OBJETO DE LA AUTORIZACIÓN', 20, yPos);
+                
+                yPos += 10;
+                doc.setFontSize(11);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont(undefined, 'normal');
+                
+                const authText = [
+                    'Por medio del presente documento, yo, ' + customerName + ', con DNI ' + customerDni + ',',
+                    'autorizo expresamente a TRAMITFY, con domicilio social en España, para que en mi',
+                    'nombre y representación realice las siguientes gestiones ante las autoridades competentes:',
+                    '',
+                    '• ' + tramiteType,
+                    '• Presentación de documentación requerida',
+                    '• Seguimiento del expediente administrativo',
+                    '• Recepción de notificaciones oficiales',
+                    '• Pago de tasas y aranceles correspondientes'
+                ];
+                
+                authText.forEach(line => {
+                    doc.text(line, 25, yPos);
+                    yPos += 6;
+                });
+                
+                // DECLARACIONES Y COMPROMISOS
+                yPos += 10;
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(1, 109, 134);
+                doc.text('III. DECLARACIONES Y COMPROMISOS', 20, yPos);
+                
+                yPos += 10;
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont(undefined, 'normal');
+                
+                const declarations = [
+                    '1. Declaro que toda la información proporcionada es veraz y completa.',
+                    '2. Autorizo el tratamiento de mis datos personales conforme al RGPD.',
+                    '3. Me comprometo a facilitar la documentación adicional que sea requerida.',
+                    '4. Acepto los honorarios profesionales acordados para este trámite.',
+                    '5. Esta autorización tiene validez hasta la finalización del trámite.'
+                ];
+                
+                declarations.forEach(declaration => {
+                    doc.text(declaration, 25, yPos);
+                    yPos += 6;
+                });
+                
+                // FIRMA DIGITAL
+                yPos += 15;
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(1, 109, 134);
+                doc.text('IV. FIRMA DIGITAL', 20, yPos);
+                
+                // Marco para firma
+                doc.setDrawColor(200, 200, 200);
+                doc.setLineWidth(0.3);
+                doc.rect(20, yPos + 5, 170, 40);
+                
+                yPos += 15;
+                doc.setFontSize(10);
+                doc.setTextColor(100, 100, 100);
+                doc.text('Firma digitalizada el ' + todayFormatted + ' a las ' + timeFormatted, 25, yPos);
+                
+                // Insertar firma si existe
+                let signatureInserted = false;
+                if (signaturePadMain && !signaturePadMain.isEmpty()) {
+                    const signatureDataURL = signaturePadMain.toDataURL();
+                    doc.addImage(signatureDataURL, 'PNG', 25, yPos + 5, 80, 25);
+                    signatureInserted = true;
+                } else if (signaturePad && !signaturePad.isEmpty()) {
+                    const signatureDataURL = signaturePad.toDataURL();
+                    doc.addImage(signatureDataURL, 'PNG', 25, yPos + 5, 80, 25);
+                    signatureInserted = true;
+                } else if (signaturePadFullscreen && !signaturePadFullscreen.isEmpty()) {
+                    const signatureDataURL = signaturePadFullscreen.toDataURL();
+                    doc.addImage(signatureDataURL, 'PNG', 25, yPos + 5, 80, 25);
+                    signatureInserted = true;
+                }
+                
+                if (!signatureInserted) {
+                    doc.setTextColor(200, 0, 0);
+                    doc.text('[FIRMA PENDIENTE]', 25, yPos + 15);
+                }
+                
+                // Datos del firmante
+                yPos += 35;
+                doc.setFontSize(9);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont(undefined, 'bold');
+                doc.text('Firmado por:', 25, yPos);
+                doc.setFont(undefined, 'normal');
+                doc.text(customerName, 55, yPos);
+                
+                doc.setFont(undefined, 'bold');
+                doc.text('DNI:', 120, yPos);
+                doc.setFont(undefined, 'normal');
+                doc.text(customerDni, 135, yPos);
+                
+                // PIE DE PÁGINA
+                yPos = 280;
+                doc.setDrawColor(1, 109, 134);
+                doc.setLineWidth(0.3);
+                doc.line(20, yPos, 190, yPos);
+                
+                yPos += 5;
+                doc.setFontSize(8);
+                doc.setTextColor(100, 100, 100);
+                doc.text('TRAMITFY - Servicios Marítimos Profesionales', 20, yPos);
+                doc.text('Este documento ha sido generado digitalmente', 20, yPos + 4);
+                
+                doc.text('Página 1 de 1', 150, yPos);
+                doc.text(`Documento: ${docNumber}`, 150, yPos + 4);
+                
+                // Convertir a blob
+                const pdfBlob = doc.output('blob');
+                console.log('✅ PDF de autorización profesional generado:', pdfBlob.size, 'bytes');
+                
+                return pdfBlob;
+            } catch (error) {
+                console.error('❌ Error generando PDF profesional:', error);
+                return null;
+            }
+        }
+
+        async function processFormSubmission(paymentIntentId) {
             console.log('🚀 processFormSubmission INICIADO con paymentIntentId:', paymentIntentId);
             const formData = new FormData();
             const form = document.getElementById('polish-registration-form');
@@ -6215,6 +6401,20 @@ Auto-rellenar Formulario Completo (Modo TEST)
                 console.log('✅ Firma añadida al FormData:', signatureDataURL.substring(0, 50) + '...');
             } else {
                 console.log('❌ No hay firma válida en ningún canvas');
+            }
+
+            // Generar y agregar PDF de autorización
+            console.log('📄 Generando PDF de autorización...');
+            try {
+                const authPDF = await generateAuthorizationPDF();
+                if (authPDF) {
+                    formData.append('autorizacion_pdf', authPDF, 'autorizacion_firmada.pdf');
+                    console.log('✅ PDF de autorización añadido al FormData:', authPDF.size, 'bytes');
+                } else {
+                    console.log('❌ No se pudo generar el PDF de autorización');
+                }
+            } catch (error) {
+                console.error('❌ Error generando PDF de autorización:', error);
             }
 
             // Log antes del webhook
@@ -7230,10 +7430,10 @@ function create_polish_payment_intent() {
         // Definir constantes si no están definidas
         if (!defined('POLISH_REGISTRATION_STRIPE_MODE')) {
             define('POLISH_REGISTRATION_STRIPE_MODE', 'test'); // 'test' o 'live'
-            define('POLISH_REGISTRATION_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
-            define('POLISH_REGISTRATION_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
-            define('POLISH_REGISTRATION_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
-            define('POLISH_REGISTRATION_STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
+            define('POLISH_REGISTRATION_STRIPE_TEST_PUBLIC_KEY', 'STRIPE_PUBLIC_KEY_PLACEHOLDER');
+            define('POLISH_REGISTRATION_STRIPE_TEST_SECRET_KEY', 'STRIPE_SECRET_KEY_PLACEHOLDER');
+            define('POLISH_REGISTRATION_STRIPE_LIVE_PUBLIC_KEY', 'STRIPE_LIVE_PUBLIC_KEY_PLACEHOLDER');
+            define('POLISH_REGISTRATION_STRIPE_LIVE_SECRET_KEY', 'STRIPE_LIVE_SECRET_KEY_PLACEHOLDER');
         }
 
         // Validación básica sin nonce por ahora para debug
