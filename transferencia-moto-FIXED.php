@@ -8172,34 +8172,29 @@ function transferencia_moto_shortcode() {
             const discountedTransferFee = transferFee - discount;
             const finalExtraFee = currentExtraFee;
 
-            // Desglose de tasas, honorarios e IVA
-            const baseTasas = 19.05; // Las tasas siempre son 19.05€
+            // ✅ CORRECCIÓN: Cálculo simplificado con tarifas todo incluido
+            const tarifaBase = transferFee; // Ya incluye transferFee + additionalServicesTotal
             
-            // Calcular honorarios basados en el precio base menos las tasas
-            // Si gestionamos ITP: 174.99 - 19.05 = 155.94
-            // Si NO gestionamos ITP: 134.99 - 19.05 = 115.94
-            // Los servicios adicionales se suman aparte
-            const baseHonorariosSinServicios = transferFee - baseTasas;
-            const baseHonorarios = baseHonorariosSinServicios + additionalServicesTotal;
+            // ✅ Aplicar descuento solo sobre tarifa base (sin servicios extras)
+            const tarifaBaseSinExtras = gestionamosITP ? BASE_TRANSFER_PRICE_CON_ITP : BASE_TRANSFER_PRICE_SIN_ITP;
+            const discount = (couponDiscountPercent / 100) * tarifaBaseSinExtras;
+            const tarifaConDescuento = tarifaBase - discount;
             
-            const discountRatio = (couponDiscountPercent / 100);
-            const discountedHonorarios = baseHonorarios * (1 - discountRatio);
+            // ✅ DESGLOSE SOLO INFORMATIVO (no se usa para cálculos)
+            const tasasInfo = 19.05; // Solo para mostrar
+            const honorariosInfo = tarifaBaseSinExtras - tasasInfo; // Solo para mostrar
+            const ivaInfo = honorariosInfo * 0.21 / 1.21; // Solo para mostrar
             
-            // 🔧 CORRECCIÓN: IVA = diferencia entre honorarios brutos y netos
-            const honorariosSinIva = discountedHonorarios / 1.21;
-            const newIva = discountedHonorarios - honorariosSinIva;
+            // ✅ Variables locales en lugar de window (más confiables)
+            const currentTasas = tasasInfo;
+            const currentHonorarios = honorariosInfo;
+            const currentIva = ivaInfo;
 
-            // Guardar valores globalmente para poder acceder en el submit
-            window.currentTasas = baseTasas;
-            window.currentHonorarios = discountedHonorarios;
-            window.currentIva = newIva;
-
-            // CRÍTICO: Solo incluir ITP si nosotros lo gestionamos
+            // ✅ CRÍTICO: Solo incluir ITP si nosotros lo gestionamos
             const itpToInclude = gestionamosITP ? itp : 0;
 
-            // Cálculo final - SOLO INCLUIR ITP SI LO GESTIONAMOS
-            const totalGestion = baseTasas + discountedHonorarios + newIva + finalExtraFee;
-            const total = itpToInclude + totalGestion;
+            // ✅ TOTAL FINAL CORRECTO
+            const total = tarifaConDescuento + itpToInclude;
 
             finalAmount = total;
 
@@ -8260,9 +8255,9 @@ function transferencia_moto_shortcode() {
             
             if (transferTaxDisplay) transferTaxDisplay.textContent = itp.toFixed(2) + ' €';
             
-            const tasasMasHonorarios = baseTasas + discountedHonorarios;
-            if (tasasHonorariosDisplay) tasasHonorariosDisplay.textContent = tasasMasHonorarios.toFixed(2) + ' €';
-            if (ivaDisplay) ivaDisplay.textContent = newIva.toFixed(2) + ' €';
+            // ✅ CORRECCIÓN: Mostrar desglose informativo correcto
+            if (tasasHonorariosDisplay) tasasHonorariosDisplay.textContent = (currentTasas + currentHonorarios).toFixed(2) + ' €';
+            if (ivaDisplay) ivaDisplay.textContent = currentIva.toFixed(2) + ' €';
             if (extraFeeIncludesDisplay) extraFeeIncludesDisplay.textContent = finalExtraFee.toFixed(2) + ' €';
             if (cambioNombrePriceDisplay) cambioNombrePriceDisplay.textContent = totalGestion.toFixed(2) + ' €';
 
@@ -8271,9 +8266,10 @@ function transferencia_moto_shortcode() {
             const ivaHidden = document.getElementById('iva_hidden');
             const honorariosHidden = document.getElementById('honorarios_hidden');
             
-            if (tasasHidden) tasasHidden.value = baseTasas.toFixed(2);
-            if (ivaHidden) ivaHidden.value = newIva.toFixed(2);
-            if (honorariosHidden) honorariosHidden.value = discountedHonorarios.toFixed(2);
+            // ✅ CORRECCIÓN: Guardar valores informativos correctos
+            if (tasasHidden) tasasHidden.value = currentTasas.toFixed(2);
+            if (ivaHidden) ivaHidden.value = currentIva.toFixed(2);
+            if (honorariosHidden) honorariosHidden.value = currentHonorarios.toFixed(2);
             
             // Actualizar también los valores en el detalle del ITP
             if (typeof calculateTransferTax === 'function') {
@@ -9587,11 +9583,10 @@ function transferencia_moto_shortcode() {
             formData.append('current_transfer_tax', currentTransferTax.toFixed(2));
             formData.append('current_extra_fee', currentExtraFee.toFixed(2));
 
-            // Leer valores calculados de las variables globales
-            // Estos valores se acaban de actualizar en updateTotal() arriba
-            const tasasValue = window.currentTasas || 0;
-            const ivaValue = window.currentIva || 0;
-            const honorariosValue = window.currentHonorarios || 0;
+            // ✅ CORRECCIÓN: Leer valores de campos ocultos (más confiable)
+            const tasasValue = parseFloat(document.getElementById('tasas_hidden')?.value) || 19.05;
+            const ivaValue = parseFloat(document.getElementById('iva_hidden')?.value) || 0;
+            const honorariosValue = parseFloat(document.getElementById('honorarios_hidden')?.value) || 0;
 
             console.log('Valores económicos a enviar:', {
                 tasas: tasasValue,
@@ -10183,10 +10178,11 @@ function transferencia_moto_shortcode() {
                         totalAmount: totalAmountParaEmail, // AJUSTADO para pago fraccionado
                         current_transfer_tax: currentTransferTax,
                         current_extra_fee: currentExtraFee,
-                        tasas_hidden: window.currentTasas || 0,
-                        iva_hidden: window.currentIva || 0,
-                        honorarios_hidden: window.currentHonorarios || 0,
-                        honorariosNetos: (window.currentHonorarios || 0) / 1.21,
+                        // ✅ CORRECCIÓN: Usar valores de campos ocultos
+                        tasas_hidden: tasasValue,
+                        iva_hidden: ivaValue,
+                        honorarios_hidden: honorariosValue,
+                        honorariosNetos: honorariosValue / 1.21,
                         pagoFraccionado: (gestionamosITP && itpMetodoPago === 'transferencia'),
 
                         // Descuentos y extras
@@ -14406,197 +14402,50 @@ function tpm_send_emails_v2() {
                     <p><strong>Total pagado:</strong> <?php echo number_format($final_amount, 2, ',', '.'); ?> €</p>
                 </div>
 
-                <!-- EMAILS ESPECÍFICOS SEGÚN CADA CASO DE ITP -->
+                <!-- INFORMACIÓN COMPLETA DEL ITP SEGÚN CASO -->
                 <?php if ($itp_pagado === true): ?>
-                <!-- ================================== CASO 1A: ITP YA PAGADO ================================== -->
-                <div class="info-box" style="background-color: #d1fae5; border: 2px solid #10b981; padding: 20px; margin: 20px 0;">
-                    <h3 style="color: #10b981; margin: 0 0 15px 0; font-size: 18px;">✅ Situación: ITP Ya Pagado</h3>
-                    
-                    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                        <h4 style="color: #059669; margin: 0 0 10px 0;">💰 Desglose de tu Pago:</h4>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #d1fae5;">
-                            <span>Gestión transferencia DGMM:</span>
-                            <strong><?php echo number_format($final_amount, 2, ',', '.'); ?> €</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; color: #059669;">
-                            <span>ITP (ya pagado por ti):</span>
-                            <strong>0 € ✅</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 16px; color: #059669; border-top: 2px solid #10b981;">
-                            <strong>TOTAL PAGADO HOY:</strong>
-                            <strong><?php echo number_format($final_amount, 2, ',', '.'); ?> €</strong>
-                        </div>
-                    </div>
-                    
-                    <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; border: 1px solid #bbf7d0;">
-                        <h4 style="color: #166534; margin: 0 0 10px 0;">🎯 ¿Qué Significa Esto?</h4>
-                        <p style="margin: 0; color: #166534; line-height: 1.6;">
-                            <strong>Perfecto!</strong> Has elegido la opción más económica. Ya pagaste el ITP por tu cuenta, 
-                            así que solo has abonado nuestro servicio de gestión de la transferencia ante la DGMM.
-                        </p>
-                    </div>
-                    
-                    <div style="background: #ecfdf5; padding: 15px; border-radius: 8px; margin-top: 15px;">
-                        <h4 style="color: #166534; margin: 0 0 10px 0;">📋 Tu Próximo Paso:</h4>
-                        <p style="margin: 0; color: #166534; line-height: 1.6;">
-                            <strong>Subir el Modelo 620:</strong> Necesitamos que subas el Modelo 620 sellado por Hacienda 
-                            en la sección de documentos. Sin este documento no podremos procesar la transferencia.
-                        </p>
-                    </div>
+                <!-- CASO 1A: Cliente ya pagó el ITP -->
+                <div class="info-box" style="background-color: #d1fae5; border: 2px solid #10b981;">
+                    <strong>✅ ITP Ya Pagado</strong><br>
+                    Has indicado que ya pagaste el ITP previamente. Perfecto, no necesitas hacer nada más respecto al impuesto.
                 </div>
                 
                 <?php elseif ($itp_gestion === 'yo-pago'): ?>
-                <!-- ================================== CASO 1B/1C: CLIENTE GESTIONA ITP ================================== -->
-                <div class="alert-warning" style="background-color: #fef3c7; border: 2px solid #f59e0b; padding: 20px; margin: 20px 0;">
-                    <h3 style="color: #d97706; margin: 0 0 15px 0; font-size: 18px;">📋 Situación: Tú Gestionas el ITP</h3>
-                    
-                    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                        <h4 style="color: #d97706; margin: 0 0 10px 0;">💰 Desglose de tu Pago:</h4>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #fef3c7;">
-                            <span>Gestión transferencia DGMM:</span>
-                            <strong><?php echo number_format($final_amount, 2, ',', '.'); ?> €</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; color: #d97706;">
-                            <span>ITP (lo pagas tú en Hacienda):</span>
-                            <strong><?php echo number_format($itp_amount, 2, ',', '.'); ?> €</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 16px; color: #d97706; border-top: 2px solid #f59e0b;">
-                            <strong>TOTAL PAGADO HOY:</strong>
-                            <strong><?php echo number_format($final_amount, 2, ',', '.'); ?> €</strong>
-                        </div>
-                    </div>
-                    
-                    <div style="background: #fffbeb; padding: 15px; border-radius: 8px; border: 1px solid #fed7aa;">
-                        <h4 style="color: #ea580c; margin: 0 0 10px 0;">🎯 ¿Qué Significa Esto?</h4>
-                        <p style="margin: 0; color: #ea580c; line-height: 1.6;">
-                            Has elegido <strong>gestionar el ITP por tu cuenta</strong>. Solo has pagado nuestro servicio de transferencia. 
-                            <strong>Importante:</strong> Debes pagar el ITP en Hacienda y enviarnos el justificante.
-                        </p>
-                    </div>
-                    
-                    <div style="background: #fee2e2; padding: 15px; border-radius: 8px; margin-top: 15px; border: 2px solid #ef4444;">
-                        <h4 style="color: #dc2626; margin: 0 0 10px 0;">⚠️ ACCIONES OBLIGATORIAS:</h4>
-                        <ol style="margin: 0; color: #dc2626; line-height: 1.8; padding-left: 20px;">
-                            <li><strong>Pagar ITP en Hacienda:</strong> Aproximadamente <?php echo number_format($itp_amount, 2, ',', '.'); ?> €</li>
-                            <li><strong>Obtener Modelo 620 sellado</strong> como justificante del pago</li>
-                            <li><strong>Subir el Modelo 620</strong> en la sección de documentos de tu trámite</li>
-                            <li><strong>Plazo límite:</strong> 30 días hábiles desde la compraventa</li>
-                        </ol>
-                        <p style="margin: 15px 0 0 0; color: #dc2626; font-weight: bold;">
-                            🚨 Sin el Modelo 620 sellado NO podremos completar tu transferencia.
-                        </p>
-                    </div>
+                <!-- CASO 1B/1C: Cliente gestiona su ITP -->
+                <div class="alert-warning">
+                    <strong>📋 Gestión del ITP (Impuesto de Transmisiones Patrimoniales)</strong><br>
+                    Has elegido gestionar el ITP por tu cuenta. <strong>Importante:</strong><br>
+                    • <strong>Debes pagar el ITP</strong> en Hacienda (aprox. <?php echo number_format($itp_amount, 2, ',', '.'); ?> €)<br>
+                    • <strong>Nos debes aportar el Modelo 620</strong> sellado para procesar la transferencia<br>
+                    • <strong>Plazo:</strong> 30 días hábiles desde la compraventa<br>
+                    <em>Sin el Modelo 620 no podremos completar tu trámite.</em>
                 </div>
                 
                 <?php elseif ($itp_gestion === 'gestionan-ustedes' && $itp_metodo_pago === 'transferencia'): ?>
-                <!-- ================================== CASO 2A: GESTIONAMOS ITP + TRANSFERENCIA ================================== -->
-                <div class="alert-warning" style="background-color: #fef3c7; border: 2px solid #f59e0b; padding: 20px; margin: 20px 0;">
-                    <h3 style="color: #d97706; margin: 0 0 15px 0; font-size: 18px;">🏢 Situación: Nosotros Gestionamos el ITP</h3>
-                    
-                    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                        <h4 style="color: #d97706; margin: 0 0 10px 0;">💰 Desglose de tu Pago:</h4>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #fef3c7;">
-                            <span>Gestión completa (DGMM + ITP):</span>
-                            <strong><?php echo number_format($final_amount, 2, ',', '.'); ?> € ✅</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; color: #f59e0b;">
-                            <span>ITP a transferir por separado:</span>
-                            <strong><?php echo number_format($itp_amount, 2, ',', '.'); ?> € ⏳</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 16px; color: #d97706; border-top: 2px solid #f59e0b;">
-                            <strong>TOTAL DEL TRÁMITE:</strong>
-                            <strong><?php echo number_format($final_amount + $itp_amount, 2, ',', '.'); ?> €</strong>
-                        </div>
-                    </div>
-                    
-                    <div style="background: #fffbeb; padding: 15px; border-radius: 8px; border: 1px solid #fed7aa;">
-                        <h4 style="color: #ea580c; margin: 0 0 10px 0;">🎯 ¿Qué Significa Esto?</h4>
-                        <p style="margin: 0; color: #ea580c; line-height: 1.6;">
-                            Has elegido que <strong>nosotros gestionemos el ITP</strong> y pagar el impuesto por <strong>transferencia bancaria</strong> 
-                            (sin comisión). Ya has abonado nuestro servicio completo, ahora necesitas transferir el importe del ITP.
-                        </p>
-                    </div>
-                    
-                    <div style="background: #fee2e2; padding: 20px; border-radius: 8px; margin-top: 15px; border: 3px solid #ef4444;">
-                        <h4 style="color: #dc2626; margin: 0 0 15px 0;">🏦 TRANSFERENCIA REQUERIDA - ITP</h4>
-                        
-                        <div style="background: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 2px solid #ef4444;">
-                                <strong style="color: #dc2626;">IMPORTE A TRANSFERIR:</strong>
-                                <strong style="color: #dc2626; font-size: 18px;"><?php echo number_format($itp_amount, 2, ',', '.'); ?> €</strong>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0;">
-                                <span style="color: #666;">Concepto obligatorio:</span>
-                                <strong style="color: #dc2626;">ITP - <?php echo esc_html($tramite_id); ?></strong>
-                            </div>
-                        </div>
-                        
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #dee2e6;">
-                            <h5 style="color: #dc2626; margin: 0 0 10px 0;">📋 DATOS BANCARIOS:</h5>
-                            <div style="line-height: 1.8; color: #333;">
-                                <strong>Beneficiario:</strong> IPM GROUP 24 SL<br>
-                                <strong>IBAN:</strong> ES76 0049 0001 5928 1016 5836<br>
-                                <strong>Banco:</strong> Banco Santander<br>
-                                <strong>BIC/SWIFT:</strong> BSCHESMMXXX
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 15px; padding: 15px; background: #fff1f2; border-radius: 6px; border: 1px solid #fca5a5;">
-                            <p style="margin: 0; color: #dc2626; font-weight: bold; line-height: 1.6;">
-                                ⚠️ <strong>MUY IMPORTANTE:</strong> Sin esta transferencia NO podremos pagar el ITP en Hacienda 
-                                y tu trámite quedará bloqueado. Tienes 30 días desde la compraventa.
-                            </p>
-                        </div>
-                    </div>
+                <!-- CASO 2A: Gestionamos ITP + transferencia -->
+                <div class="alert-warning">
+                    <strong>⚠️ Acción Requerida: Pago del ITP por Transferencia</strong><br>
+                    Gestionamos el ITP por ti. Realiza la transferencia con estos datos:<br><br>
+                    <strong>Importe:</strong> <?php echo number_format($itp_amount, 2, ',', '.'); ?> €<br>
+                    <strong>Concepto:</strong> ITP - <?php echo esc_html($tramite_id); ?><br><br>
+                    <strong>📋 DATOS BANCARIOS:</strong><br>
+                    <strong>Beneficiario:</strong> IPM GROUP 24 SL<br>
+                    <strong>IBAN:</strong> ES76 0049 0001 5928 1016 5836<br>
+                    <strong>Banco:</strong> Banco Santander<br>
+                    <strong>BIC/SWIFT:</strong> BSCHESMMXXX<br><br>
+                    <em>⚠️ Importante: Sin esta transferencia no podremos procesar completamente tu trámite.</em>
                 </div>
                 
                 <?php elseif ($itp_gestion === 'gestionan-ustedes' && $itp_metodo_pago === 'tarjeta'): ?>
-                <!-- ================================== CASO 2B: GESTIONAMOS ITP + TARJETA ================================== -->
-                <div class="info-box" style="background-color: #dbeafe; border: 2px solid #3b82f6; padding: 20px; margin: 20px 0;">
-                    <h3 style="color: #1d4ed8; margin: 0 0 15px 0; font-size: 18px;">💳 Situación: Pago Completo con Tarjeta</h3>
-                    
-                    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                        <h4 style="color: #1d4ed8; margin: 0 0 10px 0;">💰 Desglose de tu Pago:</h4>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #dbeafe;">
-                            <span>Gestión completa (DGMM + ITP):</span>
-                            <strong>174.99 €</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #dbeafe;">
-                            <span>ITP (incluido):</span>
-                            <strong><?php echo number_format($itp_amount, 2, ',', '.'); ?> €</strong>
-                        </div>
-                        <?php if ($itp_comision > 0): ?>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #dbeafe; color: #f59e0b;">
-                            <span>Comisión tarjeta (1.5% del ITP):</span>
-                            <strong><?php echo number_format($itp_comision, 2, ',', '.'); ?> €</strong>
-                        </div>
-                        <?php endif; ?>
-                        <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 16px; color: #1d4ed8; border-top: 2px solid #3b82f6;">
-                            <strong>TOTAL PAGADO HOY:</strong>
-                            <strong><?php echo number_format($final_amount, 2, ',', '.'); ?> €</strong>
-                        </div>
-                    </div>
-                    
-                    <div style="background: #eff6ff; padding: 15px; border-radius: 8px; border: 1px solid #93c5fd;">
-                        <h4 style="color: #1e40af; margin: 0 0 10px 0;">🎯 ¿Qué Significa Esto?</h4>
-                        <p style="margin: 0; color: #1e40af; line-height: 1.6;">
-                            <strong>¡Perfecto! Trámite 100% pagado.</strong> Has elegido la opción más cómoda: nosotros gestionamos 
-                            tanto la transferencia en la DGMM como el pago del ITP en Hacienda. Todo incluido en un solo pago.
-                        </p>
-                    </div>
-                    
-                    <div style="background: #ecfdf5; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #a7f3d0;">
-                        <h4 style="color: #059669; margin: 0 0 10px 0;">✅ ¿Qué Pasa Ahora?</h4>
-                        <ul style="margin: 0; color: #059669; line-height: 1.8; padding-left: 20px;">
-                            <li><strong>No necesitas hacer nada más</strong> respecto al pago</li>
-                            <li><strong>Nosotros pagamos el ITP</strong> en Hacienda por ti</li>
-                            <li><strong>Procesamos la transferencia</strong> ante la DGMM</li>
-                            <li><strong>Te mantenemos informado</strong> en cada paso del proceso</li>
-                        </ul>
-                        <p style="margin: 15px 0 0 0; color: #059669; font-weight: bold;">
-                            🎉 ¡Relájate! Tu trámite está en nuestras manos expertas.
-                        </p>
-                    </div>
+                <!-- CASO 2B: Gestionamos ITP + tarjeta -->
+                <div class="info-box" style="background-color: #e3f2fd; border: 2px solid #2196f3;">
+                    <strong>💳 ITP Incluido en el Pago</strong><br>
+                    Perfecto! Gestionamos el ITP por ti y ya lo has pagado con tarjeta:<br>
+                    <strong>Importe ITP:</strong> <?php echo number_format($itp_amount, 2, ',', '.'); ?> €<br>
+                    <?php if ($itp_comision > 0): ?>
+                    <strong>Comisión tarjeta (1.5%):</strong> <?php echo number_format($itp_comision, 2, ',', '.'); ?> €<br>
+                    <?php endif; ?>
+                    <em>No necesitas hacer nada más respecto al ITP.</em>
                 </div>
                 <?php endif; ?>
 

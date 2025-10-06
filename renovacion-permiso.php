@@ -8,10 +8,10 @@ require_once(get_template_directory() . '/vendor/autoload.php');
 // Configuración de Stripe AL NIVEL GLOBAL (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
 define('NAVIGATION_PERMIT_STRIPE_MODE', 'live'); // 'test' o 'live'
 
-define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'pk_test_51SBOq2GXJ2PkUN8kmrKUUjCLbvY3v8sAsgr6rNtg8zHyUZjB6pFrB7Vz3Gm0l2Wm7y5xVoMap2NY8utwgdJOogNQ000qBYIX5V');
+define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
 define('NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_KEY_HERE');
 
-define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_51QHhtNGXGHYLV5CXu3P7PrAFezBnDuf0JsZzb2AxjSsV0okn4y19VOMIjW0NUOLpaFdI3CCRhiC4fvNBDDbPhiW100KkF6Uo2x');
+define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
 define('NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_KEY_HERE');
 
 define('NAVIGATION_PERMIT_SERVICE_PRICE', 65.00);
@@ -1746,8 +1746,8 @@ function navigation_permit_renewal_form_shortcode() {
         document.addEventListener('DOMContentLoaded', function() {
             // Variables globales
             let stripe, elements, clientSecret, signaturePad;
-            let currentPrice = 65.00;
-            const basePrice = 65.00;
+            let currentPrice = <?php echo NAVIGATION_PERMIT_SERVICE_PRICE; ?>;
+            const basePrice = <?php echo NAVIGATION_PERMIT_SERVICE_PRICE; ?>;
 
             // Almacenamiento de archivos
             const fileStorage = {
@@ -2876,7 +2876,7 @@ function send_navigation_permit_to_tramitfy() {
         // Obtener datos del webhook
         $tramiteId = $responseBody['tramiteId'];
         $tramiteDbId = $responseBody['id'];
-        $trackingUrl = "https://46-202-128-35.sslip.io/seguimiento/{$tramiteDbId}";
+        $trackingUrl = "https://tramitfy.es/pago-realizado-con-exito/";
         $dashboardUrl = "https://46-202-128-35.sslip.io/tramites/{$tramiteDbId}";
 
         error_log("✅ Trámite creado: $tramiteId (DB ID: $tramiteDbId)");
@@ -2925,7 +2925,7 @@ function send_navigation_permit_emails() {
 
         error_log("✅ Datos recibidos para tramiteId: $tramiteId");
 
-        $trackingUrl = "https://46-202-128-35.sslip.io/seguimiento/{$tramiteDbId}";
+        $trackingUrl = "https://tramitfy.es/pago-realizado-con-exito/";
         $dashboardUrl = "https://46-202-128-35.sslip.io/tramites/{$tramiteDbId}";
 
         // Calcular contabilidad

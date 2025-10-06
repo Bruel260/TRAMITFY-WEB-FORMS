@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: Transferencia Moto de Agua
+Plugin Name: Transferencia Embarcación
 Description: Formulario de transferencia de barco con Stripe, lógica de cupones y opción para usar solo el precio de compra (sin tablas CSV) cuando el usuario no encuentra su modelo.
 Version: 1.8
 Author: GPT-4
@@ -14,8 +14,8 @@ defined('ABSPATH') || exit;
 // ============================================
 
 // Función de logging mejorada
-if (!function_exists('tramitfy_log')) {
-    function tramitfy_log($message, $context = 'MOTO-FORM', $level = 'INFO') {
+if (!function_exists('tramitfy_barco_log')) {
+    function tramitfy_barco_log($message, $context = 'BARCO-FORM', $level = 'INFO') {
         $log_dir = get_template_directory() . '/logs';
 
         if (!is_dir($log_dir)) {
@@ -48,45 +48,45 @@ if (!function_exists('tramitfy_log')) {
     }
 }
 
-if (!function_exists('tramitfy_debug')) {
-    function tramitfy_debug($message, $data = null) {
+if (!function_exists('tramitfy_barco_debug')) {
+    function tramitfy_barco_debug($message, $data = null) {
         if (defined('WP_DEBUG') && WP_DEBUG) {
             $full_msg = $message;
             if ($data !== null) {
                 $full_msg .= ' | ' . json_encode($data);
             }
-            tramitfy_log($full_msg, 'DEBUG', 'DEBUG');
+            tramitfy_barco_log($full_msg, 'DEBUG', 'DEBUG');
         }
     }
 }
 
-tramitfy_log('========== INICIO CARGA FORMULARIO MOTO ==========', 'INIT', 'INFO');
+tramitfy_barco_log('========== INICIO CARGA FORMULARIO BARCO ==========', 'INIT', 'INFO');
 
-// Configuración Stripe para Transferencia Moto - FORZADO A TEST MODE
-// IMPORTANTE: Usar constantes con prefijo MOTO_ para evitar conflictos con otros templates
-define('MOTO_STRIPE_MODE', 'test'); // 'test' o 'live'
+// Configuración Stripe para Transferencia Barco - FORZADO A TEST MODE
+// IMPORTANTE: Usar constantes con prefijo BARCO_ para evitar conflictos con otros templates
+define('BARCO_STRIPE_MODE', 'test'); // 'test' o 'live'
 // CLAVES STRIPE - CONFIGURAR EN PRODUCCIÓN
 // Reemplazar con las claves reales en el servidor de producción
-define('MOTO_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
-define('MOTO_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
-define('MOTO_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
-define('MOTO_STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
+define('BARCO_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
+define('BARCO_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
+define('BARCO_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
+define('BARCO_STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
 
 // Asignar claves a variables globales (igual que hoja-asiento.php - evita cache)
-if (MOTO_STRIPE_MODE === 'test') {
-    $moto_stripe_public_key = MOTO_STRIPE_TEST_PUBLIC_KEY;
-    $moto_stripe_secret_key = MOTO_STRIPE_TEST_SECRET_KEY;
+if (BARCO_STRIPE_MODE === 'test') {
+    $barco_stripe_public_key = BARCO_STRIPE_TEST_PUBLIC_KEY;
+    $barco_stripe_secret_key = BARCO_STRIPE_TEST_SECRET_KEY;
 } else {
-    $moto_stripe_public_key = MOTO_STRIPE_LIVE_PUBLIC_KEY;
-    $moto_stripe_secret_key = MOTO_STRIPE_LIVE_SECRET_KEY;
+    $barco_stripe_public_key = BARCO_STRIPE_LIVE_PUBLIC_KEY;
+    $barco_stripe_secret_key = BARCO_STRIPE_LIVE_SECRET_KEY;
 }
 
 /**
  * Carga datos desde archivos CSV según el tipo de vehículo
  */
-function tpm_cargar_datos_csv($tipo) {
-    // Siempre usa MOTO.csv (el parámetro no se usa realmente)
-    $ruta_csv = get_template_directory() . '/MOTO.csv';
+function tpb_cargar_datos_csv($tipo) {
+    // Siempre usa BARCO.csv (el parámetro no se usa realmente)
+    $ruta_csv = get_template_directory() . '/BARCO.csv';
     $data = [];
 
     if (($handle = fopen($ruta_csv, 'r')) !== false) {
@@ -108,11 +108,11 @@ function tpm_cargar_datos_csv($tipo) {
 /**
  * GENERA EL FORMULARIO EN EL FRONTEND
  */
-function transferencia_moto_shortcode() {
-    global $moto_stripe_public_key, $moto_stripe_secret_key;
+function transferencia_barco_shortcode() {
+    global $barco_stripe_public_key, $barco_stripe_secret_key;
 
-    // Cargar datos de fabricantes para 'Moto de Agua' inicialmente
-    $datos_fabricantes = tpm_cargar_datos_csv('Moto de Agua');
+    // Cargar datos de fabricantes para 'Embarcación' inicialmente
+    $datos_fabricantes = tpb_cargar_datos_csv('Embarcación');
 
     // Obtener la ruta y versión del archivo CSS para encolarlo
     $style_path    = get_template_directory() . '/style.css';
@@ -6183,12 +6183,12 @@ function transferencia_moto_shortcode() {
         <!-- Página Vehículo -->
         <div id="page-vehiculo" class="form-page form-section-compact">
             <!-- Título del formulario en H2 -->
-            <h2 style="margin-bottom: 12px; color: #016d86; font-size: 22px; font-weight: 600;">Cambio Titularidad Moto de Agua</h2>
-            <p style="margin-bottom: 20px; font-size: 15px; color: #666; line-height: 1.6;">Realiza el cambio de titularidad de tu moto de agua online, sin desplazamientos ni esperas en Capitanía.</p>
+            <h2 style="margin-bottom: 12px; color: #016d86; font-size: 22px; font-weight: 600;">Cambio Titularidad Embarcación</h2>
+            <p style="margin-bottom: 20px; font-size: 15px; color: #666; line-height: 1.6;">Realiza el cambio de titularidad de tu embarcación online, sin desplazamientos ni esperas en Capitanía.</p>
             
             
             <!-- Tipo de vehículo fijo: Barco -->
-            <input type="hidden" name="vehicle_type" value="Moto de Agua">
+            <input type="hidden" name="vehicle_type" value="Embarcación">
 
             <!-- Fabricante y Modelo en fila -->
             <div id="vehicle-csv-section">
@@ -6588,18 +6588,49 @@ function transferencia_moto_shortcode() {
                     <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 700; color: #1f2937; text-align: center;">Servicios Adicionales</h3>
                     
                     <!-- Cambio de Lista -->
-                    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; background: #f9fafb;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <span style="font-size: 16px; font-weight: 600; color: #1f2937;">Cambio de lista</span>
-                            <span style="font-size: 15px; font-weight: 700; color: #016d86;">+64,95€</span>
+                    <div style="border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 12px; padding: 14px; background: #f9fafb;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span style="font-size: 15px; font-weight: 600; color: #1f2937;">Cambio de lista</span>
+                            <span style="font-size: 14px; font-weight: 700; color: #016d86;">+64,95€</span>
                         </div>
-                        <p style="margin: 0 0 12px 0; font-size: 14px; color: #6b7280;">Si necesitas cambiar la lista de tu moto de agua</p>
-                        <div style="display: flex; gap: 10px;">
-                            <button type="button" id="cambio-lista-si" class="cambio-lista-btn" style="flex: 1; padding: 10px 20px; border: 1px solid #016d86; background: white; color: #016d86; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
-                                Sí, cambiar lista
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" id="cambio-lista-si" class="cambio-lista-btn" style="flex: 1; padding: 8px 16px; border: 1px solid #016d86; background: white; color: #016d86; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                                Sí
                             </button>
-                            <button type="button" id="cambio-lista-no" class="cambio-lista-btn" style="flex: 1; padding: 10px 20px; border: 1px solid #d1d5db; background: white; color: #6b7280; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
-                                No, gracias
+                            <button type="button" id="cambio-lista-no" class="cambio-lista-btn" style="flex: 1; padding: 8px 16px; border: 1px solid #d1d5db; background: white; color: #6b7280; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                                No
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Cambio de Nombre -->
+                    <div style="border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 12px; padding: 14px; background: #f9fafb;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span style="font-size: 15px; font-weight: 600; color: #1f2937;">Cambio de nombre</span>
+                            <span style="font-size: 14px; font-weight: 700; color: #016d86;">+40,00€</span>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" id="cambio-nombre-si" class="cambio-nombre-btn" style="flex: 1; padding: 8px 16px; border: 1px solid #016d86; background: white; color: #016d86; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                                Sí
+                            </button>
+                            <button type="button" id="cambio-nombre-no" class="cambio-nombre-btn" style="flex: 1; padding: 8px 16px; border: 1px solid #d1d5db; background: white; color: #6b7280; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                                No
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Cambio de Puerto -->
+                    <div style="border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 0; padding: 14px; background: #f9fafb;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span style="font-size: 15px; font-weight: 600; color: #1f2937;">Cambio de puerto base</span>
+                            <span style="font-size: 14px; font-weight: 700; color: #016d86;">+40,00€</span>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" id="cambio-puerto-si" class="cambio-puerto-btn" style="flex: 1; padding: 8px 16px; border: 1px solid #016d86; background: white; color: #016d86; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                                Sí
+                            </button>
+                            <button type="button" id="cambio-puerto-no" class="cambio-puerto-btn" style="flex: 1; padding: 8px 16px; border: 1px solid #d1d5db; background: white; color: #6b7280; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                                No
                             </button>
                         </div>
                     </div>
@@ -6698,7 +6729,7 @@ function transferencia_moto_shortcode() {
                     <div class="upload-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                         <div class="upload-item">
                             <label id="label-hoja-asiento" for="upload-hoja-asiento">
-                                <strong style="display: block; margin-bottom: 2px; font-size: 14px;">📄 Tarjeta de la moto</strong>
+                                <strong style="display: block; margin-bottom: 2px; font-size: 14px;">📄 Registro marítimo</strong>
                                 <small style="display: block; color: #6b7280; margin-bottom: 6px; font-size: 12px;">Documento de la moto</small>
                             </label>
                             <div class="upload-wrapper">
@@ -7065,7 +7096,7 @@ function transferencia_moto_shortcode() {
     };
 
     // Inicialización del sistema
-    logInfo('INIT', '========== TRAMITFY MOTO FORM v1.11 (Navigation Buttons Fix) ==========');
+    logInfo('INIT', '========== TRAMITFY BARCO FORM v1.11 (Navigation Buttons Fix) ==========');
     logInfo('INIT', `🌐 User Agent: ${navigator.userAgent.substring(0, 100)}...`);
     logInfo('INIT', `📱 Viewport: ${window.innerWidth}x${window.innerHeight}`);
     logInfo('INIT', `🔗 URL: ${window.location.href}`);
@@ -7097,7 +7128,7 @@ function transferencia_moto_shortcode() {
         fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `action=tpm_log_debug&message=${encodeURIComponent(message)}&type=${type}&timestamp=${timestamp}`
+            body: `action=tpb_log_debug&message=${encodeURIComponent(message)}&type=${type}&timestamp=${timestamp}`
         }).catch(() => {}); // Ignorar errores silenciosamente
     }
     
@@ -7151,6 +7182,22 @@ function transferencia_moto_shortcode() {
             "Madrid": 0.04, "Murcia": 0.04, "Navarra": 0.04, "País Vasco": 0.04,
             "La Rioja": 0.04, "Ceuta": 0.02, "Melilla": 0.04
         };
+
+        // Regiones con trámites especiales para embarcaciones
+        const regionesEspeciales = {
+            "Comunidad Valenciana": {
+                tasaAdicional: 45.00, // Tasa adicional específica para Valencia
+                requiereDocumentacion: ["certificado_navegabilidad", "seguro_embarcacion"]
+            },
+            "Andalucía": {
+                descuentoFamiliarNumerosa: 0.5, // 50% descuento si familia numerosa
+                requiereDocumentacion: ["certificado_andalucia"]
+            },
+            "Asturias": {
+                bonificacionJoven: 0.25, // 25% descuento si menor de 30 años
+                requiereDocumentacion: ["certificado_empadronamiento"]
+            }
+        };
         
         // Tabla oficial BOE 2024 - Columna "A motor y MN" (Motores y Motos Náuticas)
         const depreciationRates = [
@@ -7192,6 +7239,10 @@ function transferencia_moto_shortcode() {
         let precioStep = 1; // 1 o 2
         let cambioListaSeleccionado = false; // Para el servicio de cambio de lista
         const PRECIO_CAMBIO_LISTA = 64.95;
+        let cambioNombreSeleccionado = false; // Para el servicio de cambio de nombre
+        const PRECIO_CAMBIO_NOMBRE = 40.00;
+        let cambioPuertoSeleccionado = false; // Para el servicio de cambio de puerto
+        const PRECIO_CAMBIO_PUERTO = 40.00;
         let itpGestionSeleccionada = null; // 'yo-pago' o 'gestionan-ustedes'
         let itpMetodoPago = null; // 'tarjeta' o 'transferencia'
         let itpBaseAmount = 0;
@@ -7633,7 +7684,9 @@ function transferencia_moto_shortcode() {
                 setTimeout(() => {
                     try {
                         // 🚀 NUEVO: Calcular monto exacto para Stripe según caso
-                        const serviciosExtras = cambioListaSeleccionado ? 64.95 : 0;
+                        const serviciosExtras = (cambioListaSeleccionado ? 64.95 : 0) + 
+                                               (document.getElementById('cambio_nombre')?.checked ? 40.00 : 0) + 
+                                               (document.getElementById('cambio_puerto')?.checked ? 40.00 : 0);
                         let stripeAmount;
 
                         // CASO 1: Cliente gestiona su ITP - cobrar solo nuestro servicio
@@ -7788,11 +7841,11 @@ function transferencia_moto_shortcode() {
             if (messageEl) messageEl.className = 'hidden';
 
             // Inicializar Stripe según configuración
-            console.log('🔑 Clave pública de Stripe:', '<?php echo substr($moto_stripe_public_key, 0, 20); ?>...');
-            console.log('⚙️ STRIPE MODE:', '<?php echo MOTO_STRIPE_MODE; ?>' === 'test' ? '🧪 TEST MODE' : '🔴 LIVE MODE');
-            console.log('🔑 Tipo de clave:', '<?php echo $moto_stripe_public_key; ?>'.startsWith('pk_test') ? 'TEST KEY ✅' : 'LIVE KEY ⚠️');
+            console.log('🔑 Clave pública de Stripe:', '<?php echo substr($barco_stripe_public_key, 0, 20); ?>...');
+            console.log('⚙️ STRIPE MODE:', '<?php echo BARCO_STRIPE_MODE; ?>' === 'test' ? '🧪 TEST MODE' : '🔴 LIVE MODE');
+            console.log('🔑 Tipo de clave:', '<?php echo $barco_stripe_public_key; ?>'.startsWith('pk_test') ? 'TEST KEY ✅' : 'LIVE KEY ⚠️');
             console.log('🔧 Inicializando objeto Stripe...');
-            stripe = Stripe('<?php echo $moto_stripe_public_key; ?>');
+            stripe = Stripe('<?php echo $barco_stripe_public_key; ?>');
             console.log('✅ Objeto Stripe inicializado:', stripe ? 'OK' : 'ERROR');
 
             try {
@@ -7800,12 +7853,12 @@ function transferencia_moto_shortcode() {
                 const ajaxUrl = '<?php echo admin_url('admin-ajax.php'); ?>';
                 console.log('🌐 URL de AJAX:', ajaxUrl);
                 console.log('📤 Enviando petición para crear Payment Intent...');
-                console.log('📦 Datos:', `action=moto_create_payment_intent&amount=${amountCents}`);
+                console.log('📦 Datos:', `action=barco_create_payment_intent&amount=${amountCents}`);
 
                 const response = await fetch(ajaxUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `action=moto_create_payment_intent&amount=${amountCents}`
+                    body: `action=barco_create_payment_intent&amount=${amountCents}`
                 });
 
                 console.log('📥 Respuesta recibida');
@@ -8015,21 +8068,59 @@ function transferencia_moto_shortcode() {
             const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
             const { fiscalValue, depreciationPercentage, yearsDifference } = calculateFiscalValue();
             const region = regionSelect.value;
-            const rate = itpRates[region] || 0;
+            let rate = itpRates[region] || 0;
             const itpAlreadyPaidElement = document.getElementById('itp_already_paid');
             const isItpAlreadyPaid = itpAlreadyPaidElement ? itpAlreadyPaidElement.checked : false;
+
+            // Aplicar modificaciones especiales por región
+            let tasaAdicional = 0;
+            let descuentoAplicado = 0;
+            if (regionesEspeciales[region]) {
+                const especial = regionesEspeciales[region];
+                
+                // Valencia: tasa adicional
+                if (region === "Comunidad Valenciana") {
+                    tasaAdicional = especial.tasaAdicional;
+                }
+                
+                // Andalucía: descuento familia numerosa (simulado)
+                if (region === "Andalucía" && especial.descuentoFamiliarNumerosa) {
+                    // Por simplicidad, aplicamos descuento si precio > 15000€
+                    if (purchasePrice > 15000) {
+                        descuentoAplicado = especial.descuentoFamiliarNumerosa;
+                        rate = rate * (1 - descuentoAplicado);
+                    }
+                }
+                
+                // Asturias: bonificación joven (simulado)
+                if (region === "Asturias" && especial.bonificacionJoven) {
+                    // Por simplicidad, aplicamos bonificación si precio < 25000€
+                    if (purchasePrice < 25000) {
+                        descuentoAplicado = especial.bonificacionJoven;
+                        rate = rate * (1 - descuentoAplicado);
+                    }
+                }
+            }
 
             logDebug('ITP', 'Datos entrada:', {
                 purchasePrice,
                 fiscalValue,
                 region,
                 rate,
-                isItpAlreadyPaid
+                isItpAlreadyPaid,
+                tasaAdicional,
+                descuentoAplicado
             });
 
             const baseValue = Math.max(purchasePrice, fiscalValue);
-            const itp = isItpAlreadyPaid ? 0 : baseValue * rate;
-            const extraFee = 0; // No hay comisión extra sobre el ITP
+            let itp = isItpAlreadyPaid ? 0 : baseValue * rate;
+            
+            // Añadir tasa adicional si aplica
+            if (tasaAdicional > 0) {
+                itp += tasaAdicional;
+            }
+            
+            const extraFee = tasaAdicional; // La tasa adicional se considera como fee extra
 
             logDebug('ITP', 'Resultado cálculo:', { baseValue, itp, extraFee });
 
@@ -8172,34 +8263,29 @@ function transferencia_moto_shortcode() {
             const discountedTransferFee = transferFee - discount;
             const finalExtraFee = currentExtraFee;
 
-            // Desglose de tasas, honorarios e IVA
-            const baseTasas = 19.05; // Las tasas siempre son 19.05€
+            // ✅ CORRECCIÓN: Cálculo simplificado con tarifas todo incluido
+            const tarifaBase = transferFee; // Ya incluye transferFee + additionalServicesTotal
             
-            // Calcular honorarios basados en el precio base menos las tasas
-            // Si gestionamos ITP: 174.99 - 19.05 = 155.94
-            // Si NO gestionamos ITP: 134.99 - 19.05 = 115.94
-            // Los servicios adicionales se suman aparte
-            const baseHonorariosSinServicios = transferFee - baseTasas;
-            const baseHonorarios = baseHonorariosSinServicios + additionalServicesTotal;
+            // ✅ Aplicar descuento solo sobre tarifa base (sin servicios extras)
+            const tarifaBaseSinExtras = gestionamosITP ? BASE_TRANSFER_PRICE_CON_ITP : BASE_TRANSFER_PRICE_SIN_ITP;
+            const discount = (couponDiscountPercent / 100) * tarifaBaseSinExtras;
+            const tarifaConDescuento = tarifaBase - discount;
             
-            const discountRatio = (couponDiscountPercent / 100);
-            const discountedHonorarios = baseHonorarios * (1 - discountRatio);
+            // ✅ DESGLOSE SOLO INFORMATIVO (no se usa para cálculos)
+            const tasasInfo = 19.05; // Solo para mostrar
+            const honorariosInfo = tarifaBaseSinExtras - tasasInfo; // Solo para mostrar
+            const ivaInfo = honorariosInfo * 0.21 / 1.21; // Solo para mostrar
             
-            // 🔧 CORRECCIÓN: IVA = diferencia entre honorarios brutos y netos
-            const honorariosSinIva = discountedHonorarios / 1.21;
-            const newIva = discountedHonorarios - honorariosSinIva;
+            // ✅ Variables locales en lugar de window (más confiables)
+            const currentTasas = tasasInfo;
+            const currentHonorarios = honorariosInfo;
+            const currentIva = ivaInfo;
 
-            // Guardar valores globalmente para poder acceder en el submit
-            window.currentTasas = baseTasas;
-            window.currentHonorarios = discountedHonorarios;
-            window.currentIva = newIva;
-
-            // CRÍTICO: Solo incluir ITP si nosotros lo gestionamos
+            // ✅ CRÍTICO: Solo incluir ITP si nosotros lo gestionamos
             const itpToInclude = gestionamosITP ? itp : 0;
 
-            // Cálculo final - SOLO INCLUIR ITP SI LO GESTIONAMOS
-            const totalGestion = baseTasas + discountedHonorarios + newIva + finalExtraFee;
-            const total = itpToInclude + totalGestion;
+            // ✅ TOTAL FINAL CORRECTO
+            const total = tarifaConDescuento + itpToInclude;
 
             finalAmount = total;
 
@@ -8307,7 +8393,7 @@ function transferencia_moto_shortcode() {
             summaryEmailElements.forEach(el => el.textContent = document.getElementById('customer_email')?.value || '-');
             summaryPhoneElements.forEach(el => el.textContent = document.getElementById('customer_phone')?.value || '-');
 
-            const vehicleType = 'Moto de Agua';
+            const vehicleType = 'Embarcación';
             const summaryVehicleTypeElements = document.querySelectorAll('#summary-vehicle-type');
             summaryVehicleTypeElements.forEach(el => el.textContent = vehicleType);
 
@@ -8676,7 +8762,7 @@ function transferencia_moto_shortcode() {
             const customerName = document.getElementById('customer_name')?.value?.trim() || '';
             const customerDNI = document.getElementById('customer_dni')?.value?.trim() || '';
             const customerEmail = document.getElementById('customer_email')?.value?.trim() || '';
-            const vehicleType = 'Moto de Agua';
+            const vehicleType = 'Embarcación';
             const manufacturer = manufacturerSelect.value;
             const model = modelSelect.value;
             const manualManufacturer = document.getElementById('manual_manufacturer') ? document.getElementById('manual_manufacturer').value.trim() : '';
@@ -9139,7 +9225,7 @@ function transferencia_moto_shortcode() {
 
             // VERSIÓN AJAX REAL - Backend activado
             const formData = new FormData();
-            formData.append('action', 'tpm_validate_coupon');
+            formData.append('action', 'tpb_validate_coupon');
             formData.append('coupon', code);
 
             fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
@@ -9235,7 +9321,7 @@ function transferencia_moto_shortcode() {
             console.log('Tramite ID:', purchaseDetails.tramite_id);
 
             const formData = new FormData();
-            formData.append('action', 'tpm_upload_documents');
+            formData.append('action', 'tpb_upload_documents');
             formData.append('tramite_id', purchaseDetails.tramite_id);
 
             // Documentos del comprador
@@ -9415,7 +9501,7 @@ function transferencia_moto_shortcode() {
                     console.log('ℹ️ window.tramitfyApi no disponible, usando postMessage');
 
                     const messageHandler = (event) => {
-                        if (event.data.type === 'MOTO_TRANSFER_RESPONSE') {
+                        if (event.data.type === 'BARCO_TRANSFER_RESPONSE') {
                             window.removeEventListener('message', messageHandler);
                             console.log('📥 Respuesta de Tramitfy postMessage:', event.data);
 
@@ -9440,7 +9526,7 @@ function transferencia_moto_shortcode() {
                     // Enviar postMessage a la misma ventana
                     persistentLog('📡 Enviando postMessage al React App...', 'info');
                     window.postMessage({
-                        type: 'MOTO_TRANSFER_FORM',
+                        type: 'BARCO_TRANSFER_FORM',
                         payload: payload
                     }, window.location.origin);
                     persistentLog('📡 PostMessage enviado, esperando respuesta...', 'info');
@@ -9466,7 +9552,7 @@ function transferencia_moto_shortcode() {
             const reactApiUrl = 'https://tramitfy.es/app/api/receive-form';
 
             const payload = {
-                type: 'MOTO_TRANSFER',
+                type: 'BARCO_TRANSFER',
                 tramiteId: purchaseDetails.tramite_id,
                 timestamp: purchaseDetails.timestamp,
                 data: purchaseDetails
@@ -9511,7 +9597,7 @@ function transferencia_moto_shortcode() {
 
             // Convertir purchaseDetails a URLSearchParams para enviar por POST
             const params = new URLSearchParams();
-            params.append('action', 'tpm_send_emails');
+            params.append('action', 'tpb_send_emails');
 
             // Añadir todos los datos de purchaseDetails
             Object.keys(purchaseDetails).forEach(key => {
@@ -9582,7 +9668,7 @@ function transferencia_moto_shortcode() {
             alertMessageText.textContent = 'Enviando el formulario...';
 
             const formData = new FormData(document.getElementById('transferencia-form'));
-            formData.append('action', 'submit_moto_form_tpm');
+            formData.append('action', 'submit_barco_form_tpb');
             formData.append('final_amount', finalAmount.toFixed(2));
             formData.append('current_transfer_tax', currentTransferTax.toFixed(2));
             formData.append('current_extra_fee', currentExtraFee.toFixed(2));
@@ -9672,7 +9758,7 @@ function transferencia_moto_shortcode() {
                         // Enviar mensaje a la app React
                         if (window.parent !== window) {
                             window.parent.postMessage({
-                                type: 'MOTO_TRANSFER_FORM',
+                                type: 'BARCO_TRANSFER_FORM',
                                 payload: motoTransferData
                             }, 'https://tramitfy.es');
                         }
@@ -9869,8 +9955,8 @@ function transferencia_moto_shortcode() {
 
         function populateManufacturers() {
             logDebug('CSV', '📥 Iniciando carga de fabricantes desde CSV');
-            const vehicleType = 'Moto de Agua';
-            const csvFile = 'MOTO.csv';
+            const vehicleType = 'Embarcación';
+            const csvFile = 'BARCO.csv';
             const csvUrl = '<?php echo get_template_directory_uri(); ?>/' + csvFile;
             logDebug('CSV', 'URL del CSV:', csvUrl);
 
@@ -9918,17 +10004,17 @@ function transferencia_moto_shortcode() {
 
         // Ajustar label de la hoja de asiento según vehículo
         function updateDocumentLabels() {
-            const vehicleType = 'Moto de Agua'; // Fijo para transferencia de barcos
+            const vehicleType = 'Embarcación'; // Fijo para transferencia de barcos
             const labelHojaAsiento = document.getElementById('label-hoja-asiento');
             const inputHojaAsiento = document.getElementById('upload-hoja-asiento');
             const viewExampleLink = document.getElementById('view-example-hoja-asiento');
             
-            if (vehicleType === 'Moto de Agua') {
-                labelHojaAsiento.textContent = 'Tarjeta de la moto';
-                inputHojaAsiento.name = 'upload_tarjeta_moto';
-                viewExampleLink.setAttribute('data-doc', 'tarjeta-moto');
+            if (vehicleType === 'Embarcación') {
+                labelHojaAsiento.textContent = 'Registro marítimo';
+                inputHojaAsiento.name = 'upload_registro_maritimo';
+                viewExampleLink.setAttribute('data-doc', 'registro-maritimo');
             } else {
-                labelHojaAsiento.textContent = 'Copia del tarjeta de la moto';
+                labelHojaAsiento.textContent = 'Copia del registro marítimo';
                 inputHojaAsiento.name = 'upload_hoja_asiento';
                 viewExampleLink.setAttribute('data-doc', 'hoja-asiento');
             }
@@ -10100,7 +10186,7 @@ function transferencia_moto_shortcode() {
                         const idResponse = await fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: 'action=tpm_generate_tramite_id'
+                            body: 'action=tpb_generate_tramite_id'
                         });
                         const idResult = await idResponse.json();
                         if (idResult.success) {
@@ -10121,7 +10207,9 @@ function transferencia_moto_shortcode() {
                     
                     // CASO 1: Cliente gestiona su ITP - email debe mostrar solo nuestro servicio
                     if (!gestionamosITP) {
-                        const serviciosExtras = cambioListaSeleccionado ? 64.95 : 0;
+                        const serviciosExtras = (cambioListaSeleccionado ? 64.95 : 0) + 
+                                               (document.getElementById('cambio_nombre')?.checked ? 40.00 : 0) + 
+                                               (document.getElementById('cambio_puerto')?.checked ? 40.00 : 0);
                         finalAmountParaEmail = 134.99 + serviciosExtras;
                         totalAmountParaEmail = finalAmountParaEmail.toFixed(2);
                         console.log('💰 CASO 1 - CLIENTE GESTIONA ITP:');
@@ -10131,7 +10219,9 @@ function transferencia_moto_shortcode() {
                     }
                     // CASO 2A: Gestionamos ITP + transferencia
                     else if (gestionamosITP && itpMetodoPago === 'transferencia') {
-                        const serviciosExtras = cambioListaSeleccionado ? 64.95 : 0;
+                        const serviciosExtras = (cambioListaSeleccionado ? 64.95 : 0) + 
+                                               (document.getElementById('cambio_nombre')?.checked ? 40.00 : 0) + 
+                                               (document.getElementById('cambio_puerto')?.checked ? 40.00 : 0);
                         finalAmountParaEmail = 174.99 + serviciosExtras;
                         totalAmountParaEmail = finalAmountParaEmail.toFixed(2);
                         console.log('💰 CASO 2A - GESTIÓN ITP + TRANSFERENCIA:');
@@ -10167,7 +10257,7 @@ function transferencia_moto_shortcode() {
                         customerDNI: customerDniInput.value.trim(),
 
                         // Vehículo
-                        vehicleType: 'moto',
+                        vehicleType: 'barco',
                         manufacturer: selectedManufacturer || 'GENÉRICO',
                         model: selectedModel || 'GENÉRICO',
                         matriculationDate: document.getElementById('fecha_matriculacion').value || '',
@@ -10337,10 +10427,10 @@ function transferencia_moto_shortcode() {
                 <?php
                 // Cargar CSV y generar estructura JS
                 // Primero intentar desde el directorio del tema, si no desde el directorio actual
-                $csv_file = get_template_directory() . '/MOTO.csv';
+                $csv_file = get_template_directory() . '/BARCO.csv';
                 if (!file_exists($csv_file)) {
                     // Si no está en el tema, buscar en el directorio del formulario
-                    $csv_file = dirname(__FILE__) . '/MOTO.csv';
+                    $csv_file = dirname(__FILE__) . '/BARCO.csv';
                 }
 
                 $modelos_por_fabricante = array();
@@ -10740,7 +10830,7 @@ function transferencia_moto_shortcode() {
                     const response = await fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: `action=moto_create_payment_intent&amount=${amountCents}`
+                        body: `action=barco_create_payment_intent&amount=${amountCents}`
                     });
 
                     const result = await response.json();
@@ -10795,7 +10885,7 @@ function transferencia_moto_shortcode() {
                         const idResponse = await fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: 'action=tpm_generate_tramite_id'
+                            body: 'action=tpb_generate_tramite_id'
                         });
                         const idResult = await idResponse.json();
                         if (idResult.success) {
@@ -10825,7 +10915,9 @@ function transferencia_moto_shortcode() {
                     
                     // CASO 1: Cliente gestiona su ITP - email debe mostrar solo nuestro servicio
                     if (!gestionamosITP) {
-                        const serviciosExtras = cambioListaSeleccionado ? 64.95 : 0;
+                        const serviciosExtras = (cambioListaSeleccionado ? 64.95 : 0) + 
+                                               (document.getElementById('cambio_nombre')?.checked ? 40.00 : 0) + 
+                                               (document.getElementById('cambio_puerto')?.checked ? 40.00 : 0);
                         finalAmountParaEmail = 134.99 + serviciosExtras;
                         totalAmountParaEmail = finalAmountParaEmail.toFixed(2);
                         console.log('💰 CASO 1 - CLIENTE GESTIONA ITP:');
@@ -10835,7 +10927,9 @@ function transferencia_moto_shortcode() {
                     }
                     // CASO 2A: Gestionamos ITP + transferencia
                     else if (gestionamosITP && itpMetodoPago === 'transferencia') {
-                        const serviciosExtras = cambioListaSeleccionado ? 64.95 : 0;
+                        const serviciosExtras = (cambioListaSeleccionado ? 64.95 : 0) + 
+                                               (document.getElementById('cambio_nombre')?.checked ? 40.00 : 0) + 
+                                               (document.getElementById('cambio_puerto')?.checked ? 40.00 : 0);
                         finalAmountParaEmail = 174.99 + serviciosExtras;
                         totalAmountParaEmail = finalAmountParaEmail.toFixed(2);
                         console.log('💰 CASO 2A - GESTIÓN ITP + TRANSFERENCIA:');
@@ -11538,9 +11632,9 @@ function transferencia_moto_shortcode() {
                 var vehicleTypeSelect = document.querySelector('[name="vehicle_type"]');
                 console.log('[ADMIN] vehicleTypeSelect:', vehicleTypeSelect);
                 if (vehicleTypeSelect) {
-                    vehicleTypeSelect.value = 'moto';
+                    vehicleTypeSelect.value = 'barco';
                     vehicleTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                    console.log('[ADMIN] Tipo vehiculo establecido: moto');
+                    console.log('[ADMIN] Tipo vehiculo establecido: barco');
                 }
 
                 setTimeout(function() {
@@ -12402,6 +12496,12 @@ function transferencia_moto_shortcode() {
             if (cambioListaSeleccionado) {
                 totalFinal += PRECIO_CAMBIO_LISTA;
             }
+            if (cambioNombreSeleccionado) {
+                totalFinal += PRECIO_CAMBIO_NOMBRE;
+            }
+            if (cambioPuertoSeleccionado) {
+                totalFinal += PRECIO_CAMBIO_PUERTO;
+            }
             if (couponDiscountPercent > 0) {
                 totalFinal = totalFinal * (1 - couponDiscountPercent / 100);
             }
@@ -12614,6 +12714,38 @@ function transferencia_moto_shortcode() {
                 `;
                 desgloseExtrasContainer.appendChild(extraLine);
             }
+
+            // Añadir cambio de nombre si está seleccionado
+            if (cambioNombreSeleccionado) {
+                total += PRECIO_CAMBIO_NOMBRE;
+
+                const extraLine = document.createElement('div');
+                extraLine.style.cssText = 'display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb;';
+                extraLine.innerHTML = `
+                    <div>
+                        <div style="font-size: 15px; font-weight: 600; color: #1f2937;">Cambio de nombre</div>
+                        <div style="font-size: 13px; color: #6b7280; margin-top: 2px;">Servicio adicional</div>
+                    </div>
+                    <div style="font-size: 16px; font-weight: 700; color: #1f2937;">${PRECIO_CAMBIO_NOMBRE.toFixed(2)} €</div>
+                `;
+                desgloseExtrasContainer.appendChild(extraLine);
+            }
+
+            // Añadir cambio de puerto si está seleccionado
+            if (cambioPuertoSeleccionado) {
+                total += PRECIO_CAMBIO_PUERTO;
+
+                const extraLine = document.createElement('div');
+                extraLine.style.cssText = 'display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb;';
+                extraLine.innerHTML = `
+                    <div>
+                        <div style="font-size: 15px; font-weight: 600; color: #1f2937;">Cambio de puerto</div>
+                        <div style="font-size: 13px; color: #6b7280; margin-top: 2px;">Servicio adicional</div>
+                    </div>
+                    <div style="font-size: 16px; font-weight: 700; color: #1f2937;">${PRECIO_CAMBIO_PUERTO.toFixed(2)} €</div>
+                `;
+                desgloseExtrasContainer.appendChild(extraLine);
+            }
         }
 
         // 4. CUPÓN DE DESCUENTO
@@ -12700,6 +12832,98 @@ function transferencia_moto_shortcode() {
             actualizarSidebarPrecio();
 
             logDebug('CAMBIO-LISTA', '❌ Cambio de lista NO seleccionado');
+        });
+    }
+
+    // Event listeners para botones de cambio de nombre
+    const cambioNombreSi = document.getElementById('cambio-nombre-si');
+    const cambioNombreNo = document.getElementById('cambio-nombre-no');
+
+    if (cambioNombreSi && cambioNombreNo) {
+        cambioNombreSi.addEventListener('click', function() {
+            // Activar cambio de nombre
+            cambioNombreSeleccionado = true;
+
+            // Estilos activo
+            cambioNombreSi.style.background = '#016d86';
+            cambioNombreSi.style.color = 'white';
+            cambioNombreSi.style.borderColor = '#016d86';
+
+            cambioNombreNo.style.background = 'white';
+            cambioNombreNo.style.color = '#6b7280';
+            cambioNombreNo.style.borderColor = '#d1d5db';
+
+            // Actualizar precio
+            actualizarPrecioFinal();
+            actualizarSidebarPrecio();
+
+            logDebug('CAMBIO-NOMBRE', '✅ Cambio de nombre seleccionado:', PRECIO_CAMBIO_NOMBRE);
+        });
+
+        cambioNombreNo.addEventListener('click', function() {
+            // Desactivar cambio de nombre
+            cambioNombreSeleccionado = false;
+
+            // Estilos activo
+            cambioNombreNo.style.background = '#10b981';
+            cambioNombreNo.style.color = 'white';
+            cambioNombreNo.style.borderColor = '#10b981';
+
+            cambioNombreSi.style.background = 'white';
+            cambioNombreSi.style.color = '#6b7280';
+            cambioNombreSi.style.borderColor = '#d1d5db';
+
+            // Actualizar precio
+            actualizarPrecioFinal();
+            actualizarSidebarPrecio();
+
+            logDebug('CAMBIO-NOMBRE', '❌ Cambio de nombre NO seleccionado');
+        });
+    }
+
+    // Event listeners para botones de cambio de puerto
+    const cambioPuertoSi = document.getElementById('cambio-puerto-si');
+    const cambioPuertoNo = document.getElementById('cambio-puerto-no');
+
+    if (cambioPuertoSi && cambioPuertoNo) {
+        cambioPuertoSi.addEventListener('click', function() {
+            // Activar cambio de puerto
+            cambioPuertoSeleccionado = true;
+
+            // Estilos activo
+            cambioPuertoSi.style.background = '#016d86';
+            cambioPuertoSi.style.color = 'white';
+            cambioPuertoSi.style.borderColor = '#016d86';
+
+            cambioPuertoNo.style.background = 'white';
+            cambioPuertoNo.style.color = '#6b7280';
+            cambioPuertoNo.style.borderColor = '#d1d5db';
+
+            // Actualizar precio
+            actualizarPrecioFinal();
+            actualizarSidebarPrecio();
+
+            logDebug('CAMBIO-PUERTO', '✅ Cambio de puerto seleccionado:', PRECIO_CAMBIO_PUERTO);
+        });
+
+        cambioPuertoNo.addEventListener('click', function() {
+            // Desactivar cambio de puerto
+            cambioPuertoSeleccionado = false;
+
+            // Estilos activo
+            cambioPuertoNo.style.background = '#10b981';
+            cambioPuertoNo.style.color = 'white';
+            cambioPuertoNo.style.borderColor = '#10b981';
+
+            cambioPuertoSi.style.background = 'white';
+            cambioPuertoSi.style.color = '#6b7280';
+            cambioPuertoSi.style.borderColor = '#d1d5db';
+
+            // Actualizar precio
+            actualizarPrecioFinal();
+            actualizarSidebarPrecio();
+
+            logDebug('CAMBIO-PUERTO', '❌ Cambio de puerto NO seleccionado');
         });
     }
 
@@ -12797,7 +13021,7 @@ function transferencia_moto_shortcode() {
                 contenido = `
                     <div style="background: rgba(255,255,255,0.1); padding: 18px; border-radius: 8px;">
                         <h3 style="color: white; font-size: 16px; margin: 0 0 16px 0; font-weight: 600; line-height: 1.3;">
-                            Cambio Titularidad<br>Moto de Agua
+                            Cambio Titularidad<br>Embarcación
                         </h3>
                         
                         
@@ -13642,7 +13866,7 @@ function transferencia_moto_shortcode() {
 /**
  * Registrar el shortcode [transferencia_propiedad_form]
  */
-add_shortcode('transferencia_moto_form', 'transferencia_moto_shortcode');
+add_shortcode('transferencia_barco_form', 'transferencia_barco_shortcode');
 
 /**
  * ENDPOINTS Y ACCIONES AJAX
@@ -13651,14 +13875,14 @@ add_shortcode('transferencia_moto_form', 'transferencia_moto_shortcode');
 /**
  * 1. CREATE PAYMENT INTENT
  */
-add_action('wp_ajax_moto_create_payment_intent', 'tpm_create_payment_intent');
-add_action('wp_ajax_nopriv_moto_create_payment_intent', 'tpm_create_payment_intent');
-function tpm_create_payment_intent() {
+add_action('wp_ajax_barco_create_payment_intent', 'tpb_create_payment_intent');
+add_action('wp_ajax_nopriv_barco_create_payment_intent', 'tpb_create_payment_intent');
+function tpb_create_payment_intent() {
     // FORZAR claves directamente para evitar cache de constantes
     $force_test_key = 'YOUR_STRIPE_TEST_SECRET_KEY_HERE';
     $force_live_key = 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE';
     
-    if (MOTO_STRIPE_MODE === 'test') {
+    if (BARCO_STRIPE_MODE === 'test') {
         $stripe_secret_key = $force_test_key;
     } else {
         $stripe_secret_key = $force_live_key;
@@ -13678,10 +13902,10 @@ function tpm_create_payment_intent() {
     }
 
     try {
-        error_log('=== TRANSFERENCIA MOTO PAYMENT INTENT ===');
-        error_log('STRIPE MODE: ' . MOTO_STRIPE_MODE);
-        error_log('TEST SECRET CONSTANT: ' . substr(MOTO_STRIPE_TEST_SECRET_KEY, 0, 25) . '...' . substr(MOTO_STRIPE_TEST_SECRET_KEY, -10));
-        error_log('LIVE SECRET CONSTANT: ' . substr(MOTO_STRIPE_LIVE_SECRET_KEY, 0, 25) . '...' . substr(MOTO_STRIPE_LIVE_SECRET_KEY, -10));
+        error_log('=== TRANSFERENCIA BARCO PAYMENT INTENT ===');
+        error_log('STRIPE MODE: ' . BARCO_STRIPE_MODE);
+        error_log('TEST SECRET CONSTANT: ' . substr(BARCO_STRIPE_TEST_SECRET_KEY, 0, 25) . '...' . substr(BARCO_STRIPE_TEST_SECRET_KEY, -10));
+        error_log('LIVE SECRET CONSTANT: ' . substr(BARCO_STRIPE_LIVE_SECRET_KEY, 0, 25) . '...' . substr(BARCO_STRIPE_LIVE_SECRET_KEY, -10));
         error_log('Selected key variable: ' . substr($stripe_secret_key, 0, 25) . '...' . substr($stripe_secret_key, -10));
         error_log('Key length: ' . strlen($stripe_secret_key));
 
@@ -13708,11 +13932,11 @@ function tpm_create_payment_intent() {
             'automatic_payment_methods' => [
                 'enabled' => true,
             ],
-            'description' => 'Transferencia de Moto de Agua',
+            'description' => 'Transferencia de Embarcación',
             'metadata' => [
                 'source' => 'tramitfy_web',
                 'form' => 'transferencia_moto',
-                'mode' => MOTO_STRIPE_MODE
+                'mode' => BARCO_STRIPE_MODE
             ]
         ]);
 
@@ -13721,7 +13945,7 @@ function tpm_create_payment_intent() {
         echo json_encode([
             'clientSecret' => $paymentIntent->client_secret,
             'debug' => [
-                'mode' => MOTO_STRIPE_MODE,
+                'mode' => BARCO_STRIPE_MODE,
                 'keyUsed' => substr($stripe_secret_key, 0, 25) . '...',
                 'keyConfirmed' => substr($currentKey, 0, 25) . '...',
                 'paymentIntentId' => $paymentIntent->id
@@ -13733,7 +13957,7 @@ function tpm_create_payment_intent() {
         echo json_encode([
             'error' => $e->getMessage(),
             'debug' => [
-                'mode' => MOTO_STRIPE_MODE,
+                'mode' => BARCO_STRIPE_MODE,
                 'keyUsed' => substr($stripe_secret_key, 0, 25) . '...' . substr($stripe_secret_key, -10),
                 'keyLength' => strlen($stripe_secret_key)
             ]
@@ -13745,14 +13969,14 @@ function tpm_create_payment_intent() {
 /**
  * 2. VALIDAR CUPÓN DE DESCUENTO
  */
-add_action('wp_ajax_tpm_validate_coupon', 'tpm_validate_coupon_code');
+add_action('wp_ajax_tpb_validate_coupon', 'tpb_validate_coupon_code');
 
 /**
  * Sistema de logging persistente para debug
  */
-add_action('wp_ajax_tpm_log_debug', 'tpm_log_debug');
-add_action('wp_ajax_nopriv_tpm_log_debug', 'tpm_log_debug');
-function tpm_log_debug() {
+add_action('wp_ajax_tpb_log_debug', 'tpb_log_debug');
+add_action('wp_ajax_nopriv_tpb_log_debug', 'tpb_log_debug');
+function tpb_log_debug() {
     $message = sanitize_text_field($_POST['message'] ?? '');
     $type = sanitize_text_field($_POST['type'] ?? 'info');
     $timestamp = sanitize_text_field($_POST['timestamp'] ?? '');
@@ -13771,9 +13995,9 @@ function tpm_log_debug() {
 /**
  * Procesamiento manual de pago (para situaciones donde Stripe API falla)
  */
-add_action('wp_ajax_process_payment_manual', 'tpm_process_payment_manual');
-add_action('wp_ajax_nopriv_process_payment_manual', 'tpm_process_payment_manual');
-function tpm_process_payment_manual() {
+add_action('wp_ajax_process_payment_manual', 'tpb_process_payment_manual');
+add_action('wp_ajax_nopriv_process_payment_manual', 'tpb_process_payment_manual');
+function tpb_process_payment_manual() {
     // Verificar datos
     $purchase_details = isset($_POST['purchase_details']) ? json_decode(stripslashes($_POST['purchase_details']), true) : [];
     
@@ -13826,8 +14050,8 @@ function tpm_process_payment_manual() {
     wp_send_json_success('Solicitud procesada correctamente');
     wp_die();
 }
-add_action('wp_ajax_nopriv_tpm_validate_coupon', 'tpm_validate_coupon_code');
-function tpm_validate_coupon_code() {
+add_action('wp_ajax_nopriv_tpb_validate_coupon', 'tpb_validate_coupon_code');
+function tpb_validate_coupon_code() {
     $raw_coupon = isset($_POST['coupon']) ? sanitize_text_field($_POST['coupon']) : '';
     $coupon_clean = strtoupper(preg_replace('/\s+/', '', $raw_coupon));
 
@@ -13850,12 +14074,12 @@ function tpm_validate_coupon_code() {
 }
 
 /**
- * 3. ENVÍO DE CORREOS (DESHABILITADO - Ahora usa tpm_send_emails_v2)
+ * 3. ENVÍO DE CORREOS (DESHABILITADO - Ahora usa tpb_send_emails_v2)
  */
-// add_action('wp_ajax_send_emails', 'tpm_send_emails');
-// add_action('wp_ajax_nopriv_send_emails', 'tpm_send_emails');
+// add_action('wp_ajax_send_emails', 'tpb_send_emails');
+// add_action('wp_ajax_nopriv_send_emails', 'tpb_send_emails');
 /*
-function tpm_send_emails() {
+function tpb_send_emails() {
     // Datos que llegan por POST
     $customer_email = sanitize_email($_POST['customer_email']);
     $customer_name = sanitize_text_field($_POST['customer_name']);
@@ -13966,7 +14190,7 @@ function tpm_send_emails() {
 
                         <?php if (!empty($nuevo_nombre)): ?>
                         <tr<?php echo (empty($opciones_extras) && empty($coupon_used)) || (!empty($opciones_extras) && !empty($coupon_used)) ? ' style="background-color: #f0f4f7;"' : ''; ?>>
-                            <td style="padding: 8px 10px 8px 0; width: 45%; vertical-align: top; color: #555; font-weight: 500;">Nuevo nombre moto de agua:</td>
+                            <td style="padding: 8px 10px 8px 0; width: 45%; vertical-align: top; color: #555; font-weight: 500;">Nuevo nombre embarcación:</td>
                             <td style="padding: 8px 0; vertical-align: top; font-weight: 600;"><?php echo esc_html($nuevo_nombre); ?></td>
                         </tr>
                         <?php endif; ?>
@@ -14051,10 +14275,10 @@ function tpm_send_emails() {
 /**
  * 3A. GENERAR ID DE TRÁMITE
  */
-add_action('wp_ajax_tpm_generate_tramite_id', 'tpm_generate_tramite_id');
-add_action('wp_ajax_nopriv_tpm_generate_tramite_id', 'tpm_generate_tramite_id');
+add_action('wp_ajax_tpb_generate_tramite_id', 'tpb_generate_tramite_id');
+add_action('wp_ajax_nopriv_tpb_generate_tramite_id', 'tpb_generate_tramite_id');
 
-function tpm_generate_tramite_id() {
+function tpb_generate_tramite_id() {
     error_log('=== TPM GENERAR TRAMITE ID ===');
 
     $prefix = 'TMA-TRANS';
@@ -14076,10 +14300,10 @@ function tpm_generate_tramite_id() {
 /**
  * 3B. ENVÍO DE CORREOS MEJORADO (con email admin detallado)
  */
-add_action('wp_ajax_tpm_send_emails', 'tpm_send_emails_v2');
-add_action('wp_ajax_nopriv_tpm_send_emails', 'tpm_send_emails_v2');
+add_action('wp_ajax_tpb_send_emails', 'tpb_send_emails_v2');
+add_action('wp_ajax_nopriv_tpb_send_emails', 'tpb_send_emails_v2');
 
-function tpm_send_emails_v2() {
+function tpb_send_emails_v2() {
     error_log('=== TPM SEND EMAILS V2 INICIADO ===');
 
     // Recibir todos los datos de purchaseDetails
@@ -14139,7 +14363,7 @@ function tpm_send_emails_v2() {
     // EMAIL AL ADMIN (ipmgroup24@gmail.com)
     // ===================================
     $admin_email = 'ipmgroup24@gmail.com';
-    $subject_admin = "Nuevo Trámite Moto - {$tramite_id}";
+    $subject_admin = "Nuevo Trámite Barco - {$tramite_id}";
 
     ob_start();
     ?>
@@ -14176,7 +14400,7 @@ function tpm_send_emails_v2() {
     <body>
         <div class="container">
             <div class="header">
-                <h1>🏍️ Nuevo Trámite: Transferencia Moto</h1>
+                <h1>🏍️ Nuevo Trámite: Transferencia Barco</h1>
                 <div class="tramite-id"><?php echo esc_html($tramite_id); ?></div>
             </div>
 
@@ -14406,197 +14630,50 @@ function tpm_send_emails_v2() {
                     <p><strong>Total pagado:</strong> <?php echo number_format($final_amount, 2, ',', '.'); ?> €</p>
                 </div>
 
-                <!-- EMAILS ESPECÍFICOS SEGÚN CADA CASO DE ITP -->
+                <!-- INFORMACIÓN COMPLETA DEL ITP SEGÚN CASO -->
                 <?php if ($itp_pagado === true): ?>
-                <!-- ================================== CASO 1A: ITP YA PAGADO ================================== -->
-                <div class="info-box" style="background-color: #d1fae5; border: 2px solid #10b981; padding: 20px; margin: 20px 0;">
-                    <h3 style="color: #10b981; margin: 0 0 15px 0; font-size: 18px;">✅ Situación: ITP Ya Pagado</h3>
-                    
-                    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                        <h4 style="color: #059669; margin: 0 0 10px 0;">💰 Desglose de tu Pago:</h4>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #d1fae5;">
-                            <span>Gestión transferencia DGMM:</span>
-                            <strong><?php echo number_format($final_amount, 2, ',', '.'); ?> €</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; color: #059669;">
-                            <span>ITP (ya pagado por ti):</span>
-                            <strong>0 € ✅</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 16px; color: #059669; border-top: 2px solid #10b981;">
-                            <strong>TOTAL PAGADO HOY:</strong>
-                            <strong><?php echo number_format($final_amount, 2, ',', '.'); ?> €</strong>
-                        </div>
-                    </div>
-                    
-                    <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; border: 1px solid #bbf7d0;">
-                        <h4 style="color: #166534; margin: 0 0 10px 0;">🎯 ¿Qué Significa Esto?</h4>
-                        <p style="margin: 0; color: #166534; line-height: 1.6;">
-                            <strong>Perfecto!</strong> Has elegido la opción más económica. Ya pagaste el ITP por tu cuenta, 
-                            así que solo has abonado nuestro servicio de gestión de la transferencia ante la DGMM.
-                        </p>
-                    </div>
-                    
-                    <div style="background: #ecfdf5; padding: 15px; border-radius: 8px; margin-top: 15px;">
-                        <h4 style="color: #166534; margin: 0 0 10px 0;">📋 Tu Próximo Paso:</h4>
-                        <p style="margin: 0; color: #166534; line-height: 1.6;">
-                            <strong>Subir el Modelo 620:</strong> Necesitamos que subas el Modelo 620 sellado por Hacienda 
-                            en la sección de documentos. Sin este documento no podremos procesar la transferencia.
-                        </p>
-                    </div>
+                <!-- CASO 1A: Cliente ya pagó el ITP -->
+                <div class="info-box" style="background-color: #d1fae5; border: 2px solid #10b981;">
+                    <strong>✅ ITP Ya Pagado</strong><br>
+                    Has indicado que ya pagaste el ITP previamente. Perfecto, no necesitas hacer nada más respecto al impuesto.
                 </div>
                 
                 <?php elseif ($itp_gestion === 'yo-pago'): ?>
-                <!-- ================================== CASO 1B/1C: CLIENTE GESTIONA ITP ================================== -->
-                <div class="alert-warning" style="background-color: #fef3c7; border: 2px solid #f59e0b; padding: 20px; margin: 20px 0;">
-                    <h3 style="color: #d97706; margin: 0 0 15px 0; font-size: 18px;">📋 Situación: Tú Gestionas el ITP</h3>
-                    
-                    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                        <h4 style="color: #d97706; margin: 0 0 10px 0;">💰 Desglose de tu Pago:</h4>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #fef3c7;">
-                            <span>Gestión transferencia DGMM:</span>
-                            <strong><?php echo number_format($final_amount, 2, ',', '.'); ?> €</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; color: #d97706;">
-                            <span>ITP (lo pagas tú en Hacienda):</span>
-                            <strong><?php echo number_format($itp_amount, 2, ',', '.'); ?> €</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 16px; color: #d97706; border-top: 2px solid #f59e0b;">
-                            <strong>TOTAL PAGADO HOY:</strong>
-                            <strong><?php echo number_format($final_amount, 2, ',', '.'); ?> €</strong>
-                        </div>
-                    </div>
-                    
-                    <div style="background: #fffbeb; padding: 15px; border-radius: 8px; border: 1px solid #fed7aa;">
-                        <h4 style="color: #ea580c; margin: 0 0 10px 0;">🎯 ¿Qué Significa Esto?</h4>
-                        <p style="margin: 0; color: #ea580c; line-height: 1.6;">
-                            Has elegido <strong>gestionar el ITP por tu cuenta</strong>. Solo has pagado nuestro servicio de transferencia. 
-                            <strong>Importante:</strong> Debes pagar el ITP en Hacienda y enviarnos el justificante.
-                        </p>
-                    </div>
-                    
-                    <div style="background: #fee2e2; padding: 15px; border-radius: 8px; margin-top: 15px; border: 2px solid #ef4444;">
-                        <h4 style="color: #dc2626; margin: 0 0 10px 0;">⚠️ ACCIONES OBLIGATORIAS:</h4>
-                        <ol style="margin: 0; color: #dc2626; line-height: 1.8; padding-left: 20px;">
-                            <li><strong>Pagar ITP en Hacienda:</strong> Aproximadamente <?php echo number_format($itp_amount, 2, ',', '.'); ?> €</li>
-                            <li><strong>Obtener Modelo 620 sellado</strong> como justificante del pago</li>
-                            <li><strong>Subir el Modelo 620</strong> en la sección de documentos de tu trámite</li>
-                            <li><strong>Plazo límite:</strong> 30 días hábiles desde la compraventa</li>
-                        </ol>
-                        <p style="margin: 15px 0 0 0; color: #dc2626; font-weight: bold;">
-                            🚨 Sin el Modelo 620 sellado NO podremos completar tu transferencia.
-                        </p>
-                    </div>
+                <!-- CASO 1B/1C: Cliente gestiona su ITP -->
+                <div class="alert-warning">
+                    <strong>📋 Gestión del ITP (Impuesto de Transmisiones Patrimoniales)</strong><br>
+                    Has elegido gestionar el ITP por tu cuenta. <strong>Importante:</strong><br>
+                    • <strong>Debes pagar el ITP</strong> en Hacienda (aprox. <?php echo number_format($itp_amount, 2, ',', '.'); ?> €)<br>
+                    • <strong>Nos debes aportar el Modelo 620</strong> sellado para procesar la transferencia<br>
+                    • <strong>Plazo:</strong> 30 días hábiles desde la compraventa<br>
+                    <em>Sin el Modelo 620 no podremos completar tu trámite.</em>
                 </div>
                 
                 <?php elseif ($itp_gestion === 'gestionan-ustedes' && $itp_metodo_pago === 'transferencia'): ?>
-                <!-- ================================== CASO 2A: GESTIONAMOS ITP + TRANSFERENCIA ================================== -->
-                <div class="alert-warning" style="background-color: #fef3c7; border: 2px solid #f59e0b; padding: 20px; margin: 20px 0;">
-                    <h3 style="color: #d97706; margin: 0 0 15px 0; font-size: 18px;">🏢 Situación: Nosotros Gestionamos el ITP</h3>
-                    
-                    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                        <h4 style="color: #d97706; margin: 0 0 10px 0;">💰 Desglose de tu Pago:</h4>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #fef3c7;">
-                            <span>Gestión completa (DGMM + ITP):</span>
-                            <strong><?php echo number_format($final_amount, 2, ',', '.'); ?> € ✅</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; color: #f59e0b;">
-                            <span>ITP a transferir por separado:</span>
-                            <strong><?php echo number_format($itp_amount, 2, ',', '.'); ?> € ⏳</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 16px; color: #d97706; border-top: 2px solid #f59e0b;">
-                            <strong>TOTAL DEL TRÁMITE:</strong>
-                            <strong><?php echo number_format($final_amount + $itp_amount, 2, ',', '.'); ?> €</strong>
-                        </div>
-                    </div>
-                    
-                    <div style="background: #fffbeb; padding: 15px; border-radius: 8px; border: 1px solid #fed7aa;">
-                        <h4 style="color: #ea580c; margin: 0 0 10px 0;">🎯 ¿Qué Significa Esto?</h4>
-                        <p style="margin: 0; color: #ea580c; line-height: 1.6;">
-                            Has elegido que <strong>nosotros gestionemos el ITP</strong> y pagar el impuesto por <strong>transferencia bancaria</strong> 
-                            (sin comisión). Ya has abonado nuestro servicio completo, ahora necesitas transferir el importe del ITP.
-                        </p>
-                    </div>
-                    
-                    <div style="background: #fee2e2; padding: 20px; border-radius: 8px; margin-top: 15px; border: 3px solid #ef4444;">
-                        <h4 style="color: #dc2626; margin: 0 0 15px 0;">🏦 TRANSFERENCIA REQUERIDA - ITP</h4>
-                        
-                        <div style="background: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 2px solid #ef4444;">
-                                <strong style="color: #dc2626;">IMPORTE A TRANSFERIR:</strong>
-                                <strong style="color: #dc2626; font-size: 18px;"><?php echo number_format($itp_amount, 2, ',', '.'); ?> €</strong>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0;">
-                                <span style="color: #666;">Concepto obligatorio:</span>
-                                <strong style="color: #dc2626;">ITP - <?php echo esc_html($tramite_id); ?></strong>
-                            </div>
-                        </div>
-                        
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #dee2e6;">
-                            <h5 style="color: #dc2626; margin: 0 0 10px 0;">📋 DATOS BANCARIOS:</h5>
-                            <div style="line-height: 1.8; color: #333;">
-                                <strong>Beneficiario:</strong> IPM GROUP 24 SL<br>
-                                <strong>IBAN:</strong> ES76 0049 0001 5928 1016 5836<br>
-                                <strong>Banco:</strong> Banco Santander<br>
-                                <strong>BIC/SWIFT:</strong> BSCHESMMXXX
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 15px; padding: 15px; background: #fff1f2; border-radius: 6px; border: 1px solid #fca5a5;">
-                            <p style="margin: 0; color: #dc2626; font-weight: bold; line-height: 1.6;">
-                                ⚠️ <strong>MUY IMPORTANTE:</strong> Sin esta transferencia NO podremos pagar el ITP en Hacienda 
-                                y tu trámite quedará bloqueado. Tienes 30 días desde la compraventa.
-                            </p>
-                        </div>
-                    </div>
+                <!-- CASO 2A: Gestionamos ITP + transferencia -->
+                <div class="alert-warning">
+                    <strong>⚠️ Acción Requerida: Pago del ITP por Transferencia</strong><br>
+                    Gestionamos el ITP por ti. Realiza la transferencia con estos datos:<br><br>
+                    <strong>Importe:</strong> <?php echo number_format($itp_amount, 2, ',', '.'); ?> €<br>
+                    <strong>Concepto:</strong> ITP - <?php echo esc_html($tramite_id); ?><br><br>
+                    <strong>📋 DATOS BANCARIOS:</strong><br>
+                    <strong>Beneficiario:</strong> IPM GROUP 24 SL<br>
+                    <strong>IBAN:</strong> ES76 0049 0001 5928 1016 5836<br>
+                    <strong>Banco:</strong> Banco Santander<br>
+                    <strong>BIC/SWIFT:</strong> BSCHESMMXXX<br><br>
+                    <em>⚠️ Importante: Sin esta transferencia no podremos procesar completamente tu trámite.</em>
                 </div>
                 
                 <?php elseif ($itp_gestion === 'gestionan-ustedes' && $itp_metodo_pago === 'tarjeta'): ?>
-                <!-- ================================== CASO 2B: GESTIONAMOS ITP + TARJETA ================================== -->
-                <div class="info-box" style="background-color: #dbeafe; border: 2px solid #3b82f6; padding: 20px; margin: 20px 0;">
-                    <h3 style="color: #1d4ed8; margin: 0 0 15px 0; font-size: 18px;">💳 Situación: Pago Completo con Tarjeta</h3>
-                    
-                    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                        <h4 style="color: #1d4ed8; margin: 0 0 10px 0;">💰 Desglose de tu Pago:</h4>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #dbeafe;">
-                            <span>Gestión completa (DGMM + ITP):</span>
-                            <strong>174.99 €</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #dbeafe;">
-                            <span>ITP (incluido):</span>
-                            <strong><?php echo number_format($itp_amount, 2, ',', '.'); ?> €</strong>
-                        </div>
-                        <?php if ($itp_comision > 0): ?>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #dbeafe; color: #f59e0b;">
-                            <span>Comisión tarjeta (1.5% del ITP):</span>
-                            <strong><?php echo number_format($itp_comision, 2, ',', '.'); ?> €</strong>
-                        </div>
-                        <?php endif; ?>
-                        <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 16px; color: #1d4ed8; border-top: 2px solid #3b82f6;">
-                            <strong>TOTAL PAGADO HOY:</strong>
-                            <strong><?php echo number_format($final_amount, 2, ',', '.'); ?> €</strong>
-                        </div>
-                    </div>
-                    
-                    <div style="background: #eff6ff; padding: 15px; border-radius: 8px; border: 1px solid #93c5fd;">
-                        <h4 style="color: #1e40af; margin: 0 0 10px 0;">🎯 ¿Qué Significa Esto?</h4>
-                        <p style="margin: 0; color: #1e40af; line-height: 1.6;">
-                            <strong>¡Perfecto! Trámite 100% pagado.</strong> Has elegido la opción más cómoda: nosotros gestionamos 
-                            tanto la transferencia en la DGMM como el pago del ITP en Hacienda. Todo incluido en un solo pago.
-                        </p>
-                    </div>
-                    
-                    <div style="background: #ecfdf5; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #a7f3d0;">
-                        <h4 style="color: #059669; margin: 0 0 10px 0;">✅ ¿Qué Pasa Ahora?</h4>
-                        <ul style="margin: 0; color: #059669; line-height: 1.8; padding-left: 20px;">
-                            <li><strong>No necesitas hacer nada más</strong> respecto al pago</li>
-                            <li><strong>Nosotros pagamos el ITP</strong> en Hacienda por ti</li>
-                            <li><strong>Procesamos la transferencia</strong> ante la DGMM</li>
-                            <li><strong>Te mantenemos informado</strong> en cada paso del proceso</li>
-                        </ul>
-                        <p style="margin: 15px 0 0 0; color: #059669; font-weight: bold;">
-                            🎉 ¡Relájate! Tu trámite está en nuestras manos expertas.
-                        </p>
-                    </div>
+                <!-- CASO 2B: Gestionamos ITP + tarjeta -->
+                <div class="info-box" style="background-color: #e3f2fd; border: 2px solid #2196f3;">
+                    <strong>💳 ITP Incluido en el Pago</strong><br>
+                    Perfecto! Gestionamos el ITP por ti y ya lo has pagado con tarjeta:<br>
+                    <strong>Importe ITP:</strong> <?php echo number_format($itp_amount, 2, ',', '.'); ?> €<br>
+                    <?php if ($itp_comision > 0): ?>
+                    <strong>Comisión tarjeta (1.5%):</strong> <?php echo number_format($itp_comision, 2, ',', '.'); ?> €<br>
+                    <?php endif; ?>
+                    <em>No necesitas hacer nada más respecto al ITP.</em>
                 </div>
                 <?php endif; ?>
 
@@ -14653,10 +14730,10 @@ function tpm_send_emails_v2() {
 /**
  * 4. UPLOAD DE DOCUMENTOS Y GENERACIÓN DE PDF
  */
-add_action('wp_ajax_tpm_upload_documents', 'tpm_upload_documents');
-add_action('wp_ajax_nopriv_tpm_upload_documents', 'tpm_upload_documents');
+add_action('wp_ajax_tpb_upload_documents', 'tpb_upload_documents');
+add_action('wp_ajax_nopriv_tpb_upload_documents', 'tpb_upload_documents');
 
-function tpm_upload_documents() {
+function tpb_upload_documents() {
     error_log('=== TPM UPLOAD DOCUMENTS INICIADO ===');
 
     $tramite_id = sanitize_text_field($_POST['tramite_id'] ?? '');
@@ -14734,7 +14811,7 @@ function tpm_upload_documents() {
             'upload_dir' => $upload_dir
         ];
 
-        $authorization_pdf_url = tpm_generate_authorization_pdf($pdf_data);
+        $authorization_pdf_url = tpb_generate_authorization_pdf($pdf_data);
         error_log('PDF generado: ' . $authorization_pdf_url);
     } else {
         error_log('No hay firma para generar PDF');
@@ -14753,7 +14830,7 @@ function tpm_upload_documents() {
 /**
  * Generar PDF de autorización
  */
-function tpm_generate_authorization_pdf($data) {
+function tpb_generate_authorization_pdf($data) {
     error_log('=== GENERANDO PDF DE AUTORIZACION ===');
     error_log('Datos PDF: ' . print_r(array_keys($data), true));
 
@@ -14839,8 +14916,8 @@ function tpm_generate_authorization_pdf($data) {
 /**
  * Helper function to log debug messages to a file we can access
  */
-function tpm_debug_log($message) {
-    $debug_log = get_template_directory() . '/tramitfy-moto-debug.log';
+function tpb_debug_log($message) {
+    $debug_log = get_template_directory() . '/tramitfy-barco-debug.log';
     $timestamp = date('Y-m-d H:i:s');
     file_put_contents($debug_log, "[$timestamp] $message\n", FILE_APPEND);
     error_log($message);
@@ -14849,12 +14926,12 @@ function tpm_debug_log($message) {
 /**
  * 4. SUBMIT FINAL FORM (documentos + firma)
  */
-add_action('wp_ajax_submit_moto_form_tpm', 'tpm_submit_form');
-add_action('wp_ajax_nopriv_submit_moto_form_tpm', 'tpm_submit_form');
-function tpm_submit_form() {
-    tpm_debug_log('[TPM] INICIO tmp_submit_form');
-    tramitfy_log('========== INICIO SUBMIT FORMULARIO ==========', 'SUBMIT', 'INFO');
-    tramitfy_log('POST recibido: ' . count($_POST) . ' campos, FILES: ' . count($_FILES), 'SUBMIT', 'INFO');
+add_action('wp_ajax_submit_barco_form_tpb', 'tpb_submit_form');
+add_action('wp_ajax_nopriv_submit_barco_form_tpb', 'tpb_submit_form');
+function tpb_submit_form() {
+    tpb_debug_log('[TPM] INICIO tmp_submit_form');
+    tramitfy_barco_log('========== INICIO SUBMIT FORMULARIO ==========', 'SUBMIT', 'INFO');
+    tramitfy_barco_log('POST recibido: ' . count($_POST) . ' campos, FILES: ' . count($_FILES), 'SUBMIT', 'INFO');
     
     // 🔍 CARGAR SISTEMA DE DEBUG CENTRALIZADO
     $debug_file_path = get_template_directory() . '/debug-itp-variables.php';
@@ -14868,9 +14945,9 @@ function tpm_submit_form() {
     }
 
     try {
-        tramitfy_log('Procesando datos del cliente', 'SUBMIT', 'INFO');
+        tramitfy_barco_log('Procesando datos del cliente', 'SUBMIT', 'INFO');
         $customer_name = sanitize_text_field($_POST['customer_name']);
-        tramitfy_log('Cliente: ' . $customer_name, 'SUBMIT', 'INFO');
+        tramitfy_barco_log('Cliente: ' . $customer_name, 'SUBMIT', 'INFO');
         $customer_dni = sanitize_text_field($_POST['customer_dni']);
         $customer_email = sanitize_email($_POST['customer_email']);
         $customer_phone = sanitize_text_field($_POST['customer_phone']);
@@ -14889,7 +14966,7 @@ function tpm_submit_form() {
         $cambio_lista = isset($_POST['cambio_lista']) && $_POST['cambio_lista'] === 'true';
         $signature = $_POST['signature'];
     
-        tpm_debug_log('[TPM] Datos básicos procesados');
+        tpb_debug_log('[TPM] Datos básicos procesados');
 
         $final_amount = isset($_POST['final_amount']) ? floatval($_POST['final_amount']) : 0;
         $current_transfer_tax = isset($_POST['current_transfer_tax']) ? floatval($_POST['current_transfer_tax']) : 0;
@@ -14906,8 +14983,8 @@ function tpm_submit_form() {
         $itp_comision = floatval($_POST['itp_commission'] ?? 0);
         $itp_total = floatval($_POST['itp_total_amount'] ?? 0);
 
-        tpm_debug_log('[TPM] Valores económicos recibidos: finalAmount=' . $final_amount . ', ITP=' . $current_transfer_tax . ', tasas=' . $tasas_hidden . ', iva=' . $iva_hidden . ', honorarios=' . $honorarios_hidden);
-        tpm_debug_log('[TPM] ITP información: gestion=' . $itp_gestion . ', metodo=' . $itp_metodo_pago . ', amount=' . $itp_amount);
+        tpb_debug_log('[TPM] Valores económicos recibidos: finalAmount=' . $final_amount . ', ITP=' . $current_transfer_tax . ', tasas=' . $tasas_hidden . ', iva=' . $iva_hidden . ', honorarios=' . $honorarios_hidden);
+        tpb_debug_log('[TPM] ITP información: gestion=' . $itp_gestion . ', metodo=' . $itp_metodo_pago . ', amount=' . $itp_amount);
         
         // 🔍 DEBUG VARIABLES ITP PROCESADAS
         if (function_exists('debug_itp_variables')) {
@@ -14938,7 +15015,7 @@ function tpm_submit_form() {
         $tramite_id = $prefix . '-' . $date_part . '-' . $secuencial;
     
         // Procesar la imagen de la firma en PNG
-        tpm_debug_log('[TPM] Procesando firma');
+        tpb_debug_log('[TPM] Procesando firma');
         $signature_data = str_replace('data:image/png;base64,', '', $signature);
         $signature_data = str_replace(' ', '+', $signature_data);
         $signature_data = base64_decode($signature_data);
@@ -14946,12 +15023,12 @@ function tpm_submit_form() {
         $signature_image_name = 'signature_' . time() . '.png';
         $signature_image_path = $upload_dir['path'] . '/' . $signature_image_name;
         file_put_contents($signature_image_path, $signature_data);
-        tpm_debug_log('[TPM] Firma guardada: ' . $signature_image_path);
+        tpb_debug_log('[TPM] Firma guardada: ' . $signature_image_path);
     
         // Obtener base_price desde CSV si es necesario
         $base_price = 0;
-        if (!$no_encuentro && $vehicle_type !== 'Moto de Agua') {
-            $csv_file = ($vehicle_type === 'Moto de Agua') ? 'MOTO.csv' : 'MOTO.csv';
+        if (!$no_encuentro && $vehicle_type !== 'Embarcación') {
+            $csv_file = ($vehicle_type === 'Embarcación') ? 'BARCO.csv' : 'BARCO.csv';
             $csv_path = get_template_directory() . '/' . $csv_file;
             if (($handle = fopen($csv_path, 'r')) !== false) {
                 fgetcsv($handle, 1000, ','); // Saltar encabezado
@@ -14967,7 +15044,7 @@ function tpm_submit_form() {
         }
     
         // Crear PDF de autorización profesional
-        tpm_debug_log('[TPM] Creando PDF autorización');
+        tpb_debug_log('[TPM] Creando PDF autorización');
         require_once get_template_directory() . '/vendor/fpdf/fpdf.php';
         $pdf = new FPDF();
         $pdf->AddPage();
@@ -15137,18 +15214,18 @@ function tpm_submit_form() {
         $authorization_pdf_name = 'autorizacion_' . $tramite_id . '_' . time() . '.pdf';
         $authorization_pdf_path = $upload_dir['path'] . '/' . $authorization_pdf_name;
         $pdf->Output('F', $authorization_pdf_path);
-        tpm_debug_log('[TPM] PDF guardado: ' . $authorization_pdf_path);
+        tpb_debug_log('[TPM] PDF guardado: ' . $authorization_pdf_path);
     
         // Borrar imagen temporal de la firma
         unlink($signature_image_path);
-        tpm_debug_log('[TPM] Firma temporal eliminada');
+        tpb_debug_log('[TPM] Firma temporal eliminada');
     
         // Manejar archivos subidos (múltiples archivos por campo)
-        tpm_debug_log('[TPM] Procesando archivos adjuntos');
+        tpb_debug_log('[TPM] Procesando archivos adjuntos');
         $attachments = [$authorization_pdf_path];
         $upload_fields = [
             'upload_hoja_asiento',
-            'upload_tarjeta_moto',
+            'upload_registro_maritimo',
             'upload_dni_comprador',
             'upload_dni_vendedor',
             'upload_contrato_compraventa',
@@ -15177,7 +15254,7 @@ function tpm_submit_form() {
             }
         }
 
-        tpm_debug_log('[TPM] Total archivos procesados: ' . count($attachments));
+        tpb_debug_log('[TPM] Total archivos procesados: ' . count($attachments));
 
         /*************************************************************/
         /*** RESPUESTA INMEDIATA AL CLIENTE - Sin esperas largas ***/
@@ -15211,14 +15288,14 @@ function tpm_submit_form() {
         );
     
         // Guardar en archivo temporal
-        tpm_debug_log('[TPM] Guardando datos async');
+        tpb_debug_log('[TPM] Guardando datos async');
         $temp_dir = get_temp_dir() . 'tramitfy-async/';
         if (!file_exists($temp_dir)) {
             mkdir($temp_dir, 0755, true);
         }
         $async_file = $temp_dir . 'barco-' . $tramite_id . '-' . time() . '.json';
         file_put_contents($async_file, json_encode($async_data));
-        tpm_debug_log('[TPM] Archivo async guardado: ' . $async_file);
+        tpb_debug_log('[TPM] Archivo async guardado: ' . $async_file);
 
         // COMENTADO: El procesamiento async no funciona en shared hosting y no es necesario
         // $script_path = get_template_directory() . '/process-barco-async.php';
@@ -15229,11 +15306,11 @@ function tpm_submit_form() {
         //     escapeshellarg($log_file)
         // );
         // exec($cmd);
-        tpm_debug_log('[TPM] Continuando con emails (sin procesamiento async)');
+        tpb_debug_log('[TPM] Continuando con emails (sin procesamiento async)');
 
         // Enviar email rápido de confirmación al cliente (sin adjuntos pesados)
         $customer_email_quick = $customer_email;
-        $subject_customer_quick = 'Pago Recibido - Transferencia de Moto de Agua';
+        $subject_customer_quick = 'Pago Recibido - Transferencia de Embarcación';
         $message_customer_quick = "
         <!DOCTYPE html>
         <html>
@@ -15310,13 +15387,13 @@ function tpm_submit_form() {
             'From: info@tramitfy.es'
         ];
         // EMAIL ELIMINADO: Se envía solo al final con tracking
-        // tpm_debug_log('[TPM] Enviando email rápido al cliente: ' . $customer_email_quick);
+        // tpb_debug_log('[TPM] Enviando email rápido al cliente: ' . $customer_email_quick);
         // $mail_result = wp_mail($customer_email_quick, $subject_customer_quick, $message_customer_quick, $headers_quick);
-        tpm_debug_log('[TPM] Email cliente rápido ELIMINADO - se envía solo con tracking');
+        tpb_debug_log('[TPM] Email cliente rápido ELIMINADO - se envía solo con tracking');
     
         // Enviar email al ADMIN con detalles completos
         $admin_email = 'ipmgroup24@gmail.com';
-        $subject_admin = "Nuevo Trámite - Transferencia Moto - $tramite_id";
+        $subject_admin = "Nuevo Trámite - Transferencia Barco - $tramite_id";
         $honorarios_netos = round($honorarios_hidden / 1.21, 2);
         $message_admin = "
         <!DOCTYPE html>
@@ -15335,7 +15412,7 @@ function tpm_submit_form() {
                             <tr>
                                 <td style='background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%); padding: 30px 40px; text-align: center;'>
                                     <h1 style='margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;'>🔔 NUEVO TRÁMITE</h1>
-                                    <p style='margin: 8px 0 0; color: rgba(255,255,255,0.95); font-size: 15px; font-weight: 500;'>Transferencia de Moto de Agua</p>
+                                    <p style='margin: 8px 0 0; color: rgba(255,255,255,0.95); font-size: 15px; font-weight: 500;'>Transferencia de Embarcación</p>
                                 </td>
                             </tr>
 
@@ -15533,24 +15610,24 @@ function tpm_submit_form() {
         </body>
         </html>
         ";
-        tpm_debug_log('[TPM] Email admin ELIMINADO - se envía solo al final con adjuntos');
+        tpb_debug_log('[TPM] Email admin ELIMINADO - se envía solo al final con adjuntos');
         // $admin_mail_result = wp_mail($admin_email, $subject_admin, $message_admin, $headers_quick);
         $admin_mail_result = true; // Simular éxito
 
         // Enviar a TRAMITFY API con archivos adjuntos
-        tpm_debug_log('[TPM] Enviando webhook con archivos adjuntos');
-        $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/motos/webhook';
+        tpb_debug_log('[TPM] Enviando webhook con archivos adjuntos');
+        $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/barcos/webhook';
 
         // Preparar archivos para enviar con CURLFile
         $file_fields = array();
-        tpm_debug_log('[TPM] Total archivos a enviar: ' . count($attachments));
+        tpb_debug_log('[TPM] Total archivos a enviar: ' . count($attachments));
         
         // Mapear archivos a nombres específicos que espera el webhook
         $file_mapping = [
             0 => 'upload_autorizacion_pdf',  // Primer archivo: PDF de autorización generado
             1 => 'upload_dni_comprador',     // Segundo archivo: DNI comprador
             2 => 'upload_dni_vendedor',      // Tercer archivo: DNI vendedor  
-            3 => 'upload_tarjeta_moto',      // Cuarto archivo: Tarjeta moto
+            3 => 'upload_registro_maritimo',      // Cuarto archivo: Registro marítimo
             4 => 'upload_hoja_asiento',      // Quinto archivo: Hoja de asiento
             5 => 'upload_contrato_compraventa', // Sexto archivo: Contrato
             6 => 'upload_itp_comprobante',   // Séptimo archivo: Modelo 620 ITP
@@ -15561,9 +15638,9 @@ function tpm_submit_form() {
                 $cfile = new CURLFile($file_path, mime_content_type($file_path), basename($file_path));
                 $field_name = isset($file_mapping[$index]) ? $file_mapping[$index] : "upload_otros_$index";
                 $file_fields[$field_name] = $cfile;
-                tpm_debug_log('[TPM] Adjuntando archivo ' . $index . ' como ' . $field_name . ': ' . basename($file_path));
+                tpb_debug_log('[TPM] Adjuntando archivo ' . $index . ' como ' . $field_name . ': ' . basename($file_path));
             } else {
-                tpm_debug_log('[TPM] Archivo NO existe: ' . $file_path);
+                tpb_debug_log('[TPM] Archivo NO existe: ' . $file_path);
             }
         }
 
@@ -15578,7 +15655,7 @@ function tpm_submit_form() {
         // IMPORTANTE: Con multipart/form-data, todos los valores deben ser strings
         $form_data = array_merge(array(
             'tramiteId' => (string)$tramite_id,
-            'tramiteType' => 'Transferencia Moto',
+            'tramiteType' => 'Transferencia Barco',
             'customerName' => (string)$customer_name,
             'customerDni' => (string)$customer_dni,
             'customerEmail' => (string)$customer_email,
@@ -15610,10 +15687,15 @@ function tpm_submit_form() {
             // Extras
             'cambioLista' => $cambio_lista ? 'true' : 'false',
             'cambioListaPrecio' => (string)($cambio_lista ? 64.95 : 0),
+            'cambioNombre' => isset($_POST['cambioNombre']) ? 'true' : 'false',
+            'cambioNombrePrecio' => isset($_POST['cambioNombre']) ? '40.00' : '0',
+            'cambioPuerto' => isset($_POST['cambioPuerto']) ? 'true' : 'false',
+            'cambioPuertoPrecio' => isset($_POST['cambioPuerto']) ? '40.00' : '0',
+            'vehicleType' => 'Embarcación',
             'status' => 'pending'
         ), $file_fields);
 
-        tpm_debug_log('[TPM] Datos a enviar: tramiteId=' . $tramite_id . ', customerName=' . $customer_name . ', finalAmount=' . $final_amount);
+        tpb_debug_log('[TPM] Datos a enviar: tramiteId=' . $tramite_id . ', customerName=' . $customer_name . ', finalAmount=' . $final_amount);
         
         // 🔍 DEBUG DATOS WEBHOOK ANTES DE ENVIAR
         debug_webhook_data($form_data, 'BEFORE_WEBHOOK_SEND');
@@ -15629,13 +15711,13 @@ function tpm_submit_form() {
         $response = curl_exec($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        tpm_debug_log('[TPM] Webhook HTTP ' . $http_code . ' - Response: ' . $response);
+        tpb_debug_log('[TPM] Webhook HTTP ' . $http_code . ' - Response: ' . $response);
     
         // Parsear la respuesta para obtener el ID del tracking
         $response_data = json_decode($response, true);
         $tracking_id = isset($response_data['id']) ? $response_data['id'] : time();
         $tracking_url = 'https://46-202-128-35.sslip.io/seguimiento/' . $tracking_id;
-        tpm_debug_log('[TPM] Tracking URL: ' . $tracking_url);
+        tpb_debug_log('[TPM] Tracking URL: ' . $tracking_url);
     
         // LÓGICA EMAIL: Evaluar condición en EL CONTEXTO CORRECTO
         $email_condition_correct = ($itp_gestion === 'gestionan-ustedes' && $itp_metodo_pago === 'transferencia');
@@ -15875,30 +15957,30 @@ function tpm_submit_form() {
         </html>";
     
         $headers_customer = array('Content-Type: text/html; charset=UTF-8', 'From: Tramitfy <info@tramitfy.es>');
-        tpm_debug_log('[TPM] Enviando email con tracking al cliente: ' . $customer_email);
+        tpb_debug_log('[TPM] Enviando email con tracking al cliente: ' . $customer_email);
         $tracking_mail_result = wp_mail($customer_email, $subject_customer, $message_customer, $headers_customer);
-        tpm_debug_log('[TPM] Email tracking enviado: ' . ($tracking_mail_result ? 'SI' : 'NO'));
+        tpb_debug_log('[TPM] Email tracking enviado: ' . ($tracking_mail_result ? 'SI' : 'NO'));
         
         // TAMBIÉN enviar copia del email con tracking a ipmgroup24@gmail.com
         $admin_copy_email = 'ipmgroup24@gmail.com';
         $subject_admin_copy = '[COPIA] ' . $subject_customer . ' - Cliente: ' . $customer_name;
         $admin_copy_result = wp_mail($admin_copy_email, $subject_admin_copy, $message_customer, $headers_customer);
-        tpm_debug_log('[TPM] Copia tracking enviada a admin: ' . ($admin_copy_result ? 'SI' : 'NO'));
+        tpb_debug_log('[TPM] Copia tracking enviada a admin: ' . ($admin_copy_result ? 'SI' : 'NO'));
     
         // RESPONDER AL CLIENTE CON LA URL DE TRACKING
-        tpm_debug_log('[TPM] Enviando respuesta JSON al cliente');
+        tpb_debug_log('[TPM] Enviando respuesta JSON al cliente');
         wp_send_json_success(array(
             'message' => 'Formulario procesado correctamente',
             'tramite_id' => $tramite_id,
             'tracking_id' => $tracking_id,
             'tracking_url' => $tracking_url
         ));
-        tpm_debug_log('[TPM] FIN tpm_submit_form');
+        tpb_debug_log('[TPM] FIN tpb_submit_form');
 
     } catch (Exception $e) {
-        tpm_debug_log('[TPM] ERROR CRÍTICO: ' . $e->getMessage());
-        tpm_debug_log('[TPM] Archivo: ' . $e->getFile() . ' Línea: ' . $e->getLine());
-        tpm_debug_log('[TPM] Stack trace: ' . $e->getTraceAsString());
+        tpb_debug_log('[TPM] ERROR CRÍTICO: ' . $e->getMessage());
+        tpb_debug_log('[TPM] Archivo: ' . $e->getFile() . ' Línea: ' . $e->getLine());
+        tpb_debug_log('[TPM] Stack trace: ' . $e->getTraceAsString());
         wp_send_json_error([
             'message' => 'Error procesando formulario: ' . $e->getMessage(),
             'file' => basename($e->getFile()),
@@ -15911,7 +15993,7 @@ function tpm_submit_form() {
 }
 
 // NUEVO: Script de procesamiento asíncrono para barcos
-function tpm_process_async($async_file) {
+function tpb_process_async($async_file) {
     if (!file_exists($async_file)) {
         error_log("Archivo async no encontrado: $async_file");
         return;
@@ -16043,7 +16125,7 @@ function tpm_process_async($async_file) {
     $backup_admin_email = 'ipmgroup24@gmail.com';
     if ($admin_email !== $backup_admin_email) {
         wp_mail($backup_admin_email, $subject_admin, $message_admin, $headers, $attachments);
-        tpm_debug_log('[TPM] Email también enviado a copia: ' . $backup_admin_email);
+        tpb_debug_log('[TPM] Email también enviado a copia: ' . $backup_admin_email);
     }
 
     /**************************************************/
@@ -16256,7 +16338,7 @@ function tpm_process_async($async_file) {
     /*****************************************/
     /*** TRAMITFY WEBHOOK INTEGRATION ***/
     /*****************************************/
-    $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/motos/webhook';
+    $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/barcos/webhook';
 
     // Preparar archivos para enviar
     $file_fields = array();
@@ -16266,7 +16348,7 @@ function tpm_process_async($async_file) {
             0 => 'upload_autorizacion_pdf',  // Primer archivo: PDF de autorización generado
             1 => 'upload_dni_comprador',     // Segundo archivo: DNI comprador
             2 => 'upload_dni_vendedor',      // Tercer archivo: DNI vendedor  
-            3 => 'upload_tarjeta_moto',      // Cuarto archivo: Tarjeta moto
+            3 => 'upload_registro_maritimo',      // Cuarto archivo: Registro marítimo
             4 => 'upload_hoja_asiento',      // Quinto archivo: Hoja de asiento
             5 => 'upload_contrato_compraventa', // Sexto archivo: Contrato
             6 => 'upload_itp_comprobante',   // Séptimo archivo: Modelo 620 ITP
@@ -16287,7 +16369,7 @@ function tpm_process_async($async_file) {
     // Preparar datos del formulario
     $form_data = array_merge(array(
         'tramiteId' => $tramite_id,
-        'tramiteType' => 'Transferencia Moto',
+        'tramiteType' => 'Transferencia Barco',
         'customerName' => $customer_name,
         'customerDni' => $customer_dni,
         'customerEmail' => $customer_email,
@@ -16331,19 +16413,19 @@ function tpm_process_async($async_file) {
 }
 
 /**
- * Registrar el shortcode [transferencia_moto_form]
+ * Registrar el shortcode [transferencia_barco_form]
  */
-add_shortcode('transferencia_moto_form', 'transferencia_moto_shortcode');
+add_shortcode('transferencia_barco_form', 'transferencia_barco_shortcode');
 
 /**
  * Registrar AJAX handlers
  */
-add_action('wp_ajax_submit_moto_form_tpm', 'tpm_submit_form');
-add_action('wp_ajax_nopriv_submit_moto_form_tpm', 'tpm_submit_form');
+add_action('wp_ajax_submit_barco_form_tpb', 'tpb_submit_form');
+add_action('wp_ajax_nopriv_submit_barco_form_tpb', 'tpb_submit_form');
 
-add_action('wp_ajax_tpm_send_emails_v2', 'tpm_send_emails_v2');
-add_action('wp_ajax_nopriv_tpm_send_emails_v2', 'tpm_send_emails_v2');
+add_action('wp_ajax_tpb_send_emails_v2', 'tpb_send_emails_v2');
+add_action('wp_ajax_nopriv_tpb_send_emails_v2', 'tpb_send_emails_v2');
 
-add_action('wp_ajax_tpm_log_debug', 'tpm_log_debug');
-add_action('wp_ajax_nopriv_tpm_log_debug', 'tpm_log_debug');
+add_action('wp_ajax_tpb_log_debug', 'tpb_log_debug');
+add_action('wp_ajax_nopriv_tpb_log_debug', 'tpb_log_debug');
 
