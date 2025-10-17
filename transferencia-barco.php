@@ -1212,16 +1212,14 @@ function transferencia_barco_shortcode() {
         }
 
         .button-container {
-            display: none;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 36px;
-            padding-top: 24px;
-            border-top: 1px solid #e5e7eb;
-            gap: 16px;
-            width: 100%;
-            position: relative; /* Asegurar posicionamiento en flujo normal */
-            z-index: 10; /* Asegurar que esté por encima de otros elementos */
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            /* COMPLETAMENTE OCULTO - no debe crear espacio */
         }
 
         .button-container .button {
@@ -7485,16 +7483,24 @@ function transferencia_barco_shortcode() {
                 const pageId = formPages[currentPage].id;
                 
                 if (pageId === 'page-vehiculo') {
-                    // RESTAURAR visibilidad si venimos de página documentos
-                    buttonContainer.style.display = 'flex';
+                    // RESTAURAR visibilidad COMPLETA si venimos de página documentos
+                    buttonContainer.style.setProperty('display', 'flex', 'important');
+                    buttonContainer.style.setProperty('visibility', 'visible', 'important');
+                    buttonContainer.style.setProperty('opacity', '1', 'important');
+                    buttonContainer.style.setProperty('height', 'auto', 'important');
+                    buttonContainer.style.setProperty('overflow', 'visible', 'important');
                     const vehiculoContainer = document.getElementById('vehiculo-buttons-container');
                     if (vehiculoContainer) {
                         vehiculoContainer.appendChild(buttonContainer);
                         console.log('✅ Botones movidos a página vehículo');
                     }
                 } else if (pageId === 'page-datos') {
-                    // RESTAURAR visibilidad si venimos de página documentos
-                    buttonContainer.style.display = 'flex';
+                    // RESTAURAR visibilidad COMPLETA si venimos de página documentos
+                    buttonContainer.style.setProperty('display', 'flex', 'important');
+                    buttonContainer.style.setProperty('visibility', 'visible', 'important');
+                    buttonContainer.style.setProperty('opacity', '1', 'important');
+                    buttonContainer.style.setProperty('height', 'auto', 'important');
+                    buttonContainer.style.setProperty('overflow', 'visible', 'important');
                     const datosContainer = document.getElementById('datos-buttons-container');
                     if (datosContainer) {
                         datosContainer.appendChild(buttonContainer);
@@ -7515,8 +7521,12 @@ function transferencia_barco_shortcode() {
                     // SOLUCIÓN ALTERNATIVA: No mover, sino ocultar el original y mostrar uno clonado
                     const documentosContainer = document.getElementById('documentos-buttons-container');
                     if (documentosContainer) {
-                        // Ocultar el contenedor original
-                        buttonContainer.style.display = 'none';
+                        // Ocultar COMPLETAMENTE el contenedor original
+                        buttonContainer.style.setProperty('display', 'none', 'important');
+                        buttonContainer.style.setProperty('visibility', 'hidden', 'important');
+                        buttonContainer.style.setProperty('opacity', '0', 'important');
+                        buttonContainer.style.setProperty('height', '0', 'important');
+                        buttonContainer.style.setProperty('overflow', 'hidden', 'important');
                         
                         // Crear o actualizar botones clonados en la posición correcta
                         let clonedContainer = documentosContainer.querySelector('.button-container-cloned');
@@ -7542,8 +7552,12 @@ function transferencia_barco_shortcode() {
                         console.log('✅ Botones clonados creados para página documentos');
                     }
                 } else if (pageId === 'page-pago') {
-                    // RESTAURAR visibilidad si venimos de página documentos
-                    buttonContainer.style.display = 'flex';
+                    // RESTAURAR visibilidad COMPLETA si venimos de página documentos
+                    buttonContainer.style.setProperty('display', 'flex', 'important');
+                    buttonContainer.style.setProperty('visibility', 'visible', 'important');
+                    buttonContainer.style.setProperty('opacity', '1', 'important');
+                    buttonContainer.style.setProperty('height', 'auto', 'important');
+                    buttonContainer.style.setProperty('overflow', 'visible', 'important');
                     const pagoContainer = document.getElementById('pago-buttons-container');
                     if (pagoContainer) {
                         pagoContainer.appendChild(buttonContainer);
@@ -7557,8 +7571,12 @@ function transferencia_barco_shortcode() {
                         console.log('✅ Botones en posición original para', pageId);
                     }
                     
-                    // Si salimos de página documentos, restaurar visibilidad del contenedor original
-                    buttonContainer.style.display = 'flex';
+                    // Si salimos de página documentos, restaurar visibilidad COMPLETA del contenedor original
+                    buttonContainer.style.setProperty('display', 'flex', 'important');
+                    buttonContainer.style.setProperty('visibility', 'visible', 'important');
+                    buttonContainer.style.setProperty('opacity', '1', 'important');
+                    buttonContainer.style.setProperty('height', 'auto', 'important');
+                    buttonContainer.style.setProperty('overflow', 'visible', 'important');
                 }
             }
 
