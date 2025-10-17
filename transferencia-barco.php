@@ -1836,12 +1836,12 @@ function transferencia_barco_shortcode() {
         
         /* Estilos compactos para upload items */
         .upload-item {
-            padding: 12px !important;
+            padding: 8px !important;
             min-height: auto !important;
             background: white !important;
             border: 1px solid #e5e7eb !important;
-            border-radius: 8px !important;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+            border-radius: 6px !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
         }
 
         /* Asegurar posicionamiento correcto de botones en página documentos - SOLO CUANDO NO ESTÁN EN CONTENEDOR ESPECÍFICO */
@@ -1861,19 +1861,22 @@ function transferencia_barco_shortcode() {
         }
         
         .upload-wrapper {
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
         
         .upload-button {
-            padding: 8px 14px !important;
-            font-size: 13px !important;
-            min-height: 36px !important;
+            padding: 6px 10px !important;
+            font-size: 12px !important;
+            min-height: 28px !important;
+            background: #f3f4f6 !important;
+            color: #4b5563 !important;
+            border: 1px solid #d1d5db !important;
         }
         
         .file-count {
-            font-size: 11px !important;
-            margin-top: 6px !important;
-            margin-bottom: 6px !important;
+            font-size: 10px !important;
+            margin-top: 3px !important;
+            margin-bottom: 3px !important;
             color: #6b7280;
         }
         
@@ -6597,13 +6600,13 @@ function transferencia_barco_shortcode() {
 
             <!-- PASO 1: DOCUMENTOS -->
             <div id="documentos-step-1" class="documentos-step">
-                <div class="upload-grid" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                <div class="upload-grid" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px;">
                     <!-- Fila 1 -->
-                    <div class="upload-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="upload-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
                         <div class="upload-item">
                             <label id="label-hoja-asiento" for="upload-hoja-asiento">
-                                <strong style="display: block; margin-bottom: 2px; font-size: 14px;">📄 Registro marítimo</strong>
-                                <small style="display: block; color: #6b7280; margin-bottom: 6px; font-size: 12px;">Documento de la moto</small>
+                                <strong style="display: block; margin-bottom: 1px; font-size: 12px;">📄 Registro marítimo</strong>
+                                <small style="display: block; color: #6b7280; margin-bottom: 4px; font-size: 10px;">Documento de la moto</small>
                             </label>
                             <div class="upload-wrapper">
                                 <input type="file" id="upload-hoja-asiento" name="upload_hoja_asiento[]" multiple required accept="image/*,.pdf">
@@ -6611,12 +6614,12 @@ function transferencia_barco_shortcode() {
                                 <div class="file-count" data-input="upload-hoja-asiento">Ningún archivo seleccionado</div>
                             </div>
                             <div class="files-preview" id="preview-upload-hoja-asiento"></div>
-                            <a href="#" class="view-example" id="view-example-hoja-asiento" data-doc="hoja-asiento" style="font-size: 12px;">Ver ejemplo</a>
+                            <a href="#" class="view-example" id="view-example-hoja-asiento" data-doc="hoja-asiento" style="font-size: 10px;">Ver ejemplo</a>
                         </div>
                         <div class="upload-item">
                             <label id="label-dni-comprador" for="upload-dni-comprador">
-                                <strong style="display: block; margin-bottom: 2px; font-size: 14px;">🪪 DNI del comprador <span class="label-hint">(ambas caras)</span></strong>
-                                <small style="display: block; color: #6b7280; margin-bottom: 6px; font-size: 12px;">Delante y detrás del DNI</small>
+                                <strong style="display: block; margin-bottom: 1px; font-size: 12px;">🪪 DNI del comprador <span class="label-hint">(ambas caras)</span></strong>
+                                <small style="display: block; color: #6b7280; margin-bottom: 4px; font-size: 10px;">Delante y detrás del DNI</small>
                             </label>
                             <div class="upload-wrapper">
                                 <input type="file" id="upload-dni-comprador" name="upload_dni_comprador[]" multiple required accept="image/*,.pdf">
@@ -6624,16 +6627,16 @@ function transferencia_barco_shortcode() {
                                 <div class="file-count" data-input="upload-dni-comprador">Ningún archivo seleccionado</div>
                             </div>
                             <div class="files-preview" id="preview-upload-dni-comprador"></div>
-                            <a href="#" class="view-example" data-doc="dni-comprador" style="font-size: 12px;">Ver ejemplo</a>
+                            <a href="#" class="view-example" data-doc="dni-comprador" style="font-size: 10px;">Ver ejemplo</a>
                         </div>
                     </div>
 
                     <!-- Fila 2 -->
-                    <div class="upload-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="upload-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
                         <div class="upload-item">
                             <label id="label-dni-vendedor" for="upload-dni-vendedor">
-                                <strong style="display: block; margin-bottom: 2px; font-size: 14px;">🪪 DNI del vendedor <span class="label-hint">(ambas caras)</span></strong>
-                                <small style="display: block; color: #6b7280; margin-bottom: 6px; font-size: 12px;">Delante y detrás del DNI</small>
+                                <strong style="display: block; margin-bottom: 1px; font-size: 12px;">🪪 DNI del vendedor <span class="label-hint">(ambas caras)</span></strong>
+                                <small style="display: block; color: #6b7280; margin-bottom: 4px; font-size: 10px;">Delante y detrás del DNI</small>
                             </label>
                             <div class="upload-wrapper">
                                 <input type="file" id="upload-dni-vendedor" name="upload_dni_vendedor[]" multiple required accept="image/*,.pdf">
@@ -6641,12 +6644,12 @@ function transferencia_barco_shortcode() {
                                 <div class="file-count" data-input="upload-dni-vendedor">Ningún archivo seleccionado</div>
                             </div>
                             <div class="files-preview" id="preview-upload-dni-vendedor"></div>
-                            <a href="#" class="view-example" data-doc="dni-vendedor" style="font-size: 12px;">Ver ejemplo</a>
+                            <a href="#" class="view-example" data-doc="dni-vendedor" style="font-size: 10px;">Ver ejemplo</a>
                         </div>
                         <div class="upload-item">
                             <label id="label-contrato-compraventa" for="upload-contrato-compraventa">
-                                <strong style="display: block; margin-bottom: 2px; font-size: 14px;">📝 Contrato de compraventa</strong>
-                                <small style="display: block; color: #6b7280; margin-bottom: 6px; font-size: 12px;">Contrato firmado por ambas partes</small>
+                                <strong style="display: block; margin-bottom: 1px; font-size: 12px;">📝 Contrato de compraventa</strong>
+                                <small style="display: block; color: #6b7280; margin-bottom: 4px; font-size: 10px;">Contrato firmado por ambas partes</small>
                             </label>
                             <div class="upload-wrapper">
                                 <input type="file" id="upload-contrato-compraventa" name="upload_contrato_compraventa[]" multiple required accept="image/*,.pdf">
@@ -6654,18 +6657,18 @@ function transferencia_barco_shortcode() {
                                 <div class="file-count" data-input="upload-contrato-compraventa">Ningún archivo seleccionado</div>
                             </div>
                             <div class="files-preview" id="preview-upload-contrato-compraventa"></div>
-                            <a href="#" class="view-example" data-doc="contrato-compraventa" style="font-size: 12px;">Ver ejemplo</a>
+                            <a href="#" class="view-example" data-doc="contrato-compraventa" style="font-size: 10px;">Ver ejemplo</a>
                         </div>
                     </div>
 
                     <!-- Fila adicional para el MODELO 620 (solo cuando ITP ya pagado) -->
-                    <div class="upload-row" id="itp-payment-proof-row" style="display: none; grid-template-columns: 1fr; gap: 12px;">
-                        <div class="upload-item" style="background: #f0f9ff; border: 2px solid #3b82f6; border-radius: 8px; padding: 14px;">
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                                <i class="fa-solid fa-file-invoice" style="color: #3b82f6; font-size: 18px;"></i>
+                    <div class="upload-row" id="itp-payment-proof-row" style="display: none; grid-template-columns: 1fr; gap: 6px;">
+                        <div class="upload-item" style="background: #f0f9ff; border: 1px solid #3b82f6; border-radius: 6px; padding: 8px;">
+                            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                                <i class="fa-solid fa-file-invoice" style="color: #3b82f6; font-size: 14px;"></i>
                                 <div>
-                                    <strong style="display: block; font-size: 14px; color: #1e40af; margin-bottom: 2px;">📄 Modelo 620 - Justificante ITP</strong>
-                                    <small style="color: #6b7280; font-size: 12px;">Documento con justificante de pago a Hacienda</small>
+                                    <strong style="display: block; font-size: 12px; color: #1e40af; margin-bottom: 1px;">📄 Modelo 620 - Justificante ITP</strong>
+                                    <small style="color: #6b7280; font-size: 10px;">Documento con justificante de pago a Hacienda</small>
                                 </div>
                             </div>
                             <div class="upload-wrapper">
@@ -6684,10 +6687,10 @@ function transferencia_barco_shortcode() {
                 </div>
 
                 <!-- Confirmación de documentación completa - COMPACTO -->
-                <div class="docs-confirmation-container" style="margin-top: 12px; margin-bottom: 0px; padding: 14px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; border-left: 4px solid #3b82f6;">
-                    <label class="custom-checkbox" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                        <input type="checkbox" name="documents_complete" id="documents-complete-check" required style="width: 16px; height: 16px;">
-                        <span class="checkbox-text" style="flex: 1; font-size: 13px; color: #374151; line-height: 1.4; font-weight: 500;">
+                <div class="docs-confirmation-container" style="margin-top: 8px; margin-bottom: 0px; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; border-left: 3px solid #3b82f6;">
+                    <label class="custom-checkbox" style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                        <input type="checkbox" name="documents_complete" id="documents-complete-check" required style="width: 14px; height: 14px;">
+                        <span class="checkbox-text" style="flex: 1; font-size: 12px; color: #374151; line-height: 1.3; font-weight: 500;">
                             ✅ Confirmo que he adjuntado toda la documentación necesaria
                         </span>
                     </label>
