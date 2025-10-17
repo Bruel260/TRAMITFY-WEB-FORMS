@@ -1921,7 +1921,8 @@ function transferencia_barco_shortcode() {
             order: 9999 !important;
         }
 
-        #documentos-buttons-container .button-container {
+        #documentos-buttons-container .button-container,
+        #documentos-buttons-container .button-container-cloned {
             display: flex !important;
             justify-content: space-between !important;
             align-items: center !important;
@@ -1932,6 +1933,18 @@ function transferencia_barco_shortcode() {
             gap: 16px !important;
             position: relative !important;
             z-index: 1001 !important;
+        }
+
+        /* Asegurar que los botones clonados tengan el estilo correcto */
+        #documentos-buttons-container .button-container-cloned .button {
+            padding: 14px 32px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            min-width: 140px;
         }
         
         /* Los estilos de upload-wrapper, upload-button y file-count están definidos arriba */
@@ -7495,10 +7508,34 @@ function transferencia_barco_shortcode() {
                         console.log('🔧 Layout grid forzado a normal para página documentos');
                     }
                     
+                    // SOLUCIÓN ALTERNATIVA: No mover, sino ocultar el original y mostrar uno clonado
                     const documentosContainer = document.getElementById('documentos-buttons-container');
                     if (documentosContainer) {
-                        documentosContainer.appendChild(buttonContainer);
-                        console.log('✅ Botones movidos a página documentos');
+                        // Ocultar el contenedor original
+                        buttonContainer.style.display = 'none';
+                        
+                        // Crear o actualizar botones clonados en la posición correcta
+                        let clonedContainer = documentosContainer.querySelector('.button-container-cloned');
+                        if (!clonedContainer) {
+                            clonedContainer = buttonContainer.cloneNode(true);
+                            clonedContainer.classList.add('button-container-cloned');
+                            clonedContainer.classList.remove('button-container');
+                            documentosContainer.appendChild(clonedContainer);
+                            
+                            // Asegurar que los eventos funcionen en los botones clonados
+                            const clonedPrev = clonedContainer.querySelector('#prevButton');
+                            const clonedNext = clonedContainer.querySelector('#nextButton');
+                            const originalPrev = buttonContainer.querySelector('#prevButton');
+                            const originalNext = buttonContainer.querySelector('#nextButton');
+                            
+                            if (clonedPrev && originalPrev) {
+                                clonedPrev.onclick = originalPrev.onclick;
+                            }
+                            if (clonedNext && originalNext) {
+                                clonedNext.onclick = originalNext.onclick;
+                            }
+                        }
+                        console.log('✅ Botones clonados creados para página documentos');
                     }
                 } else if (pageId === 'page-pago') {
                     const pagoContainer = document.getElementById('pago-buttons-container');
@@ -7513,6 +7550,9 @@ function transferencia_barco_shortcode() {
                         mainFormContainer.appendChild(buttonContainer);
                         console.log('✅ Botones en posición original para', pageId);
                     }
+                    
+                    // Si salimos de página documentos, restaurar visibilidad del contenedor original
+                    buttonContainer.style.display = 'flex';
                 }
             }
 
