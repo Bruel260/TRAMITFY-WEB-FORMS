@@ -12263,6 +12263,51 @@ function transferencia_barco_shortcode() {
             return;
         }
 
+        // EN LA PÁGINA DOCUMENTOS, MOSTRAR INFORMACIÓN EDUCATIVA SOBRE DOCUMENTACIÓN
+        if (currentPageId === 'page-documentos') {
+            contenido = `
+                <div style="padding: 16px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 16px;">
+                    <div style="font-size: 14px; color: white; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-file-signature" style="color: #6b7280; font-size: 16px;"></i>
+                        Documentación Oficial
+                    </div>
+                    
+                    <div style="font-size: 12px; color: rgba(255,255,255,0.9); line-height: 1.5; margin-bottom: 12px;">
+                        <strong style="color: white; display: block; margin-bottom: 4px;">📋 Documentación necesaria</strong>
+                        Esta es la documentación necesaria para oficializar tu trámite ante la administración marítima
+                    </div>
+                    
+                    <div style="font-size: 12px; color: rgba(255,255,255,0.9); line-height: 1.5; margin-bottom: 12px;">
+                        <strong style="color: white; display: block; margin-bottom: 4px;">⚙️ Nosotros nos encargamos</strong>
+                        • Gestión completa en DGMM<br>
+                        • Tramitación oficial<br>
+                        • Seguimiento del proceso
+                    </div>
+                    
+                    <div style="font-size: 12px; color: rgba(255,255,255,0.9); line-height: 1.5; margin-bottom: 12px;">
+                        <strong style="color: white; display: block; margin-bottom: 4px;">📤 Tu parte es sencilla</strong>
+                        Solo adjunta los documentos requeridos y nosotros hacemos el resto
+                    </div>
+                    
+                    <div style="font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.4; font-style: italic; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        Todos los documentos se procesan de forma segura y confidencial
+                    </div>
+                </div>
+                
+                <div style="padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 3px solid #10b981;">
+                    <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 6px;">Estado</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 13px; color: white;">Documentación</span>
+                        <strong style="font-size: 13px; color: #10b981;">En progreso</strong>
+                    </div>
+                    <div style="font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 4px;">Adjunta los archivos requeridos</div>
+                </div>
+            `;
+            
+            sidebarPrecioContent.innerHTML = contenido;
+            return;
+        }
+
         // PARA OTRAS PÁGINAS, MOSTRAR CONTENIDO ORIGINAL
         // 1. Datos del vehículo (clickable para volver)
         const purchasePrice = parseFloat(document.getElementById('purchase_price')?.value) || 0;
