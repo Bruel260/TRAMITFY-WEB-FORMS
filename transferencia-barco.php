@@ -6975,15 +6975,15 @@ function transferencia_barco_shortcode() {
         <input type="hidden" name="itp_commission" id="itp_commission" />
         <input type="hidden" name="itp_total_amount" id="itp_total_amount" />
 
-        <!-- Botones de navegación (posición original dentro del grid) -->
+                </div> <!-- Fin .tramitfy-main-form -->
+            </div> <!-- Fin .tramitfy-two-column -->
+        </div> <!-- Fin .tramitfy-layout-wrapper -->
+
+        <!-- Botones de navegación (MOVIDO FUERA para evitar espacio blanco) -->
         <div class="button-container">
             <button type="button" class="button" id="prevButton">Anterior</button>
             <button type="button" class="button" id="nextButton">Siguiente</button>
         </div>
-
-                </div> <!-- Fin .tramitfy-main-form -->
-            </div> <!-- Fin .tramitfy-two-column -->
-        </div> <!-- Fin .tramitfy-layout-wrapper -->
 
     </form>
 
