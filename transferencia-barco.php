@@ -6687,13 +6687,34 @@ function transferencia_barco_shortcode() {
                 </div>
 
                 <!-- Confirmación de documentación completa - COMPACTO -->
-                <div class="docs-confirmation-container" style="margin-top: 8px; margin-bottom: 0px; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; border-left: 3px solid #3b82f6;">
+                <div class="docs-confirmation-container" style="margin-top: 8px; margin-bottom: 6px; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; border-left: 3px solid #3b82f6;">
                     <label class="custom-checkbox" style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
                         <input type="checkbox" name="documents_complete" id="documents-complete-check" required style="width: 14px; height: 14px;">
                         <span class="checkbox-text" style="flex: 1; font-size: 12px; color: #374151; line-height: 1.3; font-weight: 500;">
                             ✅ Confirmo que he adjuntado toda la documentación necesaria
                         </span>
                     </label>
+                </div>
+
+                <!-- Campo de Firma - Estilo campo upload -->
+                <div class="upload-item" style="margin-top: 6px;">
+                    <label for="document-signature">
+                        <strong style="display: block; margin-bottom: 1px; font-size: 12px;">✍️ Firma del documento</strong>
+                        <small style="display: block; color: #6b7280; margin-bottom: 4px; font-size: 10px;">Firma para autorizar el trámite</small>
+                    </label>
+                    <div class="upload-wrapper">
+                        <div id="signature-field" class="upload-button upload-button-responsive" style="text-align: center; cursor: pointer;">
+                            <span class="desktop-text"><i class="fa-solid fa-signature"></i> Firmar documento</span>
+                            <span class="mobile-text"><i class="fa-solid fa-signature"></i> Firmar</span>
+                        </div>
+                        <div class="file-count" id="signature-status">Pendiente de firma</div>
+                    </div>
+                    <div class="files-preview" id="signature-preview" style="display: none;">
+                        <div style="padding: 8px; background: #f0f9ff; border: 1px solid #3b82f6; border-radius: 4px; text-align: center;">
+                            <i class="fa-solid fa-check-circle" style="color: #10b981; margin-right: 6px;"></i>
+                            <span style="font-size: 11px; color: #374151;">Documento firmado correctamente</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Sección de firma simple (oculta inicialmente) -->
@@ -6718,7 +6739,7 @@ function transferencia_barco_shortcode() {
                     
                     <!-- Botones -->
                     <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
-                        <button type="button" id="volver-documentos" style="padding: 10px 20px; background: transparent; color: #6b7280; border: 2px solid #d1d5db; border-radius: 6px; font-size: 14px; cursor: pointer; transition: all 0.2s;">
+                        <button type="button" id="volver-documentos" onclick="returnToDocuments()" style="padding: 10px 20px; background: transparent; color: #6b7280; border: 2px solid #d1d5db; border-radius: 6px; font-size: 14px; cursor: pointer; transition: all 0.2s;">
                             ← Volver a Documentos
                         </button>
                         <button type="button" id="clear-signature-simple" style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; transition: all 0.2s;">
@@ -8478,6 +8499,18 @@ function transferencia_barco_shortcode() {
                     }, 100);
                 });
 
+                // Event listener para detectar cuando se completa una firma
+                window.signaturePadSimple.addEventListener('endStroke', function() {
+                    if (!window.signaturePadSimple.isEmpty()) {
+                        console.log('✅ Firma detectada, marcando como completada');
+                        setTimeout(() => {
+                            if (typeof onSignatureComplete === 'function') {
+                                onSignatureComplete();
+                            }
+                        }, 500); // Pequeño delay para asegurar que la firma esté completa
+                    }
+                });
+
                 // Configurar botón limpiar
                 const clearBtn = document.getElementById('clear-signature-simple');
                 if (clearBtn) {
@@ -8486,6 +8519,27 @@ function transferencia_barco_shortcode() {
                         const label = document.getElementById('signature-label-simple');
                         if (label) label.style.display = 'block';
                         canvas.style.borderColor = '#016d86';
+                        
+                        // Resetear estado de firma
+                        documentSigned = false;
+                        const signatureStatus = document.getElementById('signature-status');
+                        const signaturePreview = document.getElementById('signature-preview');
+                        const signatureField = document.getElementById('signature-field');
+                        
+                        if (signatureStatus) {
+                            signatureStatus.textContent = 'Pendiente de firma';
+                            signatureStatus.style.color = '#6b7280';
+                        }
+                        
+                        if (signaturePreview) {
+                            signaturePreview.style.display = 'none';
+                        }
+                        
+                        if (signatureField) {
+                            signatureField.style.background = '';
+                            signatureField.style.border = '';
+                            signatureField.innerHTML = '<span class="desktop-text"><i class="fa-solid fa-signature"></i> Firmar documento</span><span class="mobile-text"><i class="fa-solid fa-signature"></i> Firmar</span>';
+                        }
                     };
                 }
 
@@ -8493,11 +8547,7 @@ function transferencia_barco_shortcode() {
                 const volverBtn = document.getElementById('volver-documentos');
                 if (volverBtn) {
                     volverBtn.onclick = function() {
-                        const checkbox = document.getElementById('documents-complete-check');
-                        if (checkbox) {
-                            checkbox.checked = false;
-                            checkbox.dispatchEvent(new Event('change'));
-                        }
+                        returnToDocuments();
                     };
                 }
 
@@ -8743,20 +8793,13 @@ function transferencia_barco_shortcode() {
                 }
             }
             else if (sectionIndex === 2) { // Firma
-                if (signaturePad && signaturePad.isEmpty()) {
+                // Validar nueva firma del campo de firma
+                if (!documentSigned) {
                     isValid = false;
-                    const signatureCanvas = document.getElementById('signature-pad');
-                    if (signatureCanvas) {
-                        signatureCanvas.classList.add('invalid');
-                        signatureCanvas.parentElement.classList.add('invalid');
-                    }
-                    alert('Por favor, firme el documento antes de continuar.');
-                } else if (signaturePad) {
-                    const signatureCanvas = document.getElementById('signature-pad');
-                    if (signatureCanvas) {
-                        signatureCanvas.classList.remove('invalid');
-                        signatureCanvas.parentElement.classList.remove('invalid');
-                    }
+                    alert('Por favor, firma el documento antes de continuar.');
+                } else {
+                    // Firma completada correctamente
+                    console.log('✅ Firma validada correctamente');
                 }
             }
             
@@ -9921,14 +9964,13 @@ function transferencia_barco_shortcode() {
         prevButton.addEventListener('click', () => {
             // SINCRONIZACIÓN ESPECIAL: Página documentos (índice 3)
             if (currentPage === 3) { // page-documentos
-                const documentsCheckbox = document.getElementById('documents-complete-check');
-                const isSignatureMode = documentsCheckbox && documentsCheckbox.checked;
+                const signatureSection = document.getElementById('simple-signature-section');
+                const isSignatureMode = signatureSection && signatureSection.style.display === 'block';
                 
                 if (isSignatureMode) {
                     // Estamos en modo firma, volver a modo documentos
                     persistentLog('📋 SINCRONIZACIÓN: Volviendo a documentos desde firma');
-                    documentsCheckbox.checked = false;
-                    documentsCheckbox.dispatchEvent(new Event('change'));
+                    returnToDocuments();
                     return; // No retroceder página, quedarse en documentos
                 }
                 // Si está en modo documentos normal, retroceder normal
@@ -9947,19 +9989,19 @@ function transferencia_barco_shortcode() {
 
             // SINCRONIZACIÓN ESPECIAL: Página documentos (índice 3)
             if (currentPage === 3) { // page-documentos
-                const documentsCheckbox = document.getElementById('documents-complete-check');
-                const isDocumentsMode = !documentsCheckbox || !documentsCheckbox.checked;
+                const signatureSection = document.getElementById('simple-signature-section');
+                const isDocumentsMode = !signatureSection || signatureSection.style.display !== 'block';
                 
-                if (isDocumentsMode) {
+                if (isDocumentsMode && !documentSigned) {
                     // Estamos en modo documentos normal, activar firma
                     persistentLog('📋 SINCRONIZACIÓN: Activando firma desde botón Siguiente');
-                    if (documentsCheckbox) {
-                        documentsCheckbox.checked = true;
-                        documentsCheckbox.dispatchEvent(new Event('change'));
+                    const signatureField = document.getElementById('signature-field');
+                    if (signatureField) {
+                        signatureField.click();
                     }
                     return; // No avanzar página, quedarse en firma
                 }
-                // Si ya está en modo firma, continuar normal (ir a pago)
+                // Si ya está firmado, continuar normal (ir a pago)
             }
 
             if (!isLastPage) {
@@ -13100,8 +13142,8 @@ function transferencia_barco_shortcode() {
             case 'page-documentos':
                 // MOSTRAR INFORMACIÓN EDUCATIVA SOBRE DOCUMENTACIÓN (siempre)
                 // Verificar si estamos en paso de firma
-                const documentsCheckbox = document.getElementById('documents-complete-check');
-                const enPasoFirma = documentsCheckbox && documentsCheckbox.checked;
+                const signatureSection = document.getElementById('simple-signature-section');
+                const enPasoFirma = signatureSection && signatureSection.style.display === 'block';
                 
                 if (enPasoFirma) {
                     // MODO FIRMA: Mostrar documento de autorización
@@ -13660,16 +13702,23 @@ function transferencia_barco_shortcode() {
     
     // Función para mostrar paso 2 con firma integrada elegante
     
-    const documentsCheckbox = document.getElementById('documents-complete-check');
+    // Variable para controlar el estado de la firma
+    let documentSigned = false;
 
-    if (documentsCheckbox) {
-        documentsCheckbox.addEventListener('change', function() {
+    // NUEVO: Event listener para el campo de firma
+    const signatureField = document.getElementById('signature-field');
+    const signatureStatus = document.getElementById('signature-status');
+    const signaturePreview = document.getElementById('signature-preview');
+
+    if (signatureField) {
+        signatureField.addEventListener('click', function() {
             const signatureSection = document.getElementById('simple-signature-section');
             const uploadsSection = document.querySelector('.upload-grid');
             const docsConfirmation = document.querySelector('.docs-confirmation-container');
+            const signatureFieldContainer = this.closest('.upload-item');
             
-            if (this.checked) {
-                // Ocultar campos de adjuntar y checkbox con animación
+            if (!documentSigned) {
+                // Ocultar campos de adjuntar, checkbox y campo de firma con animación
                 if (uploadsSection) {
                     uploadsSection.style.opacity = '0';
                     uploadsSection.style.transform = 'translateY(-10px)';
@@ -13683,6 +13732,14 @@ function transferencia_barco_shortcode() {
                     docsConfirmation.style.transform = 'translateY(-10px)';
                     setTimeout(() => {
                         docsConfirmation.style.display = 'none';
+                    }, 300);
+                }
+
+                if (signatureFieldContainer) {
+                    signatureFieldContainer.style.opacity = '0';
+                    signatureFieldContainer.style.transform = 'translateY(-10px)';
+                    setTimeout(() => {
+                        signatureFieldContainer.style.display = 'none';
                     }, 300);
                 }
                 
@@ -13702,45 +13759,89 @@ function transferencia_barco_shortcode() {
                         }, 10);
                     }
                 }, 350);
-                
-            } else {
-                // Ocultar sección de firma
-                if (signatureSection) {
-                    signatureSection.style.opacity = '0';
-                    signatureSection.style.transform = 'translateY(-10px)';
-                    setTimeout(() => {
-                        signatureSection.style.display = 'none';
-                    }, 300);
-                }
-                
-                // Mostrar campos de adjuntar y checkbox con animación
-                setTimeout(() => {
-                    if (uploadsSection) {
-                        uploadsSection.style.display = 'grid';
-                        setTimeout(() => {
-                            uploadsSection.style.opacity = '1';
-                            uploadsSection.style.transform = 'translateY(0)';
-                        }, 10);
-                    }
-                    
-                    if (docsConfirmation) {
-                        docsConfirmation.style.display = 'block';
-                        setTimeout(() => {
-                            docsConfirmation.style.opacity = '1';
-                            docsConfirmation.style.transform = 'translateY(0)';
-                        }, 10);
-                    }
-                    
-                    // IMPORTANTE: Limpiar completamente el documento de autorización
-                    limpiarDocumentoAutorizacion();
-                    
-                    // Restaurar sidebar normal usando el sistema dinámico
-                    actualizarSidebarDinamico('page-documentos');
-                }, 350);
             }
         });
 
-        logDebug('DOCS', '✅ Event listener del checkbox de documentos configurado');
+        logDebug('DOCS', '✅ Event listener del campo de firma configurado');
+    }
+
+    // Función para manejar cuando se completa la firma
+    window.onSignatureComplete = function() {
+        documentSigned = true;
+        
+        // Actualizar estado visual del campo de firma
+        if (signatureStatus) {
+            signatureStatus.textContent = 'Documento firmado';
+            signatureStatus.style.color = '#10b981';
+        }
+        
+        if (signaturePreview) {
+            signaturePreview.style.display = 'block';
+        }
+        
+        if (signatureField) {
+            signatureField.style.background = '#f0f9ff';
+            signatureField.style.border = '1px solid #10b981';
+            signatureField.innerHTML = '<span class="desktop-text"><i class="fa-solid fa-check-circle"></i> Documento firmado</span><span class="mobile-text"><i class="fa-solid fa-check-circle"></i> Firmado</span>';
+        }
+        
+        logDebug('DOCS', '✅ Firma completada y estado actualizado');
+    };
+
+    // Función para volver al modo documentos desde firma
+    window.returnToDocuments = function() {
+        const signatureSection = document.getElementById('simple-signature-section');
+        const uploadsSection = document.querySelector('.upload-grid');
+        const docsConfirmation = document.querySelector('.docs-confirmation-container');
+        const signatureFieldContainer = document.querySelector('#signature-field').closest('.upload-item');
+        
+        // Ocultar sección de firma
+        if (signatureSection) {
+            signatureSection.style.opacity = '0';
+            signatureSection.style.transform = 'translateY(-10px)';
+            setTimeout(() => {
+                signatureSection.style.display = 'none';
+            }, 300);
+        }
+        
+        // Mostrar campos de adjuntar, checkbox y campo de firma con animación
+        setTimeout(() => {
+            if (uploadsSection) {
+                uploadsSection.style.display = 'grid';
+                setTimeout(() => {
+                    uploadsSection.style.opacity = '1';
+                    uploadsSection.style.transform = 'translateY(0)';
+                }, 10);
+            }
+            
+            if (docsConfirmation) {
+                docsConfirmation.style.display = 'block';
+                setTimeout(() => {
+                    docsConfirmation.style.opacity = '1';
+                    docsConfirmation.style.transform = 'translateY(0)';
+                }, 10);
+            }
+
+            if (signatureFieldContainer) {
+                signatureFieldContainer.style.display = 'block';
+                setTimeout(() => {
+                    signatureFieldContainer.style.opacity = '1';
+                    signatureFieldContainer.style.transform = 'translateY(0)';
+                }, 10);
+            }
+            
+            // IMPORTANTE: Limpiar completamente el documento de autorización
+            limpiarDocumentoAutorizacion();
+            
+            // Restaurar sidebar normal usando el sistema dinámico
+            actualizarSidebarDinamico('page-documentos');
+        }, 350);
+    };
+
+    // Mantener el checkbox como elemento simple (sin funcionalidad de firma)
+    const documentsCheckbox = document.getElementById('documents-complete-check');
+    if (documentsCheckbox) {
+        logDebug('DOCS', '✅ Checkbox de documentos mantenido como elemento simple');
     }
     
     // Event listeners para botones de firma ya definidos arriba (líneas 10070-10100)
