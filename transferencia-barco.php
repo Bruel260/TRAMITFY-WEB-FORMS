@@ -7574,9 +7574,9 @@ function transferencia_barco_shortcode() {
                     // Asegurar posición correcta abajo del formulario
                     // NO aplicar margin-top/padding-top si están en contenedores específicos
                     if (buttonContainer.closest('#documentos-buttons-container')) {
-                        // Para documentos: usar espaciado estándar
-                        buttonContainer.style.setProperty('margin-top', '36px', 'important');
-                        buttonContainer.style.setProperty('padding-top', '24px', 'important');
+                        // Para documentos: espaciado moderado para página con layout compacto
+                        buttonContainer.style.setProperty('margin-top', '24px', 'important');
+                        buttonContainer.style.setProperty('padding-top', '16px', 'important');
                         buttonContainer.style.setProperty('border-top', '1px solid #e5e7eb', 'important');
                     } else if (buttonContainer.closest('#pago-buttons-container')) {
                         // Para pago: espacio normal dentro del contenedor
