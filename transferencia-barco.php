@@ -1806,23 +1806,87 @@ function transferencia_barco_shortcode() {
             }
         }
         
-        /* Estilos para la cuadrícula de documentos - VERSION COMPACTA */
+        /* Estilos para la cuadrícula de documentos - GRID 3x2 MEJORADO */
         .upload-grid {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin: 12px 0;
+            gap: 20px;
+            margin: 20px 0;
         }
         
         .upload-row {
             display: flex;
-            gap: 12px;
+            gap: 20px;
             width: 100%;
         }
         
         .upload-row .upload-item {
             flex: 1 1 0;
             min-width: 0;
+            padding: 16px;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .upload-row .upload-item:hover {
+            border-color: #d1d5db;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .upload-item label {
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .upload-item label strong {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .upload-item label small {
+            display: block;
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 400;
+        }
+
+        .upload-wrapper {
+            margin-bottom: 8px;
+        }
+
+        .upload-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            background: #f9fafb;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            gap: 8px;
+        }
+
+        .upload-button:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+
+        .file-count {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 6px;
+            text-align: center;
         }
 
         /* Botones upload responsivos - Desktop vs Mobile */
@@ -1834,15 +1898,7 @@ function transferencia_barco_shortcode() {
             display: none;
         }
         
-        /* Estilos compactos para upload items */
-        .upload-item {
-            padding: 8px !important;
-            min-height: auto !important;
-            background: white !important;
-            border: 1px solid #e5e7eb !important;
-            border-radius: 6px !important;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-        }
+        /* Los estilos de upload-item ahora están definidos arriba en .upload-row .upload-item */
 
         /* Asegurar posicionamiento correcto de botones en página documentos - SOLO CUANDO NO ESTÁN EN CONTENEDOR ESPECÍFICO */
         #page-documentos + .button-container:not(#documentos-buttons-container .button-container),
@@ -1854,10 +1910,20 @@ function transferencia_barco_shortcode() {
         }
 
         /* Botones con espacio normal en página documentos - CORREGIDO */
-        #page-documentos #documentos-buttons-container .button-container {
-            margin-top: 24px !important;
-            padding-top: 16px !important;
+        #documentos-buttons-container {
+            margin-top: 32px;
+            padding-top: 0;
+        }
+
+        #documentos-buttons-container .button-container {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            margin-top: 0 !important;
+            padding-top: 20px !important;
             border-top: 1px solid #e5e7eb !important;
+            gap: 16px !important;
+            width: 100% !important;
         }
 
         /* Asegurar tamaño correcto de botones en todas las páginas */
@@ -1870,25 +1936,7 @@ function transferencia_barco_shortcode() {
             min-height: 48px !important;
         }
         
-        .upload-wrapper {
-            margin-bottom: 4px;
-        }
-        
-        .upload-button {
-            padding: 6px 10px !important;
-            font-size: 12px !important;
-            min-height: 28px !important;
-            background: #f3f4f6 !important;
-            color: #4b5563 !important;
-            border: 1px solid #d1d5db !important;
-        }
-        
-        .file-count {
-            font-size: 10px !important;
-            margin-top: 3px !important;
-            margin-bottom: 3px !important;
-            color: #6b7280;
-        }
+        /* Los estilos de upload-wrapper, upload-button y file-count están definidos arriba */
         
         .upload-row .upload-item:hover {
             transform: translateY(-3px);
@@ -6608,105 +6656,130 @@ function transferencia_barco_shortcode() {
         <!-- Página Documentos - FLUJO EN 2 PASOS -->
         <div id="page-documentos" class="form-page form-section-compact hidden">
 
-            <!-- PASO 1: DOCUMENTOS - ULTRA COMPACTO -->
+            <!-- PASO 1: DOCUMENTOS - DISTRIBUCIÓN 3x2 MEJORADA -->
             <div id="documentos-step-1" class="documentos-step">
-                <!-- Grid ultra-compacto 3x2 para todos los elementos -->
-                <div class="upload-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px;">
-                    <!-- Registro marítimo -->
-                    <div class="upload-item" style="padding: 4px; margin: 0;">
-                        <label id="label-hoja-asiento" for="upload-hoja-asiento">
-                            <strong style="display: block; margin-bottom: 0; font-size: 10px;">📄 Registro</strong>
-                        </label>
-                        <div class="upload-wrapper" style="margin-bottom: 2px;">
-                            <input type="file" id="upload-hoja-asiento" name="upload_hoja_asiento[]" multiple required accept="image/*,.pdf">
-                            <div class="upload-button upload-button-responsive" style="padding: 4px 6px; font-size: 10px;"><span class="desktop-text"><i class="fa-solid fa-upload"></i> Archivo</span><span class="mobile-text"><i class="fa-solid fa-camera"></i></span></div>
-                            <div class="file-count" data-input="upload-hoja-asiento" style="font-size: 8px; margin: 1px 0;">Sin archivos</div>
-                        </div>
-                        <div class="files-preview" id="preview-upload-hoja-asiento"></div>
-                    </div>
-
-                    <!-- DNI Comprador -->
-                    <div class="upload-item" style="padding: 4px; margin: 0;">
-                        <label id="label-dni-comprador" for="upload-dni-comprador">
-                            <strong style="display: block; margin-bottom: 0; font-size: 10px;">🪪 DNI comprador</strong>
-                        </label>
-                        <div class="upload-wrapper" style="margin-bottom: 2px;">
-                            <input type="file" id="upload-dni-comprador" name="upload_dni_comprador[]" multiple required accept="image/*,.pdf">
-                            <div class="upload-button upload-button-responsive" style="padding: 4px 6px; font-size: 10px;"><span class="desktop-text"><i class="fa-solid fa-upload"></i> Archivo</span><span class="mobile-text"><i class="fa-solid fa-camera"></i></span></div>
-                            <div class="file-count" data-input="upload-dni-comprador" style="font-size: 8px; margin: 1px 0;">Sin archivos</div>
-                        </div>
-                        <div class="files-preview" id="preview-upload-dni-comprador"></div>
-                    </div>
-
-                    <!-- DNI Vendedor -->
-                    <div class="upload-item" style="padding: 4px; margin: 0;">
-                        <label id="label-dni-vendedor" for="upload-dni-vendedor">
-                            <strong style="display: block; margin-bottom: 0; font-size: 10px;">🪪 DNI vendedor</strong>
-                        </label>
-                        <div class="upload-wrapper" style="margin-bottom: 2px;">
-                            <input type="file" id="upload-dni-vendedor" name="upload_dni_vendedor[]" multiple required accept="image/*,.pdf">
-                            <div class="upload-button upload-button-responsive" style="padding: 4px 6px; font-size: 10px;"><span class="desktop-text"><i class="fa-solid fa-upload"></i> Archivo</span><span class="mobile-text"><i class="fa-solid fa-camera"></i></span></div>
-                            <div class="file-count" data-input="upload-dni-vendedor" style="font-size: 8px; margin: 1px 0;">Sin archivos</div>
-                        </div>
-                        <div class="files-preview" id="preview-upload-dni-vendedor"></div>
-                    </div>
-
-                    <!-- Contrato compraventa -->
-                    <div class="upload-item" style="padding: 4px; margin: 0;">
-                        <label id="label-contrato-compraventa" for="upload-contrato-compraventa">
-                            <strong style="display: block; margin-bottom: 0; font-size: 10px;">📝 Contrato</strong>
-                        </label>
-                        <div class="upload-wrapper" style="margin-bottom: 2px;">
-                            <input type="file" id="upload-contrato-compraventa" name="upload_contrato_compraventa[]" multiple required accept="image/*,.pdf">
-                            <div class="upload-button upload-button-responsive" style="padding: 4px 6px; font-size: 10px;"><span class="desktop-text"><i class="fa-solid fa-upload"></i> Archivo</span><span class="mobile-text"><i class="fa-solid fa-camera"></i></span></div>
-                            <div class="file-count" data-input="upload-contrato-compraventa" style="font-size: 8px; margin: 1px 0;">Sin archivos</div>
-                        </div>
-                        <div class="files-preview" id="preview-upload-contrato-compraventa"></div>
-                    </div>
-
-                    <!-- Confirmación + Modelo 620 -->
-                    <div style="padding: 4px; margin: 0; display: flex; flex-direction: column; gap: 3px;">
-                        <!-- Confirmación documentos -->
-                        <div class="docs-confirmation-container" style="padding: 4px 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 3px; border-left: 2px solid #3b82f6;">
-                            <label class="custom-checkbox" style="display: flex; align-items: center; gap: 3px; cursor: pointer;">
-                                <input type="checkbox" name="documents_complete" id="documents-complete-check" required style="width: 10px; height: 10px;">
-                                <span class="checkbox-text" style="flex: 1; font-size: 9px; color: #374151; line-height: 1.1; font-weight: 500;">
-                                    ✅ Documentación OK
-                                </span>
+                <!-- Grid 3x2 con formato original mejorado -->
+                <div class="upload-grid">
+                    <!-- Primera fila: 3 documentos principales -->
+                    <div class="upload-row">
+                        <!-- Registro marítimo -->
+                        <div class="upload-item">
+                            <label id="label-hoja-asiento" for="upload-hoja-asiento">
+                                <strong>📄 Registro Marítimo</strong>
+                                <small>Hoja de asiento registral</small>
                             </label>
-                        </div>
-                        
-                        <!-- Modelo 620 - oculto por defecto -->
-                        <div id="itp-payment-proof-row" style="display: none;">
-                            <div class="upload-item" style="background: #f0f9ff; border: 1px solid #3b82f6; border-radius: 3px; padding: 3px;">
-                                <label for="upload-itp-comprobante" style="margin-bottom: 0;">
-                                    <strong style="display: block; font-size: 9px; color: #1e40af; margin-bottom: 0;">📄 Modelo 620</strong>
-                                </label>
-                                <div class="upload-wrapper" style="margin-bottom: 1px;">
-                                    <input type="file" id="upload-itp-comprobante" name="upload_itp_comprobante[]" multiple accept="image/*,.pdf">
-                                    <div class="upload-button upload-button-responsive" style="padding: 3px 4px; font-size: 9px;"><span class="desktop-text"><i class="fa-solid fa-upload"></i> ITP</span><span class="mobile-text"><i class="fa-solid fa-camera"></i></span></div>
-                                    <div class="file-count" data-input="upload-itp-comprobante" style="font-size: 8px; margin: 1px 0;">Sin archivos</div>
+                            <div class="upload-wrapper">
+                                <input type="file" id="upload-hoja-asiento" name="upload_hoja_asiento[]" multiple required accept="image/*,.pdf">
+                                <div class="upload-button upload-button-responsive">
+                                    <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivo</span>
+                                    <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
                                 </div>
-                                <div class="files-preview" id="preview-upload-itp-comprobante"></div>
+                                <div class="file-count" data-input="upload-hoja-asiento">Sin archivos</div>
                             </div>
+                            <div class="files-preview" id="preview-upload-hoja-asiento"></div>
+                        </div>
+
+                        <!-- DNI Comprador -->
+                        <div class="upload-item">
+                            <label id="label-dni-comprador" for="upload-dni-comprador">
+                                <strong>🪪 DNI Comprador</strong>
+                                <small>Documento de identidad</small>
+                            </label>
+                            <div class="upload-wrapper">
+                                <input type="file" id="upload-dni-comprador" name="upload_dni_comprador[]" multiple required accept="image/*,.pdf">
+                                <div class="upload-button upload-button-responsive">
+                                    <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivo</span>
+                                    <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
+                                </div>
+                                <div class="file-count" data-input="upload-dni-comprador">Sin archivos</div>
+                            </div>
+                            <div class="files-preview" id="preview-upload-dni-comprador"></div>
+                        </div>
+
+                        <!-- DNI Vendedor -->
+                        <div class="upload-item">
+                            <label id="label-dni-vendedor" for="upload-dni-vendedor">
+                                <strong>🪪 DNI Vendedor</strong>
+                                <small>Documento de identidad</small>
+                            </label>
+                            <div class="upload-wrapper">
+                                <input type="file" id="upload-dni-vendedor" name="upload_dni_vendedor[]" multiple required accept="image/*,.pdf">
+                                <div class="upload-button upload-button-responsive">
+                                    <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivo</span>
+                                    <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
+                                </div>
+                                <div class="file-count" data-input="upload-dni-vendedor">Sin archivos</div>
+                            </div>
+                            <div class="files-preview" id="preview-upload-dni-vendedor"></div>
                         </div>
                     </div>
 
-                    <!-- Campo de Firma -->
-                    <div class="upload-item" style="padding: 4px; margin: 0;">
-                        <label for="document-signature">
-                            <strong style="display: block; margin-bottom: 0; font-size: 10px;">✍️ Firma</strong>
-                        </label>
-                        <div class="upload-wrapper" style="margin-bottom: 2px;">
-                            <div id="signature-field" class="upload-button upload-button-responsive" style="text-align: center; cursor: pointer; padding: 4px 6px; font-size: 10px;">
-                                <span class="desktop-text"><i class="fa-solid fa-signature"></i> Firmar</span>
-                                <span class="mobile-text"><i class="fa-solid fa-signature"></i></span>
+                    <!-- Segunda fila: Contrato, Confirmación y Firma -->
+                    <div class="upload-row">
+                        <!-- Contrato compraventa -->
+                        <div class="upload-item">
+                            <label id="label-contrato-compraventa" for="upload-contrato-compraventa">
+                                <strong>📝 Contrato Compraventa</strong>
+                                <small>Documento de compraventa</small>
+                            </label>
+                            <div class="upload-wrapper">
+                                <input type="file" id="upload-contrato-compraventa" name="upload_contrato_compraventa[]" multiple required accept="image/*,.pdf">
+                                <div class="upload-button upload-button-responsive">
+                                    <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivo</span>
+                                    <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
+                                </div>
+                                <div class="file-count" data-input="upload-contrato-compraventa">Sin archivos</div>
                             </div>
-                            <div class="file-count" id="signature-status" style="font-size: 8px; margin: 1px 0;">Pendiente</div>
+                            <div class="files-preview" id="preview-upload-contrato-compraventa"></div>
                         </div>
-                        <div class="files-preview" id="signature-preview" style="display: none;">
-                            <div style="padding: 3px; background: #f0f9ff; border: 1px solid #3b82f6; border-radius: 3px; text-align: center;">
-                                <span style="font-size: 8px; color: #374151;">✅ Firmado</span>
+
+                        <!-- Confirmación documentos -->
+                        <div class="upload-item" style="display: flex; flex-direction: column; justify-content: center;">
+                            <div class="docs-confirmation-container" style="padding: 12px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                                <label class="custom-checkbox" style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                                    <input type="checkbox" name="documents_complete" id="documents-complete-check" required style="width: 20px; height: 20px;">
+                                    <span class="checkbox-text" style="flex: 1; font-size: 14px; color: #374151; line-height: 1.4; font-weight: 500;">
+                                        ✅ Confirmo que la documentación está completa y es correcta
+                                    </span>
+                                </label>
+                            </div>
+                            
+                            <!-- Modelo 620 - oculto por defecto -->
+                            <div id="itp-payment-proof-row" style="display: none; margin-top: 8px;">
+                                <div class="upload-item" style="background: #f0f9ff; border: 2px solid #3b82f6; border-radius: 8px; padding: 8px;">
+                                    <label for="upload-itp-comprobante">
+                                        <strong style="display: block; font-size: 12px; color: #1e40af; margin-bottom: 4px;">📄 Modelo 620 ITP</strong>
+                                    </label>
+                                    <div class="upload-wrapper">
+                                        <input type="file" id="upload-itp-comprobante" name="upload_itp_comprobante[]" multiple accept="image/*,.pdf">
+                                        <div class="upload-button upload-button-responsive" style="font-size: 11px;">
+                                            <span class="desktop-text"><i class="fa-solid fa-upload"></i> Archivo ITP</span>
+                                            <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
+                                        </div>
+                                        <div class="file-count" data-input="upload-itp-comprobante" style="font-size: 10px;">Sin archivos</div>
+                                    </div>
+                                    <div class="files-preview" id="preview-upload-itp-comprobante"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Campo de Firma -->
+                        <div class="upload-item" style="display: flex; flex-direction: column; justify-content: center;">
+                            <label for="document-signature">
+                                <strong>✍️ Firma Digital</strong>
+                                <small>Firmar documentación</small>
+                            </label>
+                            <div class="upload-wrapper">
+                                <div id="signature-field" class="upload-button upload-button-responsive" style="text-align: center; cursor: pointer;">
+                                    <span class="desktop-text"><i class="fa-solid fa-signature"></i> Firmar documentos</span>
+                                    <span class="mobile-text"><i class="fa-solid fa-signature"></i></span>
+                                </div>
+                                <div class="file-count" id="signature-status">Pendiente de firma</div>
+                            </div>
+                            <div class="files-preview" id="signature-preview" style="display: none;">
+                                <div style="padding: 8px; background: #f0f9ff; border: 2px solid #3b82f6; border-radius: 6px; text-align: center;">
+                                    <span style="font-size: 12px; color: #374151; font-weight: 500;">✅ Documentos firmados</span>
+                                </div>
                             </div>
                         </div>
                     </div>
