@@ -1,0 +1,1423 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Codevz strings\n"
+"POT-Creation-Date: 2024-09-23 21:48+0330\n"
+"PO-Revision-Date: 2018-02-12 17:51+0400\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.5\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-KeywordsList: _e;_n;esc_html_e;esc_attr_e;_n_noop;esc_html__;"
+"esc_attr__\n"
+"X-Poedit-SearchPath-0: .\n"
+
+#: classes/class-config.php:18
+msgid "XTRA"
+msgstr ""
+
+#: classes/class-config.php:103
+msgid "gadgets"
+msgstr ""
+
+#: classes/class-config.php:113
+msgid "supermarket"
+msgstr ""
+
+#: classes/class-config.php:123
+msgid "book-shop"
+msgstr ""
+
+#: classes/class-config.php:133
+msgid "portfolio"
+msgstr ""
+
+#: classes/class-config.php:143
+msgid "Photographer 2"
+msgstr ""
+
+#: classes/class-config.php:153
+msgid "agency-2"
+msgstr ""
+
+#: classes/class-config.php:163
+msgid "photography3"
+msgstr ""
+
+#: classes/class-config.php:173
+msgid "camping-adventures"
+msgstr ""
+
+#: classes/class-config.php:183
+msgid "logo-portfolio"
+msgstr ""
+
+#: classes/class-config.php:193
+msgid "metro-blog"
+msgstr ""
+
+#: classes/class-config.php:203
+msgid "game"
+msgstr ""
+
+#: classes/class-config.php:213
+msgid "cryptocurrency"
+msgstr ""
+
+#: classes/class-config.php:228
+msgid "Mechanic 2"
+msgstr ""
+
+#: classes/class-config.php:236
+msgid "SEO 3"
+msgstr ""
+
+#: classes/class-config.php:244
+msgid "Logistic 2"
+msgstr ""
+
+#: classes/class-config.php:252
+msgid "Home Renovation 2"
+msgstr ""
+
+#: classes/class-config.php:260
+msgid "SPA 2"
+msgstr ""
+
+#: classes/class-config.php:268
+msgid "Application 3"
+msgstr ""
+
+#: classes/class-config.php:276
+msgid "Fashion Shop 2"
+msgstr ""
+
+#: classes/class-config.php:284
+msgid "Gardening 2"
+msgstr ""
+
+#: classes/class-config.php:292
+msgid "Medical 2"
+msgstr ""
+
+#: classes/class-config.php:300
+msgid "Business 6"
+msgstr ""
+
+#: classes/class-config.php:308
+msgid "Dentist 2"
+msgstr ""
+
+#: classes/class-config.php:316
+msgid "Digital Marketing 2"
+msgstr ""
+
+#: classes/class-config.php:324
+msgid "Construction 3"
+msgstr ""
+
+#: classes/class-config.php:332
+msgid "Horse Club"
+msgstr ""
+
+#: classes/class-config.php:340
+msgid "Barber 2"
+msgstr ""
+
+#: classes/class-config.php:349
+msgid "Big Shop"
+msgstr ""
+
+#: classes/class-config.php:357
+msgid "Furniture Shop 2"
+msgstr ""
+
+#: classes/class-config.php:366
+msgid "app-2"
+msgstr ""
+
+#: classes/class-config.php:374
+msgid "pet-shop"
+msgstr ""
+
+#: classes/class-config.php:382
+msgid "event"
+msgstr ""
+
+#: classes/class-config.php:391
+msgid "car-rental"
+msgstr ""
+
+#: classes/class-config.php:399
+msgid "factory-2"
+msgstr ""
+
+#: classes/class-config.php:407
+msgid "beauty-salon-2"
+msgstr ""
+
+#: classes/class-config.php:415
+msgid "music-and-band"
+msgstr ""
+
+#: classes/class-config.php:423
+msgid "nail-salon"
+msgstr ""
+
+#: classes/class-config.php:431
+msgid "perfume-shop"
+msgstr ""
+
+#: classes/class-config.php:439
+msgid "watch-shop"
+msgstr ""
+
+#: classes/class-config.php:448
+msgid "flower-shop"
+msgstr ""
+
+#: classes/class-config.php:456
+msgid "magazine"
+msgstr ""
+
+#: classes/class-config.php:464
+msgid "architect-2"
+msgstr ""
+
+#: classes/class-config.php:472
+msgid "photographer"
+msgstr ""
+
+#: classes/class-config.php:480
+msgid "elderly-care"
+msgstr ""
+
+#: classes/class-config.php:488
+msgid "investment"
+msgstr ""
+
+#: classes/class-config.php:496
+msgid "dance"
+msgstr ""
+
+#: classes/class-config.php:504
+msgid "business-5"
+msgstr ""
+
+#: classes/class-config.php:512
+msgid "construction-2"
+msgstr ""
+
+#: classes/class-config.php:520
+msgid "advisor"
+msgstr ""
+
+#: classes/class-config.php:528
+msgid "seo-2"
+msgstr ""
+
+#: classes/class-config.php:537
+msgid "personal-blog-2"
+msgstr ""
+
+#: classes/class-config.php:545
+msgid "insurance"
+msgstr ""
+
+#: classes/class-config.php:553
+msgid "corporate-2"
+msgstr ""
+
+#: classes/class-config.php:561
+msgid "business-4"
+msgstr ""
+
+#: classes/class-config.php:569
+msgid "startup"
+msgstr ""
+
+#: classes/class-config.php:578
+msgid "medical"
+msgstr ""
+
+#: classes/class-config.php:586
+msgid "factory"
+msgstr ""
+
+#: classes/class-config.php:594
+msgid "furniture"
+msgstr ""
+
+#: classes/class-config.php:602
+msgid "carwash"
+msgstr ""
+
+#: classes/class-config.php:610
+msgid "rims"
+msgstr ""
+
+#: classes/class-config.php:618
+msgid "jewelry"
+msgstr ""
+
+#: classes/class-config.php:626
+msgid "church"
+msgstr ""
+
+#: classes/class-config.php:634
+msgid "yoga"
+msgstr ""
+
+#: classes/class-config.php:642
+msgid "moving"
+msgstr ""
+
+#: classes/class-config.php:650
+msgid "plumbing"
+msgstr ""
+
+#: classes/class-config.php:658
+msgid "travel"
+msgstr ""
+
+#: classes/class-config.php:666
+msgid "beauty-salon"
+msgstr ""
+
+#: classes/class-config.php:674
+msgid "home-renovation"
+msgstr ""
+
+#: classes/class-config.php:682
+msgid "creative-business"
+msgstr ""
+
+#: classes/class-config.php:690
+msgid "mechanic"
+msgstr ""
+
+#: classes/class-config.php:698
+msgid "lawyer"
+msgstr ""
+
+#: classes/class-config.php:706
+msgid "web-agency"
+msgstr ""
+
+#: classes/class-config.php:714
+msgid "gardening"
+msgstr ""
+
+#: classes/class-config.php:722
+msgid "corporate"
+msgstr ""
+
+#: classes/class-config.php:730
+msgid "business-3"
+msgstr ""
+
+#: classes/class-config.php:738
+msgid "digital-marketing"
+msgstr ""
+
+#: classes/class-config.php:746
+msgid "business-classic"
+msgstr ""
+
+#: classes/class-config.php:754
+msgid "charity"
+msgstr ""
+
+#: classes/class-config.php:762
+msgid "creative-studio"
+msgstr ""
+
+#: classes/class-config.php:770
+msgid "kids"
+msgstr ""
+
+#: classes/class-config.php:778
+msgid "smart-home"
+msgstr ""
+
+#: classes/class-config.php:786
+msgid "logistic"
+msgstr ""
+
+#: classes/class-config.php:794
+msgid "industrial"
+msgstr ""
+
+#: classes/class-config.php:802
+msgid "tattoo"
+msgstr ""
+
+#: classes/class-config.php:810
+msgid "personal-blog"
+msgstr ""
+
+#: classes/class-config.php:819
+msgid "cleaning"
+msgstr ""
+
+#: classes/class-config.php:827
+msgid "parallax"
+msgstr ""
+
+#: classes/class-config.php:835
+msgid "3d-portfolio"
+msgstr ""
+
+#: classes/class-config.php:843
+msgid "agency"
+msgstr ""
+
+#: classes/class-config.php:851
+msgid "spa"
+msgstr ""
+
+#: classes/class-config.php:859
+msgid "app"
+msgstr ""
+
+#: classes/class-config.php:867
+msgid "architect"
+msgstr ""
+
+#: classes/class-config.php:875
+msgid "barber"
+msgstr ""
+
+#: classes/class-config.php:883
+msgid "building"
+msgstr ""
+
+#: classes/class-config.php:891
+msgid "business"
+msgstr ""
+
+#: classes/class-config.php:899
+msgid "coffee"
+msgstr ""
+
+#: classes/class-config.php:907
+msgid "conference"
+msgstr ""
+
+#: classes/class-config.php:915
+msgid "business-2"
+msgstr ""
+
+#: classes/class-config.php:923
+msgid "construction"
+msgstr ""
+
+#: classes/class-config.php:931
+msgid "cryptocurrency-2"
+msgstr ""
+
+#: classes/class-config.php:939
+msgid "cv-resume"
+msgstr ""
+
+#: classes/class-config.php:948
+msgid "dentist"
+msgstr ""
+
+#: classes/class-config.php:956
+msgid "fashion-shop"
+msgstr ""
+
+#: classes/class-config.php:964
+msgid "fast-food"
+msgstr ""
+
+#: classes/class-config.php:972
+msgid "finance"
+msgstr ""
+
+#: classes/class-config.php:980
+msgid "gym"
+msgstr ""
+
+#: classes/class-config.php:988
+msgid "hosting"
+msgstr ""
+
+#: classes/class-config.php:996
+msgid "hotel"
+msgstr ""
+
+#: classes/class-config.php:1004
+msgid "interior"
+msgstr ""
+
+#: classes/class-config.php:1012
+msgid "lawyers"
+msgstr ""
+
+#: classes/class-config.php:1020
+msgid "music"
+msgstr ""
+
+#: classes/class-config.php:1028
+msgid "photography"
+msgstr ""
+
+#: classes/class-config.php:1036
+msgid "photography2"
+msgstr ""
+
+#: classes/class-config.php:1044
+msgid "plastic-surgery"
+msgstr ""
+
+#: classes/class-config.php:1052
+msgid "restaurant"
+msgstr ""
+
+#: classes/class-config.php:1060
+msgid "dubai-investment"
+msgstr ""
+
+#: classes/class-config.php:1068
+msgid "seo"
+msgstr ""
+
+#: classes/class-config.php:1076
+msgid "single-shop"
+msgstr ""
+
+#: classes/class-config.php:1084
+msgid "wedding"
+msgstr ""
+
+#: classes/class-config.php:1090
+msgid "winery"
+msgstr ""
+
+#: classes/class-config.php:1092
+msgid "winery demo"
+msgstr ""
+
+#: classes/class-strings.php:55
+msgid "Codevz Plus"
+msgstr ""
+
+#: classes/class-strings.php:56
+msgid "StyleKit, custom post types, options and page builder elements."
+msgstr ""
+
+#: classes/class-strings.php:57
+msgid "Home"
+msgstr ""
+
+#: classes/class-strings.php:58
+msgid "Primary"
+msgstr ""
+
+#: classes/class-strings.php:59
+msgid "Secondary"
+msgstr ""
+
+#: classes/class-strings.php:60 classes/class-strings.php:182
+msgid "Footer"
+msgstr ""
+
+#: classes/class-strings.php:61
+msgid "Offcanvas"
+msgstr ""
+
+#: classes/class-strings.php:62
+msgid "Shop primary"
+msgstr ""
+
+#: classes/class-strings.php:63
+msgid "Shop secondary"
+msgstr ""
+
+#: classes/class-strings.php:64
+msgid "Portfolio primary"
+msgstr ""
+
+#: classes/class-strings.php:65
+msgid "Portfolio secondary"
+msgstr ""
+
+#: classes/class-strings.php:66
+msgid "Add widgets here to appear in your"
+msgstr ""
+
+#: classes/class-strings.php:67
+msgid "GO PRO"
+msgstr ""
+
+#: classes/class-strings.php:68
+msgid "PRO"
+msgstr ""
+
+#: classes/class-strings.php:69 classes/class-strings.php:159
+msgid "FREE"
+msgstr ""
+
+#: classes/class-strings.php:70
+msgid "Activate your theme to access premium demos"
+msgstr ""
+
+#: classes/class-strings.php:71
+#, php-format
+msgid "Thank you for installing %s theme."
+msgstr ""
+
+#: classes/class-strings.php:72
+msgid ""
+"Install the theme plugin to access the demo importer, elements, and "
+"other features."
+msgstr ""
+
+#: classes/class-strings.php:73
+msgid "Install theme plugin"
+msgstr ""
+
+#: classes/class-strings.php:74
+msgid "Installing, It may take a minute"
+msgstr ""
+
+#: classes/class-strings.php:75
+msgid "Not active"
+msgstr ""
+
+#: classes/class-strings.php:76 classes/class-strings.php:101
+msgid "Activated"
+msgstr ""
+
+#: classes/class-strings.php:77
+msgid "Author posts"
+msgstr ""
+
+#: classes/class-strings.php:78
+msgid "View all posts"
+msgstr ""
+
+#: classes/class-strings.php:79
+msgid "Nothing Found"
+msgstr ""
+
+#: classes/class-strings.php:80
+msgid "Search"
+msgstr ""
+
+#: classes/class-strings.php:81
+msgid "No comment"
+msgstr ""
+
+#: classes/class-strings.php:82
+msgid "Comment"
+msgstr ""
+
+#: classes/class-strings.php:83
+msgid "Comments"
+msgstr ""
+
+#: classes/class-strings.php:84
+msgid "Activation"
+msgstr ""
+
+#: classes/class-strings.php:85
+msgid "Demo Importer"
+msgstr ""
+
+#: classes/class-strings.php:86
+msgid "Page Importer"
+msgstr ""
+
+#: classes/class-strings.php:87 classes/class-strings.php:143
+msgid "Install Plugins"
+msgstr ""
+
+#: classes/class-strings.php:88
+msgid "Theme Options"
+msgstr ""
+
+#: classes/class-strings.php:89 classes/class-strings.php:211
+msgid "System Status"
+msgstr ""
+
+#: classes/class-strings.php:90
+msgid "Uninstall Demo"
+msgstr ""
+
+#: classes/class-strings.php:91
+msgid "Report a bug"
+msgstr ""
+
+#: classes/class-strings.php:92
+msgid "Elementor Page Builder"
+msgstr ""
+
+#: classes/class-strings.php:93
+msgid "WPBakery Page Builder"
+msgstr ""
+
+#: classes/class-strings.php:94 classes/class-strings.php:108
+msgid "Revolution Slider"
+msgstr ""
+
+#: classes/class-strings.php:95
+msgid "Woocommerce"
+msgstr ""
+
+#: classes/class-strings.php:96
+msgid "Contact Form 7"
+msgstr ""
+
+#: classes/class-strings.php:97
+msgid "LiteSpeed Cache"
+msgstr ""
+
+#: classes/class-strings.php:98
+msgid "of"
+msgstr ""
+
+#: classes/class-strings.php:99
+msgid "Close"
+msgstr ""
+
+#: classes/class-strings.php:100
+msgid "Installing"
+msgstr ""
+
+#: classes/class-strings.php:102
+msgid "Importing"
+msgstr ""
+
+#: classes/class-strings.php:103
+msgid "Imported"
+msgstr ""
+
+#: classes/class-strings.php:104
+msgid "Downloading"
+msgstr ""
+
+#: classes/class-strings.php:105
+msgid "Demo Files"
+msgstr ""
+
+#: classes/class-strings.php:106
+msgid "Downloaded"
+msgstr ""
+
+#: classes/class-strings.php:107
+msgid "Widgets"
+msgstr ""
+
+#: classes/class-strings.php:109
+msgid "Pages & Posts"
+msgstr ""
+
+#: classes/class-strings.php:110
+msgid "Images"
+msgstr ""
+
+#: classes/class-strings.php:111
+msgid ""
+"PHP error 500, Internal server error, Please check your server error "
+"log file or contact with support."
+msgstr ""
+
+#: classes/class-strings.php:112
+msgid ""
+"PHP error 503, Internal server error, Please try again with same "
+"import demo."
+msgstr ""
+
+#: classes/class-strings.php:113
+msgid ""
+"An error has occured, Please deactivate all plugins except theme "
+"plugins and try again, If still have same issue, Please submit ticket "
+"to theme author."
+msgstr ""
+
+#: classes/class-strings.php:114
+msgid "Choose at least one feature to import."
+msgstr ""
+
+#: classes/class-strings.php:115
+msgid "Message box is empty, Please fill the box then submit."
+msgstr ""
+
+#: classes/class-strings.php:116
+msgid "URL input is empty, Please fill the input then submit."
+msgstr ""
+
+#: classes/class-strings.php:117
+#, php-format
+msgid "Welcome to %s WordPress Theme"
+msgstr ""
+
+#: classes/class-strings.php:118
+msgid "Current version:"
+msgstr ""
+
+#: classes/class-strings.php:119
+msgid "Documentation"
+msgstr ""
+
+#: classes/class-strings.php:120
+msgid "Video Tutorials"
+msgstr ""
+
+#: classes/class-strings.php:121
+msgid "Change Log"
+msgstr ""
+
+#: classes/class-strings.php:122
+msgid "Support"
+msgstr ""
+
+#: classes/class-strings.php:123
+msgid "F.A.Q"
+msgstr ""
+
+#: classes/class-strings.php:124
+msgid "Activation Certificate"
+msgstr ""
+
+#: classes/class-strings.php:125
+msgid "Deregister License"
+msgstr ""
+
+#: classes/class-strings.php:126
+msgid "Your Purchase Code"
+msgstr ""
+
+#: classes/class-strings.php:127
+msgid "Purchase date:"
+msgstr ""
+
+#: classes/class-strings.php:128
+msgid "Support until:"
+msgstr ""
+
+#: classes/class-strings.php:129
+msgid ""
+"Your support has been expired, Click on below link and extend your "
+"support."
+msgstr ""
+
+#: classes/class-strings.php:130
+msgid "Buy extended support or new license"
+msgstr ""
+
+#: classes/class-strings.php:131
+msgid "License Activation"
+msgstr ""
+
+#: classes/class-strings.php:132
+msgid ""
+"The license code for this website has been deregistered successfully."
+msgstr ""
+
+#: classes/class-strings.php:133
+msgid "Congratulation"
+msgstr ""
+
+#: classes/class-strings.php:134
+msgid "Your theme has been successfully activated."
+msgstr ""
+
+#: classes/class-strings.php:135
+msgid "Please enter a valid license code."
+msgstr ""
+
+#: classes/class-strings.php:136 classes/class-strings.php:204
+msgid ""
+"Please activate your theme via purchase code to access theme "
+"features, updates and demo importer."
+msgstr ""
+
+#: classes/class-strings.php:137
+msgid "This demo is free to import and use."
+msgstr ""
+
+#: classes/class-strings.php:138
+msgid "Please enter the purchase code ..."
+msgstr ""
+
+#: classes/class-strings.php:139
+msgid "Activate"
+msgstr ""
+
+#: classes/class-strings.php:140
+msgid "How to find purchase code?"
+msgstr ""
+
+#: classes/class-strings.php:141
+msgid "Buy XTRA theme"
+msgstr ""
+
+#: classes/class-strings.php:142
+msgid "Buy new license"
+msgstr ""
+
+#: classes/class-strings.php:144
+msgid "Required"
+msgstr ""
+
+#: classes/class-strings.php:145
+msgid "Recommended"
+msgstr ""
+
+#: classes/class-strings.php:146
+msgid "Private repository"
+msgstr ""
+
+#: classes/class-strings.php:147
+msgid "Premium"
+msgstr ""
+
+#: classes/class-strings.php:148
+msgid "WordPress repository"
+msgstr ""
+
+#: classes/class-strings.php:149
+msgid "Free version"
+msgstr ""
+
+#: classes/class-strings.php:150
+msgid "Activated successfully"
+msgstr ""
+
+#: classes/class-strings.php:151
+msgid "Theme activated successfully"
+msgstr ""
+
+#: classes/class-strings.php:152
+msgid "Install & Activate"
+msgstr ""
+
+#: classes/class-strings.php:153
+msgid "Installed & Activated"
+msgstr ""
+
+#: classes/class-strings.php:154
+msgid "Please wait"
+msgstr ""
+
+#: classes/class-strings.php:155
+msgid ""
+"All plugins have been installed, and there are no additional plugins "
+"to install."
+msgstr ""
+
+#: classes/class-strings.php:156
+msgid "All"
+msgstr ""
+
+#: classes/class-strings.php:157
+msgid "Starter"
+msgstr ""
+
+#: classes/class-strings.php:158
+msgid "Search demo name ..."
+msgstr ""
+
+#: classes/class-strings.php:160
+msgid "Import"
+msgstr ""
+
+#: classes/class-strings.php:161
+msgid "Uninstall"
+msgstr ""
+
+#: classes/class-strings.php:162
+msgid "Preview"
+msgstr ""
+
+#: classes/class-strings.php:163
+msgid "Back to demos"
+msgstr ""
+
+#: classes/class-strings.php:164
+msgid "Welcome to"
+msgstr ""
+
+#: classes/class-strings.php:165
+msgid "Selected demo:"
+msgstr ""
+
+#: classes/class-strings.php:166
+msgid "Exclusive"
+msgstr ""
+
+#: classes/class-strings.php:167
+msgid "Demo Importer Wizard"
+msgstr ""
+
+#: classes/class-strings.php:168
+msgid "Live preview:"
+msgstr ""
+
+#: classes/class-strings.php:169
+msgid "Elementor"
+msgstr ""
+
+#: classes/class-strings.php:170
+msgid "WPBakery"
+msgstr ""
+
+#: classes/class-strings.php:171
+msgid "Choose page builder:"
+msgstr ""
+
+#: classes/class-strings.php:172
+msgid "Choose Builder"
+msgstr ""
+
+#: classes/class-strings.php:173
+msgid ""
+"To access this feature, please activate your theme with the license "
+"code."
+msgstr ""
+
+#: classes/class-strings.php:174
+msgid ""
+"By checking this field, wizard will import Arabic version of current "
+"demo that you have selected."
+msgstr ""
+
+#: classes/class-strings.php:175
+msgid ""
+"By checking this field, wizard will import English version of current "
+"demo that you have selected."
+msgstr ""
+
+#: classes/class-strings.php:176
+msgid "RTL version?"
+msgstr ""
+
+#: classes/class-strings.php:177
+msgid "Full Import"
+msgstr ""
+
+#: classes/class-strings.php:178
+msgid "Custom Import"
+msgstr ""
+
+#: classes/class-strings.php:179
+msgid "Part of theme options"
+msgstr ""
+
+#: classes/class-strings.php:180
+msgid "General"
+msgstr ""
+
+#: classes/class-strings.php:181
+msgid "Header"
+msgstr ""
+
+#: classes/class-strings.php:183 classes/class-strings.php:273
+msgid "Blog"
+msgstr ""
+
+#: classes/class-strings.php:184
+msgid "Portfolio"
+msgstr ""
+
+#: classes/class-strings.php:185
+msgid "WooCommerce"
+msgstr ""
+
+#: classes/class-strings.php:186
+msgid "Images & Media"
+msgstr ""
+
+#: classes/class-strings.php:187
+msgid "Your website has been imported successfully."
+msgstr ""
+
+#: classes/class-strings.php:188
+msgid "View your website"
+msgstr ""
+
+#: classes/class-strings.php:189
+msgid "Customize webiste"
+msgstr ""
+
+#: classes/class-strings.php:190
+msgid "Error!"
+msgstr ""
+
+#: classes/class-strings.php:191
+msgid "An error has occured, Please try again."
+msgstr ""
+
+#: classes/class-strings.php:192
+msgid "Troubleshooting"
+msgstr ""
+
+#: classes/class-strings.php:193
+msgid "Prev Step"
+msgstr ""
+
+#: classes/class-strings.php:194
+msgid "Getting Started"
+msgstr ""
+
+#: classes/class-strings.php:195
+msgid "Configuration"
+msgstr ""
+
+#: classes/class-strings.php:196
+msgid "Please wait, Importing"
+msgstr ""
+
+#: classes/class-strings.php:197
+msgid "Ready to go!"
+msgstr ""
+
+#: classes/class-strings.php:198
+msgid "Next Step"
+msgstr ""
+
+#: classes/class-strings.php:199
+msgid "Single Page Importer"
+msgstr ""
+
+#: classes/class-strings.php:200
+#, php-format
+msgid ""
+"Page importer feature is available only when you %s activate your "
+"theme with a valid license code."
+msgstr ""
+
+#: classes/class-strings.php:201
+msgid ""
+"The demo page you want to import may have a second color, To avoid "
+"the color problem, set a second color for your site from Theme "
+"Options > General > Colors"
+msgstr ""
+
+#: classes/class-strings.php:202
+msgid ""
+"Insert a demo page URL and click on import button then wait for the "
+"process to complete."
+msgstr ""
+
+#: classes/class-strings.php:203
+msgid "Insert the demo link ..."
+msgstr ""
+
+#: classes/class-strings.php:205
+msgid "Please enter a valid URL"
+msgstr ""
+
+#: classes/class-strings.php:206
+msgid "Enable allow_url_fopen on your server then you can import page."
+msgstr ""
+
+#: classes/class-strings.php:207
+msgid "Page imported successfully."
+msgstr ""
+
+#: classes/class-strings.php:208
+msgid "Error, Please try again ..."
+msgstr ""
+
+#: classes/class-strings.php:209
+msgid "The server isn't responding. Please ensure your link is valid"
+msgstr ""
+
+#: classes/class-strings.php:210
+msgid "Something went wrong, Please try again ..."
+msgstr ""
+
+#: classes/class-strings.php:212
+msgid "Good"
+msgstr ""
+
+#: classes/class-strings.php:213
+msgid "Theme is not activated"
+msgstr ""
+
+#: classes/class-strings.php:214
+msgid "Server PHP Version"
+msgstr ""
+
+#: classes/class-strings.php:215
+msgid "PHP 8.0 or above recommended"
+msgstr ""
+
+#: classes/class-strings.php:216
+msgid "Server PHP Memory Limit"
+msgstr ""
+
+#: classes/class-strings.php:217
+msgid "128M recommended"
+msgstr ""
+
+#: classes/class-strings.php:218
+msgid "8 recommended"
+msgstr ""
+
+#: classes/class-strings.php:219
+msgid "30 recommended"
+msgstr ""
+
+#: classes/class-strings.php:220
+msgid "Your server has less than 1GB of disk free space"
+msgstr ""
+
+#: classes/class-strings.php:221
+msgid "Server PHP Post Max Size"
+msgstr ""
+
+#: classes/class-strings.php:222
+msgid "Server PHP Max Execution Time"
+msgstr ""
+
+#: classes/class-strings.php:223
+msgid "Server PHP"
+msgstr ""
+
+#: classes/class-strings.php:224
+msgid "PHP cURL is required"
+msgstr ""
+
+#: classes/class-strings.php:225
+msgid "PHP allow_url_fopen is required"
+msgstr ""
+
+#: classes/class-strings.php:226
+msgid "Active"
+msgstr ""
+
+#: classes/class-strings.php:227
+msgid "Contact with your server support."
+msgstr ""
+
+#: classes/class-strings.php:228
+#, php-format
+msgid ""
+"Please help us improve the \"%s\" theme, we have added a feedback "
+"form, you can send us your comments and criticisms."
+msgstr ""
+
+#: classes/class-strings.php:229
+#, php-format
+msgid ""
+"Thanks for purchasing the \"%s\" theme; to improve the theme, through "
+"the following form, you can send your feedback such as report a bug, "
+"request a feature, request a demo, ask non-support questions, etc."
+msgstr ""
+
+#: classes/class-strings.php:230
+msgid "Submit"
+msgstr ""
+
+#: classes/class-strings.php:231
+msgid "Your message has been sent successfully."
+msgstr ""
+
+#: classes/class-strings.php:232
+msgid "Could not send your message, Please try again."
+msgstr ""
+
+#: classes/class-strings.php:233
+msgid "There is no message to send, Please try again."
+msgstr ""
+
+#: classes/class-strings.php:234
+msgid "Uninstall Demo(s)"
+msgstr ""
+
+#: classes/class-strings.php:235
+msgid ""
+"In this list you can see imported demos on your site previously, You "
+"can uninstall any demo data."
+msgstr ""
+
+#: classes/class-strings.php:236
+msgid "There is no demo to uninstall"
+msgstr ""
+
+#: classes/class-strings.php:237
+msgid "Are you sure for this?"
+msgstr ""
+
+#: classes/class-strings.php:238
+msgid ""
+"This will be deleted all your website data such as posts, pages, "
+"attachments, theme options, sliders, etc. and there is no undo button "
+"for this action."
+msgstr ""
+
+#: classes/class-strings.php:239
+msgid "No, never mind"
+msgstr ""
+
+#: classes/class-strings.php:240
+msgid "Uninstalling, Please wait"
+msgstr ""
+
+#: classes/class-strings.php:241
+msgid "Yes please"
+msgstr ""
+
+#: classes/class-strings.php:242
+msgid "Reload page"
+msgstr ""
+
+#: classes/class-strings.php:243
+msgid "The requested AJAX name is empty. Please try again."
+msgstr ""
+
+#: classes/class-strings.php:244
+#, php-format
+msgid ""
+"Could not find plugin \"%s\" API, Please refresh page and try again."
+msgstr ""
+
+#: classes/class-strings.php:245
+msgid "Codevz plus plugin is not installed or activated."
+msgstr ""
+
+#: classes/class-strings.php:246
+#, php-format
+msgid "Plugin \"%s\" is no listed as a valid plugin."
+msgstr ""
+
+#: classes/class-strings.php:247
+#, php-format
+msgid ""
+"Could not download \"%s\" plugin ZIP file, Please go to Appearance > "
+"Install Plugins and install it manually, and try again demo importer."
+msgstr ""
+
+#: classes/class-strings.php:248
+#, php-format
+msgid ""
+"Error, Through FTP delete plugins > \"%s\" folder & increase PHP "
+"max_execution_time to 300 then try again."
+msgstr ""
+
+#: classes/class-strings.php:249
+msgid "Plugin activation error, "
+msgstr ""
+
+#: classes/class-strings.php:250
+#, php-format
+msgid "Plugin \"%s\" installed and activated successfully."
+msgstr ""
+
+#: classes/class-strings.php:251
+#, php-format
+msgid "Demo \"%s\" uninstalled successfully."
+msgstr ""
+
+#: classes/class-strings.php:252
+msgid ""
+"Sorry, but nothing matched your search terms. Please try again with "
+"some different keywords."
+msgstr ""
+
+#: classes/class-strings.php:253
+#, php-format
+msgid ""
+"Please install and activate Slider Revolution Plugin from Dashboard > "
+"%s > Install Plugins"
+msgstr ""
+
+#: classes/class-strings.php:254
+msgid ""
+"Please edit your page in the backend and from Page settings > Header "
+"settings, Select slider name"
+msgstr ""
+
+#: classes/class-strings.php:255
+msgid ""
+"This area is placeholder for Slider, you can customize the slider on "
+"Dashboard > Slider Revolution"
+msgstr ""
+
+#: classes/class-strings.php:256
+msgid "Source"
+msgstr ""
+
+#: classes/class-strings.php:257
+msgid "Posted by"
+msgstr ""
+
+#: classes/class-strings.php:258
+msgid "Published on"
+msgstr ""
+
+#: classes/class-strings.php:259
+msgid "Category(s)"
+msgstr ""
+
+#: classes/class-strings.php:260
+msgid "Tags"
+msgstr ""
+
+#: classes/class-strings.php:261
+msgid "Views"
+msgstr ""
+
+#: classes/class-strings.php:262
+msgid "Back to shop"
+msgstr ""
+
+#: classes/class-strings.php:263
+msgid "Add to wishlist"
+msgstr ""
+
+#: classes/class-strings.php:264
+msgid "Add to compare"
+msgstr ""
+
+#: classes/class-strings.php:265
+msgid "Browse wishlist"
+msgstr ""
+
+#: classes/class-strings.php:266
+msgid "Compare products"
+msgstr ""
+
+#: classes/class-strings.php:267
+msgid "View wishlist page"
+msgstr ""
+
+#: classes/class-strings.php:268
+msgid "View compare page"
+msgstr ""
+
+#: classes/class-strings.php:269
+msgid "Enlarge the image"
+msgstr ""
+
+#: classes/class-strings.php:270
+msgid "Select options"
+msgstr ""
+
+#: classes/class-strings.php:271
+msgid "Sevices"
+msgstr ""
+
+#: classes/class-strings.php:272
+msgid "Shop"
+msgstr ""
+
+#: classes/class-strings.php:274
+msgid "Select category"
+msgstr ""
+
+#: classes/class-strings.php:275
+msgid "All categories"
+msgstr ""
