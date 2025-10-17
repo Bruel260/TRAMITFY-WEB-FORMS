@@ -1853,11 +1853,21 @@ function transferencia_barco_shortcode() {
             z-index: 10 !important;
         }
 
-        /* Botones CASI TOCANDO el checkbox en página documentos - PRIORITARIO */
+        /* Botones con espacio normal en página documentos - CORREGIDO */
         #page-documentos #documentos-buttons-container .button-container {
-            margin-top: 2px !important;
-            padding-top: 0px !important;
-            border-top: none !important;
+            margin-top: 24px !important;
+            padding-top: 16px !important;
+            border-top: 1px solid #e5e7eb !important;
+        }
+
+        /* Asegurar tamaño correcto de botones en todas las páginas */
+        .button-container .button {
+            padding: 14px 32px !important;
+            font-size: 15px !important;
+            font-weight: 600 !important;
+            border-radius: 8px !important;
+            min-width: 140px !important;
+            min-height: 48px !important;
         }
         
         .upload-wrapper {
