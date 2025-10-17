@@ -3632,7 +3632,7 @@ function transferencia_barco_shortcode() {
             background: white;
             border-radius: 16px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-            min-height: 600px;
+            /* min-height eliminado - ajustar al contenido real */
         }
 
         /* Panel Lateral Izquierdo */
@@ -3645,7 +3645,7 @@ function transferencia_barco_shortcode() {
             box-shadow: none;
             border: none;
             backdrop-filter: none;
-            min-height: 100%;
+            /* min-height eliminado - ajustar al contenido */
             overflow-y: auto;
             overflow-x: hidden;
             color: #ffffff;
@@ -6109,7 +6109,7 @@ function transferencia_barco_shortcode() {
         /* Fix para Safari iOS */
         @supports (-webkit-touch-callout: none) {
             .tramitfy-main-form {
-                min-height: -webkit-fill-available !important;
+                /* min-height eliminado para evitar franja blanca */
             }
 
             input,
