@@ -8321,7 +8321,7 @@ function transferencia_barco_shortcode() {
         function updateTotal() {
             // Calculamos la parte base "Gestión" + extras marcados
             // Usar el precio correcto según si gestionamos el ITP
-            let transferFee = BASE_TRANSFER_PRICE_SIN_ITP; // Precio unificado 134.99€
+            let transferFee = gestionamosITP ? BASE_TRANSFER_PRICE_CON_ITP : BASE_TRANSFER_PRICE_SIN_ITP;
             let additionalServicesTotal = 0;
             let selectedServiceLabels = [];
             
@@ -8443,7 +8443,9 @@ function transferencia_barco_shortcode() {
 
             // Cálculo final
             const totalGestion = baseTasas + discountedHonorarios + newIva + finalExtraFee;
-            const total = itp + totalGestion;
+            
+            // SI gestionamosITP=true, incluir ITP; si no, solo gestión (134.99€)
+            const total = gestionamosITP ? (itp + totalGestion) : totalGestion;
 
             finalAmount = total;
 
@@ -11116,7 +11118,7 @@ function transferencia_barco_shortcode() {
                         purchase_price: parseFloat(document.getElementById('purchase_price')?.value) || 0,
                         region: document.getElementById('region')?.value || '',
 
-                        // Precios y honorarios
+                        // Precios y honorarios  
                         basePrice: gestionamosITP ? BASE_TRANSFER_PRICE_CON_ITP : BASE_TRANSFER_PRICE_SIN_ITP,
                         finalAmount: finalAmountParaEmail, // AJUSTADO para pago fraccionado
                         totalAmount: totalAmountParaEmail, // AJUSTADO para pago fraccionado
@@ -12218,7 +12220,7 @@ function transferencia_barco_shortcode() {
             if (itpGestionSeleccionada === 'gestionan-ustedes') {
                 // Mostrar métodos de pago
                 gestionamosITP = true;
-                basePrice = BASE_TRANSFER_PRICE_SIN_ITP; // 134.99€ (precio unificado)
+                basePrice = BASE_TRANSFER_PRICE_CON_ITP; // 134.99€ (precio unificado)
                 document.getElementById('metodos-pago-itp').style.display = 'block';
                 document.getElementById('btn-container-yo-pago').style.display = 'none';
                 document.getElementById('itp-pago-resumen').style.display = 'none';
@@ -12717,7 +12719,7 @@ function transferencia_barco_shortcode() {
                     <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 6px;">Honorarios</div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-size: 13px; color: white;">Gestión DGMM</span>
-                        <strong style="font-size: 15px; color: white;">${BASE_TRANSFER_PRICE_SIN_ITP.toFixed(2)} €</strong>
+                        <strong style="font-size: 15px; color: white;">${(gestionamosITP ? BASE_TRANSFER_PRICE_CON_ITP : BASE_TRANSFER_PRICE_SIN_ITP).toFixed(2)} €</strong>
                     </div>
                 </div>
             `;
@@ -12739,10 +12741,9 @@ function transferencia_barco_shortcode() {
             }
 
             // 6. TOTAL - SOLO MOSTRAR SI YA SE SELECCIONÓ ITP
-            let totalFinal = BASE_TRANSFER_PRICE_SIN_ITP; // Precio unificado
-            if (itpPagado === false && itpGestionSeleccionada === 'gestionan-ustedes') {
-                totalFinal += itpTotalAmount;
-            }
+            let totalFinal = gestionamosITP ? BASE_TRANSFER_PRICE_CON_ITP : BASE_TRANSFER_PRICE_SIN_ITP;
+            // SI gestionamosITP=true, usar precio base 134.99€ + ITP calculado
+            // NO sumar itpTotalAmount porque causaría duplicación
             if (cambioListaSeleccionado) {
                 totalFinal += PRECIO_CAMBIO_LISTA;
             }
@@ -12802,13 +12803,13 @@ function transferencia_barco_shortcode() {
                     <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 6px;">Honorarios</div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-size: 13px; color: white;">Gestión DGMM</span>
-                        <strong style="font-size: 15px; color: white;">${BASE_TRANSFER_PRICE_SIN_ITP.toFixed(2)} €</strong>
+                        <strong style="font-size: 15px; color: white;">${(gestionamosITP ? BASE_TRANSFER_PRICE_CON_ITP : BASE_TRANSFER_PRICE_SIN_ITP).toFixed(2)} €</strong>
                     </div>
                 </div>
             `;
             
             // MOSTRAR TOTAL BÁSICO
-            let totalBasico = BASE_TRANSFER_PRICE_SIN_ITP;
+            let totalBasico = gestionamosITP ? BASE_TRANSFER_PRICE_CON_ITP : BASE_TRANSFER_PRICE_SIN_ITP;
             if (cambioListaSeleccionado) {
                 totalBasico += PRECIO_CAMBIO_LISTA;
             }
@@ -12962,7 +12963,7 @@ function transferencia_barco_shortcode() {
     function actualizarPrecioFinal() {
         logDebug('PRECIO-FINAL', '💰 Calculando precio final y desglose completo');
 
-        const precioBase = BASE_TRANSFER_PRICE_SIN_ITP; // Precio unificado
+        const precioBase = gestionamosITP ? BASE_TRANSFER_PRICE_CON_ITP : BASE_TRANSFER_PRICE_SIN_ITP;
         let total = precioBase;
         let subtotal = precioBase;
 
@@ -12985,7 +12986,7 @@ function transferencia_barco_shortcode() {
             if (desgloseItp) {
                 desgloseItp.textContent = itpBase.toFixed(2) + ' €';
             }
-            total += itpBase;
+            // NO sumar itpBase porque se calcula por separado en sidebar
 
             // Mostrar comisión si paga con tarjeta
             if (itpMetodoPago === 'tarjeta') {
@@ -12996,7 +12997,7 @@ function transferencia_barco_shortcode() {
                 if (desgloseComisionContainer) {
                     desgloseComisionContainer.style.display = 'block';
                 }
-                total += comision;
+                // NO sumar comisión porque se calcula por separado en sidebar
                 if (itpDesgloseDescripcion) {
                     itpDesgloseDescripcion.textContent = 'Pagado con tarjeta (+1,5% comisión)';
                 }
@@ -13613,15 +13614,19 @@ function transferencia_barco_shortcode() {
                     }
                 }
                 
-                const precioBase = BASE_TRANSFER_PRICE_SIN_ITP; // Precio unificado
-                const itpIncluido = (itpPagado === false && itpGestionSeleccionada === 'gestionan-ustedes') ? itpTotalAmount : 0;
-                const totalEstimado = precioBase + itpIncluido;
+                const precioBase = 134.99; // SIEMPRE 134.99€ como servicio base
+                // Usar itpBaseAmount (currentTransferTax) si está disponible, sino usar itpTotalAmount
+                const itpAmount = (itpPagado === false && itpGestionSeleccionada === 'gestionan-ustedes') ? 
+                    (itpTotalAmount || itpBaseAmount || currentTransferTax || 0) : 
+                    // Si hay currentTransferTax calculado pero no han seleccionado gestión, mostrar como pendiente
+                    (itpPagado === false && currentTransferTax > 0) ? currentTransferTax : 0;
+                const totalEstimado = precioBase + itpAmount;
                 
                 // Calcular pago inmediato vs transferencia bancaria
                 const esPagoITPTransferencia = (gestionamosITP && itpMetodoPago === 'transferencia');
                 
                 // LÓGICA CORREGIDA:
-                // - Si ITP por TRANSFERENCIA: pago inmediato = 174.99€ (solo tasas DGMM), ITP por transferencia después
+                // - Si ITP por TRANSFERENCIA: pago inmediato = 134.99€ (solo tasas DGMM), ITP por transferencia después
                 // - Si ITP por TARJETA: pago inmediato = totalEstimado (tasas DGMM + ITP), no hay transferencia
                 // - Si NO ITP: pago inmediato = totalEstimado (solo tasas DGMM)
                 const pagoInmediato = esPagoITPTransferencia ? 134.99 : totalEstimado;
@@ -13630,6 +13635,17 @@ function transferencia_barco_shortcode() {
                 // Construir información detallada según el caso
                 let detallesPago = '';
                 let informacionAdicional = '';
+                
+                // DEBUG: Diagnóstico de variables ITP
+                console.log('🔍 SIDEBAR DEBUG:');
+                console.log('  gestionamosITP:', gestionamosITP);
+                console.log('  itpMetodoPago:', itpMetodoPago);
+                console.log('  esPagoITPTransferencia:', esPagoITPTransferencia);
+                console.log('  itpAmount:', itpAmount);
+                console.log('  itpTotalAmount:', itpTotalAmount);
+                console.log('  itpBaseAmount:', itpBaseAmount);
+                console.log('  currentTransferTax:', currentTransferTax);
+                console.log('  totalEstimado:', totalEstimado);
                 
                 if (esPagoITPTransferencia) {
                     // Caso: ITP por transferencia bancaria - pago fraccionado
@@ -13689,12 +13705,23 @@ function transferencia_barco_shortcode() {
                             Tramitación completa
                         </div>
                     `;
-                } else if (gestionamosITP) {
-                    // Caso: ITP sin método especificado (fallback)
+                } else if (itpAmount > 0) {
+                    // Caso: ITP calculado - MOSTRAR DESGLOSE COMPLETO (independiente de gestión seleccionada)
+                    console.log('🔍 DEBUG: ITP calculado - itpAmount:', itpAmount, 'gestionamosITP:', gestionamosITP, 'itpMetodoPago:', itpMetodoPago);
+                    const baseAmount = 134.99;
                     detallesPago = `
                         <div style="background: rgba(255,255,255,0.08); padding: 10px; border-radius: 6px; margin-bottom: 8px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                                <span style="font-weight: 600; color: white; font-size: 13px;">TOTAL:</span>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Tramitación DGMM:</span>
+                                <span style="color: white; font-size: 13px;">${baseAmount.toFixed(2)} €</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span style="color: rgba(255,255,255,0.9); font-size: 12px;">ITP a gestionar:</span>
+                                <span style="color: white; font-size: 13px;">${itpAmount.toFixed(2)} €</span>
+                            </div>
+                            <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.2); margin: 8px 0;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="font-weight: 600; color: white; font-size: 14px;">TOTAL:</span>
                                 <strong style="font-size: 16px; color: white;">${totalEstimado.toFixed(2)} €</strong>
                             </div>
                             <div style="font-size: 11px; color: rgba(255,255,255,0.7);">
@@ -13702,11 +13729,17 @@ function transferencia_barco_shortcode() {
                             </div>
                         </div>
                     `;
-                    informacionAdicional = `
+                    informacionAdicional = gestionamosITP ? `
                         <div style="font-size: 11px; color: rgba(255,255,255,0.8); line-height: 1.4; margin-top: 8px;">
                             <strong>ITP incluido:</strong><br>
                             Nos encargamos de todo el proceso<br>
                             Tramitación completa
+                        </div>
+                    ` : `
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.8); line-height: 1.4; margin-top: 8px;">
+                            <strong>ITP estimado:</strong><br>
+                            Pendiente de confirmar gestión<br>
+                            Seleccionar en paso anterior
                         </div>
                     `;
                 } else {
