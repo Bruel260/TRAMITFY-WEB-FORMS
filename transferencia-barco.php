@@ -7485,12 +7485,16 @@ function transferencia_barco_shortcode() {
                 const pageId = formPages[currentPage].id;
                 
                 if (pageId === 'page-vehiculo') {
+                    // RESTAURAR visibilidad si venimos de página documentos
+                    buttonContainer.style.display = 'flex';
                     const vehiculoContainer = document.getElementById('vehiculo-buttons-container');
                     if (vehiculoContainer) {
                         vehiculoContainer.appendChild(buttonContainer);
                         console.log('✅ Botones movidos a página vehículo');
                     }
                 } else if (pageId === 'page-datos') {
+                    // RESTAURAR visibilidad si venimos de página documentos
+                    buttonContainer.style.display = 'flex';
                     const datosContainer = document.getElementById('datos-buttons-container');
                     if (datosContainer) {
                         datosContainer.appendChild(buttonContainer);
@@ -7538,6 +7542,8 @@ function transferencia_barco_shortcode() {
                         console.log('✅ Botones clonados creados para página documentos');
                     }
                 } else if (pageId === 'page-pago') {
+                    // RESTAURAR visibilidad si venimos de página documentos
+                    buttonContainer.style.display = 'flex';
                     const pagoContainer = document.getElementById('pago-buttons-container');
                     if (pagoContainer) {
                         pagoContainer.appendChild(buttonContainer);
