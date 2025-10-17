@@ -130,6 +130,54 @@ function transferencia_barco_shortcode() {
 
     <!-- Estilos personalizados para el formulario -->
     <style>
+        /* RESET GLOBAL PARA ELIMINAR ESPACIOS EN BLANCO */
+        * {
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+        }
+        
+        /* PREVENIR QUE EL BODY CREE ESPACIO CUANDO CAMBIA OVERFLOW */
+        body {
+            min-height: 100vh !important;
+            position: relative !important;
+        }
+        
+        body[style*="overflow: hidden"] {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* ANULAR TODOS LOS ESTILOS DE WORDPRESS QUE PUEDAN CREAR ESPACIO */
+        .entry-content,
+        .post-content,
+        .page-content,
+        .single-content,
+        .elementor-widget-container,
+        .elementor-widget-shortcode,
+        .vc_custom,
+        .wpb_wrapper,
+        article,
+        main,
+        section {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        
+        /* ELIMINAR MÁRGENES DE CONTENEDORES PADRE WORDPRESS */
+        body.single-post #transferencia-form,
+        body.page #transferencia-form,
+        .post-content #transferencia-form,
+        .entry-content #transferencia-form,
+        .page-content #transferencia-form {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
         /* Tipografía corporativa */
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
         
@@ -810,7 +858,7 @@ function transferencia_barco_shortcode() {
         #transferencia-form {
             max-width: 100%;
             width: 100%;
-            margin: 20px auto;
+            margin: 20px auto 0 auto; /* Sin margen inferior */
             padding: 0;
             border: none;
             border-radius: 16px;
@@ -1209,9 +1257,25 @@ function transferencia_barco_shortcode() {
             visibility: hidden !important;
             opacity: 0 !important;
             pointer-events: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+        }
+        
+        /* CUANDO EL MODAL ESTÁ ACTIVO, NO DEBE CREAR ESPACIO EXTRA */
+        #signature-modal-mobile.active {
+            margin: 0 !important;
+            padding: 0 !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            position: fixed !important;
+            z-index: 9999 !important;
         }
 
-        .button-container {
+        .button-container,
+        .button-container-cloned {
             display: none !important;
             visibility: hidden !important;
             opacity: 0 !important;
@@ -1219,7 +1283,53 @@ function transferencia_barco_shortcode() {
             overflow: hidden !important;
             margin: 0 !important;
             padding: 0 !important;
-            /* COMPLETAMENTE OCULTO - no debe crear espacio */
+            position: absolute !important;
+            top: -9999px !important;
+            left: -9999px !important;
+            /* COMPLETAMENTE OCULTO Y FUERA DE LA PANTALLA */
+        }
+        
+        /* CONTENEDORES DE BOTONES TAMBIÉN OCULTOS CUANDO VACÍOS */
+        #vehiculo-buttons-container:empty,
+        #datos-buttons-container:empty,
+        #documentos-buttons-container:empty,
+        #pago-buttons-container:empty {
+            display: none !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* ASEGURAR QUE CONTENEDORES NO CREEN ESPACIO NUNCA */
+        #vehiculo-buttons-container,
+        #datos-buttons-container,
+        #documentos-buttons-container,
+        #pago-buttons-container {
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 0 !important;
+        }
+        
+        /* FORZAR QUE EL GRID LAYOUT NUNCA SE ROMPA EN PÁGINA DOCUMENTOS */
+        .tramitfy-main-form {
+            grid-column: auto !important;
+            grid-area: content !important;
+        }
+        
+        /* PREVENIR QUE JAVASCRIPT CAMBIE EL GRID-COLUMN A FULL WIDTH */
+        .tramitfy-main-form[style*="grid-column: 1 / -1"] {
+            grid-column: auto !important;
+        }
+        
+        /* ASEGURAR QUE EL SIDEBAR SIEMPRE ESTÉ VISIBLE EN EL GRID */
+        .tramitfy-sidebar {
+            display: flex !important;
+            grid-area: sidebar !important;
+        }
+        
+        /* PREVENIR QUE JAVASCRIPT OCULTE EL SIDEBAR */
+        .tramitfy-sidebar[style*="display: none"] {
+            display: flex !important;
         }
 
         .button-container .button {
@@ -1907,42 +2017,48 @@ function transferencia_barco_shortcode() {
             z-index: 10 !important;
         }
 
-        /* Asegurar posicionamiento correcto del contenedor de botones documentos */
+        /* CONTENEDOR DE BOTONES DOCUMENTOS COMPLETAMENTE OCULTO */
         #documentos-buttons-container {
-            position: relative !important;
-            width: 100% !important;
-            margin-top: 32px !important;
-            clear: both !important;
-            display: block !important;
-            /* Forzar que esté al final del contenido, no afectado por grid */
-            z-index: 1000 !important;
-            order: 9999 !important;
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            position: absolute !important;
+            top: -9999px !important;
+            left: -9999px !important;
         }
 
         #documentos-buttons-container .button-container,
         #documentos-buttons-container .button-container-cloned {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            width: 100% !important;
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
             margin: 0 !important;
-            padding-top: 20px !important;
-            border-top: 1px solid #e5e7eb !important;
-            gap: 16px !important;
-            position: relative !important;
-            z-index: 1001 !important;
+            padding: 0 !important;
+            position: absolute !important;
+            top: -9999px !important;
+            left: -9999px !important;
         }
 
-        /* Asegurar que los botones clonados tengan el estilo correcto */
-        #documentos-buttons-container .button-container-cloned .button {
-            padding: 14px 32px;
-            font-size: 15px;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: none;
-            min-width: 140px;
+        /* TODOS LOS ELEMENTOS DENTRO DEL CONTENEDOR DOCUMENTOS OCULTOS */
+        #documentos-buttons-container .button-container-cloned .button,
+        #documentos-buttons-container .button,
+        #documentos-buttons-container * {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            position: absolute !important;
+            top: -9999px !important;
+            left: -9999px !important;
         }
         
         /* Los estilos de upload-wrapper, upload-button y file-count están definidos arriba */
@@ -2235,6 +2351,8 @@ function transferencia_barco_shortcode() {
             background-color: rgba(0,0,0,0.7);
             backdrop-filter: blur(5px);
             animation: fadeIn 0.3s;
+            margin: 0 !important;
+            padding: 0 !important;
         }
         
         #document-popup .popup-content {
@@ -2298,7 +2416,7 @@ function transferencia_barco_shortcode() {
         @media (max-width: 768px) {
             #transferencia-form {
                 padding: 20px;
-                margin: 20px auto;
+                margin: 20px auto 0 auto; /* Sin margen inferior */
             }
             
             #form-navigation {
@@ -3617,7 +3735,7 @@ function transferencia_barco_shortcode() {
         .tramitfy-layout-wrapper {
             max-width: 1400px;
             width: 95%;
-            margin: 40px auto;
+            margin: 40px auto 0 auto; /* Sin margen inferior */
             padding: 0;
         }
 
@@ -3626,7 +3744,7 @@ function transferencia_barco_shortcode() {
             grid-template-columns: auto 1fr !important; /* Sidebar flexible + formulario resto */
             grid-template-areas: "sidebar content" !important;
             gap: 0;
-            align-items: start; /* Cambiado para mejor alineación */
+            align-items: stretch; /* Sidebar se ajusta a altura del form */
             background: white;
             border-radius: 16px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
@@ -3988,7 +4106,7 @@ function transferencia_barco_shortcode() {
         @media (max-width: 768px) {
             .tramitfy-layout-wrapper {
                 padding: 0;
-                margin: 15px;
+                margin: 15px 15px 0 15px; /* Sin margen inferior */
             }
 
             .tramitfy-two-column {
@@ -4652,7 +4770,7 @@ function transferencia_barco_shortcode() {
             /* Layout principal móvil */
             .tramitfy-layout-wrapper {
                 padding: 0 !important;
-                margin: 0 !important;
+                margin: 0 !important; /* Sin márgenes en móvil */
             }
 
             .tramitfy-two-column {
@@ -7489,6 +7607,9 @@ function transferencia_barco_shortcode() {
                     buttonContainer.style.setProperty('opacity', '1', 'important');
                     buttonContainer.style.setProperty('height', 'auto', 'important');
                     buttonContainer.style.setProperty('overflow', 'visible', 'important');
+                    buttonContainer.style.setProperty('position', 'relative', 'important');
+                    buttonContainer.style.setProperty('top', 'auto', 'important');
+                    buttonContainer.style.setProperty('left', 'auto', 'important');
                     const vehiculoContainer = document.getElementById('vehiculo-buttons-container');
                     if (vehiculoContainer) {
                         vehiculoContainer.appendChild(buttonContainer);
@@ -7501,6 +7622,9 @@ function transferencia_barco_shortcode() {
                     buttonContainer.style.setProperty('opacity', '1', 'important');
                     buttonContainer.style.setProperty('height', 'auto', 'important');
                     buttonContainer.style.setProperty('overflow', 'visible', 'important');
+                    buttonContainer.style.setProperty('position', 'relative', 'important');
+                    buttonContainer.style.setProperty('top', 'auto', 'important');
+                    buttonContainer.style.setProperty('left', 'auto', 'important');
                     const datosContainer = document.getElementById('datos-buttons-container');
                     if (datosContainer) {
                         datosContainer.appendChild(buttonContainer);
@@ -7558,6 +7682,9 @@ function transferencia_barco_shortcode() {
                     buttonContainer.style.setProperty('opacity', '1', 'important');
                     buttonContainer.style.setProperty('height', 'auto', 'important');
                     buttonContainer.style.setProperty('overflow', 'visible', 'important');
+                    buttonContainer.style.setProperty('position', 'relative', 'important');
+                    buttonContainer.style.setProperty('top', 'auto', 'important');
+                    buttonContainer.style.setProperty('left', 'auto', 'important');
                     const pagoContainer = document.getElementById('pago-buttons-container');
                     if (pagoContainer) {
                         pagoContainer.appendChild(buttonContainer);
@@ -7577,6 +7704,9 @@ function transferencia_barco_shortcode() {
                     buttonContainer.style.setProperty('opacity', '1', 'important');
                     buttonContainer.style.setProperty('height', 'auto', 'important');
                     buttonContainer.style.setProperty('overflow', 'visible', 'important');
+                    buttonContainer.style.setProperty('position', 'relative', 'important');
+                    buttonContainer.style.setProperty('top', 'auto', 'important');
+                    buttonContainer.style.setProperty('left', 'auto', 'important');
                 }
             }
 
