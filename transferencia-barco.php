@@ -1911,11 +1911,14 @@ function transferencia_barco_shortcode() {
 
         /* Asegurar posicionamiento correcto del contenedor de botones documentos */
         #documentos-buttons-container {
-            position: relative;
-            width: 100%;
-            margin-top: 32px;
-            clear: both;
-            display: block;
+            position: relative !important;
+            width: 100% !important;
+            margin-top: 32px !important;
+            clear: both !important;
+            display: block !important;
+            /* Forzar que esté al final del contenido, no afectado por grid */
+            z-index: 1000 !important;
+            order: 9999 !important;
         }
 
         #documentos-buttons-container .button-container {
@@ -1927,6 +1930,8 @@ function transferencia_barco_shortcode() {
             padding-top: 20px !important;
             border-top: 1px solid #e5e7eb !important;
             gap: 16px !important;
+            position: relative !important;
+            z-index: 1001 !important;
         }
         
         /* Los estilos de upload-wrapper, upload-button y file-count están definidos arriba */
@@ -7480,6 +7485,16 @@ function transferencia_barco_shortcode() {
                     }
                 } else if (pageId === 'page-documentos') {
                     console.log("Página documentos cargada - v1.10 sin acordeones");
+                    
+                    // ASEGURAR que el layout esté restaurado correctamente antes de mover botones
+                    const mainForm = document.querySelector('.tramitfy-main-form');
+                    const sidebar = document.querySelector('.tramitfy-sidebar');
+                    if (mainForm && sidebar) {
+                        mainForm.style.gridColumn = '';
+                        sidebar.style.display = 'flex';
+                        console.log('🔧 Layout grid forzado a normal para página documentos');
+                    }
+                    
                     const documentosContainer = document.getElementById('documentos-buttons-container');
                     if (documentosContainer) {
                         documentosContainer.appendChild(buttonContainer);
