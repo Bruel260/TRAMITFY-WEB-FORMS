@@ -1909,32 +1909,7 @@ function transferencia_barco_shortcode() {
             z-index: 10 !important;
         }
 
-        /* Botones con espacio normal en página documentos - CORREGIDO */
-        #documentos-buttons-container {
-            margin-top: 32px;
-            padding-top: 0;
-        }
-
-        #documentos-buttons-container .button-container {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            margin-top: 0 !important;
-            padding-top: 20px !important;
-            border-top: 1px solid #e5e7eb !important;
-            gap: 16px !important;
-            width: 100% !important;
-        }
-
-        /* Asegurar tamaño correcto de botones en todas las páginas */
-        .button-container .button {
-            padding: 14px 32px !important;
-            font-size: 15px !important;
-            font-weight: 600 !important;
-            border-radius: 8px !important;
-            min-width: 140px !important;
-            min-height: 48px !important;
-        }
+        /* Los botones en página documentos usan el comportamiento estándar */
         
         /* Los estilos de upload-wrapper, upload-button y file-count están definidos arriba */
         
@@ -7599,9 +7574,10 @@ function transferencia_barco_shortcode() {
                     // Asegurar posición correcta abajo del formulario
                     // NO aplicar margin-top/padding-top si están en contenedores específicos
                     if (buttonContainer.closest('#documentos-buttons-container')) {
-                        // Para documentos: botones casi tocando el checkbox
-                        buttonContainer.style.setProperty('margin-top', '2px', 'important');
-                        buttonContainer.style.setProperty('padding-top', '0px', 'important');
+                        // Para documentos: usar espaciado estándar
+                        buttonContainer.style.setProperty('margin-top', '36px', 'important');
+                        buttonContainer.style.setProperty('padding-top', '24px', 'important');
+                        buttonContainer.style.setProperty('border-top', '1px solid #e5e7eb', 'important');
                     } else if (buttonContainer.closest('#pago-buttons-container')) {
                         // Para pago: espacio normal dentro del contenedor
                         buttonContainer.style.setProperty('margin-top', '20px', 'important');
