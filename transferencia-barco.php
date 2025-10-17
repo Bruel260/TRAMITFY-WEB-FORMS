@@ -13098,32 +13098,19 @@ function transferencia_barco_shortcode() {
                 break;
 
             case 'page-documentos':
-                
-                // Verificar si estamos en paso 2 (firma) - detección mejorada
-                const step2 = document.getElementById('documentos-step-2');
-                const step1 = document.getElementById('documentos-step-1');
+                // MOSTRAR INFORMACIÓN EDUCATIVA SOBRE DOCUMENTACIÓN (siempre)
+                // Verificar si estamos en paso de firma
                 const documentsCheckbox = document.getElementById('documents-complete-check');
-                
-                // Detección simplificada: checkbox marcado = modo firma
                 const enPasoFirma = documentsCheckbox && documentsCheckbox.checked;
                 
-                console.log('DEBUG SIDEBAR DOCUMENTOS:', {
-                    step2_exists: !!step2,
-                    step2_display: step2?.style.display,
-                    step2_hidden: step2?.classList.contains('hidden'),
-                    enPasoFirma: enPasoFirma
-                });
-
                 if (enPasoFirma) {
-                    // MODO FIRMA: Asegurar que SIEMPRE se muestre el documento
+                    // MODO FIRMA: Mostrar documento de autorización
                     console.log('🎯 DETECTADO MODO FIRMA - Mostrando documento automáticamente');
                     
-                    // Llamar función para mostrar documento (con delay para asegurar DOM ready)
                     setTimeout(() => {
                         mostrarDocumentoAutorizacionSidebar();
                     }, 100);
                     
-                    // Contenido temporal mientras se carga el documento
                     contenido = `
                         <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
                             <h4 style="color: white; font-size: 15px; margin: 0 0 12px 0; font-weight: 600;">
@@ -13135,133 +13122,43 @@ function transferencia_barco_shortcode() {
                         </div>
                     `;
                 } else {
-                    // MODO NORMAL: Testigos de documentos subidos
-                    // Restaurar sidebar normal
-                    const sidebar = document.querySelector('.tramitfy-sidebar');
-                    if (sidebar) {
-                        sidebar.style.width = '';
-                        sidebar.style.background = '';
-                        sidebar.style.boxShadow = '';
-                        sidebar.style.minWidth = '';
-                    }
-
-                    // Verificar estado de cada documento
-                    const hojaAsientoFiles = document.getElementById('upload-hoja-asiento')?.files?.length || 0;
-                    const dniCompradorFiles = document.getElementById('upload-dni-comprador')?.files?.length || 0;
-                    const dniVendedorFiles = document.getElementById('upload-dni-vendedor')?.files?.length || 0;
-                    const contratoFiles = document.getElementById('upload-contrato-compraventa')?.files?.length || 0;
-                    const itpComprobanteFiles = document.getElementById('upload-itp-comprobante')?.files?.length || 0;
-                    
-                    // Verificar si el ITP ya fue pagado (necesita comprobante)
-                    const necesitaComprobanteITP = (itpPagado === true);
-                    
-                    const documentsCheckbox = document.getElementById('documents-complete-check');
-                    const todosConfirmados = documentsCheckbox && documentsCheckbox.checked;
-
+                    // MODO NORMAL: Mostrar información educativa sobre documentación
                     contenido = `
-                        <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
-                            <h4 style="color: white; font-size: 15px; margin: 0 0 12px 0; font-weight: 600;">
-                                📋 Estado Documentos
-                            </h4>`;
-
-                    // Testigo 1: Hoja de asiento
-                    const hojaEstado = hojaAsientoFiles > 0;
-                    contenido += `
-                            <div style="padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 8px; border-left: 3px solid ${hojaEstado ? '#10b981' : '#ef4444'};">
-                                <div style="display: flex; align-items: center; justify-content: space-between;">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <i class="fa-solid ${hojaEstado ? 'fa-check-circle' : 'fa-circle-xmark'}" style="color: ${hojaEstado ? '#10b981' : '#ef4444'}; font-size: 12px;"></i>
-                                        <span style="font-size: 12px; color: white;">Hoja de asiento</span>
-                                    </div>
-                                    <span style="font-size: 11px; color: ${hojaEstado ? '#10b981' : '#ef4444'}; font-weight: 600;">
-                                        ${hojaEstado ? hojaAsientoFiles : '0'}
-                                    </span>
-                                </div>
-                            </div>`;
-
-                    // Testigo 2: DNI Comprador
-                    const dniCompradorEstado = dniCompradorFiles > 0;
-                    contenido += `
-                            <div style="padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 8px; border-left: 3px solid ${dniCompradorEstado ? '#10b981' : '#ef4444'};">
-                                <div style="display: flex; align-items: center; justify-content: space-between;">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <i class="fa-solid ${dniCompradorEstado ? 'fa-check-circle' : 'fa-circle-xmark'}" style="color: ${dniCompradorEstado ? '#10b981' : '#ef4444'}; font-size: 12px;"></i>
-                                        <span style="font-size: 12px; color: white;">DNI Comprador</span>
-                                    </div>
-                                    <span style="font-size: 11px; color: ${dniCompradorEstado ? '#10b981' : '#ef4444'}; font-weight: 600;">
-                                        ${dniCompradorEstado ? dniCompradorFiles : '0'}
-                                    </span>
-                                </div>
-                            </div>`;
-
-                    // Testigo 3: DNI Vendedor
-                    const dniVendedorEstado = dniVendedorFiles > 0;
-                    contenido += `
-                            <div style="padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 8px; border-left: 3px solid ${dniVendedorEstado ? '#10b981' : '#ef4444'};">
-                                <div style="display: flex; align-items: center; justify-content: space-between;">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <i class="fa-solid ${dniVendedorEstado ? 'fa-check-circle' : 'fa-circle-xmark'}" style="color: ${dniVendedorEstado ? '#10b981' : '#ef4444'}; font-size: 12px;"></i>
-                                        <span style="font-size: 12px; color: white;">DNI Vendedor</span>
-                                    </div>
-                                    <span style="font-size: 11px; color: ${dniVendedorEstado ? '#10b981' : '#ef4444'}; font-weight: 600;">
-                                        ${dniVendedorEstado ? dniVendedorFiles : '0'}
-                                    </span>
-                                </div>
-                            </div>`;
-
-                    // Testigo 4: Contrato compraventa
-                    const contratoEstado = contratoFiles > 0;
-                    contenido += `
-                            <div style="padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 8px; border-left: 3px solid ${contratoEstado ? '#10b981' : '#ef4444'};">
-                                <div style="display: flex; align-items: center; justify-content: space-between;">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <i class="fa-solid ${contratoEstado ? 'fa-check-circle' : 'fa-circle-xmark'}" style="color: ${contratoEstado ? '#10b981' : '#ef4444'}; font-size: 12px;"></i>
-                                        <span style="font-size: 12px; color: white;">Contrato compraventa</span>
-                                    </div>
-                                    <span style="font-size: 11px; color: ${contratoEstado ? '#10b981' : '#ef4444'}; font-weight: 600;">
-                                        ${contratoEstado ? contratoFiles : '0'}
-                                    </span>
-                                </div>
-                            </div>`;
-
-                    // Testigo 5: Comprobante ITP (solo si es necesario)
-                    if (necesitaComprobanteITP) {
-                        const itpEstado = itpComprobanteFiles > 0;
-                        contenido += `
-                            <div style="padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 8px; border-left: 3px solid ${itpEstado ? '#10b981' : '#f59e0b'};">
-                                <div style="display: flex; align-items: center; justify-content: space-between;">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <i class="fa-solid ${itpEstado ? 'fa-check-circle' : 'fa-exclamation-triangle'}" style="color: ${itpEstado ? '#10b981' : '#f59e0b'}; font-size: 12px;"></i>
-                                        <span style="font-size: 12px; color: white;">Comprobante ITP</span>
-                                    </div>
-                                    <span style="font-size: 11px; color: ${itpEstado ? '#10b981' : '#f59e0b'}; font-weight: 600;">
-                                        ${itpEstado ? itpComprobanteFiles : '0'}
-                                    </span>
-                                </div>
-                            </div>`;
-                    }
-
-                    // Estado general y confirmación
-                    const documentosBasicosCompletos = hojaEstado && dniCompradorEstado && dniVendedorEstado && contratoEstado;
-                    const todosDocumentosCompletos = documentosBasicosCompletos && (!necesitaComprobanteITP || itpComprobanteFiles > 0);
-                    
-                    contenido += `
-                            <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.2); margin: 12px 0;">
-                            <div style="padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; border-left: 3px solid ${todosConfirmados ? '#10b981' : '#6b7280'};">
-                                <div style="display: flex; align-items: center; justify-content: space-between;">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <i class="fa-solid ${todosConfirmados ? 'fa-check-circle' : 'fa-clock'}" style="color: ${todosConfirmados ? '#10b981' : '#6b7280'}; font-size: 12px;"></i>
-                                        <span style="font-size: 12px; color: white; font-weight: 600;">Confirmación</span>
-                                    </div>
-                                    <span style="font-size: 11px; color: ${todosConfirmados ? '#10b981' : '#6b7280'}; font-weight: 600;">
-                                        ${todosConfirmados ? '✓' : '○'}
-                                    </span>
-                                </div>
+                        <div style="padding: 16px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 16px;">
+                            <div style="font-size: 14px; color: white; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-file-signature" style="color: #6b7280; font-size: 16px;"></i>
+                                Documentación Oficial
                             </div>
                             
-                            <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 12px; line-height: 1.5; text-align: center;">
-                                ${!todosDocumentosCompletos ? '📤 Sube todos los documentos requeridos' : !todosConfirmados ? '✅ Confirma documentos para continuar' : '🎯 Documentación completa'}
+                            <div style="font-size: 12px; color: rgba(255,255,255,0.9); line-height: 1.5; margin-bottom: 12px;">
+                                <strong style="color: white; display: block; margin-bottom: 4px;">📋 Documentación necesaria</strong>
+                                Esta es la documentación necesaria para oficializar tu trámite ante la administración marítima
                             </div>
+                            
+                            <div style="font-size: 12px; color: rgba(255,255,255,0.9); line-height: 1.5; margin-bottom: 12px;">
+                                <strong style="color: white; display: block; margin-bottom: 4px;">⚙️ Nosotros nos encargamos</strong>
+                                • Gestión completa en DGMM<br>
+                                • Tramitación oficial<br>
+                                • Seguimiento del proceso
+                            </div>
+                            
+                            <div style="font-size: 12px; color: rgba(255,255,255,0.9); line-height: 1.5; margin-bottom: 12px;">
+                                <strong style="color: white; display: block; margin-bottom: 4px;">📤 Tu parte es sencilla</strong>
+                                Solo adjunta los documentos requeridos y nosotros hacemos el resto
+                            </div>
+                            
+                            <div style="font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.4; font-style: italic; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                Todos los documentos se procesan de forma segura y confidencial
+                            </div>
+                        </div>
+                        
+                        <div style="padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 3px solid #10b981;">
+                            <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 6px;">Estado</div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 13px; color: white;">Documentación</span>
+                                <strong style="font-size: 13px; color: #10b981;">En progreso</strong>
+                            </div>
+                            <div style="font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 4px;">Adjunta los archivos requeridos</div>
                         </div>
                     `;
                 }
