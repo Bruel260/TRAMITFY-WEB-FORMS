@@ -1909,7 +1909,25 @@ function transferencia_barco_shortcode() {
             z-index: 10 !important;
         }
 
-        /* Los botones en página documentos usan el comportamiento estándar */
+        /* Asegurar posicionamiento correcto del contenedor de botones documentos */
+        #documentos-buttons-container {
+            position: relative;
+            width: 100%;
+            margin-top: 32px;
+            clear: both;
+            display: block;
+        }
+
+        #documentos-buttons-container .button-container {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding-top: 20px !important;
+            border-top: 1px solid #e5e7eb !important;
+            gap: 16px !important;
+        }
         
         /* Los estilos de upload-wrapper, upload-button y file-count están definidos arriba */
         
@@ -7574,10 +7592,8 @@ function transferencia_barco_shortcode() {
                     // Asegurar posición correcta abajo del formulario
                     // NO aplicar margin-top/padding-top si están en contenedores específicos
                     if (buttonContainer.closest('#documentos-buttons-container')) {
-                        // Para documentos: espaciado moderado para página con layout compacto
-                        buttonContainer.style.setProperty('margin-top', '24px', 'important');
-                        buttonContainer.style.setProperty('padding-top', '16px', 'important');
-                        buttonContainer.style.setProperty('border-top', '1px solid #e5e7eb', 'important');
+                        // Para documentos: usar CSS definido específicamente, no aplicar estilos inline
+                        // Los estilos están en #documentos-buttons-container .button-container
                     } else if (buttonContainer.closest('#pago-buttons-container')) {
                         // Para pago: espacio normal dentro del contenedor
                         buttonContainer.style.setProperty('margin-top', '20px', 'important');
