@@ -1333,10 +1333,10 @@ function transferencia_barco_shortcode() {
         }
 
         .button-container .button {
-            padding: 14px 32px;
-            font-size: 15px;
+            padding: 10px 24px;
+            font-size: 14px;
             font-weight: 600;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s ease;
             border: none;
@@ -1660,12 +1660,18 @@ function transferencia_barco_shortcode() {
         }
         
         .upload-item {
-            margin-bottom: 20px;
-            padding: 15px;
+            margin-bottom: 12px;
+            padding: 10px;
             border: 1px solid #eaeaea;
-            border-radius: 12px;
+            border-radius: 8px;
             background-color: #f9f9f9;
             transition: all 0.2s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 85px;
         }
         
         .upload-item:hover {
@@ -1918,24 +1924,24 @@ function transferencia_barco_shortcode() {
         .upload-grid {
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            margin: 20px 0;
+            gap: 12px;
+            margin: 12px 0;
         }
         
         .upload-row {
             display: flex;
-            gap: 20px;
+            gap: 12px;
             width: 100%;
         }
         
         .upload-row .upload-item {
             flex: 1 1 0;
             min-width: 0;
-            padding: 16px;
+            padding: 10px;
             background: white;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
             transition: all 0.2s ease;
         }
 
@@ -1973,16 +1979,16 @@ function transferencia_barco_shortcode() {
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 10px 16px;
-            font-size: 13px;
+            padding: 6px 12px;
+            font-size: 12px;
             font-weight: 500;
             background: #f9fafb;
             color: #374151;
             border: 1px solid #d1d5db;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
             transition: all 0.2s ease;
-            gap: 8px;
+            gap: 6px;
         }
 
         .upload-button:hover {
@@ -2011,8 +2017,8 @@ function transferencia_barco_shortcode() {
         /* Asegurar posicionamiento correcto de botones en página documentos - SOLO CUANDO NO ESTÁN EN CONTENEDOR ESPECÍFICO */
         #page-documentos + .button-container:not(#documentos-buttons-container .button-container),
         #page-documentos ~ .button-container:not(#documentos-buttons-container .button-container) {
-            margin-top: 36px !important;
-            padding-top: 24px !important;
+            margin-top: 0px !important;
+            padding-top: 0px !important;
             position: relative !important;
             z-index: 10 !important;
         }
@@ -3756,8 +3762,8 @@ function transferencia_barco_shortcode() {
             grid-area: sidebar;
             position: relative;
             background: #016d86; /* Color corporativo sólido */
-            border-radius: 16px 0 0 16px;
-            padding: 28px 20px;
+            border-radius: 12px 0 0 12px;
+            padding: 18px 16px;
             box-shadow: none;
             border: none;
             backdrop-filter: none;
@@ -5273,10 +5279,16 @@ function transferencia_barco_shortcode() {
                 margin-bottom: 8px !important;
             }
 
-            /* Ver ejemplo link - VISIBLE */
+            /* Ver ejemplo link - MEJORADO */
             .view-example {
-                font-size: 13px !important;
-                font-weight: 600 !important;
+                font-size: 11px !important;
+                font-weight: 500 !important;
+                transition: all 0.2s ease !important;
+            }
+            
+            .view-example:hover {
+                background: #e5e7eb !important;
+                color: #374151 !important;
                 margin-top: 14px !important;
                 margin-bottom: 0 !important;
                 padding: 12px 0 0 0 !important;
@@ -6793,7 +6805,6 @@ function transferencia_barco_shortcode() {
                         <div class="upload-item">
                             <label id="label-hoja-asiento" for="upload-hoja-asiento">
                                 <strong>📄 Registro Marítimo</strong>
-                                <small>Hoja de asiento registral</small>
                             </label>
                             <div class="upload-wrapper">
                                 <input type="file" id="upload-hoja-asiento" name="upload_hoja_asiento[]" multiple required accept="image/*,.pdf">
@@ -6804,13 +6815,13 @@ function transferencia_barco_shortcode() {
                                 <div class="file-count" data-input="upload-hoja-asiento">Sin archivos</div>
                             </div>
                             <div class="files-preview" id="preview-upload-hoja-asiento"></div>
+                            <a href="#" class="view-example" id="view-example-hoja-asiento" data-doc="hoja-asiento" style="font-size: 11px; color: #6b7280; text-decoration: none; padding: 4px 8px; background: #f9fafb; border-radius: 4px; border: 1px solid #e5e7eb; margin-top: 8px; display: inline-block;">📜 Ver ejemplo registro</a>
                         </div>
 
                         <!-- DNI Comprador -->
                         <div class="upload-item">
                             <label id="label-dni-comprador" for="upload-dni-comprador">
                                 <strong>🪪 DNI Comprador</strong>
-                                <small>Documento de identidad</small>
                             </label>
                             <div class="upload-wrapper">
                                 <input type="file" id="upload-dni-comprador" name="upload_dni_comprador[]" multiple required accept="image/*,.pdf">
@@ -6821,13 +6832,13 @@ function transferencia_barco_shortcode() {
                                 <div class="file-count" data-input="upload-dni-comprador">Sin archivos</div>
                             </div>
                             <div class="files-preview" id="preview-upload-dni-comprador"></div>
+                            <a href="#" class="view-example" data-doc="dni-comprador" style="font-size: 11px; color: #6b7280; text-decoration: none; padding: 4px 8px; background: #f9fafb; border-radius: 4px; border: 1px solid #e5e7eb; margin-top: 8px; display: inline-block;">🆔 Ver ejemplo DNI</a>
                         </div>
 
                         <!-- DNI Vendedor -->
                         <div class="upload-item">
                             <label id="label-dni-vendedor" for="upload-dni-vendedor">
                                 <strong>🪪 DNI Vendedor</strong>
-                                <small>Documento de identidad</small>
                             </label>
                             <div class="upload-wrapper">
                                 <input type="file" id="upload-dni-vendedor" name="upload_dni_vendedor[]" multiple required accept="image/*,.pdf">
@@ -6838,6 +6849,7 @@ function transferencia_barco_shortcode() {
                                 <div class="file-count" data-input="upload-dni-vendedor">Sin archivos</div>
                             </div>
                             <div class="files-preview" id="preview-upload-dni-vendedor"></div>
+                            <a href="#" class="view-example" data-doc="dni-vendedor" style="font-size: 11px; color: #6b7280; text-decoration: none; padding: 4px 8px; background: #f9fafb; border-radius: 4px; border: 1px solid #e5e7eb; margin-top: 8px; display: inline-block;">🆔 Ver ejemplo DNI</a>
                         </div>
                     </div>
 
@@ -6847,7 +6859,6 @@ function transferencia_barco_shortcode() {
                         <div class="upload-item">
                             <label id="label-contrato-compraventa" for="upload-contrato-compraventa">
                                 <strong>📝 Contrato Compraventa</strong>
-                                <small>Documento de compraventa</small>
                             </label>
                             <div class="upload-wrapper">
                                 <input type="file" id="upload-contrato-compraventa" name="upload_contrato_compraventa[]" multiple required accept="image/*,.pdf">
@@ -6858,35 +6869,25 @@ function transferencia_barco_shortcode() {
                                 <div class="file-count" data-input="upload-contrato-compraventa">Sin archivos</div>
                             </div>
                             <div class="files-preview" id="preview-upload-contrato-compraventa"></div>
+                            <a href="#" class="view-example" data-doc="contrato-compraventa" style="font-size: 11px; color: #6b7280; text-decoration: none; padding: 4px 8px; background: #f9fafb; border-radius: 4px; border: 1px solid #e5e7eb; margin-top: 8px; display: inline-block;">📄 Ver ejemplo contrato</a>
                         </div>
 
-                        <!-- Confirmación documentos -->
-                        <div class="upload-item" style="display: flex; flex-direction: column; justify-content: center;">
-                            <div class="docs-confirmation-container" style="padding: 12px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; border-left: 4px solid #3b82f6;">
-                                <label class="custom-checkbox" style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
-                                    <input type="checkbox" name="documents_complete" id="documents-complete-check" required style="width: 20px; height: 20px;">
-                                    <span class="checkbox-text" style="flex: 1; font-size: 14px; color: #374151; line-height: 1.4; font-weight: 500;">
-                                        ✅ Confirmo que la documentación está completa y es correcta
-                                    </span>
+                        <!-- Espacio para Modelo 620 (cuando ITP ya pagado) -->
+                        <div class="upload-item" id="modelo-620-container" style="display: none; flex-direction: column; justify-content: center;">
+                            <div style="background: #f0f9ff; border: 2px solid #3b82f6; border-radius: 8px; padding: 16px;">
+                                <label for="upload-modelo-620">
+                                    <strong style="display: block; font-size: 14px; color: #1e40af; margin-bottom: 4px;">📄 Modelo 620 - Comprobante ITP</strong>
+                                    <small style="color: #1e40af;">El ITP ya está pagado, adjunta el comprobante</small>
                                 </label>
-                            </div>
-                            
-                            <!-- Modelo 620 - oculto por defecto -->
-                            <div id="itp-payment-proof-row" style="display: none; margin-top: 8px;">
-                                <div class="upload-item" style="background: #f0f9ff; border: 2px solid #3b82f6; border-radius: 8px; padding: 8px;">
-                                    <label for="upload-itp-comprobante">
-                                        <strong style="display: block; font-size: 12px; color: #1e40af; margin-bottom: 4px;">📄 Modelo 620 ITP</strong>
-                                    </label>
-                                    <div class="upload-wrapper">
-                                        <input type="file" id="upload-itp-comprobante" name="upload_itp_comprobante[]" multiple accept="image/*,.pdf">
-                                        <div class="upload-button upload-button-responsive" style="font-size: 11px;">
-                                            <span class="desktop-text"><i class="fa-solid fa-upload"></i> Archivo ITP</span>
-                                            <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
-                                        </div>
-                                        <div class="file-count" data-input="upload-itp-comprobante" style="font-size: 10px;">Sin archivos</div>
+                                <div class="upload-wrapper">
+                                    <input type="file" id="upload-modelo-620" name="upload_modelo_620[]" multiple accept="image/*,.pdf">
+                                    <div class="upload-button upload-button-responsive">
+                                        <span class="desktop-text"><i class="fa-solid fa-upload"></i> Adjuntar Modelo 620</span>
+                                        <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
                                     </div>
-                                    <div class="files-preview" id="preview-upload-itp-comprobante"></div>
+                                    <div class="file-count" data-input="upload-modelo-620">Sin archivos</div>
                                 </div>
+                                <div class="files-preview" id="preview-upload-modelo-620"></div>
                             </div>
                         </div>
 
@@ -6894,7 +6895,6 @@ function transferencia_barco_shortcode() {
                         <div class="upload-item" style="display: flex; flex-direction: column; justify-content: center;">
                             <label for="document-signature">
                                 <strong>✍️ Firma Digital</strong>
-                                <small>Firmar documentación</small>
                             </label>
                             <div class="upload-wrapper">
                                 <div id="signature-field" class="upload-button upload-button-responsive" style="text-align: center; cursor: pointer;">
@@ -6912,16 +6912,20 @@ function transferencia_barco_shortcode() {
                     </div>
                 </div>
 
-                <!-- Ejemplos compactos en una sola línea -->
-                <div style="display: flex; gap: 6px; justify-content: center; margin-top: 4px; flex-wrap: wrap;">
-                    <a href="#" class="view-example" id="view-example-hoja-asiento" data-doc="hoja-asiento" style="font-size: 8px; color: #6b7280;">Ver ejemplo registro</a>
-                    <a href="#" class="view-example" data-doc="dni-comprador" style="font-size: 8px; color: #6b7280;">Ver ejemplo DNI</a>
-                    <a href="#" class="view-example" data-doc="contrato-compraventa" style="font-size: 8px; color: #6b7280;">Ver ejemplo contrato</a>
+
+                <!-- Checkbox de confirmación discreto -->
+                <div style="margin-top: 6px; padding: 8px 12px; background: #f8fdf9; border: 1px solid #d1fae5; border-radius: 6px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0;">
+                        <input type="checkbox" name="documents_complete" id="documents-complete-check" required style="width: 16px; height: 16px; accent-color: #16a34a;">
+                        <span style="font-size: 13px; font-weight: 500; color: #374151;">
+                            ✅ Confirmo que la documentación está completa y es correcta
+                        </span>
+                    </label>
                 </div>
             </div>
 
                 <!-- Sección de firma simple (oculta inicialmente) -->
-                <div id="simple-signature-section" style="display: none; opacity: 0; transform: translateY(-10px); transition: all 0.3s ease; margin-top: 30px; padding: 30px; background: #f8f9fa; border: 2px solid #016d86; border-radius: 8px; text-align: center;">
+                <div id="simple-signature-section" style="display: none; opacity: 0; transform: translateY(-10px); transition: all 0.3s ease; margin-top: 6px; padding: 20px; background: #f8f9fa; border: 2px solid #016d86; border-radius: 8px; text-align: center;">
                     <h2 style="margin: 0 0 8px 0; color: #016d86; font-size: 20px; font-weight: 600;">
                         ✍️ Firma del Documento
                     </h2>
@@ -7094,9 +7098,8 @@ function transferencia_barco_shortcode() {
                 </div> <!-- Fin .tramitfy-main-form -->
             </div> <!-- Fin .tramitfy-two-column -->
         </div> <!-- Fin .tramitfy-layout-wrapper -->
-
         <!-- Botones de navegación (MOVIDO FUERA para evitar espacio blanco) -->
-        <div class="button-container">
+        <div class="button-container" style="margin-top: 0px; padding-top: 0px;">
             <button type="button" class="button" id="prevButton">Anterior</button>
             <button type="button" class="button" id="nextButton">Siguiente</button>
         </div>
@@ -7808,9 +7811,9 @@ function transferencia_barco_shortcode() {
                         buttonContainer.style.setProperty('margin-top', '20px', 'important');
                         buttonContainer.style.setProperty('padding-top', '0px', 'important');
                     } else {
-                        // Para otras páginas: espaciado por defecto
-                        buttonContainer.style.setProperty('margin-top', '36px', 'important');
-                        buttonContainer.style.setProperty('padding-top', '24px', 'important');
+                        // Para otras páginas: espaciado mínimo
+                        buttonContainer.style.setProperty('margin-top', '4px', 'important');
+                        buttonContainer.style.setProperty('padding-top', '0px', 'important');
                     }
                     buttonContainer.style.setProperty('position', 'relative', 'important');
 
@@ -12008,14 +12011,14 @@ function transferencia_barco_shortcode() {
             basePrice = BASE_TRANSFER_PRICE_SIN_ITP; // 134.99€ (precio unificado)
 
             // Mostrar contenedor Modelo 620 en documentos
-            const itpPaymentProofRow = document.getElementById('itp-payment-proof-row');
-            const itpComprobante = document.getElementById('upload-itp-comprobante');
-            if (itpPaymentProofRow) {
-                itpPaymentProofRow.style.display = 'grid';
+            const modelo620Container = document.getElementById('modelo-620-container');
+            const upload620 = document.getElementById('upload-modelo-620');
+            if (modelo620Container) {
+                modelo620Container.style.display = 'flex';
                 logDebug('PRECIO-FLOW', '📄 Mostrando contenedor Modelo 620');
             }
-            if (itpComprobante) {
-                itpComprobante.required = true;
+            if (upload620) {
+                upload620.required = true;
                 logDebug('PRECIO-FLOW', '✅ Campo Modelo 620 ahora requerido');
             }
 
@@ -12104,14 +12107,14 @@ function transferencia_barco_shortcode() {
             logDebug('PRECIO-FLOW', '🧹 Radio buttons ITP desmarcados');
 
             // Ocultar contenedor Modelo 620 en documentos
-            const itpPaymentProofRow = document.getElementById('itp-payment-proof-row');
-            const itpComprobante = document.getElementById('upload-itp-comprobante');
-            if (itpPaymentProofRow) {
-                itpPaymentProofRow.style.display = 'none';
+            const modelo620Container = document.getElementById('modelo-620-container');
+            const upload620 = document.getElementById('upload-modelo-620');
+            if (modelo620Container) {
+                modelo620Container.style.display = 'none';
                 logDebug('PRECIO-FLOW', '📄 Ocultando contenedor Modelo 620');
             }
-            if (itpComprobante) {
-                itpComprobante.required = false;
+            if (upload620) {
+                upload620.required = false;
                 logDebug('PRECIO-FLOW', '❌ Campo Modelo 620 ya no requerido');
             }
 
