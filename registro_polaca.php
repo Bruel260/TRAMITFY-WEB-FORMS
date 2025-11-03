@@ -253,7 +253,7 @@ function generate_polish_invoice_pdf($customer_name, $customer_dni, $customer_em
 function polish_registration_form_shortcode() {
     // Configuración de Stripe - movido dentro de la función para evitar conflictos con Elementor
     if (!defined('POLISH_REGISTRATION_STRIPE_MODE')) {
-        define('POLISH_REGISTRATION_STRIPE_MODE', 'test'); // 'test' o 'live'
+        define('POLISH_REGISTRATION_STRIPE_MODE', 'live'); // 'test' o 'live'
         define('POLISH_REGISTRATION_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
         define('POLISH_REGISTRATION_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
         define('POLISH_REGISTRATION_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
@@ -7229,7 +7229,7 @@ function create_polish_payment_intent() {
     try {
         // Definir constantes si no están definidas
         if (!defined('POLISH_REGISTRATION_STRIPE_MODE')) {
-            define('POLISH_REGISTRATION_STRIPE_MODE', 'test'); // 'test' o 'live'
+            define('POLISH_REGISTRATION_STRIPE_MODE', 'live'); // 'test' o 'live'
             define('POLISH_REGISTRATION_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
             define('POLISH_REGISTRATION_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
             define('POLISH_REGISTRATION_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');

@@ -64,7 +64,7 @@ tramitfy_log('========== INICIO CARGA FORMULARIO MOTO ==========', 'INIT', 'INFO
 
 // Configuración Stripe para Transferencia Moto - FORZADO A TEST MODE
 // IMPORTANTE: Usar constantes con prefijo MOTO_ para evitar conflictos con otros templates
-define('MOTO_STRIPE_MODE', 'test'); // 'test' o 'live'
+define('MOTO_STRIPE_MODE', 'live'); // 'test' o 'live'
 // CLAVES STRIPE - CONFIGURAR EN PRODUCCIÓN
 // Reemplazar con las claves reales en el servidor de producción
 define('MOTO_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');

@@ -64,7 +64,7 @@ tramitfy_barco_log('========== INICIO CARGA FORMULARIO BARCO ==========', 'INIT'
 
 // Configuración Stripe para Transferencia Barco - FORZADO A TEST MODE
 // IMPORTANTE: Usar constantes con prefijo BARCO_ para evitar conflictos con otros templates
-define('BARCO_STRIPE_MODE', 'test'); // 'test' o 'live'
+define('BARCO_STRIPE_MODE', 'live'); // 'test' o 'live'
 // CLAVES STRIPE - CONFIGURAR EN PRODUCCIÓN
 // Reemplazar con las claves reales en el servidor de producción
 define('BARCO_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
@@ -13738,8 +13738,7 @@ function transferencia_barco_shortcode() {
                     ` : `
                         <div style="font-size: 11px; color: rgba(255,255,255,0.8); line-height: 1.4; margin-top: 8px;">
                             <strong>ITP estimado:</strong><br>
-                            Pendiente de confirmar gestión<br>
-                            Seleccionar en paso anterior
+                            Pendiente de confirmar gestión
                         </div>
                     `;
                 } else {
@@ -13758,8 +13757,7 @@ function transferencia_barco_shortcode() {
                     informacionAdicional = `
                         <div style="font-size: 11px; color: rgba(255,255,255,0.8); line-height: 1.4; margin-top: 8px;">
                             <strong>Sin ITP:</strong><br>
-                            Ya abonado anteriormente<br>
-                            Solo tramitación
+                            Ya abonado anteriormente
                         </div>
                     `;
                 }
