@@ -14158,6 +14158,26 @@ function transferencia_moto_shortcode() {
     // FIN FLUJO DE PÁGINA DE DOCUMENTOS
     // ============================================
 
+    // OPTIMIZACIONES ESPECÍFICAS PARA FIRMA Y CHECKBOX EN MÓVIL
+    if (window.innerWidth <= 768) {
+        console.log('📱 Aplicando optimizaciones móvil para firma...');
+        
+        // Canvas de firma optimizado para móvil
+        const canvas = document.getElementById('signature-pad-simple');
+        if (canvas) {
+            canvas.style.touchAction = 'none';
+            canvas.style.webkitTouchCallout = 'none';
+            canvas.style.webkitUserSelect = 'none';
+            canvas.style.userSelect = 'none';
+            
+            const container = canvas.parentElement;
+            if (container) {
+                container.style.minHeight = '200px';
+                container.style.padding = '10px';
+            }
+        }
+    }
+
     }); // FIN document.addEventListener('DOMContentLoaded')
     </script>
     <?php
