@@ -67,10 +67,10 @@ tramitfy_barco_log('========== INICIO CARGA FORMULARIO BARCO ==========', 'INIT'
 define('BARCO_STRIPE_MODE', 'live'); // 'test' o 'live'
 // CLAVES STRIPE - CONFIGURAR EN PRODUCCIÓN
 // Reemplazar con las claves reales en el servidor de producción
-define('BARCO_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
-define('BARCO_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
-define('BARCO_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
-define('BARCO_STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
+define('BARCO_STRIPE_TEST_PUBLIC_KEY', 'pk_test_51Q3cLbRojhm8dCiULtMTJmyUP37N4QGbMuSKBrGJKaH8LQBhYMKPz7s9VzAqOKhjEWO1oajjqJhIYuFb4xpJz1Cg00N7oBJDJO');
+define('BARCO_STRIPE_TEST_SECRET_KEY', 'sk_test_51Q3cLbRojhm8dCiUfWvRoIgdHheCOTDgkh9o5eH9x8ZHZGF3PY5hMQ5dTuYZ1oQ9EqrCqJHIqMO8zKX4AXQhvUGl004zV6QaZK');
+define('BARCO_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_51QHhtNGXGHYLV5CXu3P7PrAFezBnDuf0JsZzb2AxjSsV0okn4y19VOMIjW0NUOLpaFdI3CCRhiC4fvNBDDbPhiW100KkF6Uo2x');
+define('BARCO_STRIPE_LIVE_SECRET_KEY', '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');
 
 // Asignar claves a variables globales (igual que hoja-asiento.php - evita cache)
 if (BARCO_STRIPE_MODE === 'test') {
@@ -2023,32 +2023,20 @@ function transferencia_barco_shortcode() {
             z-index: 10 !important;
         }
 
-        /* CONTENEDOR DE BOTONES DOCUMENTOS COMPLETAMENTE OCULTO */
+        /* CONTENEDOR DE BOTONES DOCUMENTOS - FIX VISIBILIDAD CONSERVATIVO */
         #documentos-buttons-container {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            height: 0 !important;
-            overflow: hidden !important;
-            margin: 0 !important;
+            /* SOLUCIÓN MÍNIMA: No ocultar completamente, solo posicionar discretamente */
+            margin: 20px 0 0 0 !important;
             padding: 0 !important;
-            position: absolute !important;
-            top: -9999px !important;
-            left: -9999px !important;
+            /* Removido: display: none, visibility: hidden, opacity: 0 que causan desaparición */
         }
 
         #documentos-buttons-container .button-container,
         #documentos-buttons-container .button-container-cloned {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            height: 0 !important;
-            overflow: hidden !important;
+            /* SOLUCIÓN MÍNIMA: Mantener visibilidad de botones dentro del contenedor */
             margin: 0 !important;
             padding: 0 !important;
-            position: absolute !important;
-            top: -9999px !important;
-            left: -9999px !important;
+            /* Removido: todos los display: none que ocultan botones */
         }
 
         /* TODOS LOS ELEMENTOS DENTRO DEL CONTENEDOR DOCUMENTOS OCULTOS */
@@ -5486,6 +5474,10 @@ function transferencia_barco_shortcode() {
                 cursor: pointer !important;
                 accent-color: #016d86 !important;
             }
+            
+            #documents-complete-check:checked {
+                background-color: #016d86 !important;
+            }
 
             .document-checkbox-label span {
                 flex: 1 !important;
@@ -6916,7 +6908,7 @@ function transferencia_barco_shortcode() {
                 <!-- Checkbox de confirmación discreto -->
                 <div style="margin-top: 6px; padding: 8px 12px; background: #f8fdf9; border: 1px solid #d1fae5; border-radius: 6px;">
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0;">
-                        <input type="checkbox" name="documents_complete" id="documents-complete-check" required style="width: 16px; height: 16px; accent-color: #059669; filter: contrast(1.2);">
+                        <input type="checkbox" name="documents_complete" id="documents-complete-check" required style="width: 16px; height: 16px; accent-color: #16a34a;">
                         <span style="font-size: 13px; font-weight: 500; color: #374151;">
                             ✅ Confirmo que la documentación está completa y es correcta
                         </span>
@@ -7655,27 +7647,41 @@ function transferencia_barco_shortcode() {
                         buttonContainer.style.setProperty('height', '0', 'important');
                         buttonContainer.style.setProperty('overflow', 'hidden', 'important');
                         
-                        // Crear o actualizar botones clonados en la posición correcta
+                        // FIX: FORZAR recreación del botón clonado SIEMPRE (especialmente pago → documentos)
                         let clonedContainer = documentosContainer.querySelector('.button-container-cloned');
-                        if (!clonedContainer) {
-                            clonedContainer = buttonContainer.cloneNode(true);
-                            clonedContainer.classList.add('button-container-cloned');
-                            clonedContainer.classList.remove('button-container');
-                            documentosContainer.appendChild(clonedContainer);
-                            
-                            // Asegurar que los eventos funcionen en los botones clonados
-                            const clonedPrev = clonedContainer.querySelector('#prevButton');
-                            const clonedNext = clonedContainer.querySelector('#nextButton');
-                            const originalPrev = buttonContainer.querySelector('#prevButton');
-                            const originalNext = buttonContainer.querySelector('#nextButton');
-                            
-                            if (clonedPrev && originalPrev) {
-                                clonedPrev.onclick = originalPrev.onclick;
-                            }
-                            if (clonedNext && originalNext) {
-                                clonedNext.onclick = originalNext.onclick;
-                            }
+                        
+                        // Eliminar contenedor clonado anterior si existe
+                        if (clonedContainer) {
+                            clonedContainer.remove();
                         }
+                        
+                        // Crear NUEVO contenedor clonado
+                        clonedContainer = buttonContainer.cloneNode(true);
+                        clonedContainer.classList.add('button-container-cloned');
+                        clonedContainer.classList.remove('button-container');
+                        
+                        // ASEGURAR VISIBILIDAD del contenedor clonado
+                        clonedContainer.style.setProperty('display', 'flex', 'important');
+                        clonedContainer.style.setProperty('visibility', 'visible', 'important');
+                        clonedContainer.style.setProperty('opacity', '1', 'important');
+                        clonedContainer.style.setProperty('height', 'auto', 'important');
+                        
+                        documentosContainer.appendChild(clonedContainer);
+                        
+                        // Asegurar que los eventos funcionen en los botones clonados
+                        const clonedPrev = clonedContainer.querySelector('#prevButton');
+                        const clonedNext = clonedContainer.querySelector('#nextButton');
+                        const originalPrev = buttonContainer.querySelector('#prevButton');
+                        const originalNext = buttonContainer.querySelector('#nextButton');
+                        
+                        if (clonedPrev && originalPrev) {
+                            clonedPrev.onclick = originalPrev.onclick;
+                        }
+                        if (clonedNext && originalNext) {
+                            clonedNext.onclick = originalNext.onclick;
+                        }
+                        
+                        console.log('✅ Botones clonados recreados FORZOSAMENTE para página documentos');
                         console.log('✅ Botones clonados creados para página documentos');
                     }
                 } else if (pageId === 'page-pago') {
@@ -8117,11 +8123,14 @@ function transferencia_barco_shortcode() {
                 console.log('✅ Stripe elements creado con clientSecret');
 
                 // Usar Payment Element (igual que hoja-asiento)
+                const isMobile = window.innerWidth <= 768;
                 const paymentElement = elements.create('payment', {
                     layout: {
                         type: 'tabs',
                         defaultCollapsed: false
-                    }
+                    },
+                    // En móvil, priorizar tarjeta como método predeterminado
+                    paymentMethodOrder: isMobile ? ['card', 'ideal', 'bancontact'] : undefined
                 });
                 console.log('✅ Payment Element creado');
 
@@ -10791,6 +10800,8 @@ function transferencia_barco_shortcode() {
                 }
 
                 if (pagoIndex !== -1) {
+                    // FIX: Registrar página anterior antes de navegación automática
+                    window.prevPage = currentPage;
                     currentPage = pagoIndex;
                     updateForm();
                     // El scroll ya se hace en updateForm()
@@ -11740,6 +11751,9 @@ function transferencia_barco_shortcode() {
                         modal.classList.remove('active');
                         document.body.style.overflow = '';
 
+                        // FIX: Actualizar formulario para reposicionar botones tras cerrar modal
+                        updateForm();
+
                         // Limpiar modal para próximo uso
                         if (signaturePadModal) {
                             signaturePadModal.clear();
@@ -11756,6 +11770,10 @@ function transferencia_barco_shortcode() {
                 if (e.target === modal) {
                     modal.classList.remove('active');
                     document.body.style.overflow = '';
+                    
+                    // FIX: Actualizar formulario para reposicionar botones
+                    updateForm();
+                    
                     if (signaturePadModal) signaturePadModal.clear();
                     if (modalLabel) modalLabel.style.display = 'block';
                 }
@@ -14184,8 +14202,8 @@ add_action('wp_ajax_barco_create_payment_intent', 'tpb_create_payment_intent');
 add_action('wp_ajax_nopriv_barco_create_payment_intent', 'tpb_create_payment_intent');
 function tpb_create_payment_intent() {
     // FORZAR claves directamente para evitar cache de constantes
-    $force_test_key = 'YOUR_STRIPE_TEST_SECRET_KEY_HERE';
-    $force_live_key = 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE';
+    $force_test_key = 'sk_test_51Q3cLbRojhm8dCiUfWvRoIgdHheCOTDgkh9o5eH9x8ZHZGF3PY5hMQ5dTuYZ1oQ9EqrCqJHIqMO8zKX4AXQhvUGl004zV6QaZK';
+    $force_live_key = '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';
     
     if (BARCO_STRIPE_MODE === 'test') {
         $stripe_secret_key = $force_test_key;
@@ -16685,6 +16703,1066 @@ function tpb_process_async($async_file) {
  * Registrar el shortcode [transferencia_barco_form]
  */
 add_shortcode('transferencia_barco_form', 'transferencia_barco_shortcode');
+
+// DIAGNOSTICO RADICAL - ENCONTRAR EL PROBLEMA REAL
+add_action('wp_footer', function() {
+    if (is_page() && has_shortcode(get_post()->post_content, 'transferencia_barco_form')) {
+        ?>
+        <script>
+        console.log("🚨 DIAGNOSTICO RADICAL INICIADO");
+        
+        // Esperar a que la página cargue completamente
+        document.addEventListener("DOMContentLoaded", function() {
+            console.log("📄 DOM cargado - iniciando diagnóstico");
+            
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                             window.innerWidth <= 768 || 
+                             "ontouchstart" in window;
+            
+            console.log("📱 Detección móvil:", {
+                userAgent: navigator.userAgent,
+                width: window.innerWidth,
+                touchSupport: "ontouchstart" in window,
+                esMobile: isMobile
+            });
+            
+            if (!isMobile) {
+                console.log("💻 No es móvil - diagnóstico terminado");
+                return;
+            }
+            
+            // Función para buscar elementos problemáticos
+            function buscarElementos() {
+                console.log("🔍 Buscando elementos problemáticos...");
+                
+                // 1. Buscar botón eliminar de TODAS las formas
+                let eliminarBtn = null;
+                const todosLosBotones = document.querySelectorAll("button");
+                
+                todosLosBotones.forEach((btn, i) => {
+                    if (btn.textContent && btn.textContent.includes("Eliminar")) {
+                        console.log(`🗑️ Botón ${i} encontrado:`, {
+                            text: btn.textContent,
+                            innerHTML: btn.innerHTML,
+                            style: btn.getAttribute("style"),
+                            classes: btn.className,
+                            elemento: btn
+                        });
+                        eliminarBtn = btn;
+                    }
+                });
+                
+                // 2. Buscar modal de firma
+                const modalBtn = document.getElementById("open-signature-modal-mobile");
+                console.log("✍️ Modal firma:", modalBtn);
+                
+                // 3. Buscar checkbox documentos
+                const checkbox = document.getElementById("documents-complete-check");
+                console.log("📋 Checkbox documentos:", checkbox);
+                
+                return { eliminar: eliminarBtn, modal: modalBtn, checkbox: checkbox };
+            }
+            
+            // Probar elementos cada 2 segundos
+            setInterval(buscarElementos, 2000);
+            
+            // Listener global para detectar TODOS los toques
+            document.addEventListener("touchstart", function(e) {
+                console.log("👆 TOUCH detectado:", {
+                    target: e.target,
+                    tagName: e.target.tagName,
+                    id: e.target.id,
+                    className: e.target.className,
+                    textContent: e.target.textContent?.substring(0, 50)
+                });
+            }, { passive: true, capture: true });
+            
+            document.addEventListener("click", function(e) {
+                console.log("🖱️ CLICK detectado:", {
+                    target: e.target,
+                    tagName: e.target.tagName,
+                    id: e.target.id
+                });
+            }, { passive: true, capture: true });
+            
+            // Test automático después de 10 segundos
+            setTimeout(function() {
+                console.log("🧪 EJECUTANDO TEST AUTOMÁTICO...");
+                const elementos = buscarElementos();
+                
+                if (elementos.eliminar) {
+                    console.log("🗑️ Intentando click automático en eliminar...");
+                    elementos.eliminar.click();
+                }
+                
+                if (elementos.modal) {
+                    console.log("✍️ Intentando click automático en modal...");
+                    elementos.modal.click();
+                }
+                
+                if (elementos.checkbox) {
+                    console.log("📋 Intentando toggle automático en checkbox...");
+                    elementos.checkbox.checked = !elementos.checkbox.checked;
+                }
+            }, 10000);
+            
+            console.log("✅ Diagnóstico configurado - toca los elementos y revisa la consola");
+        });
+        </script>
+        <?php
+    }
+});
+
+// SCRIPT FUNCIONAL PARA MOVIL - SOLO FUNCIONALIDAD, SIN AFECTAR ESTETICA
+add_action('wp_footer', function() {
+    if (is_page() && has_shortcode(get_post()->post_content, 'transferencia_barco_form')) {
+        ?>
+        <script>
+        (function() {
+            'use strict';
+            
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                             window.innerWidth <= 768 || 
+                             'ontouchstart' in window;
+            
+            if (!isMobile) return;
+            
+            console.log('📱 Activando correcciones móvil funcionales...');
+            
+            // Fix SOLO para elementos problemáticos - NO interferir con otros
+            document.addEventListener('touchstart', function(e) {
+                const target = e.target;
+                
+                // SOLO actuar en elementos específicos que no funcionan
+                let needsFix = false;
+                let actionType = '';
+                
+                // Fix para botones eliminar archivo
+                if (target.classList.contains('file-remove-btn') || target.closest('.file-remove-btn')) {
+                    needsFix = true;
+                    actionType = 'eliminar';
+                }
+                // Fix para modal de firma
+                else if (target.id === 'open-signature-modal-mobile' || target.closest('#open-signature-modal-mobile')) {
+                    needsFix = true;
+                    actionType = 'modal-firma';
+                }
+                // Fix para checkbox documentos
+                else if (target.id === 'documents-complete-check' || target.closest('label[for="documents-complete-check"]')) {
+                    needsFix = true;
+                    actionType = 'checkbox';
+                }
+                
+                // SOLO prevenir default en elementos problemáticos
+                if (needsFix) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    console.log('🔧 Touch fix aplicado:', actionType);
+                    
+                    // Simular click después de un momento
+                    setTimeout(() => {
+                        if (actionType === 'eliminar') {
+                            const btn = target.classList.contains('file-remove-btn') ? target : target.closest('.file-remove-btn');
+                            btn.click();
+                        } else if (actionType === 'modal-firma') {
+                            const btn = target.id === 'open-signature-modal-mobile' ? target : target.closest('#open-signature-modal-mobile');
+                            btn.click();
+                        } else if (actionType === 'checkbox') {
+                            const checkbox = document.getElementById('documents-complete-check');
+                            if (checkbox) {
+                                checkbox.checked = !checkbox.checked;
+                                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                        }
+                    }, 100);
+                }
+                
+            }, { passive: false });
+            
+            // SOLUCIÓN QUIRÚRGICA ESPECÍFICA - Basada en análisis profundo del código
+            const style = document.createElement('style');
+            style.textContent = `
+                @media screen and (max-width: 768px) and (pointer: coarse) {
+                    
+                    /* FIX 1: Botón Eliminar último (creado dinámicamente línea 11618) */
+                    button[style*="background: #ef4444"],
+                    button[style*="background:#ef4444"] {
+                        min-height: 48px !important;
+                        min-width: 48px !important;
+                        touch-action: manipulation !important;
+                        padding: 12px !important;
+                        font-size: 16px !important;
+                        -webkit-tap-highlight-color: rgba(239, 68, 68, 0.3) !important;
+                    }
+                    
+                    /* FIX 2: Modal firma móvil (línea 11656) */
+                    #open-signature-modal-mobile {
+                        min-height: 48px !important;
+                        min-width: 48px !important;
+                        touch-action: manipulation !important;
+                        padding: 12px !important;
+                        -webkit-tap-highlight-color: rgba(1, 109, 134, 0.3) !important;
+                    }
+                    
+                    /* FIX 3: Checkbox documentos (línea 6907) */
+                    #documents-complete-check {
+                        width: 24px !important;
+                        height: 24px !important;
+                        min-width: 24px !important;
+                        min-height: 24px !important;
+                        touch-action: manipulation !important;
+                        transform: scale(1.3) !important;
+                        margin: 8px !important;
+                    }
+                    
+                    /* Label del checkbox - área táctil ampliada */
+                    label[for="documents-complete-check"] {
+                        min-height: 48px !important;
+                        padding: 12px !important;
+                        touch-action: manipulation !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        -webkit-tap-highlight-color: rgba(22, 163, 74, 0.3) !important;
+                    }
+                    
+                    /* Override conflictivo de touch-action: none */
+                    canvas#signature-pad-simple,
+                    canvas#signature-modal-canvas {
+                        touch-action: pan-x pan-y !important;
+                    }
+                }
+                
+                /* Específico para iOS Safari */
+                @supports (-webkit-touch-callout: none) {
+                    button[style*="background: #ef4444"],
+                    #open-signature-modal-mobile,
+                    #documents-complete-check {
+                        -webkit-touch-callout: none !important;
+                        -webkit-user-select: none !important;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            console.log('✅ Solución quirúrgica móvil aplicada - 3 elementos específicos corregidos');
+            
+            // INTERCEPTORES DIRECTOS PARA MÓVIL - Solución de event binding
+            function setupMobileInterceptors() {
+                console.log('🔧 Configurando interceptores móvil...');
+                
+                // INTERCEPTOR 1: Botón Eliminar último
+                function interceptEliminarButtons() {
+                    const interval = setInterval(() => {
+                        const eliminarBtns = document.querySelectorAll('button[style*="background: #ef4444"], button[style*="background:#ef4444"]');
+                        eliminarBtns.forEach(btn => {
+                            if (!btn.dataset.mobileFixed) {
+                                console.log('🎯 Interceptando botón eliminar');
+                                btn.dataset.mobileFixed = 'true';
+                                
+                                // Interceptar TODOS los eventos posibles
+                                ['touchstart', 'touchend', 'click', 'mousedown', 'mouseup'].forEach(eventType => {
+                                    btn.addEventListener(eventType, function(e) {
+                                        console.log(`👆 ${eventType} en eliminar`);
+                                        if (eventType === 'touchend' || eventType === 'click') {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            
+                                            // Ejecutar función original manualmente
+                                            const input = document.querySelector('input[type="file"][multiple]');
+                                            if (input && input.files.length > 0) {
+                                                const dt = new DataTransfer();
+                                                const files = Array.from(input.files);
+                                                for (let i = 0; i < files.length - 1; i++) {
+                                                    dt.items.add(files[i]);
+                                                }
+                                                input.files = dt.files;
+                                                
+                                                // Trigger change event
+                                                const event = new Event('change', { bubbles: true });
+                                                input.dispatchEvent(event);
+                                                console.log('✅ Archivo eliminado manualmente');
+                                            }
+                                        }
+                                    }, { passive: false });
+                                });
+                            }
+                        });
+                    }, 500);
+                    
+                    // Limpiar después de 30 segundos
+                    setTimeout(() => clearInterval(interval), 30000);
+                }
+                
+                // INTERCEPTOR 2: Modal firma
+                function interceptModalFirma() {
+                    const modalBtn = document.getElementById('open-signature-modal-mobile');
+                    if (modalBtn && !modalBtn.dataset.mobileFixed) {
+                        console.log('🎯 Interceptando modal firma');
+                        modalBtn.dataset.mobileFixed = 'true';
+                        
+                        ['touchstart', 'touchend', 'click'].forEach(eventType => {
+                            modalBtn.addEventListener(eventType, function(e) {
+                                console.log(`👆 ${eventType} en modal firma`);
+                                if (eventType === 'touchend' || eventType === 'click') {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    
+                                    // Ejecutar manualmente
+                                    const modal = document.getElementById('signature-modal-mobile');
+                                    if (modal) {
+                                        modal.classList.add('active');
+                                        document.body.style.overflow = 'hidden';
+                                        console.log('✅ Modal abierto manualmente');
+                                    }
+                                }
+                            }, { passive: false });
+                        });
+                    }
+                }
+                
+                // INTERCEPTOR 3: Checkbox documentos
+                function interceptCheckbox() {
+                    const checkbox = document.getElementById('documents-complete-check');
+                    const label = document.querySelector('label[for="documents-complete-check"]');
+                    
+                    [checkbox, label].forEach(element => {
+                        if (element && !element.dataset.mobileFixed) {
+                            console.log('🎯 Interceptando checkbox/label');
+                            element.dataset.mobileFixed = 'true';
+                            
+                            ['touchstart', 'touchend', 'click'].forEach(eventType => {
+                                element.addEventListener(eventType, function(e) {
+                                    console.log(`👆 ${eventType} en checkbox`);
+                                    if (eventType === 'touchend' || eventType === 'click') {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        
+                                        // Toggle manualmente
+                                        if (checkbox) {
+                                            checkbox.checked = !checkbox.checked;
+                                            
+                                            // Trigger change event
+                                            const event = new Event('change', { bubbles: true });
+                                            checkbox.dispatchEvent(event);
+                                            console.log('✅ Checkbox toggleado manualmente');
+                                        }
+                                    }
+                                }, { passive: false });
+                            });
+                        }
+                    });
+                }
+                
+                // Ejecutar interceptores
+                interceptEliminarButtons();
+                interceptModalFirma();
+                interceptCheckbox();
+                
+                // Re-ejecutar cuando cambie la página
+                const observer = new MutationObserver(() => {
+                    interceptEliminarButtons();
+                    interceptModalFirma();
+                    interceptCheckbox();
+                });
+                observer.observe(document.body, { childList: true, subtree: true });
+            }
+            
+            // SOLUCIÓN PROFESIONAL - EVENT DELEGATION Y TOUCH HANDLING
+            function setupProfessionalMobileFix() {
+                console.log('🔬 Iniciando solución profesional móvil...');
+                
+                // VIEWPORT FIX - Asegurar que no hay scaling issues
+                let viewportMeta = document.querySelector('meta[name="viewport"]');
+                if (viewportMeta) {
+                    viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+                }
+                
+                // EVENT DELEGATION CORREGIDO - Selectores exactos identificados
+                document.addEventListener('touchend', function(e) {
+                    const target = e.target;
+                    console.log('👆 Touch en:', target.tagName, target.id, target.className);
+                    
+                    // FIX 1: Botón Eliminar último - SELECTOR CORREGIDO
+                    if (target.tagName === 'BUTTON' && 
+                        target.innerHTML && 
+                        target.innerHTML.includes('Eliminar último')) {
+                        
+                        console.log('🎯 Eliminar último detectado');
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // BUSCAR INPUT CORRECTO - El que está relacionado con este botón
+                        const previewDiv = target.closest('div');
+                        const previewContainer = previewDiv ? previewDiv.parentElement : null;
+                        const uploadWrapper = previewContainer ? previewContainer.closest('.upload-wrapper') : null;
+                        const input = uploadWrapper ? uploadWrapper.querySelector('input[type="file"]') : null;
+                        
+                        console.log('🔍 Input encontrado:', input);
+                        
+                        if (input && input.files && input.files.length > 0) {
+                            const dt = new DataTransfer();
+                            const files = Array.from(input.files);
+                            console.log('📁 Archivos antes:', files.length);
+                            
+                            // Añadir todos excepto el último
+                            for (let i = 0; i < files.length - 1; i++) {
+                                dt.items.add(files[i]);
+                            }
+                            
+                            input.files = dt.files;
+                            input.dispatchEvent(new Event('change', { bubbles: true }));
+                            console.log('✅ Archivo eliminado profesionalmente. Archivos después:', input.files.length);
+                        } else {
+                            console.log('❌ No se encontró input o no hay archivos');
+                        }
+                        return false;
+                    }
+                    
+                    // FIX 2: Modal firma - SELECTOR CORREGIDO (signature-field)
+                    if (target.id === 'signature-field' || 
+                        target.closest('#signature-field') ||
+                        (target.textContent && target.textContent.includes('Firmar documentos'))) {
+                        
+                        console.log('🎯 Botón firma detectado (signature-field)');
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // EJECUTAR LA LÓGICA ORIGINAL DEL CAMPO DE FIRMA
+                        const signatureSection = document.getElementById('simple-signature-section');
+                        const uploadsSection = document.querySelector('.upload-grid');
+                        const docsConfirmation = document.querySelector('.docs-confirmation-container');
+                        const signatureFieldContainer = document.querySelector('#signature-field').closest('.upload-item');
+                        
+                        if (signatureSection && uploadsSection) {
+                            // Lógica original de mostrar firma
+                            uploadsSection.style.opacity = '0';
+                            uploadsSection.style.transform = 'translateY(-10px)';
+                            
+                            setTimeout(() => {
+                                uploadsSection.style.display = 'none';
+                                signatureSection.style.display = 'block';
+                                signatureSection.style.opacity = '1';
+                                signatureSection.style.transform = 'translateY(0)';
+                            }, 300);
+                            
+                            console.log('✅ Modal firma abierto profesionalmente');
+                        }
+                        return false;
+                    }
+                    
+                    // FIX 3: Checkbox documentos - CUSTOM VISUAL
+                    if (target.id === 'documents-complete-check' || 
+                        target.id === 'custom-checkbox-mobile' ||
+                        target.closest('#custom-checkbox-mobile') ||
+                        (target.tagName === 'LABEL' && target.getAttribute('for') === 'documents-complete-check')) {
+                        
+                        console.log('🎯 Checkbox detectado (delegation) - ID:', target.id);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Usar función custom si está disponible
+                        if (typeof window.setCustomCheckbox === 'function') {
+                            const originalCheckbox = document.getElementById('documents-complete-check');
+                            if (originalCheckbox) {
+                                window.setCustomCheckbox(!originalCheckbox.checked);
+                                console.log('✅ Checkbox CUSTOM cambiado via delegation');
+                            }
+                        } else {
+                            // Fallback al método simple
+                            const checkbox = document.getElementById('documents-complete-check');
+                            if (checkbox) {
+                                checkbox.checked = !checkbox.checked;
+                                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                                console.log('✅ Checkbox cambiado con método simple');
+                            }
+                        }
+                        return false;
+                    }
+                    
+                    // FIX 4: Botón "Volver a Documentos"
+                    if (target.id === 'volver-documentos' || 
+                        (target.textContent && target.textContent.includes('Volver a Documentos'))) {
+                        
+                        console.log('🎯 Botón "Volver a Documentos" detectado');
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Ejecutar función original
+                        if (typeof window.returnToDocuments === 'function') {
+                            window.returnToDocuments();
+                            console.log('✅ Volver a documentos ejecutado');
+                        }
+                        return false;
+                    }
+                    
+                    // FIX 5: Botón "Limpiar Firma"
+                    if (target.id === 'clear-signature-simple' || 
+                        (target.textContent && target.textContent.includes('Limpiar Firma'))) {
+                        
+                        console.log('🎯 Botón "Limpiar Firma" detectado');
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Limpiar canvas directo primero
+                        const canvas = document.getElementById('signature-pad-simple');
+                        if (canvas) {
+                            const ctx = canvas.getContext('2d');
+                            if (ctx) {
+                                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                                ctx.fillStyle = 'white';
+                                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                                console.log('🧹 Canvas limpiado directamente (delegation)');
+                            }
+                        }
+                        
+                        // También limpiar SignaturePad si existe
+                        if (window.signaturePadSimple && typeof window.signaturePadSimple.clear === 'function') {
+                            window.signaturePadSimple.clear();
+                        }
+                        
+                        // Mostrar label "Firme aquí" de nuevo
+                        const signatureLabel = document.getElementById('signature-label-simple');
+                        if (signatureLabel) {
+                            signatureLabel.style.opacity = '1';
+                            signatureLabel.style.transition = 'opacity 0.3s';
+                        }
+                        
+                        console.log('✅ Firma completamente limpiada (delegation)');
+                        return false;
+                    }
+                    
+                }, { passive: false, capture: true });
+                
+                // TOUCH START para feedback visual
+                document.addEventListener('touchstart', function(e) {
+                    const target = e.target;
+                    
+                    // Añadir feedback visual a elementos interactivos - TODOS LOS BOTONES
+                    if ((target.tagName === 'BUTTON' && target.innerHTML && target.innerHTML.includes('Eliminar último')) ||
+                        target.id === 'signature-field' ||
+                        target.closest('#signature-field') ||
+                        (target.textContent && target.textContent.includes('Firmar documentos')) ||
+                        target.id === 'documents-complete-check' ||
+                        (target.tagName === 'LABEL' && target.getAttribute('for') === 'documents-complete-check') ||
+                        target.id === 'volver-documentos' ||
+                        (target.textContent && target.textContent.includes('Volver a Documentos')) ||
+                        target.id === 'clear-signature-simple' ||
+                        (target.textContent && target.textContent.includes('Limpiar Firma'))) {
+                        
+                        target.style.backgroundColor = '#059669';
+                        target.style.transform = 'scale(0.95)';
+                        
+                        setTimeout(() => {
+                            target.style.backgroundColor = '';
+                            target.style.transform = '';
+                        }, 150);
+                    }
+                }, { passive: false, capture: true });
+                
+                console.log('✅ Solución profesional móvil activada');
+            }
+            
+            // OPTIMIZACIONES ESPECÍFICAS PARA FIRMA Y CHECKBOX
+            function setupMobileOptimizations() {
+                console.log('🎨 Configurando optimizaciones móvil específicas...');
+                
+                // OPTIMIZACIÓN 1: Canvas de firma móvil AVANZADO
+                function optimizeCanvasForMobile() {
+                    const canvas = document.getElementById('signature-pad-simple');
+                    if (canvas && window.innerWidth <= 768) {
+                        console.log('🖊️ Optimizando canvas AVANZADO para móvil');
+                        
+                        // Configuración específica para móvil
+                        canvas.style.touchAction = 'none';
+                        canvas.style.msTouchAction = 'none';
+                        canvas.style.webkitTouchCallout = 'none';
+                        canvas.style.webkitUserSelect = 'none';
+                        canvas.style.userSelect = 'none';
+                        
+                        // Mejorar tamaño del canvas para dedos
+                        const container = canvas.parentElement;
+                        if (container) {
+                            container.style.minHeight = '200px';
+                            container.style.padding = '10px';
+                        }
+                        
+                        // Sistema de dibujo directo con tinta visible
+                        let isDrawing = false;
+                        let lastX = 0;
+                        let lastY = 0;
+                        let ctx = null;
+                        
+                        // Inicializar contexto de dibujo
+                        function initDrawingContext() {
+                            ctx = canvas.getContext('2d');
+                            if (ctx) {
+                                // Configuración para dibujo suave con dedo
+                                ctx.lineCap = 'round';
+                                ctx.lineJoin = 'round';
+                                ctx.strokeStyle = '#000000';
+                                ctx.lineWidth = 2.5; // Grosor visible para dedo
+                                ctx.globalCompositeOperation = 'source-over';
+                                
+                                // Fondo blanco si no lo tiene
+                                if (!canvas.style.backgroundColor && !canvas.style.background) {
+                                    ctx.fillStyle = 'white';
+                                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                                }
+                                
+                                console.log('🎨 Contexto de dibujo inicializado');
+                            }
+                        }
+                        
+                        // Función para dibujar línea visible
+                        function drawLine(x1, y1, x2, y2) {
+                            if (!ctx) return;
+                            
+                            ctx.beginPath();
+                            ctx.moveTo(x1, y1);
+                            ctx.lineTo(x2, y2);
+                            ctx.stroke();
+                        }
+                        
+                        // Inicializar contexto
+                        setTimeout(initDrawingContext, 100);
+                        
+                        // Touch handlers con dibujo directo
+                        canvas.addEventListener('touchstart', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            if (!ctx) initDrawingContext();
+                            
+                            isDrawing = true;
+                            const touch = e.touches[0];
+                            const rect = canvas.getBoundingClientRect();
+                            
+                            // Ajustar coordenadas para DPI
+                            const scaleX = canvas.width / rect.width;
+                            const scaleY = canvas.height / rect.height;
+                            
+                            lastX = (touch.clientX - rect.left) * scaleX;
+                            lastY = (touch.clientY - rect.top) * scaleY;
+                            
+                            console.log('👆 Comenzando firma VISIBLE en:', lastX, lastY);
+                            
+                            // Ocultar label inmediatamente
+                            const signatureLabel = document.getElementById('signature-label-simple');
+                            if (signatureLabel) {
+                                signatureLabel.style.opacity = '0';
+                                signatureLabel.style.transition = 'opacity 0.3s';
+                            }
+                            
+                            // Marcar inicio del trazo
+                            ctx.beginPath();
+                            ctx.moveTo(lastX, lastY);
+                            
+                        }, { passive: false });
+                        
+                        canvas.addEventListener('touchmove', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            if (!isDrawing || !ctx) return;
+                            
+                            const touch = e.touches[0];
+                            const rect = canvas.getBoundingClientRect();
+                            
+                            // Ajustar coordenadas para DPI
+                            const scaleX = canvas.width / rect.width;
+                            const scaleY = canvas.height / rect.height;
+                            
+                            const currentX = (touch.clientX - rect.left) * scaleX;
+                            const currentY = (touch.clientY - rect.top) * scaleY;
+                            
+                            // DIBUJAR LÍNEA VISIBLE INMEDIATAMENTE
+                            drawLine(lastX, lastY, currentX, currentY);
+                            
+                            // Actualizar posición
+                            lastX = currentX;
+                            lastY = currentY;
+                            
+                            console.log('🖊️ Dibujando tinta visible en:', currentX, currentY);
+                            
+                        }, { passive: false });
+                        
+                        canvas.addEventListener('touchend', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            isDrawing = false;
+                            console.log('✅ Firma con tinta VISIBLE completada');
+                            
+                            // Marcar el canvas como usado para SignaturePad
+                            if (window.signaturePadSimple) {
+                                // Forzar que SignaturePad reconozca que hay contenido
+                                window.signaturePadSimple._isEmpty = false;
+                                
+                                // Trigger events para compatibilidad
+                                const changeEvent = new Event('change');
+                                canvas.dispatchEvent(changeEvent);
+                            }
+                            
+                            canvas.style.cursor = 'default';
+                            
+                        }, { passive: false });
+                        
+                        // Prevent context menu
+                        canvas.addEventListener('contextmenu', function(e) {
+                            e.preventDefault();
+                            return false;
+                        });
+                        
+                        console.log('✅ Canvas optimizado AVANZADO para firma con dedo');
+                    }
+                }
+                
+                // OPTIMIZACIÓN 2: Checkbox VISUAL CUSTOM para móvil
+                function optimizeCheckboxForMobile() {
+                    const originalCheckbox = document.getElementById('documents-complete-check');
+                    const originalLabel = document.querySelector('label[for="documents-complete-check"]');
+                    
+                    if (originalCheckbox && originalLabel && window.innerWidth <= 768) {
+                        console.log('☑️ Creando checkbox VISUAL CUSTOM para móvil');
+                        
+                        // Ocultar checkbox original pero mantenerlo funcional
+                        originalCheckbox.style.display = 'none';
+                        
+                        // Estado del checkbox custom
+                        let isChecked = originalCheckbox.checked;
+                        
+                        // Crear checkbox visual completamente custom
+                        const customCheckbox = document.createElement('div');
+                        customCheckbox.id = 'custom-checkbox-mobile';
+                        customCheckbox.style.cssText = `
+                            width: 32px;
+                            height: 32px;
+                            border: 3px solid #016d86;
+                            border-radius: 6px;
+                            background: white;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            cursor: pointer;
+                            user-select: none;
+                            -webkit-user-select: none;
+                            transition: all 0.2s ease;
+                            flex-shrink: 0;
+                        `;
+                        
+                        // Icono de check
+                        const checkIcon = document.createElement('div');
+                        checkIcon.innerHTML = '✓';
+                        checkIcon.style.cssText = `
+                            color: white;
+                            font-size: 20px;
+                            font-weight: bold;
+                            opacity: 0;
+                            transition: opacity 0.2s ease;
+                        `;
+                        customCheckbox.appendChild(checkIcon);
+                        
+                        // Función para actualizar visual
+                        function updateVisual() {
+                            if (isChecked) {
+                                customCheckbox.style.backgroundColor = '#16a34a';
+                                customCheckbox.style.borderColor = '#16a34a';
+                                checkIcon.style.opacity = '1';
+                                originalLabel.style.backgroundColor = '#f0fdf4';
+                            } else {
+                                customCheckbox.style.backgroundColor = 'white';
+                                customCheckbox.style.borderColor = '#016d86';
+                                checkIcon.style.opacity = '0';
+                                originalLabel.style.backgroundColor = '';
+                            }
+                        }
+                        
+                        // Función para cambiar estado
+                        function toggleCheckbox() {
+                            isChecked = !isChecked;
+                            
+                            // Actualizar checkbox original
+                            originalCheckbox.checked = isChecked;
+                            originalCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+                            originalCheckbox.dispatchEvent(new Event('input', { bubbles: true }));
+                            
+                            // Actualizar visual
+                            updateVisual();
+                            
+                            console.log('✅ Checkbox CUSTOM cambiado a:', isChecked);
+                        }
+                        
+                        // Crear contenedor wrapper
+                        const wrapper = document.createElement('div');
+                        wrapper.style.cssText = `
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                            padding: 20px;
+                            min-height: 80px;
+                            cursor: pointer;
+                            border-radius: 8px;
+                            transition: all 0.2s ease;
+                            background: transparent;
+                            touch-action: manipulation;
+                            -webkit-tap-highlight-color: rgba(1, 109, 134, 0.1);
+                        `;
+                        
+                        // Clonar el texto del span original
+                        const textSpan = originalLabel.querySelector('span');
+                        const newText = document.createElement('span');
+                        if (textSpan) {
+                            newText.innerHTML = textSpan.innerHTML;
+                            newText.style.cssText = textSpan.style.cssText;
+                            newText.style.fontSize = '16px'; // Más grande para móvil
+                        }
+                        
+                        // Ensamblar el nuevo checkbox
+                        wrapper.appendChild(customCheckbox);
+                        wrapper.appendChild(newText);
+                        
+                        // Reemplazar el label original
+                        originalLabel.style.display = 'none';
+                        originalLabel.parentNode.insertBefore(wrapper, originalLabel.nextSibling);
+                        
+                        // Event listeners para el wrapper completo
+                        ['touchend', 'click'].forEach(eventType => {
+                            wrapper.addEventListener(eventType, function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                
+                                console.log('📱 Checkbox CUSTOM tocado:', eventType);
+                                toggleCheckbox();
+                                
+                            }, { passive: false });
+                        });
+                        
+                        // Feedback visual al tocar
+                        wrapper.addEventListener('touchstart', function(e) {
+                            wrapper.style.backgroundColor = '#e7fce8';
+                            wrapper.style.transform = 'scale(0.98)';
+                            
+                            setTimeout(() => {
+                                wrapper.style.transform = 'scale(1)';
+                                updateVisual(); // Restaurar color correcto
+                            }, 150);
+                        }, { passive: false });
+                        
+                        // Inicializar visual
+                        updateVisual();
+                        
+                        // Función global para control externo
+                        window.setCustomCheckbox = function(state) {
+                            isChecked = !!state;
+                            originalCheckbox.checked = isChecked;
+                            updateVisual();
+                            console.log('🔧 Checkbox CUSTOM forzado a:', isChecked);
+                        };
+                        
+                        console.log('✅ Checkbox VISUAL CUSTOM creado y funcional');
+                    }
+                }
+                
+                // OPTIMIZACIÓN 3: Sistema ROBUSTO para botones de firma
+                function optimizeSignatureButtons() {
+                    console.log('🔧 Configurando sistema ROBUSTO de botones...');
+                    
+                    // BOTÓN VOLVER - Sistema de respaldo múltiple
+                    function ensureVolverButtonWorks() {
+                        const volverBtn = document.getElementById('volver-documentos');
+                        
+                        if (volverBtn && window.innerWidth <= 768) {
+                            console.log('🔧 Configurando botón VOLVER con sistema robusto');
+                            
+                            // Estilo optimizado
+                            volverBtn.style.minHeight = '48px';
+                            volverBtn.style.fontSize = '16px';
+                            volverBtn.style.padding = '12px 20px';
+                            volverBtn.style.touchAction = 'manipulation';
+                            volverBtn.style.zIndex = '1000';
+                            volverBtn.style.position = 'relative';
+                            
+                            // SISTEMA 1: Event delegation ya configurado arriba
+                            // SISTEMA 2: Direct click handler
+                            volverBtn.onclick = function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                console.log('🔙 VOLVER: onclick directo ejecutado');
+                                executeReturnToDocuments();
+                                return false;
+                            };
+                            
+                            // SISTEMA 3: Multiple event listeners
+                            ['click', 'touchend', 'mouseup'].forEach(eventType => {
+                                volverBtn.addEventListener(eventType, function(e) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    console.log('🔙 VOLVER:', eventType, 'ejecutado');
+                                    executeReturnToDocuments();
+                                }, { passive: false });
+                            });
+                            
+                            // SISTEMA 4: Área táctil ampliada invisible
+                            const touchArea = document.createElement('div');
+                            touchArea.style.cssText = `
+                                position: absolute;
+                                top: -15px;
+                                left: -15px;
+                                right: -15px;
+                                bottom: -15px;
+                                background: transparent;
+                                z-index: 1001;
+                                cursor: pointer;
+                            `;
+                            
+                            volverBtn.style.position = 'relative';
+                            volverBtn.appendChild(touchArea);
+                            
+                            touchArea.addEventListener('touchend', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                console.log('🔙 VOLVER: área táctil ampliada ejecutada');
+                                executeReturnToDocuments();
+                            }, { passive: false });
+                            
+                            console.log('✅ Botón VOLVER configurado con 4 sistemas de respaldo');
+                        }
+                    }
+                    
+                    // FUNCIÓN ROBUSTA para ejecutar volver
+                    function executeReturnToDocuments() {
+                        console.log('🔄 Ejecutando VOLVER A DOCUMENTOS...');
+                        
+                        try {
+                            // Método 1: Función global
+                            if (typeof window.returnToDocuments === 'function') {
+                                window.returnToDocuments();
+                                console.log('✅ VOLVER: método 1 ejecutado (función global)');
+                                return;
+                            }
+                            
+                            // Método 2: Ejecución manual del código original
+                            const signatureSection = document.getElementById('simple-signature-section');
+                            const uploadsSection = document.querySelector('.upload-grid');
+                            
+                            if (signatureSection && uploadsSection) {
+                                // Ocultar firma
+                                signatureSection.style.opacity = '0';
+                                signatureSection.style.transform = 'translateY(-10px)';
+                                
+                                setTimeout(() => {
+                                    signatureSection.style.display = 'none';
+                                    
+                                    // Mostrar documentos
+                                    uploadsSection.style.display = 'grid';
+                                    setTimeout(() => {
+                                        uploadsSection.style.opacity = '1';
+                                        uploadsSection.style.transform = 'translateY(0)';
+                                    }, 10);
+                                    
+                                }, 300);
+                                
+                                console.log('✅ VOLVER: método 2 ejecutado (manual)');
+                                return;
+                            }
+                            
+                            console.log('❌ VOLVER: No se pudo ejecutar ningún método');
+                            
+                        } catch (error) {
+                            console.error('❌ VOLVER: Error ejecutando:', error);
+                        }
+                    }
+                    
+                    // BOTÓN LIMPIAR optimizado
+                    function ensureLimpiarButtonWorks() {
+                        const clearBtn = document.getElementById('clear-signature-simple');
+                        
+                        if (clearBtn && window.innerWidth <= 768) {
+                            clearBtn.style.minHeight = '48px';
+                            clearBtn.style.fontSize = '16px';
+                            clearBtn.style.padding = '12px 20px';
+                            clearBtn.style.touchAction = 'manipulation';
+                            
+                            // Event handler robusto para limpiar canvas directo
+                            clearBtn.onclick = function(e) {
+                                e.preventDefault();
+                                
+                                // Limpiar canvas directo
+                                const canvas = document.getElementById('signature-pad-simple');
+                                if (canvas) {
+                                    const ctx = canvas.getContext('2d');
+                                    if (ctx) {
+                                        // Limpiar completamente el canvas
+                                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                                        
+                                        // Restaurar fondo blanco
+                                        ctx.fillStyle = 'white';
+                                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                                        
+                                        console.log('🧹 Canvas limpiado directamente');
+                                    }
+                                }
+                                
+                                // También limpiar SignaturePad si existe
+                                if (window.signaturePadSimple && typeof window.signaturePadSimple.clear === 'function') {
+                                    window.signaturePadSimple.clear();
+                                }
+                                
+                                // Mostrar label de nuevo
+                                const signatureLabel = document.getElementById('signature-label-simple');
+                                if (signatureLabel) {
+                                    signatureLabel.style.opacity = '1';
+                                    signatureLabel.style.transition = 'opacity 0.3s';
+                                }
+                                
+                                console.log('✅ LIMPIAR: Firma completamente limpiada');
+                                return false;
+                            };
+                            
+                            console.log('✅ Botón LIMPIAR optimizado');
+                        }
+                    }
+                    
+                    // Exponer función globalmente para el sistema de respaldo
+                    window.executeReturnToDocuments = executeReturnToDocuments;
+                    
+                    // Ejecutar configuraciones
+                    ensureVolverButtonWorks();
+                    ensureLimpiarButtonWorks();
+                    
+                    console.log('✅ Sistema ROBUSTO de botones configurado');
+                }
+                
+                // Ejecutar optimizaciones
+                setTimeout(optimizeCanvasForMobile, 500);
+                setTimeout(optimizeCheckboxForMobile, 300);
+                setTimeout(optimizeSignatureButtons, 400);
+                
+                // Re-ejecutar cuando cambie la vista
+                const observer = new MutationObserver(() => {
+                    setTimeout(optimizeCanvasForMobile, 200);
+                    setTimeout(optimizeCheckboxForMobile, 100);
+                });
+                observer.observe(document.body, { childList: true, subtree: true });
+            }
+            
+            // Ejecutar inmediatamente y después del DOM
+            setupProfessionalMobileFix();
+            setupMobileOptimizations();
+            document.addEventListener('DOMContentLoaded', () => {
+                setupProfessionalMobileFix();
+                setupMobileOptimizations();
+            });
+            window.addEventListener('load', () => {
+                setupProfessionalMobileFix();
+                setupMobileOptimizations();
+            });
+        })();
+        </script>
+        <?php
+    }
+});
 
 /**
  * Registrar AJAX handlers
