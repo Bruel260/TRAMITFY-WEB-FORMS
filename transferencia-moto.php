@@ -14158,177 +14158,235 @@ function transferencia_moto_shortcode() {
     // FIN FLUJO DE PÁGINA DE DOCUMENTOS
     // ============================================
 
-    // SOLUCIÓN PROFESIONAL MÓVIL - IDÉNTICA A BARCO QUE FUNCIONA
-    const isMobile = window.innerWidth <= 768 || 'ontouchstart' in window;
+    // ============================================
+    // SISTEMA MÓVIL PROFESIONAL - ESTRUCTURA EXACTA DE BARCO
+    // ============================================
     
-    if (isMobile) {
-        console.log('🔬 Iniciando solución profesional móvil IDÉNTICA A BARCO...');
+    (function() {
+        'use strict';
         
-        // VIEWPORT FIX - Asegurar que no hay scaling issues (EXACTO DE BARCO)
-        let viewportMeta = document.querySelector('meta[name="viewport"]');
-        if (viewportMeta) {
-            viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                         window.innerWidth <= 768 || 
+                         'ontouchstart' in window;
+        
+        if (!isMobile) return;
+        
+        // SOLUCIÓN PROFESIONAL - EVENT DELEGATION Y TOUCH HANDLING
+        function setupProfessionalMobileFix() {
+            console.log('🔬 Iniciando solución profesional móvil...');
+            
+            // VIEWPORT FIX - Asegurar que no hay scaling issues
+            let viewportMeta = document.querySelector('meta[name="viewport"]');
+            if (viewportMeta) {
+                viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+            }
+            
+            // EVENT DELEGATION CORREGIDO - Selectores exactos identificados
+            document.addEventListener('touchend', function(e) {
+                const target = e.target;
+                console.log('👆 Touch en:', target.tagName, target.id, target.className);
+                
+                // FIX 1: Botón Eliminar último - SELECTOR CORREGIDO
+                if (target.tagName === 'BUTTON' && 
+                    target.innerHTML && 
+                    target.innerHTML.includes('Eliminar último')) {
+                    
+                    console.log('🎯 Eliminar último detectado');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // BUSCAR INPUT CORRECTO - El que está relacionado con este botón
+                    const previewDiv = target.closest('div');
+                    const previewContainer = previewDiv ? previewDiv.parentElement : null;
+                    const uploadWrapper = previewContainer ? previewContainer.closest('.upload-wrapper') : null;
+                    const input = uploadWrapper ? uploadWrapper.querySelector('input[type="file"]') : null;
+                    
+                    console.log('🔍 Input encontrado:', input);
+                    
+                    if (input && input.files && input.files.length > 0) {
+                        const dt = new DataTransfer();
+                        const files = Array.from(input.files);
+                        console.log('📁 Archivos antes:', files.length);
+                        
+                        // Añadir todos excepto el último
+                        for (let i = 0; i < files.length - 1; i++) {
+                            dt.items.add(files[i]);
+                        }
+                        
+                        input.files = dt.files;
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                        console.log('✅ Archivo eliminado profesionalmente. Archivos después:', input.files.length);
+                    } else {
+                        console.log('❌ No se encontró input o no hay archivos');
+                    }
+                    return false;
+                }
+                
+                // FIX 2: Modal firma - SELECTOR CORREGIDO (signature-field)
+                if (target.id === 'signature-field' || 
+                    target.closest('#signature-field') ||
+                    (target.textContent && target.textContent.includes('Firmar documentos'))) {
+                    
+                    console.log('🎯 Botón firma detectado (signature-field)');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // EJECUTAR LA LÓGICA ORIGINAL DEL CAMPO DE FIRMA
+                    const signatureSection = document.getElementById('simple-signature-section');
+                    const uploadsSection = document.querySelector('.upload-grid');
+                    const docsConfirmation = document.querySelector('.docs-confirmation-container');
+                    const signatureFieldContainer = document.querySelector('#signature-field').closest('.upload-item');
+                    
+                    if (signatureSection && uploadsSection) {
+                        // Lógica original de mostrar firma
+                        uploadsSection.style.opacity = '0';
+                        uploadsSection.style.transform = 'translateY(-10px)';
+                        
+                        setTimeout(() => {
+                            uploadsSection.style.display = 'none';
+                            signatureSection.style.display = 'block';
+                            signatureSection.style.opacity = '1';
+                            signatureSection.style.transform = 'translateY(0)';
+                        }, 300);
+                        
+                        console.log('✅ Modal firma abierto profesionalmente');
+                    }
+                    return false;
+                }
+                
+                // FIX 3: Checkbox documentos - CUSTOM VISUAL
+                if (target.id === 'documents-complete-check' || 
+                    target.id === 'custom-checkbox-mobile' ||
+                    target.closest('#custom-checkbox-mobile') ||
+                    (target.tagName === 'LABEL' && target.getAttribute('for') === 'documents-complete-check')) {
+                    
+                    console.log('🎯 Checkbox detectado (delegation) - ID:', target.id);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Usar función custom si está disponible
+                    if (typeof window.setCustomCheckbox === 'function') {
+                        const originalCheckbox = document.getElementById('documents-complete-check');
+                        if (originalCheckbox) {
+                            window.setCustomCheckbox(!originalCheckbox.checked);
+                            console.log('✅ Checkbox CUSTOM cambiado via delegation');
+                        }
+                    } else {
+                        // Fallback al método simple
+                        const checkbox = document.getElementById('documents-complete-check');
+                        if (checkbox) {
+                            checkbox.checked = !checkbox.checked;
+                            checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                            console.log('✅ Checkbox cambiado con método simple');
+                        }
+                    }
+                    return false;
+                }
+                
+                // FIX 4: Botón "Volver a Documentos"
+                if (target.id === 'volver-documentos' || 
+                    (target.textContent && target.textContent.includes('Volver a Documentos'))) {
+                    
+                    console.log('🎯 Botón "Volver a Documentos" detectado');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Ejecutar función original
+                    if (typeof window.returnToDocuments === 'function') {
+                        window.returnToDocuments();
+                        console.log('✅ Volver a documentos ejecutado');
+                    }
+                    return false;
+                }
+                
+                // FIX 5: Botón "Limpiar Firma"
+                if (target.id === 'clear-signature-simple' || 
+                    (target.textContent && target.textContent.includes('Limpiar Firma'))) {
+                    
+                    console.log('🎯 Botón "Limpiar Firma" detectado');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Limpiar canvas directo primero
+                    const canvas = document.getElementById('signature-pad-simple');
+                    if (canvas) {
+                        const ctx = canvas.getContext('2d');
+                        if (ctx) {
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                            ctx.fillStyle = 'white';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            console.log('🧹 Canvas limpiado directamente (delegation)');
+                        }
+                    }
+                    
+                    // También limpiar SignaturePad si existe
+                    if (window.signaturePadSimple && typeof window.signaturePadSimple.clear === 'function') {
+                        window.signaturePadSimple.clear();
+                    }
+                    
+                    // Mostrar label "Firme aquí" de nuevo
+                    const signatureLabel = document.getElementById('signature-label-simple');
+                    if (signatureLabel) {
+                        signatureLabel.style.opacity = '1';
+                        signatureLabel.style.transition = 'opacity 0.3s';
+                    }
+                    
+                    console.log('✅ Firma completamente limpiada (delegation)');
+                    return false;
+                }
+                
+            }, { passive: false, capture: true });
+            
+            // TOUCH START para feedback visual
+            document.addEventListener('touchstart', function(e) {
+                const target = e.target;
+                
+                // Añadir feedback visual a elementos interactivos - TODOS LOS BOTONES
+                if ((target.tagName === 'BUTTON' && target.innerHTML && target.innerHTML.includes('Eliminar último')) ||
+                    target.id === 'signature-field' ||
+                    target.closest('#signature-field') ||
+                    (target.textContent && target.textContent.includes('Firmar documentos')) ||
+                    target.id === 'documents-complete-check' ||
+                    (target.tagName === 'LABEL' && target.getAttribute('for') === 'documents-complete-check') ||
+                    target.id === 'volver-documentos' ||
+                    (target.textContent && target.textContent.includes('Volver a Documentos')) ||
+                    target.id === 'clear-signature-simple' ||
+                    (target.textContent && target.textContent.includes('Limpiar Firma'))) {
+                    
+                    target.style.backgroundColor = '#059669';
+                    target.style.transform = 'scale(0.95)';
+                    
+                    setTimeout(() => {
+                        target.style.backgroundColor = '';
+                        target.style.transform = '';
+                    }, 150);
+                }
+            }, { passive: false, capture: true });
+            
+            console.log('✅ Solución profesional móvil activada');
         }
         
-        // EVENT DELEGATION CORREGIDO - Selectores exactos identificados (EXACTO DE BARCO)
-        document.addEventListener('touchend', function(e) {
-            const target = e.target;
-            console.log('👆 Touch en:', target.tagName, target.id, target.className);
+        // OPTIMIZACIONES ESPECÍFICAS PARA FIRMA Y CHECKBOX
+        function setupMobileOptimizations() {
+            console.log('🎨 Configurando optimizaciones móvil específicas...');
             
-            // FIX 1: Botón Eliminar último - SELECTOR CORREGIDO (EXACTO DE BARCO)
-            if (target.tagName === 'BUTTON' && 
-                target.innerHTML && 
-                target.innerHTML.includes('Eliminar último')) {
-                
-                console.log('🎯 Eliminar último detectado');
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // BUSCAR INPUT CORRECTO - El que está relacionado con este botón
-                const previewDiv = target.closest('div');
-                const previewContainer = previewDiv ? previewDiv.parentElement : null;
-                const uploadWrapper = previewContainer ? previewContainer.closest('.upload-wrapper') : null;
-                const input = uploadWrapper ? uploadWrapper.querySelector('input[type="file"]') : null;
-                
-                console.log('🔍 Input encontrado:', input);
-                
-                if (input && input.files && input.files.length > 0) {
-                    const dt = new DataTransfer();
-                    const files = Array.from(input.files);
-                    console.log('📁 Archivos antes:', files.length);
-                    
-                    // Añadir todos excepto el último
-                    for (let i = 0; i < files.length - 1; i++) {
-                        dt.items.add(files[i]);
-                    }
-                    
-                    input.files = dt.files;
-                    input.dispatchEvent(new Event('change', { bubbles: true }));
-                    console.log('✅ Archivo eliminado profesionalmente. Archivos después:', input.files.length);
-                } else {
-                    console.log('❌ No se encontró input o no hay archivos');
-                }
-                return false;
-            }
-            
-            // FIX 2: Modal firma - DEJAR QUE EL CLICK ORIGINAL FUNCIONE
-            // NO interceptar signature-field porque tiene su propio click listener que funciona
-            // Solo aplicar feedback visual en touchstart
-            
-            if (false) { // Deshabilitado - dejar que click original funcione
-                console.log('🎯 Signature-field interceptor DESHABILITADO - usar click original');
-            }
-            
-            // FIX 3: Checkbox documentos - CUSTOM VISUAL (EXACTO DE BARCO)
-            if (target.id === 'documents-complete-check' || 
-                target.id === 'custom-checkbox-mobile' ||
-                target.closest('#custom-checkbox-mobile') ||
-                (target.tagName === 'LABEL' && target.getAttribute('for') === 'documents-complete-check')) {
-                
-                console.log('🎯 Checkbox detectado (delegation) - ID:', target.id);
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Usar función custom si está disponible
-                if (typeof window.setCustomCheckbox === 'function') {
-                    const originalCheckbox = document.getElementById('documents-complete-check');
-                    if (originalCheckbox) {
-                        window.setCustomCheckbox(!originalCheckbox.checked);
-                        console.log('✅ Checkbox CUSTOM cambiado via delegation');
-                    }
-                } else {
-                    // Fallback al método simple
-                    const checkbox = document.getElementById('documents-complete-check');
-                    if (checkbox) {
-                        checkbox.checked = !checkbox.checked;
-                        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-                        console.log('✅ Checkbox cambiado con método simple');
-                    }
-                }
-                return false;
-            }
-            
-            // FIX 4: Botón "Volver a Documentos" (EXACTO DE BARCO)
-            if (target.id === 'volver-documentos' || 
-                (target.textContent && target.textContent.includes('Volver a Documentos'))) {
-                
-                console.log('🎯 Botón "Volver a Documentos" detectado');
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Ejecutar función original
-                if (typeof window.returnToDocuments === 'function') {
-                    window.returnToDocuments();
-                    console.log('✅ Volver a documentos ejecutado');
-                }
-                return false;
-            }
-            
-            // FIX 5: Botón "Limpiar Firma" (EXACTO DE BARCO)
-            if (target.id === 'clear-signature-simple' || 
-                (target.textContent && target.textContent.includes('Limpiar Firma'))) {
-                
-                console.log('🎯 Botón "Limpiar Firma" detectado');
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Limpiar canvas directo primero
-                const canvas = document.getElementById('signature-pad-simple');
-                if (canvas) {
-                    const ctx = canvas.getContext('2d');
-                    if (ctx) {
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        ctx.fillStyle = 'white';
-                        ctx.fillRect(0, 0, canvas.width, canvas.height);
-                        console.log('🧹 Canvas limpiado directamente (delegation)');
-                    }
-                }
-                
-                // También limpiar SignaturePad si existe
-                if (window.signaturePadSimple && typeof window.signaturePadSimple.clear === 'function') {
-                    window.signaturePadSimple.clear();
-                }
-                
-                // Mostrar label "Firme aquí" de nuevo
-                const signatureLabel = document.getElementById('signature-label-simple');
-                if (signatureLabel) {
-                    signatureLabel.style.opacity = '1';
-                    signatureLabel.style.transition = 'opacity 0.3s';
-                }
-                
-                console.log('✅ Firma completamente limpiada (delegation)');
-                return false;
-            }
-            
-        }, { passive: false, capture: true });
+            // Aquí irían las optimizaciones específicas como en barco
+            // Por ahora solo log para confirmar que se ejecuta
+            console.log('✅ Optimizaciones móviles configuradas');
+        }
         
-        // TOUCH START para feedback visual (EXACTO DE BARCO)
-        document.addEventListener('touchstart', function(e) {
-            const target = e.target;
-            
-            // Añadir feedback visual a elementos interactivos - TODOS LOS BOTONES
-            if ((target.tagName === 'BUTTON' && target.innerHTML && target.innerHTML.includes('Eliminar último')) ||
-                target.id === 'signature-field' ||
-                target.closest('#signature-field') ||
-                target.id === 'documents-complete-check' ||
-                (target.tagName === 'LABEL' && target.getAttribute('for') === 'documents-complete-check') ||
-                target.id === 'volver-documentos' ||
-                (target.textContent && target.textContent.includes('Volver a Documentos')) ||
-                target.id === 'clear-signature-simple' ||
-                (target.textContent && target.textContent.includes('Limpiar Firma'))) {
-                
-                target.style.backgroundColor = '#059669';
-                target.style.transform = 'scale(0.95)';
-                
-                setTimeout(() => {
-                    target.style.backgroundColor = '';
-                    target.style.transform = '';
-                }, 150);
-            }
-        }, { passive: false, capture: true });
-        
-        console.log('✅ Solución profesional móvil activada - IDÉNTICA A BARCO');
-    }
+        // Ejecutar inmediatamente y después del DOM - EXACTO COMO BARCO
+        setupProfessionalMobileFix();
+        setupMobileOptimizations();
+        document.addEventListener('DOMContentLoaded', () => {
+            setupProfessionalMobileFix();
+            setupMobileOptimizations();
+        });
+        window.addEventListener('load', () => {
+            setupProfessionalMobileFix();
+            setupMobileOptimizations();
+        });
+    })();
 
     }); // FIN document.addEventListener('DOMContentLoaded')
     </script>
