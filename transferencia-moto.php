@@ -14211,36 +14211,12 @@ function transferencia_moto_shortcode() {
                 return false;
             }
             
-            // FIX 2: Modal firma - SELECTOR CORREGIDO (signature-field) (EXACTO DE BARCO)
-            if (target.id === 'signature-field' || 
-                target.closest('#signature-field') ||
-                (target.textContent && target.textContent.includes('Firmar documentos'))) {
-                
-                console.log('🎯 Botón firma detectado (signature-field)');
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // EJECUTAR LA LÓGICA ORIGINAL DEL CAMPO DE FIRMA
-                const signatureSection = document.getElementById('simple-signature-section');
-                const uploadsSection = document.querySelector('.upload-grid');
-                const docsConfirmation = document.querySelector('.docs-confirmation-container');
-                const signatureFieldContainer = document.querySelector('#signature-field').closest('.upload-item');
-                
-                if (signatureSection && uploadsSection) {
-                    // Lógica original de mostrar firma
-                    uploadsSection.style.opacity = '0';
-                    uploadsSection.style.transform = 'translateY(-10px)';
-                    
-                    setTimeout(() => {
-                        uploadsSection.style.display = 'none';
-                        signatureSection.style.display = 'block';
-                        signatureSection.style.opacity = '1';
-                        signatureSection.style.transform = 'translateY(0)';
-                    }, 300);
-                    
-                    console.log('✅ Modal firma abierto profesionalmente');
-                }
-                return false;
+            // FIX 2: Modal firma - DEJAR QUE EL CLICK ORIGINAL FUNCIONE
+            // NO interceptar signature-field porque tiene su propio click listener que funciona
+            // Solo aplicar feedback visual en touchstart
+            
+            if (false) { // Deshabilitado - dejar que click original funcione
+                console.log('🎯 Signature-field interceptor DESHABILITADO - usar click original');
             }
             
             // FIX 3: Checkbox documentos - CUSTOM VISUAL (EXACTO DE BARCO)
@@ -14334,7 +14310,6 @@ function transferencia_moto_shortcode() {
             if ((target.tagName === 'BUTTON' && target.innerHTML && target.innerHTML.includes('Eliminar último')) ||
                 target.id === 'signature-field' ||
                 target.closest('#signature-field') ||
-                (target.textContent && target.textContent.includes('Firmar documentos')) ||
                 target.id === 'documents-complete-check' ||
                 (target.tagName === 'LABEL' && target.getAttribute('for') === 'documents-complete-check') ||
                 target.id === 'volver-documentos' ||
