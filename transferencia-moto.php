@@ -14158,60 +14158,69 @@ function transferencia_moto_shortcode() {
     // FIN FLUJO DE PÁGINA DE DOCUMENTOS
     // ============================================
 
-    // OPTIMIZACIONES ESPECÍFICAS PARA FIRMA Y CHECKBOX EN MÓVIL
-    if (window.innerWidth <= 768) {
-        console.log('📱 Aplicando optimizaciones móvil para firma...');
+    // SISTEMA MÓVIL IDÉNTICO AL BARCO QUE FUNCIONA
+    const isMobile = window.innerWidth <= 768 || 'ontouchstart' in window;
+    
+    if (!isMobile) return;
+    
+    console.log('📱 Activando sistema móvil idéntico al barco...');
+    
+    // EVENT DELEGATION EXACTO COMO EN BARCO - Funciona
+    document.addEventListener('touchend', function(e) {
+        const target = e.target;
+        console.log('👆 Touch en:', target.tagName, target.id, target.className);
         
-        // Canvas de firma optimizado para móvil
-        const canvas = document.getElementById('signature-pad-simple');
-        if (canvas) {
-            canvas.style.touchAction = 'none';
-            canvas.style.webkitTouchCallout = 'none';
-            canvas.style.webkitUserSelect = 'none';
-            canvas.style.userSelect = 'none';
+        // FIX signature-field - SELECTOR EXACTO DEL BARCO
+        if (target.id === 'signature-field' || 
+            target.closest('#signature-field') ||
+            (target.textContent && target.textContent.includes('Firmar documentos'))) {
             
-            const container = canvas.parentElement;
-            if (container) {
-                container.style.minHeight = '200px';
-                container.style.padding = '10px';
+            console.log('🎯 Botón firma detectado (signature-field) - IDÉNTICO BARCO');
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // EJECUTAR LA LÓGICA ORIGINAL DEL CAMPO DE FIRMA - EXACTA
+            const signatureSection = document.getElementById('simple-signature-section');
+            const uploadsSection = document.querySelector('.upload-grid');
+            const docsConfirmation = document.querySelector('.docs-confirmation-container');
+            const signatureFieldContainer = document.querySelector('#signature-field').closest('.upload-item');
+            
+            if (signatureSection && uploadsSection) {
+                // Lógica original de mostrar firma - EXACTA
+                uploadsSection.style.opacity = '0';
+                uploadsSection.style.transform = 'translateY(-10px)';
+                
+                setTimeout(() => {
+                    uploadsSection.style.display = 'none';
+                    signatureSection.style.display = 'block';
+                    signatureSection.style.opacity = '1';
+                    signatureSection.style.transform = 'translateY(0)';
+                }, 300);
+                
+                console.log('✅ Modal firma abierto profesionalmente - IDÉNTICO BARCO');
             }
+            return false;
         }
         
-        // INTERCEPTOR ESPECÍFICO PARA BOTÓN FIRMA MÓVIL
-        const signatureField = document.getElementById('signature-field');
-        if (signatureField) {
-            console.log('🎯 Configurando interceptor botón firma móvil...');
+        // FIX Checkbox documentos - EXACTO DEL BARCO
+        if (target.id === 'documents-complete-check' || 
+            (target.tagName === 'LABEL' && target.getAttribute('for') === 'documents-complete-check')) {
             
-            // Interceptar eventos táctiles específicamente
-            ['touchstart', 'touchend', 'click'].forEach(eventType => {
-                signatureField.addEventListener(eventType, function(e) {
-                    console.log(`👆 ${eventType} en botón firma móvil`);
-                    if (eventType === 'touchend' || eventType === 'click') {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        // Ejecutar lógica original de firma manualmente
-                        const signatureSection = document.getElementById('simple-signature-section');
-                        const uploadsSection = document.querySelector('.upload-grid');
-                        
-                        if (signatureSection && uploadsSection) {
-                            console.log('✅ Activando sección firma desde interceptor móvil');
-                            
-                            uploadsSection.style.opacity = '0';
-                            uploadsSection.style.transform = 'translateY(-10px)';
-                            
-                            setTimeout(() => {
-                                uploadsSection.style.display = 'none';
-                                signatureSection.style.display = 'block';
-                                signatureSection.style.opacity = '1';
-                                signatureSection.style.transform = 'translateY(0px)';
-                            }, 300);
-                        }
-                    }
-                }, { passive: false });
-            });
+            console.log('🎯 Checkbox detectado (delegation) - IDÉNTICO BARCO');
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const checkbox = document.getElementById('documents-complete-check');
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                console.log('✅ Checkbox cambiado - IDÉNTICO BARCO');
+            }
+            return false;
         }
-    }
+    }, { passive: false });
+    
+    console.log('✅ Sistema móvil idéntico al barco aplicado correctamente');
 
     }); // FIN document.addEventListener('DOMContentLoaded')
     </script>
