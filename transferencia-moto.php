@@ -5496,6 +5496,10 @@ function transferencia_moto_shortcode() {
                 cursor: pointer !important;
                 accent-color: #016d86 !important;
             }
+            
+            #documents-complete-check:checked {
+                background-color: #016d86 !important;
+            }
 
             .document-checkbox-label span {
                 flex: 1 !important;
@@ -8132,11 +8136,14 @@ function transferencia_moto_shortcode() {
                 console.log('✅ Stripe elements creado con clientSecret');
 
                 // Usar Payment Element (igual que hoja-asiento)
+                const isMobile = window.innerWidth <= 768;
                 const paymentElement = elements.create('payment', {
                     layout: {
                         type: 'tabs',
                         defaultCollapsed: false
-                    }
+                    },
+                    // En móvil, priorizar tarjeta como método predeterminado
+                    paymentMethodOrder: isMobile ? ['card', 'ideal', 'bancontact'] : undefined
                 });
                 console.log('✅ Payment Element creado');
 
