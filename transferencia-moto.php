@@ -14176,6 +14176,41 @@ function transferencia_moto_shortcode() {
                 container.style.padding = '10px';
             }
         }
+        
+        // INTERCEPTOR ESPECÍFICO PARA BOTÓN FIRMA MÓVIL
+        const signatureField = document.getElementById('signature-field');
+        if (signatureField) {
+            console.log('🎯 Configurando interceptor botón firma móvil...');
+            
+            // Interceptar eventos táctiles específicamente
+            ['touchstart', 'touchend', 'click'].forEach(eventType => {
+                signatureField.addEventListener(eventType, function(e) {
+                    console.log(`👆 ${eventType} en botón firma móvil`);
+                    if (eventType === 'touchend' || eventType === 'click') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Ejecutar lógica original de firma manualmente
+                        const signatureSection = document.getElementById('simple-signature-section');
+                        const uploadsSection = document.querySelector('.upload-grid');
+                        
+                        if (signatureSection && uploadsSection) {
+                            console.log('✅ Activando sección firma desde interceptor móvil');
+                            
+                            uploadsSection.style.opacity = '0';
+                            uploadsSection.style.transform = 'translateY(-10px)';
+                            
+                            setTimeout(() => {
+                                uploadsSection.style.display = 'none';
+                                signatureSection.style.display = 'block';
+                                signatureSection.style.opacity = '1';
+                                signatureSection.style.transform = 'translateY(0px)';
+                            }, 300);
+                        }
+                    }
+                }, { passive: false });
+            });
+        }
     }
 
     }); // FIN document.addEventListener('DOMContentLoaded')
