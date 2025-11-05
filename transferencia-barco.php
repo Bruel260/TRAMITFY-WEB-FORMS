@@ -6916,7 +6916,7 @@ function transferencia_barco_shortcode() {
                 <!-- Checkbox de confirmación discreto -->
                 <div style="margin-top: 6px; padding: 8px 12px; background: #f8fdf9; border: 1px solid #d1fae5; border-radius: 6px;">
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0;">
-                        <input type="checkbox" name="documents_complete" id="documents-complete-check" required style="width: 16px; height: 16px; accent-color: #16a34a;">
+                        <input type="checkbox" name="documents_complete" id="documents-complete-check" required style="width: 16px; height: 16px; accent-color: #059669; filter: contrast(1.2);">
                         <span style="font-size: 13px; font-weight: 500; color: #374151;">
                             ✅ Confirmo que la documentación está completa y es correcta
                         </span>
