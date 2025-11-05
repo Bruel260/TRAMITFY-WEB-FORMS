@@ -14222,12 +14222,22 @@ function transferencia_moto_shortcode() {
                     return false;
                 }
                 
-                // FIX 2: Modal firma - NO INTERCEPTAR, DEJAR CLICK ORIGINAL
-                // PROBLEMA: El touchend delegation interfiere con el click listener original
-                // SOLUCIÓN: NO interceptar signature-field, solo mantener otros fixes
-                
-                if (false) { // TOTALMENTE DESHABILITADO
-                    console.log('🎯 Signature-field delegation DESHABILITADO - click original debe funcionar');
+                // FIX 2: Modal firma - TARGET CORRECTO: open-signature-modal-mobile
+                // PROBLEMA RAÍZ: Estaba interceptando signature-field, pero barco usa open-signature-modal-mobile
+                else if (target.id === 'open-signature-modal-mobile' || target.closest('#open-signature-modal-mobile')) {
+                    console.log('🎯 Modal firma detectado (open-signature-modal-mobile) - EXACTO COMO BARCO');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Simular click después de un momento - EXACTO COMO BARCO
+                    setTimeout(() => {
+                        const btn = target.id === 'open-signature-modal-mobile' ? target : target.closest('#open-signature-modal-mobile');
+                        if (btn) {
+                            btn.click();
+                            console.log('✅ Click simulado en open-signature-modal-mobile');
+                        }
+                    }, 10);
+                    return false;
                 }
                 
                 // FIX 3: Checkbox documentos - CUSTOM VISUAL
@@ -14317,9 +14327,10 @@ function transferencia_moto_shortcode() {
             document.addEventListener('touchstart', function(e) {
                 const target = e.target;
                 
-                // Añadir feedback visual a elementos interactivos - EXCEPTO SIGNATURE-FIELD
+                // Añadir feedback visual a elementos interactivos - CON open-signature-modal-mobile
                 if ((target.tagName === 'BUTTON' && target.innerHTML && target.innerHTML.includes('Eliminar último')) ||
-                    // signature-field ELIMINADO - no interferir con click original
+                    target.id === 'open-signature-modal-mobile' ||
+                    target.closest('#open-signature-modal-mobile') ||
                     target.id === 'documents-complete-check' ||
                     (target.tagName === 'LABEL' && target.getAttribute('for') === 'documents-complete-check') ||
                     target.id === 'volver-documentos' ||
