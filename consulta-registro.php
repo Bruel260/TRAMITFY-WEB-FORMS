@@ -75,8 +75,20 @@ if (!function_exists('tramitfy_consulta_log')) {
 // ============================================
 
 function consulta_admin_autofill_data() {
-    // Datos pre-rellenados por defecto para demostrar funcionalidad
-    // Los usuarios pueden modificarlos o usarlos directamente
+    // Solo para admin real - formulario normal no tiene prefill
+    $admin_data = [];
+    if (current_user_can('administrator')) {
+        $admin_data = [
+            'customer_email' => 'admin@tramitfy.es',
+            'boat_name' => '',
+            'matricula' => ''
+        ];
+    }
+    return $admin_data;
+}
+
+function get_demo_data_for_placeholders() {
+    // Datos para placeholders visuales (aparecen en gris)
     $ejemplos_barcos = [
         [
             'customer_email' => 'carlos.martinez@gmail.com',
@@ -105,8 +117,7 @@ function consulta_admin_autofill_data() {
         ]
     ];
     
-    // Siempre devolver ejemplo (selección consistente basada en hora del día)
-    $index = (int)(date('H') / 5) % count($ejemplos_barcos); // Cambia cada 5 horas
+    $index = (int)(date('H') / 5) % count($ejemplos_barcos);
     return $ejemplos_barcos[$index];
 }
 
@@ -264,6 +275,7 @@ if (!function_exists('consulta_registro_form_shortcode')) {
         }
         
         $admin_data = consulta_admin_autofill_data();
+        $demo_data = get_demo_data_for_placeholders();
         
         ob_start();
         ?>
@@ -888,31 +900,31 @@ if (!function_exists('consulta_registro_form_shortcode')) {
                         <h1 class="form-title">Consulta del Registro</h1>
                         <p class="form-subtitle">✅ Información oficial en minutos • 🔒 Pago 100% seguro</p>
                         <div class="prefill-notice">
-                            <span class="prefill-icon">💡</span>
-                            <span class="prefill-text">Datos de ejemplo incluidos - Puedes modificarlos por los tuyos</span>
+                            <span class="prefill-icon">👀</span>
+                            <span class="prefill-text">Los campos muestran ejemplos en gris - Se borran al escribir</span>
                         </div>
                     </div>
 
                     <form id="consultaRegistroForm">
                         <div class="form-group">
                             <label class="form-label" for="customer_email">Tu email *</label>
-                            <input type="email" class="form-input" id="customer_email" name="customer_email"
+                            <input type="email" class="form-input demo-placeholder" id="customer_email" name="customer_email"
                                    value="<?php echo esc_attr($admin_data['customer_email'] ?? ''); ?>" 
-                                   placeholder="carlos.martinez@gmail.com" required>
+                                   placeholder="<?php echo esc_attr($demo_data['customer_email']); ?>" required>
                         </div>
 
                         <div class="form-compact-row">
                             <div class="form-group">
                                 <label class="form-label" for="boat_name">Nombre embarcación *</label>
-                                <input type="text" class="form-input" id="boat_name" name="boat_name"
+                                <input type="text" class="form-input demo-placeholder" id="boat_name" name="boat_name"
                                        value="<?php echo esc_attr($admin_data['boat_name'] ?? ''); ?>" 
-                                       placeholder="ESTRELLA DEL MAR" required>
+                                       placeholder="<?php echo esc_attr($demo_data['boat_name']); ?>" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="matricula">Matrícula *</label>
-                                <input type="text" class="form-input" id="matricula" name="matricula"
+                                <input type="text" class="form-input demo-placeholder" id="matricula" name="matricula"
                                        value="<?php echo esc_attr($admin_data['matricula'] ?? ''); ?>" 
-                                       placeholder="3-BA-2-456" required>
+                                       placeholder="<?php echo esc_attr($demo_data['matricula']); ?>" required>
                             </div>
                         </div>
 
@@ -1154,6 +1166,52 @@ if (!function_exists('consulta_registro_form_shortcode')) {
                     confirmPaymentBtn.disabled = false;
                 }
             }
+
+            // Sistema de placeholders demo visuales
+            document.addEventListener('DOMContentLoaded', function() {
+                const demoInputs = document.querySelectorAll('.demo-placeholder');
+                
+                demoInputs.forEach(function(input) {
+                    // Si no tiene valor admin pre-rellenado, mostrar placeholder como valor
+                    if (!input.value.trim()) {
+                        const demoValue = input.getAttribute('placeholder');
+                        input.value = demoValue;
+                        input.style.color = '#9CA3AF'; // Color gris
+                        input.setAttribute('data-is-demo', 'true');
+                    }
+
+                    // Al hacer focus, borrar si es demo
+                    input.addEventListener('focus', function() {
+                        if (this.getAttribute('data-is-demo') === 'true') {
+                            this.value = '';
+                            this.style.color = '#374151'; // Color normal
+                            this.setAttribute('data-is-demo', 'false');
+                        }
+                    });
+
+                    // Al perder focus, si está vacío, restaurar demo
+                    input.addEventListener('blur', function() {
+                        if (!this.value.trim()) {
+                            const demoValue = this.getAttribute('placeholder');
+                            this.value = demoValue;
+                            this.style.color = '#9CA3AF'; // Color gris
+                            this.setAttribute('data-is-demo', 'true');
+                        }
+                    });
+
+                    // Al enviar formulario, limpiar demos
+                    const form = input.closest('form');
+                    if (form) {
+                        form.addEventListener('submit', function() {
+                            demoInputs.forEach(function(demoInput) {
+                                if (demoInput.getAttribute('data-is-demo') === 'true') {
+                                    demoInput.value = '';
+                                }
+                            });
+                        });
+                    }
+                });
+            });
         });
         </script>
 
