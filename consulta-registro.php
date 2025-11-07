@@ -738,34 +738,8 @@ if (!function_exists('consulta_registro_form_shortcode')) {
             <div class="tramitfy-two-column">
                 <!-- Panel Lateral Izquierdo -->
                 <aside class="tramitfy-sidebar">
-                    <div class="sidebar-header">
-                        <div class="sidebar-icon">🔍</div>
-                        <div class="sidebar-title">
-                            <h3>Consulta Oficial</h3>
-                            <p>Registro de Embarcaciones</p>
-                        </div>
-                    </div>
-
                     <div class="sidebar-price-highlight">
-                        <div class="sidebar-price-label">Precio promocional</div>
                         <div class="sidebar-price-amount"><?php echo CONSULTA_SERVICE_PRICE; ?>€</div>
-                        <div class="sidebar-price-includes">Todo incluido • Sin extras</div>
-                        <div class="sidebar-badge">✓ Respuesta 24-48h</div>
-                    </div>
-
-                    <div class="sidebar-info-box">
-                        <h4>📊 ¿Qué obtienes?</h4>
-                        <p>• Datos oficiales completos</p>
-                        <p>• Historial de la embarcación</p>
-                        <p>• Estado legal actual</p>
-                        <p>• Cargas y gravámenes</p>
-                    </div>
-
-                    <div class="sidebar-info-box">
-                        <h4>⚡ Proceso rápido</h4>
-                        <p>• Solo 3 campos obligatorios</p>
-                        <p>• Pago seguro con Stripe</p>
-                        <p>• Respuesta garantizada</p>
                     </div>
 
                     <!-- Widget de Trustpilot -->
@@ -776,12 +750,11 @@ if (!function_exists('consulta_registro_form_shortcode')) {
                 <main class="tramitfy-main-form">
                     <div class="form-header">
                         <h1 class="form-title">Consulta del Registro</h1>
-                        <p class="form-subtitle">Obtén la información oficial de cualquier embarcación</p>
                     </div>
 
                     <form id="consultaRegistroForm">
                         <div class="form-group">
-                            <label class="form-label" for="customer_email">📧 Tu email (donde recibirás la consulta) *</label>
+                            <label class="form-label" for="customer_email">Tu email *</label>
                             <input type="email" class="form-input" id="customer_email" name="customer_email"
                                    value="<?php echo esc_attr($admin_data['customer_email'] ?? ''); ?>" 
                                    placeholder="nombre@ejemplo.com" required>
@@ -789,27 +762,21 @@ if (!function_exists('consulta_registro_form_shortcode')) {
 
                         <div class="form-compact-row">
                             <div class="form-group">
-                                <label class="form-label" for="boat_name">⛵ Nombre de la embarcación *</label>
+                                <label class="form-label" for="boat_name">Nombre embarcación *</label>
                                 <input type="text" class="form-input" id="boat_name" name="boat_name"
                                        value="<?php echo esc_attr($admin_data['boat_name'] ?? ''); ?>" 
                                        placeholder="MAR AZUL, GAVIOTA..." required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label" for="matricula">🏷️ Matrícula/Folio *</label>
+                                <label class="form-label" for="matricula">Matrícula *</label>
                                 <input type="text" class="form-input" id="matricula" name="matricula"
                                        value="<?php echo esc_attr($admin_data['matricula'] ?? ''); ?>" 
-                                       placeholder="2-ABC-1-23, FR-123456..." required>
+                                       placeholder="2-ABC-1-23" required>
                             </div>
                         </div>
 
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;">
-                            <p style="margin: 0; font-size: 14px; color: #155724;">
-                                ✓ <strong>Consulta oficial</strong> directamente de las autoridades marítimas
-                            </p>
-                        </div>
-
                         <button type="button" id="show-payment-modal" class="primary-button">
-                            💳 Proceder al Pago (<?php echo CONSULTA_SERVICE_PRICE; ?>€)
+                            Proceder al Pago (<?php echo CONSULTA_SERVICE_PRICE; ?>€)
                         </button>
                     </form>
                 </main>
@@ -822,7 +789,7 @@ if (!function_exists('consulta_registro_form_shortcode')) {
                 <span class="consulta-close-payment-modal">&times;</span>
                 
                 <h3 style="text-align: center; color: #016d86; margin-bottom: 20px;">
-                    💳 Pago Seguro - <?php echo CONSULTA_SERVICE_PRICE; ?>€
+                    Pago - <?php echo CONSULTA_SERVICE_PRICE; ?>€
                 </h3>
 
                 <div id="consulta-stripe-container">
@@ -840,7 +807,7 @@ if (!function_exists('consulta_registro_form_shortcode')) {
                 </div>
 
                 <button type="button" id="consulta-confirm-payment-btn" class="consulta-confirm-payment-btn" disabled>
-                    <i class="fa-solid fa-check-circle"></i> Confirmar Pago
+                    Confirmar Pago
                 </button>
             </div>
         </div>
@@ -1019,14 +986,13 @@ if (!function_exists('consulta_registro_form_shortcode')) {
                     const result = await response.json();
 
                     if (result.success) {
-                        showMessage('✅ Pago completado. Su consulta ha sido registrada correctamente.', 'success');
+                        showMessage('Pago completado. Consulta registrada correctamente.', 'success');
                         setTimeout(function() {
                             paymentModal.classList.remove('show');
                             document.getElementById('consultaRegistroForm').innerHTML = 
                                 '<div style="text-align: center; padding: 30px; background: #d4edda; border-radius: 8px; color: #155724;">' +
-                                '<h3>✅ Consulta Registrada</h3>' +
-                                '<p>Su consulta ha sido procesada correctamente. Recibirá los resultados por email en 24-48h.</p>' +
-                                '<p><strong>ID del trámite:</strong> ' + result.data.tramite_id + '</p>' +
+                                '<h3>Consulta Registrada</h3>' +
+                                '<p>Recibirá los resultados por email en 24-48h.</p>' +
                                 '</div>';
                         }, 2000);
                     } else {
