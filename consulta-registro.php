@@ -387,6 +387,25 @@ if (!function_exists('consulta_registro_form_shortcode')) {
             line-height: 1.5;
         }
 
+        .price-badge {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: inline-block;
+        }
+
+        .price-value-text {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
         .sidebar-info-box {
             background: rgba(255, 255, 255, 0.12);
             padding: 15px;
@@ -455,8 +474,15 @@ if (!function_exists('consulta_registro_form_shortcode')) {
         }
 
         .form-subtitle {
-            font-size: 16px;
-            color: rgb(var(--neutral-600));
+            font-size: 14px;
+            color: #059669;
+            font-weight: 500;
+            background: rgba(5, 150, 105, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(5, 150, 105, 0.2);
+            display: inline-block;
+            margin-top: 5px;
         }
 
         .form-group {
@@ -527,6 +553,69 @@ if (!function_exists('consulta_registro_form_shortcode')) {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
+        }
+
+        /* Estilos mejorados para conversión */
+        .enhanced-cta {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px !important;
+            font-size: 17px !important;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .enhanced-cta::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s;
+        }
+
+        .enhanced-cta:hover::before {
+            left: 100%;
+        }
+
+        .button-icon {
+            font-size: 16px;
+            margin-right: 8px;
+        }
+
+        .button-text {
+            flex: 1;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .button-price {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .trust-indicators {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .trust-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: rgb(var(--neutral-600));
+        }
+
+        .trust-item span {
+            margin-left: 8px;
+            font-weight: 500;
         }
 
         /* Modal de pago - IGUAL QUE HOJA-ASIENTO */
@@ -739,7 +828,9 @@ if (!function_exists('consulta_registro_form_shortcode')) {
                 <!-- Panel Lateral Izquierdo -->
                 <aside class="tramitfy-sidebar">
                     <div class="sidebar-price-highlight">
+                        <div class="price-badge">⚡ Respuesta inmediata</div>
                         <div class="sidebar-price-amount"><?php echo CONSULTA_SERVICE_PRICE; ?>€</div>
+                        <div class="price-value-text">Información oficial completa</div>
                     </div>
 
                     <!-- Widget de Trustpilot -->
@@ -750,6 +841,7 @@ if (!function_exists('consulta_registro_form_shortcode')) {
                 <main class="tramitfy-main-form">
                     <div class="form-header">
                         <h1 class="form-title">Consulta del Registro</h1>
+                        <p class="form-subtitle">✅ Información oficial en minutos • 🔒 Pago 100% seguro</p>
                     </div>
 
                     <form id="consultaRegistroForm">
@@ -775,9 +867,17 @@ if (!function_exists('consulta_registro_form_shortcode')) {
                             </div>
                         </div>
 
-                        <button type="button" id="show-payment-modal" class="primary-button">
-                            Proceder al Pago (<?php echo CONSULTA_SERVICE_PRICE; ?>€)
+                        <button type="button" id="show-payment-modal" class="primary-button enhanced-cta">
+                            <span class="button-icon">🚀</span>
+                            <span class="button-text">Obtener Información Ahora</span>
+                            <span class="button-price"><?php echo CONSULTA_SERVICE_PRICE; ?>€</span>
                         </button>
+                        
+                        <div class="trust-indicators">
+                            <div class="trust-item">🔒 <span>Pago 100% seguro con Stripe</span></div>
+                            <div class="trust-item">⚡ <span>Información en menos de 5 minutos</span></div>
+                            <div class="trust-item">✅ <span>Datos oficiales del registro marítimo</span></div>
+                        </div>
                     </form>
                 </main>
             </div>
