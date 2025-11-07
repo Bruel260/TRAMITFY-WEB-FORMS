@@ -75,41 +75,39 @@ if (!function_exists('tramitfy_consulta_log')) {
 // ============================================
 
 function consulta_admin_autofill_data() {
-    $admin_data = [];
-    if (current_user_can('administrator')) {
-        // Datos realistas de embarcaciones españolas
-        $ejemplos_barcos = [
-            [
-                'customer_email' => 'carlos.martinez@gmail.com',
-                'boat_name' => 'MAR AZUL',
-                'matricula' => '3-BA-2-456'
-            ],
-            [
-                'customer_email' => 'ana.rodriguez@hotmail.es',
-                'boat_name' => 'GAVIOTA BLANCA',
-                'matricula' => '2-MA-3-789'
-            ],
-            [
-                'customer_email' => 'miguel.fernandez@yahoo.es',
-                'boat_name' => 'ESTRELLA DEL MAR',
-                'matricula' => '4-MU-1-234'
-            ],
-            [
-                'customer_email' => 'laura.gonzalez@outlook.com',
-                'boat_name' => 'BRISA MARINA',
-                'matricula' => '6-PM-2-567'
-            ],
-            [
-                'customer_email' => 'jose.lopez@icloud.com',
-                'boat_name' => 'VIENTO DEL SUR',
-                'matricula' => '1-CA-4-890'
-            ]
-        ];
-        
-        // Seleccionar ejemplo aleatorio
-        $admin_data = $ejemplos_barcos[array_rand($ejemplos_barcos)];
-    }
-    return $admin_data;
+    // Datos pre-rellenados por defecto para demostrar funcionalidad
+    // Los usuarios pueden modificarlos o usarlos directamente
+    $ejemplos_barcos = [
+        [
+            'customer_email' => 'carlos.martinez@gmail.com',
+            'boat_name' => 'MAR AZUL',
+            'matricula' => '3-BA-2-456'
+        ],
+        [
+            'customer_email' => 'ana.rodriguez@hotmail.es',
+            'boat_name' => 'GAVIOTA BLANCA',
+            'matricula' => '2-MA-3-789'
+        ],
+        [
+            'customer_email' => 'miguel.fernandez@yahoo.es',
+            'boat_name' => 'ESTRELLA DEL MAR',
+            'matricula' => '4-MU-1-234'
+        ],
+        [
+            'customer_email' => 'laura.gonzalez@outlook.com',
+            'boat_name' => 'BRISA MARINA',
+            'matricula' => '6-PM-2-567'
+        ],
+        [
+            'customer_email' => 'jose.lopez@icloud.com',
+            'boat_name' => 'VIENTO DEL SUR',
+            'matricula' => '1-CA-4-890'
+        ]
+    ];
+    
+    // Siempre devolver ejemplo (selección consistente basada en hora del día)
+    $index = (int)(date('H') / 5) % count($ejemplos_barcos); // Cambia cada 5 horas
+    return $ejemplos_barcos[$index];
 }
 
 // ============================================
@@ -644,6 +642,27 @@ if (!function_exists('consulta_registro_form_shortcode')) {
             font-weight: 500;
         }
 
+        .prefill-notice {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .prefill-icon {
+            font-size: 14px;
+        }
+
+        .prefill-text {
+            font-size: 13px;
+            color: #1e40af;
+            font-weight: 500;
+        }
+
         /* Modal de pago - IGUAL QUE HOJA-ASIENTO */
         .consulta-payment-modal {
             display: none;
@@ -868,6 +887,10 @@ if (!function_exists('consulta_registro_form_shortcode')) {
                     <div class="form-header">
                         <h1 class="form-title">Consulta del Registro</h1>
                         <p class="form-subtitle">✅ Información oficial en minutos • 🔒 Pago 100% seguro</p>
+                        <div class="prefill-notice">
+                            <span class="prefill-icon">💡</span>
+                            <span class="prefill-text">Datos de ejemplo incluidos - Puedes modificarlos por los tuyos</span>
+                        </div>
                     </div>
 
                     <form id="consultaRegistroForm">
