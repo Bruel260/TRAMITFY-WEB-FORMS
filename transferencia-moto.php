@@ -7466,7 +7466,7 @@ function transferencia_moto_shortcode() {
         // Variables globales y configuración
         const itpRates = {
             "Andalucía": 0.04, "Aragón": 0.04, "Asturias": 0.04, "Islas Baleares": 0.04,
-            "Canarias": 0.055, "Cantabria": 0.08, "Castilla-La Mancha": 0.06, "Castilla y León": 0.05,
+            "Canarias": 0.055, "Cantabria": 0.06, "Castilla-La Mancha": 0.06, "Castilla y León": 0.05,
             "Cataluña": 0.05, "Comunidad Valenciana": 0.08, "Galicia": 0.03,
             "Madrid": 0.04, "Murcia": 0.04, "Navarra": 0.04, "País Vasco": 0.04,
             "La Rioja": 0.04, "Ceuta": 0.02, "Melilla": 0.04
