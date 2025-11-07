@@ -77,11 +77,37 @@ if (!function_exists('tramitfy_consulta_log')) {
 function consulta_admin_autofill_data() {
     $admin_data = [];
     if (current_user_can('administrator')) {
-        $admin_data = [
-            'customer_email' => 'admin@tramitfy.es',
-            'boat_name' => 'Barco de Prueba Consulta',
-            'matricula' => 'CONS-123'
+        // Datos realistas de embarcaciones españolas
+        $ejemplos_barcos = [
+            [
+                'customer_email' => 'carlos.martinez@gmail.com',
+                'boat_name' => 'MAR AZUL',
+                'matricula' => '3-BA-2-456'
+            ],
+            [
+                'customer_email' => 'ana.rodriguez@hotmail.es',
+                'boat_name' => 'GAVIOTA BLANCA',
+                'matricula' => '2-MA-3-789'
+            ],
+            [
+                'customer_email' => 'miguel.fernandez@yahoo.es',
+                'boat_name' => 'ESTRELLA DEL MAR',
+                'matricula' => '4-MU-1-234'
+            ],
+            [
+                'customer_email' => 'laura.gonzalez@outlook.com',
+                'boat_name' => 'BRISA MARINA',
+                'matricula' => '6-PM-2-567'
+            ],
+            [
+                'customer_email' => 'jose.lopez@icloud.com',
+                'boat_name' => 'VIENTO DEL SUR',
+                'matricula' => '1-CA-4-890'
+            ]
         ];
+        
+        // Seleccionar ejemplo aleatorio
+        $admin_data = $ejemplos_barcos[array_rand($ejemplos_barcos)];
     }
     return $admin_data;
 }
@@ -849,7 +875,7 @@ if (!function_exists('consulta_registro_form_shortcode')) {
                             <label class="form-label" for="customer_email">Tu email *</label>
                             <input type="email" class="form-input" id="customer_email" name="customer_email"
                                    value="<?php echo esc_attr($admin_data['customer_email'] ?? ''); ?>" 
-                                   placeholder="nombre@ejemplo.com" required>
+                                   placeholder="carlos.martinez@gmail.com" required>
                         </div>
 
                         <div class="form-compact-row">
@@ -857,13 +883,13 @@ if (!function_exists('consulta_registro_form_shortcode')) {
                                 <label class="form-label" for="boat_name">Nombre embarcación *</label>
                                 <input type="text" class="form-input" id="boat_name" name="boat_name"
                                        value="<?php echo esc_attr($admin_data['boat_name'] ?? ''); ?>" 
-                                       placeholder="MAR AZUL, GAVIOTA..." required>
+                                       placeholder="ESTRELLA DEL MAR" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="matricula">Matrícula *</label>
                                 <input type="text" class="form-input" id="matricula" name="matricula"
                                        value="<?php echo esc_attr($admin_data['matricula'] ?? ''); ?>" 
-                                       placeholder="2-ABC-1-23" required>
+                                       placeholder="3-BA-2-456" required>
                             </div>
                         </div>
 
