@@ -302,7 +302,7 @@ if (!function_exists('consulta_registro_form_shortcode')) {
             border-radius: 16px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
             margin: 15px auto;
-            max-width: 750px;
+            max-width: 900px;
             min-height: 400px;
         }
 
@@ -451,7 +451,7 @@ if (!function_exists('consulta_registro_form_shortcode')) {
         /* Panel Principal del Formulario */
         .tramitfy-main-form {
             grid-area: content;
-            padding: 25px 35px;
+            padding: 30px 40px;
             background: #ffffff;
             border-radius: 0 12px 12px 0;
             display: flex;
@@ -486,7 +486,7 @@ if (!function_exists('consulta_registro_form_shortcode')) {
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 18px;
         }
 
         .form-label {
