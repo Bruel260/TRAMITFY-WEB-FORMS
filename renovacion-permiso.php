@@ -1392,7 +1392,7 @@ function navigation_permit_renewal_form_shortcode() {
                 <div class="npn-price-box">
                     <div class="npn-price-label">Precio Total</div>
                     <div class="npn-price-amount">65€</div>
-                    <div class="npn-price-detail">IVA incluido · Pago único</div>
+                    <div class="npn-price-detail">IVA incluido, tasas Capitanía marítima incluidas</div>
                 </div>
 
                 <div class="npn-benefits">
