@@ -6,7 +6,7 @@ defined('ABSPATH') || exit;
 require_once(get_template_directory() . '/vendor/autoload.php');
 
 // Configuración de Stripe AL NIVEL GLOBAL (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
-define('NAVIGATION_PERMIT_STRIPE_MODE', 'live'); // 'test' o 'live'
+define('NAVIGATION_PERMIT_STRIPE_MODE', 'test'); // 'test' o 'live'
 
 define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'pk_test_51SBOq2GXJ2PkUN8kmrKUUjCLbvY3v8sAsgr6rNtg8zHyUZjB6pFrB7Vz3Gm0l2Wm7y5xVoMap2NY8utwgdJOogNQ000qBYIX5V');
 define('NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY', 'sk_test_51SBOq2GXJ2PkUN8kFlbLBQU3pd1kTVpWsSooQzdPMcqC8jKFSykeptf5XKOtbBzwMT4yjVHM0AbHUFoncbWIe4V600wkzJwpXC');
