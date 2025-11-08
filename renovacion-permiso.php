@@ -6,13 +6,13 @@ defined('ABSPATH') || exit;
 require_once(get_template_directory() . '/vendor/autoload.php');
 
 // Configuración de Stripe AL NIVEL GLOBAL (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
-define('NAVIGATION_PERMIT_STRIPE_MODE', 'test'); // 'test' o 'live'
+define('NAVIGATION_PERMIT_STRIPE_MODE', 'test'); // 'test' o 'live' - MODO LIVE ACTIVADO
 
 define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'pk_test_51SBOq2GXJ2PkUN8kmrKUUjCLbvY3v8sAsgr6rNtg8zHyUZjB6pFrB7Vz3Gm0l2Wm7y5xVoMap2NY8utwgdJOogNQ000qBYIX5V');
 define('NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY', 'sk_test_51SBOq2GXJ2PkUN8kFlbLBQU3pd1kTVpWsSooQzdPMcqC8jKFSykeptf5XKOtbBzwMT4yjVHM0AbHUFoncbWIe4V600wkzJwpXC');
 
-define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_51QHhtNGXGHYLV5CXu3P7PrAFezBnDuf0JsZzb2AxjSsV0okn4y19VOMIjW0NUOLpaFdI3CCRhiC4fvNBDDbPhiW100KkF6Uo2x');
-define('NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY', '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');
+define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+define('NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY', 'sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
 
 define('NAVIGATION_PERMIT_SERVICE_PRICE', 65.00);
 define('NAVIGATION_PERMIT_TASA_CERTIFICADO', 15.00);
@@ -117,6 +117,13 @@ function navigation_permit_renewal_form_shortcode() {
             position: relative;
         }
 
+        /* Asegurar que todos los títulos en sidebar tengan texto blanco sin fondo */
+        .npn-sidebar h1, .npn-sidebar h2, .npn-sidebar h3, .npn-sidebar h4, .npn-sidebar h5, .npn-sidebar h6 {
+            color: white !important;
+            background: none !important;
+            background-color: transparent !important;
+        }
+
         .npn-logo {
             font-size: 22px;
             font-weight: 700;
@@ -135,11 +142,11 @@ function navigation_permit_renewal_form_shortcode() {
             font-weight: 600;
             line-height: 1.3;
             margin-bottom: 8px;
-            color: white !important;
-        }
-        
-        .npn-headline h2 {
-            color: white !important;
+            background: transparent;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: -5px -5px 15px -5px;
         }
 
         .npn-subheadline {
@@ -261,6 +268,8 @@ function navigation_permit_renewal_form_shortcode() {
             gap: 20px;
             margin-top: 20px;
             padding-top: 15px;
+            background: none !important;
+            background-color: transparent !important;
         }
         
         /* Estética moderna para parte inferior */
@@ -1368,6 +1377,15 @@ function navigation_permit_renewal_form_shortcode() {
                 padding: 20px !important;
             }
 
+            /* Modal de pago más arriba en móvil */
+            .npn-payment-modal-content {
+                margin: 20px auto 5% auto !important;
+                width: 95% !important;
+                padding: 20px !important;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+
             .npn-zoom-btn {
                 display: block;
                 width: 100%;
@@ -1423,14 +1441,14 @@ function navigation_permit_renewal_form_shortcode() {
             </div>
 
             <!-- Contenido para página de autorización (Página 3) -->
-            <div id="sidebar-authorization" style="display: none;">
+            <div id="sidebar-authorization" style="display: none; background: none !important; background-color: transparent !important;">
                 <div class="npn-logo">
                     <i class="fa-solid fa-file-signature"></i>
                     <span>Autorización</span>
                 </div>
 
                 <div class="npn-sidebar-auth-doc">
-                    <h4 style="font-size: 18px; font-weight: 700; color: white; margin-bottom: 15px;">
+                    <h4 style="font-size: 18px; font-weight: 700; color: white !important; margin-bottom: 15px; background: none !important; background-color: transparent !important;">
                         DOCUMENTO DE AUTORIZACIÓN
                     </h4>
 
@@ -2274,6 +2292,9 @@ function navigation_permit_renewal_form_shortcode() {
                     return;
                 }
 
+                // Ocultar todos los popups antes de mostrar el modal
+                hideAllPopups();
+                
                 // Mostrar el modal
                 document.getElementById('npn-payment-modal').classList.add('show');
 
@@ -2287,11 +2308,15 @@ function navigation_permit_renewal_form_shortcode() {
             // Cerrar modal de pago
             document.querySelector('.npn-close-payment-modal').addEventListener('click', function() {
                 document.getElementById('npn-payment-modal').classList.remove('show');
+                // Restaurar popups al cerrar
+                restoreAllPopups();
             });
 
             document.getElementById('npn-payment-modal').addEventListener('click', function(event) {
                 if (event.target === this) {
                     this.classList.remove('show');
+                    // Restaurar popups al cerrar
+                    restoreAllPopups();
                 }
             });
 
@@ -2370,6 +2395,247 @@ function navigation_permit_renewal_form_shortcode() {
                 }
             });
 
+            // OPTIMIZACIONES MÓVILES
+            function isMobile() {
+                return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+            }
+
+            async function compressImageForMobile(file, maxSizeMB = 2) {
+                return new Promise((resolve) => {
+                    if (!file.type.startsWith('image/') || !isMobile()) {
+                        resolve(file);
+                        return;
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const img = new Image();
+                    
+                    img.onload = function() {
+                        let { width, height } = img;
+                        const maxDimension = 1200;
+                        
+                        if (width > height && width > maxDimension) {
+                            height = (height * maxDimension) / width;
+                            width = maxDimension;
+                        } else if (height > maxDimension) {
+                            width = (width * maxDimension) / height;
+                            height = maxDimension;
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        canvas.toBlob((blob) => {
+                            const compressedFile = new File([blob], file.name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            });
+                            resolve(compressedFile);
+                        }, 'image/jpeg', 0.8);
+                    };
+                    
+                    img.src = URL.createObjectURL(file);
+                });
+            }
+
+            function validateFileSize(file) {
+                const maxSize = isMobile() ? 10 * 1024 * 1024 : 20 * 1024 * 1024; // 10MB móvil, 20MB escritorio
+                
+                if (file.size > maxSize) {
+                    const maxSizeMB = Math.round(maxSize / (1024 * 1024));
+                    const currentSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+                    alert(`⚠️ Archivo "${file.name}" demasiado grande\\n\\n📱 Tamaño máximo: ${maxSizeMB}MB\\n📊 Tamaño actual: ${currentSizeMB}MB\\n\\n💡 Consejo: Toma la foto desde la app para compresión automática`);
+                    return false;
+                }
+                return true;
+            }
+
+            // Progress bar para móvil
+            function createMobileProgressBar() {
+                if (document.querySelector('.mobile-progress-container')) return;
+                
+                const progressContainer = document.createElement('div');
+                progressContainer.className = 'mobile-progress-container';
+                progressContainer.innerHTML = `
+                    <div style="
+                        background: #f0f0f0; 
+                        border-radius: 20px; 
+                        height: 6px; 
+                        margin: 15px 0;
+                        overflow: hidden;
+                        box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+                    ">
+                        <div class="mobile-progress-bar" style="
+                            background: linear-gradient(90deg, #016d86, #4f46e5); 
+                            height: 100%; 
+                            width: 0%; 
+                            transition: width 0.5s ease;
+                            border-radius: 20px;
+                        "></div>
+                    </div>
+                    <div class="mobile-progress-text" style="
+                        font-size: 14px; 
+                        color: #666; 
+                        text-align: center;
+                        font-weight: 500;
+                    ">Preparando archivos...</div>
+                `;
+                
+                const submitBtn = document.querySelector('.npn-submit-btn');
+                if (submitBtn && submitBtn.parentNode) {
+                    submitBtn.parentNode.insertBefore(progressContainer, submitBtn.nextSibling);
+                }
+                
+                return progressContainer;
+            }
+
+            function updateMobileProgress(progress, message) {
+                if (!isMobile()) return;
+                
+                const container = document.querySelector('.mobile-progress-container') || createMobileProgressBar();
+                const progressBar = container.querySelector('.mobile-progress-bar');
+                const progressText = container.querySelector('.mobile-progress-text');
+                
+                if (progressBar) progressBar.style.width = progress + '%';
+                if (progressText) progressText.textContent = message;
+            }
+
+            // Retry fetch para conexiones móviles inestables
+            async function fetchWithRetry(url, options, maxRetries = 3) {
+                for (let i = 0; i < maxRetries; i++) {
+                    try {
+                        const controller = new AbortController();
+                        const timeout = isMobile() ? 180000 : 120000; // 3 min móvil, 2 min escritorio
+                        
+                        const timeoutId = setTimeout(() => controller.abort(), timeout);
+                        
+                        const response = await fetch(url, {
+                            ...options,
+                            signal: controller.signal
+                        });
+                        
+                        clearTimeout(timeoutId);
+                        
+                        if (response.ok) return response;
+                        
+                        if (i < maxRetries - 1) {
+                            console.log(`🔄 Reintentando (${i + 1}/${maxRetries})...`);
+                            if (isMobile()) updateMobileProgress(30 + i * 10, `Reintentando conexión... (${i + 1}/${maxRetries})`);
+                            await new Promise(resolve => setTimeout(resolve, 2000 * (i + 1)));
+                        }
+                        
+                    } catch (error) {
+                        if (i < maxRetries - 1) {
+                            console.log(`❌ Error en intento ${i + 1}:`, error.message);
+                            if (isMobile()) updateMobileProgress(30 + i * 10, `Error de conexión... Reintentando`);
+                            await new Promise(resolve => setTimeout(resolve, 3000 * (i + 1)));
+                        } else {
+                            throw error;
+                        }
+                    }
+                }
+            }
+
+            // GESTIÓN PROFESIONAL DE POPUPS EN MODAL DE PAGO
+            let hiddenPopups = [];
+            
+            function hideAllPopups() {
+                // Lista completa de selectores de popups comunes
+                const popupSelectors = [
+                    // WhatsApp
+                    '.wa__popup_chat_box', '#whatsapp-button', '.wa__btn_popup', '.wa__stt', 
+                    '[class*="wa__"]', '[id*="whatsapp"]', '.whatsapp-chat', '.wa-button',
+                    '.whatsapp-widget', '.whatsapp-popup', '[class*="whats"]',
+                    
+                    // Cookies
+                    '.cookie-banner', '.cookie-consent', '.cookie-notice', '.cookie-popup',
+                    '.gdpr-banner', '.privacy-banner', '#cookie-consent', '[class*="cookie"]',
+                    '.cc-banner', '.cookie-law-info-bar', '.moove_gdpr_cookie_info_bar',
+                    
+                    // Otros popups comunes
+                    '.newsletter-popup', '.exit-intent', '.promotion-popup', '.discount-popup',
+                    '.notification-popup', '.chat-widget', '.help-widget', '.support-widget',
+                    '.feedback-widget', '.survey-popup',
+                    
+                    // WordPress/Elementor popups
+                    '.elementor-popup', '.popup-maker', '.pum-popup', '.lightbox-popup',
+                    '.fancybox-overlay', '.mfp-bg', '.ui-widget-overlay',
+                    
+                    // Específicos de plugins comunes
+                    '.tawk-widget', '.crisp-chat', '.intercom-messenger', '.zendesk-widget',
+                    '.mailchimp-popup', '.optinmonster', '.hustle-popup'
+                ];
+                
+                hiddenPopups = [];
+                
+                popupSelectors.forEach(selector => {
+                    try {
+                        const elements = document.querySelectorAll(selector);
+                        elements.forEach(element => {
+                            // NO ocultar nuestro modal de pago
+                            if (element && !element.closest('.npn-payment-modal') && 
+                                element.id !== 'npn-payment-modal' &&
+                                element.style.display !== 'none' && 
+                                element.style.visibility !== 'hidden') {
+                                
+                                // Guardar estado original
+                                hiddenPopups.push({
+                                    element: element,
+                                    originalDisplay: element.style.display || getComputedStyle(element).display,
+                                    originalVisibility: element.style.visibility || getComputedStyle(element).visibility,
+                                    originalZIndex: element.style.zIndex || getComputedStyle(element).zIndex
+                                });
+                                
+                                // Ocultar elemento
+                                element.style.display = 'none';
+                                element.style.visibility = 'hidden';
+                                element.style.zIndex = '-9999';
+                            }
+                        });
+                    } catch (e) {
+                        console.warn('Error ocultando popup:', selector, e);
+                    }
+                });
+                
+                // Ocultar también cualquier overlay o backdrop (excepto nuestro modal)
+                const overlays = document.querySelectorAll('[class*="overlay"]:not(.npn-payment-modal), [class*="backdrop"]:not(.npn-payment-modal), [id*="overlay"]:not(#npn-payment-modal), [id*="backdrop"]:not(#npn-payment-modal)');
+                overlays.forEach(overlay => {
+                    if (overlay !== document.querySelector('.npn-payment-modal') && 
+                        !overlay.closest('.npn-payment-modal')) {
+                        if (overlay.style.display !== 'none') {
+                            hiddenPopups.push({
+                                element: overlay,
+                                originalDisplay: overlay.style.display || getComputedStyle(overlay).display,
+                                originalVisibility: overlay.style.visibility || getComputedStyle(overlay).visibility,
+                                originalZIndex: overlay.style.zIndex || getComputedStyle(overlay).zIndex
+                            });
+                            overlay.style.display = 'none';
+                        }
+                    }
+                });
+                
+                console.log(`🧹 Popups ocultados: ${hiddenPopups.length} elementos`);
+            }
+            
+            function restoreAllPopups() {
+                hiddenPopups.forEach(item => {
+                    try {
+                        if (item.element) {
+                            item.element.style.display = item.originalDisplay === 'none' ? '' : item.originalDisplay;
+                            item.element.style.visibility = item.originalVisibility === 'hidden' ? '' : item.originalVisibility;
+                            item.element.style.zIndex = item.originalZIndex === '-9999' ? '' : item.originalZIndex;
+                        }
+                    } catch (e) {
+                        console.warn('Error restaurando popup:', e);
+                    }
+                });
+                
+                console.log(`🔄 Popups restaurados: ${hiddenPopups.length} elementos`);
+                hiddenPopups = [];
+            }
+
             // Enviar datos del formulario
             async function submitFormData() {
                 const form = document.getElementById('navigation-permit-renewal-form');
@@ -2392,14 +2658,54 @@ function navigation_permit_renewal_form_shortcode() {
                     'upload-documento-barco': fileStorage['upload-documento-barco'].length
                 });
                 
-                fileStorage['upload-dni-propietario'].forEach((file, index) => {
-                    console.log(`📎 Añadiendo DNI archivo ${index}:`, file.name, file.size);
-                    formData.append('upload_dni_propietario[]', file);
-                });
-                fileStorage['upload-documento-barco'].forEach((file, index) => {
-                    console.log(`📎 Añadiendo documento archivo ${index}:`, file.name, file.size);
-                    formData.append('upload_documento_barco[]', file);
-                });
+                // Procesar archivos con optimizaciones móviles
+                const dniFiles = fileStorage['upload-dni-propietario'] || [];
+                const docFiles = fileStorage['upload-documento-barco'] || [];
+                
+                // Mostrar progreso en móvil
+                if (isMobile()) {
+                    updateMobileProgress(10, 'Procesando archivos...');
+                }
+
+                // Validar tamaños y comprimir si es móvil
+                const totalFiles = dniFiles.length + docFiles.length;
+                let processedFiles = 0;
+
+                for (let index = 0; index < dniFiles.length; index++) {
+                    const file = dniFiles[index];
+                    if (!validateFileSize(file)) continue;
+                    
+                    if (isMobile()) {
+                        const progress = 10 + (processedFiles / totalFiles) * 30;
+                        updateMobileProgress(progress, `Comprimiendo DNI ${index + 1}...`);
+                    }
+                    
+                    console.log(`📎 Procesando DNI ${index}:`, file.name, `${Math.round(file.size/1024)}KB`);
+                    const processedFile = await compressImageForMobile(file);
+                    console.log(`✅ DNI ${index} procesado:`, processedFile.name, `${Math.round(processedFile.size/1024)}KB`);
+                    formData.append(`upload_dni_propietario_${index}`, processedFile);
+                    processedFiles++;
+                }
+                
+                for (let index = 0; index < docFiles.length; index++) {
+                    const file = docFiles[index];
+                    if (!validateFileSize(file)) continue;
+                    
+                    if (isMobile()) {
+                        const progress = 10 + (processedFiles / totalFiles) * 30;
+                        updateMobileProgress(progress, `Comprimiendo documento ${index + 1}...`);
+                    }
+                    
+                    console.log(`📎 Procesando Doc ${index}:`, file.name, `${Math.round(file.size/1024)}KB`);
+                    const processedFile = await compressImageForMobile(file);
+                    console.log(`✅ Doc ${index} procesado:`, processedFile.name, `${Math.round(processedFile.size/1024)}KB`);
+                    formData.append(`upload_documento_barco_${index}`, processedFile);
+                    processedFiles++;
+                }
+
+                if (isMobile()) {
+                    updateMobileProgress(40, 'Archivos listos. Enviando...');
+                }
 
                 // Añadir datos adicionales
                 formData.append('final_amount', currentPrice);
@@ -2426,7 +2732,12 @@ function navigation_permit_renewal_form_shortcode() {
                 try {
                     // PASO 1: Enviar datos y crear trámite
                     console.log('📤 PASO 1: Enviando datos al servidor...');
-                    const response = await fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                    
+                    if (isMobile()) {
+                        updateMobileProgress(50, 'Conectando con servidor...');
+                    }
+                    
+                    const response = await fetchWithRetry('<?php echo admin_url('admin-ajax.php'); ?>', {
                         method: 'POST',
                         body: formData,
                         signal: submitController.signal // Usar controller para cancelación
@@ -2494,7 +2805,11 @@ function navigation_permit_renewal_form_shortcode() {
 
                     // Cerrar modal y redirigir
                     document.getElementById('npn-payment-modal').classList.remove('show');
-                    alert(`✅ Formulario enviado con éxito. ID del trámite: ${result.tramiteId}`);
+                    // Restaurar popups antes de redireccionar
+                    restoreAllPopups();
+                    
+                    // Redirección directa sin alert - la página de seguimiento ya confirma el éxito
+                    console.log(`✅ Formulario enviado con éxito. ID del trámite: ${result.tramiteId}`);
                     
                     // 🛡️ NO resetear isSubmitting aquí - el usuario va a ser redirigido
                     window.location.href = result.trackingUrl;
@@ -2984,14 +3299,9 @@ function send_navigation_permit_to_tramitfy() {
         // Agregar archivos adjuntos
         foreach ($uploadedFiles as $file) {
             if (file_exists($file['path'])) {
-                // Usar nombre del campo para categorización
-                if (strpos($file['fieldname'], 'permiso') !== false || strpos($file['fieldname'], 'documento') !== false) {
-                    $form_data['permiso_caducado'] = new CURLFile($file['path'], $file['type'], $file['name']);
-                    error_log("✅ Permiso caducado agregado: {$file['name']}");
-                } else {
-                    $form_data[$file['fieldname']] = new CURLFile($file['path'], $file['type'], $file['name']);
-                    error_log("✅ Archivo agregado ({$file['fieldname']}): {$file['name']}");
-                }
+                // MANTENER nombres de campo exactos para múltiples archivos
+                $form_data[$file['fieldname']] = new CURLFile($file['path'], $file['type'], $file['name']);
+                error_log("✅ Archivo agregado ({$file['fieldname']}): {$file['name']}");
             }
         }
 
@@ -3008,16 +3318,44 @@ function send_navigation_permit_to_tramitfy() {
         curl_close($ch);
 
         error_log("📡 CURL Response Code: $httpCode");
-        error_log("📡 CURL Response Body: $response");
+        error_log("📡 CURL Response Length: " . strlen($response));
+        error_log("📡 CURL Response (first 200 chars): " . substr($response, 0, 200));
+        
         if ($curlError) {
             error_log("❌ CURL Error: $curlError");
+            wp_send_json(['success' => false, 'error' => 'Error de conexión'], 500);
+            return;
+        }
+
+        if ($httpCode !== 200) {
+            error_log("❌ HTTP Error: $httpCode");
+            wp_send_json(['success' => false, 'error' => 'Error del servidor'], 500);
+            return;
+        }
+
+        if (empty($response)) {
+            error_log("❌ Empty response");
+            wp_send_json(['success' => false, 'error' => 'Respuesta vacía'], 500);
+            return;
         }
 
         $responseBody = json_decode($response, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log("❌ JSON Error: " . json_last_error_msg());
+            error_log("❌ Raw response: " . $response);
+            wp_send_json(['success' => false, 'error' => 'Respuesta inválida: ' . json_last_error_msg()], 500);
+            return;
+        }
 
-        if (!$responseBody || !isset($responseBody['success']) || !$responseBody['success']) {
-            error_log('❌ Error: Respuesta del webhook no válida');
-            wp_send_json(['success' => false, 'error' => 'Error al procesar el formulario'], 500);
+        if (!isset($responseBody['success'])) {
+            error_log("❌ Missing success field in: " . print_r($responseBody, true));
+            wp_send_json(['success' => false, 'error' => 'Respuesta incompleta'], 500);
+            return;
+        }
+
+        if (!$responseBody['success']) {
+            error_log("❌ Webhook returned success=false: " . ($responseBody['error'] ?? 'No error message'));
+            wp_send_json(['success' => false, 'error' => 'Error: ' . ($responseBody['error'] ?? 'Error desconocido')], 500);
             return;
         }
 
@@ -3149,7 +3487,7 @@ function send_navigation_permit_emails() {
                                 </p>
 
                                 <p style='margin: 0 0 28px 0; color: #546e7a; font-size: 15px; line-height: 1.7;'>
-                                    Hemos recibido correctamente su solicitud de renovación de permiso de navegación. Nuestro equipo revisará su documentación <strong>(incluido DNI por ambas caras)</strong> y comenzará con la tramitación a la mayor brevedad posible.
+                                    Hemos recibido correctamente su solicitud de renovación de permiso de navegación. Nuestro equipo revisará su documentación y comenzará con la tramitación a la mayor brevedad posible.
                                 </p>
 
                                 <!-- Status Box -->

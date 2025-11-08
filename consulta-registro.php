@@ -15,11 +15,11 @@ require_once(get_template_directory() . '/vendor/autoload.php');
 // Configuración de Stripe AL NIVEL GLOBAL (IGUAL QUE HOJA DE ASIENTO)
 define('CONSULTA_STRIPE_MODE', 'test'); // 'test' o 'live' - CAMBIADO A TEST
 
-define('CONSULTA_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
-define('CONSULTA_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
+define('CONSULTA_STRIPE_TEST_PUBLIC_KEY', 'pk_test_51SBOq2GXJ2PkUN8kmrKUUjCLbvY3v8sAsgr6rNtg8zHyUZjB6pFrB7Vz3Gm0l2Wm7y5xVoMap2NY8utwgdJOogNQ000qBYIX5V');
+define('CONSULTA_STRIPE_TEST_SECRET_KEY', 'sk_test_51SBOq2GXJ2PkUN8kFlbLBQU3pd1kTVpWsSooQzdPMcqC8jKFSykeptf5XKOtbBzwMT4yjVHM0AbHUFoncbWIe4V600wkzJwpXC');
 
-define('CONSULTA_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
-define('CONSULTA_STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
+define('CONSULTA_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_51QHhtNGXGHYLV5CXu3P7PrAFezBnDuf0JsZzb2AxjSsV0okn4y19VOMIjW0NUOLpaFdI3CCRhiC4fvNBDDbPhiW100KkF6Uo2x');
+define('CONSULTA_STRIPE_LIVE_SECRET_KEY', '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');
 
 define('CONSULTA_SERVICE_PRICE', 29.99);
 
@@ -1512,17 +1512,11 @@ if (!function_exists('consulta_registro_form_shortcode')) {
                             console.log('✅ Emails enviados correctamente');
                         }
                         
-                        // Mostrar éxito final
-                        showMessage('Consulta registrada correctamente. Recibirá confirmación por email.', 'success');
+                        // Mostrar éxito y redirigir a página de éxito
+                        showMessage('Consulta registrada correctamente. Redirigiendo...', 'success');
                         
                         setTimeout(function() {
-                            paymentModal.classList.remove('show');
-                            document.getElementById('consultaRegistroForm').innerHTML = 
-                                '<div style="text-align: center; padding: 30px; background: #d4edda; border-radius: 8px; color: #155724;">' +
-                                '<h3>✅ Consulta Registrada</h3>' +
-                                '<p><strong>Recibirá los resultados por email.</strong></p>' +
-                                '<p style="margin-top: 15px; font-size: 14px;">También hemos enviado una confirmación a su email.</p>' +
-                                '</div>';
+                            window.location.href = 'https://tramitfy.es/pago-realizado-con-exito/';
                         }, 2000);
                         
                     } else {

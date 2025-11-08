@@ -12,11 +12,11 @@ error_log("=== RDOC FILE START ===");
 // Configuración de Stripe
 define('STRIPE_MODE', 'live'); // test o live
 
-define('STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
-define('STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
+define('STRIPE_TEST_PUBLIC_KEY', 'pk_test_51SBOq2GXJ2PkUN8kmrKUUjCLbvY3v8sAsgr6rNtg8zHyUZjB6pFrB7Vz3Gm0l2Wm7y5xVoMap2NY8utwgdJOogNQ000qBYIX5V');
+define('STRIPE_TEST_SECRET_KEY', 'sk_test_51SBOq2GXJ2PkUN8kFlbLBQU3pd1kTVpWsSooQzdPMcqC8jKFSykeptf5XKOtbBzwMT4yjVHM0AbHUFoncbWIe4V600wkzJwpXC');
 
-define('STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
-define('STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
+define('STRIPE_LIVE_PUBLIC_KEY', 'pk_live_51QHhtNGXGHYLV5CXu3P7PrAFezBnDuf0JsZzb2AxjSsV0okn4y19VOMIjW0NUOLpaFdI3CCRhiC4fvNBDDbPhiW100KkF6Uo2x');
+define('STRIPE_LIVE_SECRET_KEY', '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');
 
 if (STRIPE_MODE === 'test') {
     $stripe_public_key = STRIPE_TEST_PUBLIC_KEY;
@@ -30,7 +30,7 @@ if (STRIPE_MODE === 'test') {
 define('PRECIO_TOTAL', 94.95);
 define('TASA_1', 19.03);
 define('TASA_2', 7.62);
-define('TRAMITFY_API_URL', 'https://46-202-128-35.sslip.io/api/herramientas/documentacion/webhook');
+define('TRAMITFY_API_URL', 'https://tramitfy.org/api/herramientas/documentacion/webhook');
 
 // Cargar Stripe library ANTES de las funciones
 require_once(__DIR__ . '/vendor/autoload.php');
@@ -353,201 +353,125 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
     $honorariosNetos = round($honorariosBrutos / 1.21, 2);
     $iva = round($honorariosBrutos - $honorariosNetos, 2);
 
-    $trackingUrl = $tramiteId ? 'https://46-202-128-35.sslip.io/seguimiento/' . $tramiteId : '#';
+    $trackingUrl = $tramiteId ? 'https://tramitfy.org/seguimiento/' . $tramiteId : '#';
     $tramiteDisplayId = $tramiteReference ?? 'En proceso';
 
     // ============================================
     // EMAIL AL CLIENTE - Diseño mejorado y profesional
     // ============================================
-    $customerSubject = '✅ Solicitud Confirmada - Recuperación de Documentación | ' . $tramiteDisplayId;
+    $customerSubject = 'Solicitud de Recuperación de Documentación - ' . $tramiteDisplayId;
     $customerMessage = "
     <!DOCTYPE html>
     <html>
     <head>
-        <meta charset='UTF-8'>
-        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <style>
+        @media only screen and (max-width: 600px) {
+            .container { width: 100% !important; }
+            .mobile-padding { padding: 20px !important; }
+        }
+    </style>
     </head>
-    <body style='margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif; background-color: #f0f4f8;'>
-        <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #f0f4f8; padding: 40px 20px;'>
-            <tr>
-                <td align='center'>
-                    <table width='600' cellpadding='0' cellspacing='0' style='background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.12);'>
-
-                        <!-- Header Tramitfy -->
-                        <tr>
-                            <td style='background: linear-gradient(135deg, #016d86 0%, #014d61 100%); padding: 45px 40px; text-align: center;'>
-                                <h1 style='margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: 1px;'>TRAMITFY</h1>
-                                <p style='margin: 10px 0 0; color: rgba(255,255,255,0.95); font-size: 15px; font-weight: 400;'>Gestión Profesional de Trámites Marítimos</p>
-                            </td>
-                        </tr>
-
-                        <!-- Confirmación Success -->
-                        <tr>
-                            <td style='padding: 45px 40px 35px;'>
-                                <div style='background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left: 5px solid #4caf50; padding: 20px 24px; border-radius: 8px; margin-bottom: 35px; text-align: center;'>
-                                    <p style='margin: 0; color: #1b5e20; font-size: 18px; font-weight: 700;'>✅ ¡Solicitud Recibida y Confirmada!</p>
-                                    <p style='margin: 8px 0 0; color: #2e7d32; font-size: 14px; font-weight: 500;'>Su pago ha sido procesado correctamente</p>
-                                </div>
-
-                                <p style='margin: 0 0 12px; color: #333; font-size: 16px; line-height: 1.6;'>
-                                    Hola <strong>{$customerName}</strong>,
-                                </p>
-                                <p style='margin: 0 0 24px; color: #555; font-size: 15px; line-height: 1.8;'>
-                                    Hemos recibido su solicitud de <strong>recuperación de documentación extraviada</strong> y el pago se ha procesado exitosamente. Nuestro equipo ya está trabajando en su trámite.
-                                </p>
-
-                                <!-- Número de Trámite CTA Principal -->
-                                <div style='background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-radius: 12px; padding: 28px 32px; margin-bottom: 32px; text-align: center; border: 2px solid #1976d2;'>
-                                    <p style='margin: 0 0 8px; color: #0d47a1; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;'>
-                                        Su número de trámite
-                                    </p>
-                                    <p style='margin: 0 0 20px; color: #01579b; font-size: 26px; font-weight: 700; font-family: monospace;'>
-                                        {$tramiteDisplayId}
-                                    </p>
-                                    <a href='{$trackingUrl}' style='display: inline-block; background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; padding: 16px 36px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(25,118,210,0.4); transition: all 0.3s;'>
-                                        🔍 CONSULTAR ESTADO EN TIEMPO REAL
-                                    </a>
-                                    <p style='margin: 18px 0 0; color: #546e7a; font-size: 13px; line-height: 1.6;'>
-                                        Le enviaremos notificaciones automáticas por email<br/>con cada actualización del trámite.
-                                    </p>
-                                </div>
-
-                                <!-- Próximos Pasos Timeline -->
-                                <div style='background-color: #fafafa; border-radius: 10px; padding: 28px 32px; margin-bottom: 28px; border: 1px solid #e0e0e0;'>
-                                    <h3 style='margin: 0 0 20px; color: #016d86; font-size: 17px; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;'>📅 Próximos Pasos</h3>
-
-                                    <div style='position: relative; padding-left: 32px; border-left: 3px solid #016d86; margin-left: 12px;'>
-                                        <div style='margin-bottom: 20px;'>
-                                            <div style='position: absolute; left: -11px; width: 18px; height: 18px; background: #4caf50; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px #4caf50;'></div>
-                                            <p style='margin: 0 0 4px; color: #4caf50; font-size: 14px; font-weight: 700;'>✓ COMPLETADO</p>
-                                            <p style='margin: 0; color: #666; font-size: 13px; line-height: 1.6;'>Solicitud recibida y pago confirmado</p>
-                                        </div>
-
-                                        <div style='margin-bottom: 20px;'>
-                                            <div style='position: absolute; left: -11px; width: 18px; height: 18px; background: #ff9800; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px #ff9800;'></div>
-                                            <p style='margin: 0 0 4px; color: #e65100; font-size: 14px; font-weight: 700;'>⏳ PRÓXIMO PASO (24-48h)</p>
-                                            <p style='margin: 0; color: #666; font-size: 13px; line-height: 1.6;'>Revisión de documentación y preparación de expediente</p>
-                                        </div>
-
-                                        <div style='margin-bottom: 20px;'>
-                                            <div style='position: absolute; left: -11px; width: 18px; height: 18px; background: #90a4ae; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px #90a4ae;'></div>
-                                            <p style='margin: 0 0 4px; color: #455a64; font-size: 14px; font-weight: 700;'>⏹ PENDIENTE (5-7 días)</p>
-                                            <p style='margin: 0; color: #666; font-size: 13px; line-height: 1.6;'>Tramitación ante Capitanía Marítima</p>
-                                        </div>
-
-                                        <div>
-                                            <div style='position: absolute; left: -11px; width: 18px; height: 18px; background: #90a4ae; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px #90a4ae;'></div>
-                                            <p style='margin: 0 0 4px; color: #455a64; font-size: 14px; font-weight: 700;'>⏹ PENDIENTE (7-10 días)</p>
-                                            <p style='margin: 0; color: #666; font-size: 13px; line-height: 1.6;'>Envío de documentación oficial completa</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Embarcación Info -->
-                                <table width='100%' cellpadding='0' cellspacing='0' style='background: linear-gradient(135deg, #f5f5f5 0%, #eeeeee 100%); border-radius: 10px; margin-bottom: 28px; overflow: hidden; border: 1px solid #e0e0e0;'>
-                                    <tr>
-                                        <td style='padding: 24px 28px;'>
-                                            <h3 style='margin: 0 0 18px; color: #016d86; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;'>⛵ Embarcación</h3>
-                                            <table width='100%' cellpadding='8' cellspacing='0'>
-                                                <tr>
-                                                    <td style='color: #666; font-size: 14px; padding: 8px 0; width: 35%; font-weight: 600;'>Nombre:</td>
-                                                    <td style='color: #333; font-size: 15px; padding: 8px 0; font-weight: 700;'>{$vesselName}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td style='color: #666; font-size: 14px; padding: 8px 0; font-weight: 600;'>Matrícula:</td>
-                                                    <td style='color: #333; font-size: 15px; padding: 8px 0; font-weight: 700;'>{$vesselRegistration}</td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
-
-                                <!-- Documentación a Recibir -->
-                                <div style='background-color: #fff3e0; border-radius: 10px; padding: 24px 28px; margin-bottom: 28px; border: 1px solid #ffb74d;'>
-                                    <h3 style='margin: 0 0 18px; color: #e65100; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;'>📄 Documentación a Recibir</h3>
-                                    <table width='100%' cellpadding='0' cellspacing='0'>
-                                        <tr>
-                                            <td style='padding: 10px 0; border-bottom: 1px solid rgba(255,152,0,0.2);'>
-                                                <span style='color: #4caf50; font-size: 18px; font-weight: bold; margin-right: 10px;'>✓</span>
-                                                <span style='color: #333; font-size: 14px; font-weight: 600;'>Hoja de asiento registral completa</span>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style='padding: 10px 0; border-bottom: 1px solid rgba(255,152,0,0.2);'>
-                                                <span style='color: #4caf50; font-size: 18px; font-weight: bold; margin-right: 10px;'>✓</span>
-                                                <span style='color: #333; font-size: 14px; font-weight: 600;'>Certificado de registro marítimo renovado</span>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style='padding: 10px 0;'>
-                                                <span style='color: #4caf50; font-size: 18px; font-weight: bold; margin-right: 10px;'>✓</span>
-                                                <span style='color: #333; font-size: 14px; font-weight: 600;'>Permiso de navegación renovado y vigente</span>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </div>
-
-                                <!-- Resumen Pago -->
-                                <table width='100%' cellpadding='0' cellspacing='0' style='background: linear-gradient(135deg, #016d86 0%, #014d61 100%); border-radius: 10px; margin-bottom: 28px;'>
-                                    <tr>
-                                        <td style='padding: 24px 28px;'>
-                                            <table width='100%' cellpadding='6' cellspacing='0'>
-                                                <tr>
-                                                    <td style='color: rgba(255,255,255,0.9); font-size: 15px; padding: 4px 0;'>Importe Total:</td>
-                                                    <td align='right' style='color: #ffffff; font-size: 26px; font-weight: 700; padding: 4px 0;'>" . number_format(PRECIO_TOTAL, 2) . " €</td>
-                                                </tr>
-                                                <tr>
-                                                    <td colspan='2' style='padding-top: 8px;'>
-                                                        <div style='background: rgba(255,255,255,0.2); padding: 10px 14px; border-radius: 6px; margin-top: 6px;'>
-                                                            <p style='margin: 0; color: rgba(255,255,255,0.95); font-size: 12px; line-height: 1.5;'>
-                                                                ✓ Pago procesado correctamente<br/>
-                                                                ✓ Todas las tasas oficiales incluidas<br/>
-                                                                ✓ Gestión completa sin cargos ocultos
-                                                            </p>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
-
-                                <!-- Contacto y Soporte -->
-                                <div style='background-color: #f5f5f5; border-radius: 10px; padding: 20px 24px; text-align: center; border: 1px solid #e0e0e0;'>
-                                    <p style='margin: 0 0 12px; color: #333; font-size: 15px; font-weight: 700;'>¿Necesita ayuda?</p>
-                                    <p style='margin: 0 0 16px; color: #666; font-size: 13px; line-height: 1.6;'>
-                                        Nuestro equipo está disponible para resolver cualquier duda<br/>
-                                        sobre su trámite.
-                                    </p>
-                                    <p style='margin: 0; color: #016d86; font-size: 14px; font-weight: 600;'>
-                                        📧 info@tramitfy.es<br/>
-                                        📱 WhatsApp: +34 XXX XXX XXX
-                                    </p>
-                                </div>
-
-                            </td>
-                        </tr>
-
-                        <!-- Footer -->
-                        <tr>
-                            <td style='background-color: #263238; padding: 35px 40px; text-align: center;'>
-                                <p style='margin: 0 0 10px; color: rgba(255,255,255,0.9); font-size: 16px; font-weight: 700;'>
-                                    TRAMITFY
-                                </p>
-                                <p style='margin: 0 0 16px; color: rgba(255,255,255,0.7); font-size: 13px;'>
-                                    Gestión Profesional de Trámites Marítimos
-                                </p>
-                                <p style='margin: 0; color: rgba(255,255,255,0.5); font-size: 11px; line-height: 1.6;'>
-                                    Este es un email automático. Por favor, no responda directamente.<br/>
-                                    Para consultas, utilice los canales de contacto indicados arriba.
-                                </p>
-                            </td>
-                        </tr>
-
-                    </table>
-                </td>
-            </tr>
-        </table>
+    <body style='margin: 0; padding: 0; font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif; background-color: #f7f9fc; color: #333333;'>
+        
+    <table width='100%' cellpadding='0' cellspacing='0' border='0' style='background-color: #f7f9fc; padding: 20px 0;'>
+        <tr>
+            <td align='center'>
+                
+                <!-- Main Container -->
+                <table class='container' width='600' cellpadding='0' cellspacing='0' border='0' style='background-color: #ffffff; max-width: 600px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);'>
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td style='background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); padding: 40px 30px; text-align: center;'>
+                            <h1 style='margin: 0; color: #ffffff; font-size: 24px; font-weight: 600; letter-spacing: 0.5px;'>
+                                TRAMITFY
+                            </h1>
+                            <p style='margin: 8px 0 0; color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 400;'>
+                                Gestión Profesional de Trámites Marítimos
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td class='mobile-padding' style='padding: 40px 30px;'>
+                            
+                            <!-- Reference Number -->
+                            <table width='100%' cellpadding='0' cellspacing='0' style='margin-bottom: 30px; background-color: #f8fafc; border-radius: 6px; border-left: 4px solid #1e40af;'>
+                                <tr>
+                                    <td style='padding: 20px 25px;'>
+                                        <p style='margin: 0 0 5px; color: #64748b; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>
+                                            NÚMERO DE REFERENCIA
+                                        </p>
+                                        <p style='margin: 0; color: #1e40af; font-size: 18px; font-weight: 700; letter-spacing: 0.5px;'>
+                                            {$tramiteDisplayId}
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Main Content -->
+                            <p style='margin: 0 0 20px; color: #1f2937; font-size: 16px; line-height: 1.6;'>
+                                Estimado/a <strong>{$customerName}</strong>,
+                            </p>
+                            
+                            <p style='margin: 0 0 25px; color: #4b5563; font-size: 15px; line-height: 1.7;'>
+                                Le confirmamos que hemos recibido su solicitud de <strong>recuperación de documentación</strong> correctamente. 
+                                Nuestro equipo especializado procederá a revisar la documentación proporcionada (incluido DNI por ambas caras) y gestionar 
+                                su trámite ante las autoridades competentes.
+                            </p>
+                            
+                            <!-- Details Box -->
+                            <table width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0; background-color: #fefefe; border: 1px solid #e5e7eb; border-radius: 6px;'>
+                                <tr>
+                                    <td style='padding: 20px 25px;'>
+                                        <table width='100%' cellpadding='8' cellspacing='0'>
+                                            <tr>
+                                                <td style='color: #6b7280; font-size: 14px; font-weight: 600; width: 35%;'>Estado:</td>
+                                                <td style='color: #dc2626; font-size: 14px; font-weight: 600;'>Pendiente</td>
+                                            </tr>
+                                            <tr>
+                                                <td style='color: #6b7280; font-size: 14px; font-weight: 600;'>Fecha:</td>
+                                                <td style='color: #374151; font-size: 14px; font-weight: 600;'>" . date('d/m/Y H:i') . "</td>
+                                            </tr>
+                                            <tr>
+                                                <td style='color: #6b7280; font-size: 14px; font-weight: 600;'>Importe:</td>
+                                                <td style='color: #374151; font-size: 14px; font-weight: 600;'>" . number_format(PRECIO_TOTAL, 2) . "€</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <p style='margin: 30px 0 0; color: #4b5563; font-size: 15px; line-height: 1.7;'>
+                                Le mantendremos informado del progreso por email y le contactaremos si necesitamos información adicional.
+                            </p>
+                            
+                            <p style='margin: 25px 0 0; color: #1f2937; font-size: 15px;'>
+                                Atentamente,<br>
+                                <strong style='color: #1e40af;'>Equipo Tramitfy</strong>
+                            </p>
+                            
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style='background-color: #f8fafc; padding: 25px 30px; border-top: 1px solid #e5e7eb;'>
+                            <p style='margin: 0; color: #6b7280; font-size: 13px; text-align: center; line-height: 1.5;'>
+                                <strong style='color: #374151;'>Tramitfy</strong><br>
+                                info@tramitfy.es | +34 689 170 273<br>
+                                <span style='color: #9ca3af; font-size: 12px;'>Paseo Castellana 194 puerta B, Madrid, España</span>
+                            </p>
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
     </body>
     </html>
     ";
@@ -577,12 +501,6 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
 
             <div style='padding: 30px;'>
 
-                <!-- Link de Seguimiento -->
-                <div style='margin-bottom: 25px; background-color: #e3f2fd; padding: 16px 20px; border-radius: 6px; text-align: center;'>
-                    <a href='{$trackingUrl}' style='display: inline-block; background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; padding: 10px 24px; text-decoration: none; border-radius: 5px; font-weight: 600; font-size: 14px; box-shadow: 0 3px 8px rgba(25,118,210,0.3);'>
-                        🔍 Ver Detalle Completo del Trámite
-                    </a>
-                </div>
 
                 <!-- Datos del Cliente -->
                 <div style='margin-bottom: 25px;'>
@@ -694,7 +612,7 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
 
                 <!-- Botón Dashboard -->
                 <div style='text-align: center; margin-top: 30px;'>
-                    <a href='https://46-202-128-35.sslip.io' style='display: inline-block; background: linear-gradient(135deg, #0066cc 0%, #004a99 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 10px rgba(0,102,204,0.3);'>
+                    <a href='https://tramitfy.org' style='display: inline-block; background: linear-gradient(135deg, #0066cc 0%, #004a99 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 10px rgba(0,102,204,0.3);'>
                         🖥 Ver en Dashboard TRAMITFY
                     </a>
                 </div>
@@ -3126,10 +3044,9 @@ function recuperar_documentacion_form_shortcode() {
                     document.getElementById('rdoc-form').style.display = 'none';
                     document.getElementById('rdoc-success').style.display = 'block';
 
-                    // Redirigir a la página de seguimiento después de 3 segundos
+                    // Redirigir a la página de éxito después de 3 segundos
                     setTimeout(() => {
-                        const trackingUrl = `https://46-202-128-35.sslip.io/seguimiento/${tramiteResult.tramiteId}`;
-                        window.location.href = trackingUrl;
+                        window.location.href = 'https://tramitfy.es/pago-realizado-con-exito/';
                     }, 3000);
 
                     // Solo scroll en desktop
@@ -3257,7 +3174,7 @@ function rdoc_send_emails() {
 
     error_log("Enviando emails para: $customer_email, tramiteId: $tramite_id");
 
-    $tracking_url = 'https://46-202-128-35.sslip.io/seguimiento/' . $tramite_id;
+    $tracking_url = 'https://tramitfy.org/seguimiento/' . $tramite_id;
 
     // Email al cliente
     $subject_customer = "✅ Confirmación de Solicitud - Recuperación de Documentación";
@@ -3405,10 +3322,9 @@ function rdoc_send_emails() {
                     </div>
                 </div>
                 
-                <div class='tracking-section'>
-                    <h3 style='color: #016d86; margin-bottom: 10px;'>📋 Seguimiento en Tiempo Real</h3>
-                    <p>Consulte el estado de su trámite cuando lo desee</p>
-                    <a href='$tracking_url' class='tracking-btn'>Ver Estado del Trámite</a>
+                <div style='background: #e8f4f8; padding: 25px; text-align: center; border-radius: 8px; margin: 25px 0;'>
+                    <h3 style='color: #016d86; margin-bottom: 10px;'>📧 Contacto Profesional</h3>
+                    <p>Le mantendremos informado del progreso por email profesional y le contactaremos si necesitamos documentación adicional (DNI por ambas caras incluido).</p>
                 </div>
                 
                 <p style='margin-top: 25px; color: #6c757d;'>
@@ -3616,10 +3532,10 @@ function rdoc_send_emails() {
             </div>
             
             <div class='actions'>
-                <a href='https://46-202-128-35.sslip.io/tramites/$tramite_id' class='btn-primary'>
+                <a href='https://tramitfy.org/tramites/$tramite_id' class='btn-primary'>
                     📊 Ver en Dashboard
                 </a>
-                <a href='https://46-202-128-35.sslip.io/seguimiento/$tramite_id' class='btn-secondary'>
+                <a href='https://tramitfy.org/seguimiento/$tramite_id' class='btn-secondary'>
                     👁️ Vista Cliente
                 </a>
             </div>

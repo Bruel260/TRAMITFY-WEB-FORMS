@@ -2,48 +2,36 @@
 // Asegurarse de que el archivo no sea accedido directamente
 defined('ABSPATH') || exit;
 
-// Cargar Stripe library ANTES de las funciones (CON PROTECCIÓN)
-if (!class_exists('\\Stripe\\Stripe')) {
-    require_once(get_template_directory() . '/vendor/autoload.php');
-}
+// Cargar Stripe library ANTES de las funciones (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
+require_once(get_template_directory() . '/vendor/autoload.php');
 
-// Configuración de Stripe AL NIVEL GLOBAL (CON PROTECCIÓN CONTRA REDEFINICIÓN)
-if (!defined('HOJA_ASIENTO_STRIPE_MODE')) {
-    define('HOJA_ASIENTO_STRIPE_MODE', 'test'); // 'test' o 'live'
-}
+// Configuración de Stripe AL NIVEL GLOBAL (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
+define('NAVIGATION_PERMIT_STRIPE_MODE', 'live'); // 'test' o 'live' - MODO LIVE ACTIVADO
 
-if (!defined('HOJA_ASIENTO_STRIPE_TEST_PUBLIC_KEY')) {
-    define('HOJA_ASIENTO_STRIPE_TEST_PUBLIC_KEY', 'pk_test_51SBOq2GXJ2PkUN8kmrKUUjCLbvY3v8sAsgr6rNtg8zHyUZjB6pFrB7Vz3Gm0l2Wm7y5xVoMap2NY8utwgdJOogNQ000qBYIX5V');
-}
-if (!defined('HOJA_ASIENTO_STRIPE_TEST_SECRET_KEY')) {
-    define('HOJA_ASIENTO_STRIPE_TEST_SECRET_KEY', 'sk_test_51SBOq2GXJ2PkUN8kFlbLBQU3pd1kTVpWsSooQzdPMcqC8jKFSykeptf5XKOtbBzwMT4yjVHM0AbHUFoncbWIe4V600wkzJwpXC');
-}
+define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'pk_test_51SBOq2GXJ2PkUN8kmrKUUjCLbvY3v8sAsgr6rNtg8zHyUZjB6pFrB7Vz3Gm0l2Wm7y5xVoMap2NY8utwgdJOogNQ000qBYIX5V');
+define('NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY', 'sk_test_51SBOq2GXJ2PkUN8kFlbLBQU3pd1kTVpWsSooQzdPMcqC8jKFSykeptf5XKOtbBzwMT4yjVHM0AbHUFoncbWIe4V600wkzJwpXC');
 
-if (!defined('HOJA_ASIENTO_STRIPE_LIVE_PUBLIC_KEY')) {
-    define('HOJA_ASIENTO_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
-}
-if (!defined('HOJA_ASIENTO_STRIPE_LIVE_SECRET_KEY')) {
-    define('HOJA_ASIENTO_STRIPE_LIVE_SECRET_KEY', 'sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
-}
+define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_51QHhtNGXGHYLV5CXu3P7PrAFezBnDuf0JsZzb2AxjSsV0okn4y19VOMIjW0NUOLpaFdI3CCRhiC4fvNBDDbPhiW100KkF6Uo2x');
+define('NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY', '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');
 
-if (!defined('HOJA_ASIENTO_SERVICE_PRICE')) {
-    define('HOJA_ASIENTO_SERVICE_PRICE', 29.99);
-}
+define('NAVIGATION_PERMIT_SERVICE_PRICE', 65.00);
+define('NAVIGATION_PERMIT_TASA_CERTIFICADO', 15.00);
+define('NAVIGATION_PERMIT_TASA_EMISION', 8.00);
 
 // Seleccionar las claves según el modo (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
-if (HOJA_ASIENTO_STRIPE_MODE === 'test') {
-    $ha_stripe_public_key = HOJA_ASIENTO_STRIPE_TEST_PUBLIC_KEY;
-    $ha_stripe_secret_key = HOJA_ASIENTO_STRIPE_TEST_SECRET_KEY;
+if (NAVIGATION_PERMIT_STRIPE_MODE === 'test') {
+    $stripe_public_key = NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY;
+    $stripe_secret_key = NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY;
 } else {
-    $ha_stripe_public_key = HOJA_ASIENTO_STRIPE_LIVE_PUBLIC_KEY;
-    $ha_stripe_secret_key = HOJA_ASIENTO_STRIPE_LIVE_SECRET_KEY;
+    $stripe_public_key = NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY;
+    $stripe_secret_key = NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY;
 }
 
 /**
- * Shortcode para el formulario de copia de hoja de asiento
+ * Shortcode para el formulario de renovación de permiso de navegación
  */
-function hoja_asiento_form_shortcode() {
-    global $ha_stripe_public_key, $ha_stripe_secret_key;
+function navigation_permit_renewal_form_shortcode() {
+    global $stripe_public_key, $stripe_secret_key;
 
     // Si estamos en el editor de Elementor, devolver un placeholder
     if (defined('ELEMENTOR_VERSION') &&
@@ -51,7 +39,7 @@ function hoja_asiento_form_shortcode() {
         \Elementor\Plugin::$instance->editor &&
         \Elementor\Plugin::$instance->editor->is_edit_mode()) {
         return '<div style="padding: 20px; background: #f0f0f0; text-align: center;">
-                    <h3>Formulario de Hoja de Asiento</h3>
+                    <h3>Formulario de Renovación de Permiso de Navegación</h3>
                     <p>El formulario se mostrará aquí en el frontend.</p>
                 </div>';
     }
@@ -104,7 +92,7 @@ function hoja_asiento_form_shortcode() {
         }
 
         /* Container principal - Grid de 2 columnas */
-        .ha-container {
+        .npn-container {
             max-width: 1400px;
             margin: 25px auto 40px auto;
             background: white;
@@ -118,7 +106,7 @@ function hoja_asiento_form_shortcode() {
         }
 
         /* SIDEBAR IZQUIERDO */
-        .ha-sidebar {
+        .npn-sidebar {
             background: linear-gradient(180deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
             color: white;
             padding: 30px 25px 40px 25px;
@@ -129,7 +117,14 @@ function hoja_asiento_form_shortcode() {
             position: relative;
         }
 
-        .ha-logo {
+        /* Asegurar que todos los títulos en sidebar tengan texto blanco sin fondo */
+        .npn-sidebar h1, .npn-sidebar h2, .npn-sidebar h3, .npn-sidebar h4, .npn-sidebar h5, .npn-sidebar h6 {
+            color: white !important;
+            background: none !important;
+            background-color: transparent !important;
+        }
+
+        .npn-logo {
             font-size: 22px;
             font-weight: 700;
             margin-bottom: 4px;
@@ -138,18 +133,23 @@ function hoja_asiento_form_shortcode() {
             gap: 10px;
         }
 
-        .ha-logo i {
+        .npn-logo i {
             font-size: 28px;
         }
 
-        .ha-headline {
-            font-size: 24px;
+        .npn-headline {
+            font-size: 18px;
             font-weight: 600;
             line-height: 1.3;
             margin-bottom: 8px;
+            background: transparent;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: -5px -5px 15px -5px;
         }
 
-        .ha-subheadline {
+        .npn-subheadline {
             font-size: 13px;
             opacity: 0.92;
             line-height: 1.4;
@@ -157,7 +157,7 @@ function hoja_asiento_form_shortcode() {
         }
 
         /* Caja de precio destacada */
-        .ha-price-box {
+        .npn-price-box {
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
             border-radius: 12px;
@@ -167,7 +167,7 @@ function hoja_asiento_form_shortcode() {
             margin: 15px 0 20px 0;
         }
 
-        .ha-price-label {
+        .npn-price-label {
             font-size: 11px;
             opacity: 0.85;
             text-transform: uppercase;
@@ -175,27 +175,27 @@ function hoja_asiento_form_shortcode() {
             margin-bottom: 6px;
         }
 
-        .ha-price-amount {
+        .npn-price-amount {
             font-size: 38px;
             font-weight: 700;
             margin: 4px 0;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .ha-price-detail {
+        .npn-price-detail {
             font-size: 12px;
             opacity: 0.88;
         }
 
         /* Lista de beneficios */
-        .ha-benefits {
+        .npn-benefits {
             display: flex;
             flex-direction: column;
             gap: 10px;
             margin: 15px 0 20px 0;
         }
 
-        .ha-reviews-widget {
+        .npn-reviews-widget {
             margin-top: 25px;
             padding: 25px 15px 20px 15px;
             background: rgba(255, 255, 255, 0.08);
@@ -204,7 +204,7 @@ function hoja_asiento_form_shortcode() {
             backdrop-filter: blur(5px);
         }
 
-        .ha-benefit {
+        .npn-benefit {
             display: flex;
             align-items: start;
             gap: 8px;
@@ -212,7 +212,7 @@ function hoja_asiento_form_shortcode() {
             line-height: 1.4;
         }
 
-        .ha-benefit i {
+        .npn-benefit i {
             font-size: 14px;
             color: rgb(var(--success));
             background: white;
@@ -227,7 +227,7 @@ function hoja_asiento_form_shortcode() {
         }
 
         /* Trust badges */
-        .ha-trust-badges {
+        .npn-trust-badges {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
@@ -236,7 +236,7 @@ function hoja_asiento_form_shortcode() {
             border-top: 1px solid rgba(255, 255, 255, 0.15);
         }
 
-        .ha-badge {
+        .npn-badge {
             background: rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(10px);
             padding: 8px 12px;
@@ -251,27 +251,29 @@ function hoja_asiento_form_shortcode() {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
-        .ha-badge i {
+        .npn-badge i {
             font-size: 11px;
         }
         
-        .ha-badge:hover {
+        .npn-badge:hover {
             background: rgba(255, 255, 255, 0.3);
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
         /* Sidebar de autorización */
-        .ha-sidebar-auth-doc {
+        .npn-sidebar-auth-doc {
             display: flex;
             flex-direction: column;
             gap: 20px;
             margin-top: 20px;
             padding-top: 15px;
+            background: none !important;
+            background-color: transparent !important;
         }
         
         /* Estética moderna para parte inferior */
-        .ha-container::after {
+        .npn-container::after {
             content: '';
             position: absolute;
             bottom: -20px;
@@ -285,13 +287,13 @@ function hoja_asiento_form_shortcode() {
         }
         
         /* Mejorar navegación para que se vea más moderna */
-        .ha-navigation {
+        .npn-navigation {
             background: linear-gradient(135deg, white 0%, #f8f9fa 100%);
             border: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         /* ÁREA PRINCIPAL DEL FORMULARIO */
-        .ha-form-area {
+        .npn-form-area {
             padding: 30px 40px 50px 40px;
             background: linear-gradient(135deg, #fafbfc 0%, #f8f9fa 100%);
             overflow-y: auto;
@@ -301,24 +303,24 @@ function hoja_asiento_form_shortcode() {
             position: relative;
         }
 
-        .ha-form-header {
+        .npn-form-header {
             margin-bottom: 15px;
         }
 
-        .ha-form-title {
-            font-size: 22px;
+        .npn-form-title {
+            font-size: 18px;
             font-weight: 700;
             color: rgb(var(--neutral-900));
             margin-bottom: 4px;
         }
 
-        .ha-form-subtitle {
+        .npn-form-subtitle {
             font-size: 13px;
             color: rgb(var(--neutral-600));
         }
 
         /* Panel de auto-rellenado para administradores */
-        .ha-admin-panel {
+        .npn-admin-panel {
             background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
             color: white;
             padding: 10px 15px;
@@ -330,24 +332,24 @@ function hoja_asiento_form_shortcode() {
             box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
         }
 
-        .ha-admin-panel-info {
+        .npn-admin-panel-info {
             display: flex;
             flex-direction: column;
             gap: 4px;
         }
 
-        .ha-admin-panel-title {
+        .npn-admin-panel-title {
             font-size: 12px;
             font-weight: 600;
             opacity: 0.95;
         }
 
-        .ha-admin-panel-subtitle {
+        .npn-admin-panel-subtitle {
             font-size: 10px;
             opacity: 0.85;
         }
 
-        .ha-admin-autofill-btn {
+        .npn-admin-autofill-btn {
             padding: 8px 16px;
             background: white;
             color: #0ea5e9;
@@ -360,13 +362,13 @@ function hoja_asiento_form_shortcode() {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
 
-        .ha-admin-autofill-btn:hover {
+        .npn-admin-autofill-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
         /* Navegación modernizada */
-        .ha-navigation {
+        .npn-navigation {
             display: flex;
             gap: 10px;
             margin-bottom: 15px;
@@ -376,7 +378,7 @@ function hoja_asiento_form_shortcode() {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
-        .ha-nav-item {
+        .npn-nav-item {
             flex: 1;
             padding: 10px 16px;
             text-align: center;
@@ -395,35 +397,35 @@ function hoja_asiento_form_shortcode() {
             border: 2px solid transparent;
         }
 
-        .ha-nav-item i {
+        .npn-nav-item i {
             font-size: 14px;
         }
 
-        .ha-nav-item.active {
+        .npn-nav-item.active {
             background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
             color: white;
             border-color: rgb(var(--primary));
             box-shadow: 0 4px 12px rgba(var(--primary), 0.3);
         }
 
-        .ha-nav-item:hover:not(.active) {
+        .npn-nav-item:hover:not(.active) {
             background: #e9ecef;
             border-color: rgb(var(--primary-light));
         }
 
         /* Páginas del formulario */
-        .ha-form-page {
+        .npn-form-page {
             background: white;
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
 
-        .ha-form-page.hidden {
+        .npn-form-page.hidden {
             display: none;
         }
 
-        .ha-form-page h3 {
+        .npn-form-page h3 {
             font-size: 18px;
             font-weight: 600;
             color: rgb(var(--neutral-900));
@@ -431,11 +433,11 @@ function hoja_asiento_form_shortcode() {
         }
 
         /* Inputs mejorados */
-        .ha-input-group {
+        .npn-input-group {
             margin-bottom: 18px;
         }
 
-        .ha-input-group label {
+        .npn-input-group label {
             display: block;
             font-weight: 500;
             margin-bottom: 7px;
@@ -443,11 +445,11 @@ function hoja_asiento_form_shortcode() {
             font-size: 14px;
         }
 
-        .ha-input-group input[type="text"],
-        .ha-input-group input[type="email"],
-        .ha-input-group input[type="tel"],
-        .ha-input-group input[type="file"],
-        .ha-input-group select {
+        .npn-input-group input[type="text"],
+        .npn-input-group input[type="email"],
+        .npn-input-group input[type="tel"],
+        .npn-input-group input[type="file"],
+        .npn-input-group select {
             width: 100%;
             padding: 12px 16px;
             border: 2px solid rgb(var(--neutral-300));
@@ -457,50 +459,56 @@ function hoja_asiento_form_shortcode() {
             background: white;
         }
 
-        .ha-input-group input:focus,
-        .ha-input-group select:focus {
+        .npn-input-group input:focus,
+        .npn-input-group select:focus {
             outline: none;
             border-color: rgb(var(--primary));
             box-shadow: 0 0 0 3px rgba(var(--primary), 0.1);
         }
 
         /* Grid para inputs en 2 columnas */
-        .ha-inputs-row {
+        .npn-inputs-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
             margin-bottom: 18px;
         }
 
-        /* Upload section - Diseño discreto */
-        .ha-upload-grid {
+        /* Upload section */
+        .npn-upload-grid {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
             margin: 20px 0;
         }
 
-        .ha-upload-item {
+        .npn-upload-item {
             background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid rgb(var(--neutral-200));
-            transition: all 0.2s ease;
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px dashed rgb(var(--neutral-300));
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            min-height: 230px;
         }
 
-        .ha-upload-item:hover {
+        .npn-upload-item:hover {
             border-color: rgb(var(--primary));
+            background: rgba(var(--primary), 0.02);
         }
 
-        .ha-upload-item label {
+        .npn-upload-item label {
             display: block;
-            font-weight: 500;
-            margin-bottom: 12px;
+            font-weight: 600;
+            margin-bottom: 15px;
             color: rgb(var(--neutral-800));
-            font-size: 14px;
+            font-size: 15px;
+            flex-grow: 0;
+            min-height: 65px;
         }
 
-        .ha-upload-item input[type="file"] {
+        .npn-upload-item input[type="file"] {
             width: 100%;
             padding: 6px;
             border: none;
@@ -509,122 +517,29 @@ function hoja_asiento_form_shortcode() {
             font-size: 11px;
         }
 
-        .ha-upload-item .view-example {
+        .npn-upload-item .view-example {
             display: inline-block;
+            margin-top: auto;
             color: rgb(var(--primary));
             text-decoration: none;
-            font-size: 12px;
-            font-weight: 400;
-            margin-left: 10px;
+            font-size: 11px;
+            font-weight: 500;
+            padding-top: 10px;
         }
 
-        .ha-upload-item .view-example:hover {
+        .npn-upload-item .view-example:hover {
             text-decoration: underline;
         }
 
-        /* Vista previa de archivos */
-        .ha-file-preview-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .ha-file-preview-item {
-            position: relative;
-            width: 100px;
-            height: 100px;
-            border-radius: 8px;
-            overflow: hidden;
-            background: rgb(var(--neutral-100));
-            border: 2px solid rgb(var(--neutral-200));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .ha-file-preview-item:hover {
-            border-color: rgb(var(--primary));
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(var(--primary), 0.15);
-        }
-
-        .ha-file-preview-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .ha-file-preview-item i {
-            font-size: 32px;
-            color: rgb(var(--neutral-400));
-        }
-
-        .ha-file-remove-btn {
-            position: absolute;
-            top: 4px;
-            right: 4px;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            background: rgba(220, 38, 38, 0.95);
-            border: 2px solid white;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 11px;
-            opacity: 0;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-        }
-
-        .ha-file-preview-item:hover .ha-file-remove-btn {
-            opacity: 1;
-        }
-
-        .ha-file-remove-btn:hover {
-            background: rgba(185, 28, 28, 1);
-            transform: scale(1.1);
-        }
-
-        .ha-file-name {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 6px 4px;
-            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-            color: white;
-            font-size: 10px;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        @keyframes fadeOut {
-            from {
-                opacity: 1;
-                transform: scale(1);
-            }
-            to {
-                opacity: 0;
-                transform: scale(0.8);
-            }
-        }
-
         /* Layout 2 columnas para autorización */
-        .ha-auth-layout {
+        .npn-auth-layout {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 25px;
             margin: 20px 0;
         }
 
-        .ha-auth-document {
+        .npn-auth-document {
             background: #f8f9fa;
             padding: 25px;
             border-radius: 10px;
@@ -633,20 +548,20 @@ function hoja_asiento_form_shortcode() {
             border: 2px solid rgb(var(--neutral-200));
         }
 
-        .ha-auth-document h4 {
+        .npn-auth-document h4 {
             font-size: 16px;
             font-weight: 700;
             color: rgb(var(--primary));
             margin-bottom: 15px;
         }
 
-        .ha-auth-signature-area {
+        .npn-auth-signature-area {
             display: flex;
             flex-direction: column;
             justify-content: center;
         }
 
-        .ha-signature-label {
+        .npn-signature-label {
             font-size: 14px;
             font-weight: 600;
             color: rgb(var(--neutral-700));
@@ -655,7 +570,7 @@ function hoja_asiento_form_shortcode() {
         }
 
         /* Firma */
-        .ha-signature-container {
+        .npn-signature-container {
             margin: 0;
             text-align: center;
             position: relative;
@@ -671,7 +586,7 @@ function hoja_asiento_form_shortcode() {
             box-shadow: 0 2px 8px rgba(var(--primary), 0.15);
         }
 
-        .ha-signature-clear {
+        .npn-signature-clear {
             margin-top: 12px;
             padding: 10px 20px;
             background: rgb(var(--neutral-500));
@@ -684,12 +599,12 @@ function hoja_asiento_form_shortcode() {
             transition: all 0.2s ease;
         }
 
-        .ha-signature-clear:hover {
+        .npn-signature-clear:hover {
             background: rgb(var(--neutral-600));
             transform: translateY(-1px);
         }
 
-        .ha-zoom-btn {
+        .npn-zoom-btn {
             display: none;
             margin-top: 12px;
             padding: 10px 20px;
@@ -704,13 +619,13 @@ function hoja_asiento_form_shortcode() {
             box-shadow: 0 4px 12px rgba(var(--primary), 0.3);
         }
 
-        .ha-zoom-btn:hover {
+        .npn-zoom-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 16px rgba(var(--primary), 0.4);
         }
 
         /* Modal de firma avanzado */
-        .ha-signature-modal {
+        .npn-signature-modal {
             position: fixed;
             top: 0;
             left: 0;
@@ -725,13 +640,13 @@ function hoja_asiento_form_shortcode() {
             animation: fadeIn 0.3s ease;
         }
 
-        .ha-signature-modal.active {
+        .npn-signature-modal.active {
             display: flex;
         }
 
-        .ha-signature-modal.active ~ * .wa__popup_chat_box,
-        .ha-signature-modal.active ~ * #whatsapp-button,
-        .ha-signature-modal.active ~ * .wa__btn_popup {
+        .npn-signature-modal.active ~ * .wa__popup_chat_box,
+        .npn-signature-modal.active ~ * #whatsapp-button,
+        .npn-signature-modal.active ~ * .wa__btn_popup {
             display: none !important;
             visibility: hidden !important;
         }
@@ -745,7 +660,7 @@ function hoja_asiento_form_shortcode() {
             }
         }
 
-        .ha-modal-content {
+        .npn-modal-content {
             position: relative;
             width: 95%;
             height: 92%;
@@ -759,7 +674,7 @@ function hoja_asiento_form_shortcode() {
             overflow: hidden;
         }
 
-        .ha-modal-header {
+        .npn-modal-header {
             background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
             color: white;
             padding: 20px;
@@ -769,13 +684,13 @@ function hoja_asiento_form_shortcode() {
             border-bottom: 2px solid rgba(255, 255, 255, 0.2);
         }
 
-        .ha-modal-header h3 {
+        .npn-modal-header h3 {
             margin: 0;
             font-size: 22px;
             font-weight: 700;
         }
 
-        .ha-modal-close {
+        .npn-modal-close {
             background: rgba(255, 255, 255, 0.2);
             color: white;
             border: none;
@@ -790,12 +705,12 @@ function hoja_asiento_form_shortcode() {
             transition: all 0.2s ease;
         }
 
-        .ha-modal-close:hover {
+        .npn-modal-close:hover {
             background: rgba(255, 255, 255, 0.3);
             transform: rotate(90deg);
         }
 
-        .ha-enhanced-signature-container {
+        .npn-enhanced-signature-container {
             position: relative;
             flex: 1;
             width: 100%;
@@ -813,7 +728,7 @@ function hoja_asiento_form_shortcode() {
             touch-action: none;
         }
 
-        .ha-signature-guide {
+        .npn-signature-guide {
             position: absolute;
             top: 50%;
             left: 10px;
@@ -822,13 +737,13 @@ function hoja_asiento_form_shortcode() {
             pointer-events: none;
         }
 
-        .ha-signature-line {
+        .npn-signature-line {
             height: 2px;
             background-color: rgb(var(--primary));
             opacity: 0.5;
         }
 
-        .ha-signature-instruction {
+        .npn-signature-instruction {
             position: absolute;
             color: rgb(var(--primary));
             font-size: 20px;
@@ -841,25 +756,25 @@ function hoja_asiento_form_shortcode() {
             text-align: center;
         }
 
-        .ha-modal-footer {
+        .npn-modal-footer {
             background: #f8f9fa;
             padding: 20px;
             border-top: 2px solid rgb(var(--neutral-200));
         }
 
-        .ha-modal-instructions {
+        .npn-modal-instructions {
             text-align: center;
             color: rgb(var(--neutral-600));
             font-size: 14px;
             margin-bottom: 15px;
         }
 
-        .ha-modal-button-container {
+        .npn-modal-button-container {
             display: flex;
             gap: 12px;
         }
 
-        .ha-modal-clear-btn {
+        .npn-modal-clear-btn {
             flex: 1;
             padding: 14px 24px;
             background: rgb(var(--neutral-500));
@@ -876,12 +791,12 @@ function hoja_asiento_form_shortcode() {
             gap: 8px;
         }
 
-        .ha-modal-clear-btn:hover {
+        .npn-modal-clear-btn:hover {
             background: rgb(var(--neutral-600));
             transform: translateY(-2px);
         }
 
-        .ha-modal-accept-btn {
+        .npn-modal-accept-btn {
             flex: 2;
             padding: 14px 24px;
             background: linear-gradient(135deg, rgb(var(--success)) 0%, rgba(var(--success), 0.8) 100%);
@@ -899,18 +814,18 @@ function hoja_asiento_form_shortcode() {
             box-shadow: 0 4px 12px rgba(var(--success), 0.3);
         }
 
-        .ha-modal-accept-btn:hover:not(:disabled) {
+        .npn-modal-accept-btn:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 6px 16px rgba(var(--success), 0.4);
         }
 
-        .ha-modal-accept-btn:disabled {
+        .npn-modal-accept-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
 
         /* Modal de pago */
-        .ha-payment-modal {
+        .npn-payment-modal {
             display: none;
             position: fixed;
             z-index: 999998;
@@ -925,12 +840,12 @@ function hoja_asiento_form_shortcode() {
             transition: opacity 0.3s ease;
         }
 
-        .ha-payment-modal.show {
+        .npn-payment-modal.show {
             display: block;
             opacity: 1;
         }
 
-        .ha-payment-modal-content {
+        .npn-payment-modal-content {
             background-color: #fff;
             margin: 125px auto 5% auto;
             max-width: 600px;
@@ -944,12 +859,12 @@ function hoja_asiento_form_shortcode() {
             transition: all 0.4s ease;
         }
 
-        .ha-payment-modal.show .ha-payment-modal-content {
+        .npn-payment-modal.show .npn-payment-modal-content {
             transform: translateY(0);
             opacity: 1;
         }
 
-        .ha-close-payment-modal {
+        .npn-close-payment-modal {
             position: absolute;
             top: 20px;
             right: 20px;
@@ -966,24 +881,24 @@ function hoja_asiento_form_shortcode() {
             transition: all 0.2s ease;
         }
 
-        .ha-close-payment-modal:hover {
+        .npn-close-payment-modal:hover {
             color: #333;
             background-color: #f0f0f0;
         }
 
-        #ha-stripe-container {
+        #npn-stripe-container {
             margin: 0 auto;
             width: 100%;
             padding: 0;
         }
 
-        #ha-stripe-loading {
+        #npn-stripe-loading {
             text-align: center;
             padding: 20px;
             margin-bottom: 15px;
         }
 
-        .ha-stripe-spinner {
+        .npn-stripe-spinner {
             display: inline-block;
             width: 40px;
             height: 40px;
@@ -995,7 +910,7 @@ function hoja_asiento_form_shortcode() {
         }
 
 
-        .ha-confirm-payment-btn {
+        .npn-confirm-payment-btn {
             width: 100%;
             padding: 16px 24px;
             background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
@@ -1014,17 +929,17 @@ function hoja_asiento_form_shortcode() {
             margin-top: 20px;
         }
 
-        .ha-confirm-payment-btn:hover:not(:disabled) {
+        .npn-confirm-payment-btn:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 6px 16px rgba(var(--primary), 0.4);
         }
 
-        .ha-confirm-payment-btn:disabled {
+        .npn-confirm-payment-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
         }
 
-        #ha-payment-message {
+        #npn-payment-message {
             margin: 15px 0;
             padding: 12px;
             border-radius: 8px;
@@ -1032,30 +947,30 @@ function hoja_asiento_form_shortcode() {
             text-align: center;
         }
 
-        #ha-payment-message.error {
+        #npn-payment-message.error {
             background: rgba(var(--error), 0.1);
             color: rgb(var(--error));
             border: 1px solid rgba(var(--error), 0.3);
         }
 
-        #ha-payment-message.success {
+        #npn-payment-message.success {
             background: rgba(var(--success), 0.1);
             color: rgb(var(--success));
             border: 1px solid rgba(var(--success), 0.3);
         }
 
-        #ha-payment-message.processing {
+        #npn-payment-message.processing {
             background: rgba(var(--info), 0.1);
             color: rgb(var(--info));
             border: 1px solid rgba(var(--info), 0.3);
         }
 
-        #ha-payment-message.hidden {
+        #npn-payment-message.hidden {
             display: none;
         }
 
         /* Términos y condiciones */
-        .ha-terms {
+        .npn-terms {
             margin: 12px 0;
             padding: 10px;
             background: #f8f9fa;
@@ -1063,7 +978,7 @@ function hoja_asiento_form_shortcode() {
             border-left: 3px solid rgb(var(--info));
         }
 
-        .ha-terms label {
+        .npn-terms label {
             display: flex;
             align-items: start;
             gap: 8px;
@@ -1071,31 +986,31 @@ function hoja_asiento_form_shortcode() {
             font-size: 11px;
         }
 
-        .ha-terms input[type="checkbox"] {
+        .npn-terms input[type="checkbox"] {
             margin-top: 2px;
             width: 16px;
             height: 16px;
             cursor: pointer;
         }
 
-        .ha-terms a {
+        .npn-terms a {
             color: rgb(var(--primary));
             text-decoration: none;
             font-weight: 500;
         }
 
-        .ha-terms a:hover {
+        .npn-terms a:hover {
             text-decoration: underline;
         }
 
         /* Botones de navegación */
-        .ha-button-group {
+        .npn-button-group {
             display: flex;
             gap: 10px;
             margin-top: 15px;
         }
 
-        .ha-btn {
+        .npn-btn {
             flex: 1;
             padding: 14px 24px;
             border: none;
@@ -1110,29 +1025,29 @@ function hoja_asiento_form_shortcode() {
             gap: 8px;
         }
 
-        .ha-btn-prev {
+        .npn-btn-prev {
             background: rgb(var(--neutral-300));
             color: rgb(var(--neutral-800));
         }
 
-        .ha-btn-prev:hover {
+        .npn-btn-prev:hover {
             background: rgb(var(--neutral-400));
             transform: translateY(-2px);
         }
 
-        .ha-btn-next, .ha-btn-submit {
+        .npn-btn-next, .npn-btn-submit {
             background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
             color: white;
             box-shadow: 0 4px 12px rgba(var(--primary), 0.3);
         }
 
-        .ha-btn-next:hover, .ha-btn-submit:hover {
+        .npn-btn-next:hover, .npn-btn-submit:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 16px rgba(var(--primary), 0.4);
         }
 
         /* Precio y pago */
-        .ha-price-summary {
+        .npn-price-summary {
             background: #f8f9fa;
             padding: 12px 15px;
             border-radius: 8px;
@@ -1140,18 +1055,18 @@ function hoja_asiento_form_shortcode() {
             border: 2px solid rgb(var(--neutral-200));
         }
 
-        .ha-price-row {
+        .npn-price-row {
             display: flex;
             justify-content: space-between;
             margin-bottom: 6px;
             font-size: 13px;
         }
 
-        .ha-price-row strong {
+        .npn-price-row strong {
             color: rgb(var(--neutral-900));
         }
 
-        .ha-price-total {
+        .npn-price-total {
             margin-top: 8px;
             padding-top: 8px;
             border-top: 2px solid rgb(var(--neutral-300));
@@ -1170,11 +1085,11 @@ function hoja_asiento_form_shortcode() {
         }
 
         /* Cupón */
-        .ha-coupon-container {
+        .npn-coupon-container {
             margin: 12px 0;
         }
 
-        .ha-coupon-input {
+        .npn-coupon-input {
             display: flex;
             gap: 8px;
         }
@@ -1187,20 +1102,20 @@ function hoja_asiento_form_shortcode() {
             font-size: 13px;
         }
 
-        .ha-coupon-message {
+        .npn-coupon-message {
             margin-top: 6px;
             padding: 8px 12px;
             border-radius: 6px;
             font-size: 12px;
         }
 
-        .ha-coupon-message.success {
+        .npn-coupon-message.success {
             background: rgba(var(--success), 0.1);
             color: rgb(var(--success));
             border: 1px solid rgba(var(--success), 0.3);
         }
 
-        .ha-coupon-message.error {
+        .npn-coupon-message.error {
             background: rgba(var(--error), 0.1);
             color: rgb(var(--error));
             border: 1px solid rgba(var(--error), 0.3);
@@ -1224,7 +1139,7 @@ function hoja_asiento_form_shortcode() {
             display: flex;
         }
 
-        .ha-loading-spinner {
+        .npn-loading-spinner {
             width: 60px;
             height: 60px;
             border: 5px solid rgb(var(--neutral-300));
@@ -1239,123 +1154,112 @@ function hoja_asiento_form_shortcode() {
 
         /* Responsive */
         @media (max-width: 1024px) {
-            .ha-container {
+            .npn-container {
                 grid-template-columns: 1fr;
                 margin: 20px;
             }
 
-            .ha-sidebar {
+            .npn-sidebar {
                 position: relative;
                 height: auto;
             }
 
-            .ha-form-area {
+            .npn-form-area {
                 padding: 25px 20px;
             }
 
-            .ha-inputs-row {
+            .npn-inputs-row {
                 grid-template-columns: 1fr;
             }
 
-            .ha-navigation {
+            .npn-navigation {
                 flex-wrap: wrap;
             }
 
-            .ha-nav-item {
+            .npn-nav-item {
                 flex: 1 1 calc(50% - 8px);
                 min-width: 140px;
             }
         }
 
-        /* File previews - Diseño mejorado */
-        .ha-file-preview-container {
-            margin: 20px 0;
+        /* File previews */
+        .npn-file-preview-container {
+            margin-top: 15px;
             display: flex;
             flex-wrap: wrap;
-            gap: 15px;
-            justify-content: center;
-            min-height: 20px;
+            gap: 12px;
         }
 
-        .ha-file-preview-item {
+        .npn-file-preview-item {
             position: relative;
-            width: 110px;
-            height: 110px;
-            border-radius: 12px;
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
             overflow: hidden;
-            background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
-            border: 2px solid rgba(1, 109, 134, 0.15);
+            background: rgb(var(--neutral-100));
+            border: 2px solid rgb(var(--neutral-200));
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            animation: slideIn 0.3s ease;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            transition: all 0.2s ease;
+            animation: fadeIn 0.3s ease;
         }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .npn-file-preview-item:hover {
+            border-color: rgb(var(--primary));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(var(--primary), 0.15);
         }
 
-        .ha-file-preview-item:hover {
-            border-color: #016d86;
-            transform: translateY(-4px) scale(1.05);
-            box-shadow: 0 8px 20px rgba(1, 109, 134, 0.2);
-        }
-
-        .ha-file-preview-item img {
+        .npn-file-preview-item img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .ha-file-preview-item i {
+        .npn-file-preview-item i {
             font-size: 32px;
             color: rgb(var(--neutral-400));
         }
 
-        .ha-file-remove-btn {
+        .npn-file-remove-btn {
             position: absolute;
-            top: 2px;
-            right: 2px;
-            width: 16px;
-            height: 16px;
+            top: 4px;
+            right: 4px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
-            background: rgba(220, 38, 38, 0.9);
+            background: rgba(220, 38, 38, 0.95);
+            border: 2px solid white;
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: 9px;
+            font-size: 11px;
             opacity: 0;
-            transition: opacity 0.2s ease;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
         }
 
-        .ha-file-preview-item:hover .ha-file-remove-btn {
+        .npn-file-preview-item:hover .npn-file-remove-btn {
             opacity: 1;
         }
 
-        .ha-file-remove-btn:hover {
+        .npn-file-remove-btn:hover {
             background: rgba(185, 28, 28, 1);
+            transform: scale(1.1);
         }
 
-        .ha-file-name {
+        .npn-file-name {
             position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
-            padding: 2px;
-            background: rgba(0,0,0,0.7);
+            padding: 6px 4px;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
             color: white;
-            font-size: 8px;
+            font-size: 10px;
             text-align: center;
             white-space: nowrap;
             overflow: hidden;
@@ -1385,112 +1289,75 @@ function hoja_asiento_form_shortcode() {
         }
 
         /* Hide default file input */
-        .ha-upload-item input[type="file"] {
+        .npn-upload-item input[type="file"] {
             opacity: 0;
             position: absolute;
             z-index: -1;
         }
 
-        .ha-upload-btn {
+        .npn-upload-btn {
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            padding: 16px 32px;
-            background: linear-gradient(135deg, #016d86 0%, #014d5f 100%);
+            gap: 8px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
             color: white;
             border: none;
-            border-radius: 12px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(1, 109, 134, 0.3);
-            position: relative;
-            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(var(--primary), 0.2);
         }
 
-        .ha-upload-btn::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.6s ease, height 0.6s ease;
-        }
-
-        .ha-upload-btn:hover {
-            background: linear-gradient(135deg, #014d5f 0%, #016d86 100%);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(1, 109, 134, 0.4);
-        }
-
-        .ha-upload-btn:hover::after {
-            width: 400px;
-            height: 400px;
-        }
-
-        .ha-upload-btn:active {
-            transform: translateY(-1px);
+        .npn-upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(var(--primary), 0.35);
         }
         
-        /* Área de botones en uploads - Diseño centrado */
-        .ha-upload-actions {
+        /* Área de botones en uploads */
+        .npn-upload-actions {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 10px;
             margin-top: auto;
-            padding-top: 20px;
-            align-items: center;
+            padding-top: 15px;
         }
 
-        .ha-upload-btn i {
-            font-size: 18px;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-3px); }
+        .npn-upload-btn i {
+            font-size: 16px;
         }
 
         @media (max-width: 768px) {
-            .ha-container {
+            .npn-container {
                 margin: 10px;
                 border-radius: 12px;
             }
 
-            .ha-form-title {
-                font-size: 22px;
+            .npn-form-title {
+                font-size: 16px;
             }
 
-            .ha-upload-item {
-                padding: 15px;
+            .npn-upload-grid {
+                grid-template-columns: 1fr;
             }
 
-            .ha-upload-btn {
-                font-size: 12px;
-                padding: 8px 12px;
+            .npn-file-preview-item {
+                width: 85px;
+                height: 85px;
             }
 
-            .ha-file-preview-item {
-                width: 60px;
-                height: 60px;
-            }
-
-            .ha-file-remove-btn {
+            .npn-file-remove-btn {
                 opacity: 1;
             }
 
-            .ha-auth-layout {
+            .npn-auth-layout {
                 grid-template-columns: 1fr;
                 gap: 20px;
             }
 
-            .ha-button-group {
+            .npn-button-group {
                 flex-direction: column;
             }
 
@@ -1498,96 +1365,96 @@ function hoja_asiento_form_shortcode() {
                 display: none;
             }
 
-            .ha-signature-clear {
+            .npn-signature-clear {
                 display: none;
             }
 
-            .ha-signature-container {
+            .npn-signature-container {
                 margin: 25px 0 !important;
             }
 
-            .ha-form-page {
+            .npn-form-page {
                 padding: 20px !important;
             }
 
-            .ha-zoom-btn {
-                display: block;
-                width: 100%;
-                padding: 16px 24px;
-                font-size: 16px;
-            }
-
             /* Modal de pago más arriba en móvil */
-            .ha-payment-modal-content {
+            .npn-payment-modal-content {
                 margin: 20px auto 5% auto !important;
                 width: 95% !important;
                 padding: 20px !important;
                 max-height: 90vh;
                 overflow-y: auto;
             }
+
+            .npn-zoom-btn {
+                display: block;
+                width: 100%;
+                padding: 16px 24px;
+                font-size: 16px;
+            }
         }
     </style>
 
     <!-- Container principal con layout de 2 columnas -->
-    <div class="ha-container">
+    <div class="npn-container">
         
         <!-- SIDEBAR IZQUIERDO -->
-        <div class="ha-sidebar">
+        <div class="npn-sidebar">
             <!-- Contenido por defecto (Páginas 1, 2 y 4) -->
             <div id="sidebar-default">
 
                 <div>
-                    <div class="ha-headline">
-                        Hoja de Asiento
+                    <div class="npn-headline">
+                        <h2>Renovar Permiso de Navegación</h2>
                     </div>
-                    <div class="ha-subheadline">
-                        Obtén tu hoja de asiento de forma rápida y segura. Gestión completa online sin desplazamientos.
+                    <div class="npn-subheadline">
+                        Renueva tu permiso de navegación de forma rápida y segura. Gestión completa online sin desplazamientos.
                     </div>
                 </div>
 
-                <div class="ha-price-box">
-                    <div class="ha-price-label">Precio Total</div>
-                    <div class="ha-price-amount">29,99€</div>
-                    <div class="ha-price-detail">Sin tasas adicionales</div>
+                <div class="npn-price-box">
+                    <div class="npn-price-label">Precio Total</div>
+                    <div class="npn-price-amount">65€</div>
+                    <div class="npn-price-detail">IVA y tasas Capitanía marítima incluidas</div>
                 </div>
 
-                <div class="ha-benefits">
-                    <div class="ha-benefit">
+                <div class="npn-benefits">
+                    <div class="npn-benefit">
                         <i class="fa-solid fa-check"></i>
                         <span>Presentamos tu solicitud en menos de 24h desde que la recibimos</span>
                     </div>
-                    <div class="ha-benefit">
+                    <div class="npn-benefit">
                         <i class="fa-solid fa-check"></i>
                         <span>Envío de provisional en menos de 24h</span>
                     </div>
-                    <div class="ha-benefit">
+                    <div class="npn-benefit">
                         <i class="fa-solid fa-check"></i>
                         <span>Consulta el estado del trámite vía whatsapp</span>
                     </div>
                 </div>
 
                 <!-- Widget de reseñas TrustIndex -->
-                <div class="ha-reviews-widget">
+                <div class="npn-reviews-widget">
                     [trustindex data-widget-id=f4fbfd341d12439e0c86fae7fc2]
                 </div>
 
             </div>
 
             <!-- Contenido para página de autorización (Página 3) -->
-            <div id="sidebar-authorization" style="display: none;">
-                <div class="ha-logo">
+            <div id="sidebar-authorization" style="display: none; background: none !important; background-color: transparent !important;">
+                <div class="npn-logo">
                     <i class="fa-solid fa-file-signature"></i>
                     <span>Autorización</span>
                 </div>
 
-                <div class="ha-sidebar-auth-doc">
-                    <h4 style="font-size: 18px; font-weight: 700; color: white; margin-bottom: 15px;">
+                <div class="npn-sidebar-auth-doc">
+                    <h4 style="font-size: 18px; font-weight: 700; color: white !important; margin-bottom: 15px; background: none !important; background-color: transparent !important;">
                         DOCUMENTO DE AUTORIZACIÓN
                     </h4>
 
                     <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 20px; backdrop-filter: blur(10px);">
                         <p style="font-size: 14px; line-height: 1.8; margin-bottom: 15px;">
-                            Yo, <strong id="sidebar-auth-name" style="color: #fff; font-size: 16px;">[Nombre]</strong>, con DNI/NIE <strong id="sidebar-auth-dni" style="color: #fff;">[DNI]</strong>, autorizo a <strong>TRAMITFY</strong> para que, en mi nombre y representación, gestione ante las autoridades competentes la obtención de una copia de mi hoja de asiento.
+                            Yo, <strong id="sidebar-auth-name" style="color: #fff; font-size: 16px;">[Nombre]</strong>, con DNI/NIE <strong id="sidebar-auth-dni" style="color: #fff;">[DNI]</strong>, autorizo a <strong>TRAMITFY</strong> para que, en mi nombre y representación, gestione ante las autoridades competentes la renovación de mi permiso de navegación.
                         </p>
                         <p style="font-size: 14px; line-height: 1.8;">
                             Me comprometo a aportar toda la documentación necesaria y a abonar las tasas correspondientes.
@@ -1606,42 +1473,42 @@ function hoja_asiento_form_shortcode() {
         </div>
 
         <!-- ÁREA PRINCIPAL DEL FORMULARIO -->
-        <div class="ha-form-area">
+        <div class="npn-form-area">
             <form id="navigation-permit-renewal-form" action="" method="POST" enctype="multipart/form-data">
                 
-                <div class="ha-form-header">
-                    <div class="ha-form-title">Solicitud de Copia de Hoja de Asiento</div>
-                    <p class="ha-form-subtitle">Complete el formulario para obtener una copia de su hoja de asiento</p>
+                <div class="npn-form-header">
+                    <h2 class="npn-form-title">Solicitud de Renovación</h2>
+                    <p class="npn-form-subtitle">Complete el formulario para renovar su permiso de navegación</p>
                 </div>
 
                 <!-- Panel de auto-rellenado para administradores -->
                 <?php if (current_user_can('administrator')): ?>
-                <div class="ha-admin-panel">
-                    <div class="ha-admin-panel-info">
-                        <div class="ha-admin-panel-title">🔧 Modo Administrador</div>
-                        <div class="ha-admin-panel-subtitle">Auto-relleno disponible para testing</div>
+                <div class="npn-admin-panel">
+                    <div class="npn-admin-panel-info">
+                        <div class="npn-admin-panel-title">🔧 Modo Administrador</div>
+                        <div class="npn-admin-panel-subtitle">Auto-relleno disponible para testing</div>
                     </div>
-                    <button type="button" id="admin-autofill-btn" class="ha-admin-autofill-btn">
+                    <button type="button" id="admin-autofill-btn" class="npn-admin-autofill-btn">
                         ⚡ Auto-rellenar
                     </button>
                 </div>
                 <?php endif; ?>
 
                 <!-- Navegación del formulario -->
-                <nav class="ha-navigation">
-                    <a href="#" class="ha-nav-item active" data-page-id="page-personal-info">
+                <nav class="npn-navigation">
+                    <a href="#" class="npn-nav-item active" data-page-id="page-personal-info">
                         <i class="fa-solid fa-user"></i>
-                        <span>Datos</span>
+                        <span>Datos Personales</span>
                     </a>
-                    <a href="#" class="ha-nav-item" data-page-id="page-documents">
+                    <a href="#" class="npn-nav-item" data-page-id="page-documents">
                         <i class="fa-solid fa-file-alt"></i>
                         <span>Documentación</span>
                     </a>
-                    <a href="#" class="ha-nav-item" data-page-id="page-authorization">
+                    <a href="#" class="npn-nav-item" data-page-id="page-authorization">
                         <i class="fa-solid fa-signature"></i>
                         <span>Autorización</span>
                     </a>
-                    <a href="#" class="ha-nav-item" data-page-id="page-payment">
+                    <a href="#" class="npn-nav-item" data-page-id="page-payment">
                         <i class="fa-solid fa-credit-card"></i>
                         <span>Pago</span>
                     </a>
@@ -1649,100 +1516,101 @@ function hoja_asiento_form_shortcode() {
 
                 <!-- Loading overlay -->
                 <div id="loading-overlay">
-                    <div class="ha-loading-spinner"></div>
+                    <div class="npn-loading-spinner"></div>
                 </div>
 
                 <!-- PÁGINA 1: Datos Personales -->
-                <div id="page-personal-info" class="ha-form-page">
-                    <h3><i class="fa-solid fa-user"></i> Datos Personales y del Barco</h3>
+                <div id="page-personal-info" class="npn-form-page">
+                    <h3><i class="fa-solid fa-user"></i> Datos Personales</h3>
 
-                    <div class="ha-inputs-row">
-                        <div class="ha-input-group">
+                    <div class="npn-inputs-row">
+                        <div class="npn-input-group">
                             <label for="customer_name">Nombre y Apellidos *</label>
                             <input type="text" id="customer_name" name="customer_name" placeholder="Juan García López" required />
                         </div>
 
-                        <div class="ha-input-group">
+                        <div class="npn-input-group">
                             <label for="customer_dni">DNI/NIE *</label>
                             <input type="text" id="customer_dni" name="customer_dni" placeholder="12345678A" required />
                         </div>
                     </div>
 
-                    <div class="ha-inputs-row">
-                        <div class="ha-input-group">
+                    <div class="npn-inputs-row">
+                        <div class="npn-input-group">
                             <label for="customer_email">Correo Electrónico *</label>
                             <input type="email" id="customer_email" name="customer_email" placeholder="ejemplo@email.com" required />
                         </div>
 
-                        <div class="ha-input-group">
+                        <div class="npn-input-group">
                             <label for="customer_phone">Teléfono *</label>
                             <input type="tel" id="customer_phone" name="customer_phone" placeholder="600 123 456" required />
                         </div>
                     </div>
 
-                    <h4 style="margin: 30px 0 15px 0; color: rgb(var(--neutral-700));"><i class="fa-solid fa-ship"></i> Datos del Barco</h4>
-                    
-                    <div class="ha-inputs-row">
-                        <div class="ha-input-group">
-                            <label for="boat_name">Nombre del Barco *</label>
-                            <input type="text" id="boat_name" name="boat_name" placeholder="Mi Barco" required />
-                        </div>
 
-                        <div class="ha-input-group">
-                            <label for="boat_matricula">Matrícula *</label>
-                            <input type="text" id="boat_matricula" name="boat_matricula" placeholder="MA-1234-AB" required />
-                        </div>
-                    </div>
-
-                    <div class="ha-button-group">
-                        <button type="button" class="ha-btn ha-btn-next" data-next="page-documents">
+                    <div class="npn-button-group">
+                        <button type="button" class="npn-btn npn-btn-next" data-next="page-documents">
                             Siguiente <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </div>
                 </div>
 
-
-                <!-- PÁGINA 3: Documentación -->
-                <div id="page-documents" class="ha-form-page hidden">
+                <!-- PÁGINA 2: Documentación -->
+                <div id="page-documents" class="npn-form-page hidden">
                     <h3><i class="fa-solid fa-file-alt"></i> Documentación Requerida</h3>
 
-                    <p style="color: rgb(var(--neutral-600)); margin-bottom: 20px; font-size: 14px;">
-                        Por favor, adjunte el DNI del propietario en formato PDF, JPG o PNG.
+                    <p style="color: rgb(var(--neutral-600)); margin-bottom: 25px;">
+                        Por favor, adjunte los siguientes documentos en formato PDF, JPG o PNG.
                     </p>
 
-                    <div class="ha-upload-grid">
-                        <div class="ha-upload-item">
+                    <div class="npn-upload-grid">
+                        <div class="npn-upload-item">
                             <label for="upload-dni-propietario">
                                 <i class="fa-solid fa-id-card"></i> DNI del Propietario *
+                                <small style="display: block; color: #016d86; font-weight: 500; margin-top: 4px;">(ambas caras)</small>
                             </label>
-                            <div style="font-size: 12px; color: #666; margin-top: 4px; margin-bottom: 8px;">
-                                <i class="fa-solid fa-info-circle" style="margin-right: 4px;"></i>
-                                Fotografías de <strong>ambas caras</strong> del DNI
-                            </div>
                             <input type="file" id="upload-dni-propietario" name="upload_dni_propietario[]" accept="image/*,.pdf" multiple>
-                            <div id="preview-dni-propietario" class="ha-file-preview-container"></div>
+                            <div id="preview-dni-propietario" class="npn-file-preview-container"></div>
                             
-                            <div class="ha-upload-actions">
-                                <button type="button" class="ha-upload-btn" onclick="document.getElementById('upload-dni-propietario').click()">
-                                    <i class="fa-solid fa-upload"></i> Seleccionar archivos
+                            <div class="npn-upload-actions">
+                                <button type="button" class="npn-upload-btn" onclick="document.getElementById('upload-dni-propietario').click()">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> Seleccionar archivos
                                 </button>
                                 <a href="#" class="view-example" data-doc="dni">Ver ejemplo</a>
                             </div>
                         </div>
+
+                        <div class="npn-upload-item">
+                            <label for="upload-documento-barco">
+                                <i class="fa-solid fa-file-lines"></i> Documento de la Embarcación *<br>
+                                <small style="font-weight: normal; font-size: 12px; opacity: 0.8; display: block; margin-top: 5px;">
+                                    Suba <strong>uno o más</strong> de los siguientes: Registro Marítimo (Hoja de Asiento) <strong>O</strong> Permiso de Navegación a Renovar
+                                </small>
+                            </label>
+                            <input type="file" id="upload-documento-barco" name="upload_documento_barco[]" accept="image/*,.pdf" multiple>
+                            <div id="preview-documento-barco" class="npn-file-preview-container"></div>
+                            
+                            <div class="npn-upload-actions">
+                                <button type="button" class="npn-upload-btn" onclick="document.getElementById('upload-documento-barco').click()">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> Seleccionar archivos
+                                </button>
+                                <a href="#" class="view-example" data-doc="registro">Ver ejemplo</a>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="ha-button-group">
-                        <button type="button" class="ha-btn ha-btn-prev" data-prev="page-personal-info">
+                    <div class="npn-button-group">
+                        <button type="button" class="npn-btn npn-btn-prev" data-prev="page-personal-info">
                             <i class="fa-solid fa-arrow-left"></i> Anterior
                         </button>
-                        <button type="button" class="ha-btn ha-btn-next" data-next="page-authorization">
+                        <button type="button" class="npn-btn npn-btn-next" data-next="page-authorization">
                             Siguiente <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </div>
                 </div>
 
                 <!-- PÁGINA 3: Autorización y Firma -->
-                <div id="page-authorization" class="ha-form-page hidden">
+                <div id="page-authorization" class="npn-form-page hidden">
                     <h3><i class="fa-solid fa-signature"></i> Firme el Documento de Autorización</h3>
 
                     <p style="color: rgb(var(--neutral-600)); margin-bottom: 25px; text-align: center;" class="auth-instruction-text">
@@ -1750,80 +1618,87 @@ function hoja_asiento_form_shortcode() {
                         <span class="mobile-text" style="display: none;">El documento de autorización se muestra en el panel superior. Por favor, firme en el área inferior para completar la autorización.</span>
                     </p>
 
-                    <div class="ha-signature-label" style="text-align: center; margin-bottom: 15px; font-size: 15px; font-weight: 600; color: rgb(var(--neutral-700));">
+                    <div class="npn-signature-label" style="text-align: center; margin-bottom: 15px; font-size: 15px; font-weight: 600; color: rgb(var(--neutral-700));">
                         <i class="fa-solid fa-pen-to-square"></i> Firme aquí para autorizar
                     </div>
 
-                    <div class="ha-signature-container" style="margin: 20px 0; text-align: center;">
+                    <div class="npn-signature-container" style="margin: 20px 0; text-align: center;">
                         <canvas id="signature-pad" width="800" height="200"></canvas>
-                        <button type="button" class="ha-signature-clear" id="clear-signature">
+                        <button type="button" class="npn-signature-clear" id="clear-signature">
                             <i class="fa-solid fa-eraser"></i> Limpiar Firma
                         </button>
-                        <button type="button" class="ha-zoom-btn" id="zoom-signature">
+                        <button type="button" class="npn-zoom-btn" id="zoom-signature">
                             <i class="fa-solid fa-search-plus"></i> Ampliar
                         </button>
                     </div>
 
-                    <div class="ha-button-group">
-                        <button type="button" class="ha-btn ha-btn-prev" data-prev="page-documents">
+                    <div class="npn-button-group">
+                        <button type="button" class="npn-btn npn-btn-prev" data-prev="page-documents">
                             <i class="fa-solid fa-arrow-left"></i> Anterior
                         </button>
-                        <button type="button" class="ha-btn ha-btn-next" data-next="page-payment">
+                        <button type="button" class="npn-btn npn-btn-next" data-next="page-payment">
                             Siguiente <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </div>
                 </div>
 
                 <!-- PÁGINA 4: Pago -->
-                <div id="page-payment" class="ha-form-page hidden">
+                <div id="page-payment" class="npn-form-page hidden">
                     <h3><i class="fa-solid fa-credit-card"></i> Información de Pago</h3>
 
-                    <div style="margin: 30px 0;">
-                        <h4 style="margin-bottom: 15px;">Resumen del Trámite</h4>
-                        <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #e0e6ed;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                <span>Servicio de Hoja de Asiento:</span>
-                                <strong>29,99€</strong>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-top: 10px; border-top: 1px solid #e0e6ed;">
-                                <strong>Total a pagar:</strong>
-                                <strong style="color: rgb(var(--primary)); font-size: 18px;">29,99€</strong>
-                            </div>
+                    <div class="npn-price-summary">
+                        <div class="npn-price-row">
+                            <span>Gestión Tramitfy + Tasas DGMM</span>
+                            <span>55,35 €</span>
+                        </div>
+                        <div class="npn-price-row">
+                            <span>IVA (21%)</span>
+                            <span>9,65 €</span>
+                        </div>
+                        <div class="npn-price-row npn-price-total">
+                            <strong>Total a pagar</strong>
+                            <strong id="final-amount">65,00 €</strong>
                         </div>
                     </div>
 
-                    <!-- Términos y condiciones -->
-                    <div class="ha-terms">
+                    <div class="npn-coupon-container">
+                        <label for="coupon_code">Código de descuento (opcional)</label>
+                        <div class="npn-coupon-input">
+                            <input type="text" id="coupon_code" name="coupon_code" placeholder="Ingresa tu código">
+                        </div>
+                        <div id="coupon-message" class="npn-coupon-message hidden"></div>
+                    </div>
+
+                    <div class="npn-terms">
                         <label>
-                            <input type="checkbox" name="terms_accept" id="terms_accept" required />
-                            He leído y acepto la <a href="#" target="_blank">Política de Privacidad</a> y los <a href="#" target="_blank">Términos y Condiciones</a>.
+                            <input type="checkbox" name="terms_accept" required>
+                            <span>Acepto la <a href="https://tramitfy.es/politica-de-privacidad/" target="_blank">Política de Privacidad</a> y los <a href="https://tramitfy.es/terminos-y-condiciones-de-uso-2/" target="_blank">Términos y Condiciones</a> del servicio.</span>
                         </label>
                     </div>
 
-                    <div class="ha-button-group">
-                        <button type="button" class="ha-btn ha-btn-prev" data-prev="page-authorization">
+                    <div class="npn-button-group">
+                        <button type="button" class="npn-btn npn-btn-prev" data-prev="page-authorization">
                             <i class="fa-solid fa-arrow-left"></i> Anterior
                         </button>
-                        <button type="button" class="ha-btn ha-btn-submit" id="show-payment-modal">
+                        <button type="button" class="npn-btn npn-btn-submit" id="show-payment-modal">
                             <i class="fa-solid fa-lock"></i> Realizar Pago Seguro
                         </button>
                     </div>
                 </div>
-
 
             </form>
         </div>
     </div>
 
     <!-- Modal de pago -->
-    <div id="ha-payment-modal" class="ha-payment-modal">
-        <div class="ha-payment-modal-content">
-            <span class="ha-close-payment-modal">&times;</span>
+    <div id="npn-payment-modal" class="npn-payment-modal">
+        <div class="npn-payment-modal-content">
+            <span class="npn-close-payment-modal">&times;</span>
 
-            <div id="ha-stripe-container">
+            <div id="npn-stripe-container">
                 <!-- Spinner de carga mientras se inicializa -->
-                <div id="ha-stripe-loading">
-                    <div class="ha-stripe-spinner"></div>
+                <div id="npn-stripe-loading">
+                    <div class="npn-stripe-spinner"></div>
                     <p>Cargando sistema de pago...</p>
                 </div>
 
@@ -1831,42 +1706,42 @@ function hoja_asiento_form_shortcode() {
                 <div id="payment-element" class="payment-element-container"></div>
 
                 <!-- Mensajes de estado del pago -->
-                <div id="ha-payment-message" class="hidden"></div>
+                <div id="npn-payment-message" class="hidden"></div>
             </div>
 
-            <button type="button" id="ha-confirm-payment-btn" class="ha-confirm-payment-btn">
+            <button type="button" id="npn-confirm-payment-btn" class="npn-confirm-payment-btn">
                 <i class="fa-solid fa-check-circle"></i> Confirmar Pago
             </button>
         </div>
     </div>
 
     <!-- Modal de firma avanzado -->
-    <div id="signature-modal-advanced" class="ha-signature-modal">
-        <div class="ha-modal-content">
-            <div class="ha-modal-header">
+    <div id="signature-modal-advanced" class="npn-signature-modal">
+        <div class="npn-modal-content">
+            <div class="npn-modal-header">
                 <h3><i class="fa-solid fa-pen-fancy"></i> Firma Digital</h3>
-                <button class="ha-modal-close" id="close-modal">
+                <button class="npn-modal-close" id="close-modal">
                     <i class="fa-solid fa-times"></i>
                 </button>
             </div>
 
-            <div class="ha-enhanced-signature-container">
-                <div class="ha-signature-guide">
-                    <div class="ha-signature-line"></div>
-                    <div class="ha-signature-instruction">FIRME AQUÍ</div>
+            <div class="npn-enhanced-signature-container">
+                <div class="npn-signature-guide">
+                    <div class="npn-signature-line"></div>
+                    <div class="npn-signature-instruction">FIRME AQUÍ</div>
                 </div>
                 <canvas id="enhanced-signature-canvas"></canvas>
             </div>
 
-            <div class="ha-modal-footer">
-                <p class="ha-modal-instructions">
+            <div class="npn-modal-footer">
+                <p class="npn-modal-instructions">
                     <i class="fa-solid fa-hand-pointer"></i> Use el dedo para firmar en el área indicada
                 </p>
-                <div class="ha-modal-button-container">
-                    <button class="ha-modal-clear-btn" id="modal-clear-btn">
+                <div class="npn-modal-button-container">
+                    <button class="npn-modal-clear-btn" id="modal-clear-btn">
                         <i class="fa-solid fa-eraser"></i> Borrar
                     </button>
-                    <button class="ha-modal-accept-btn" id="modal-accept-btn" disabled>
+                    <button class="npn-modal-accept-btn" id="modal-accept-btn" disabled>
                         <i class="fa-solid fa-check"></i> Confirmar firma
                     </button>
                 </div>
@@ -1880,19 +1755,24 @@ function hoja_asiento_form_shortcode() {
 
         // Evitar ejecución en el editor de Elementor
         if (window.elementor || (typeof elementorFrontend !== 'undefined' && elementorFrontend.isEditMode && elementorFrontend.isEditMode())) {
-            console.log('[Hoja de Asiento Form] Skipping initialization - Elementor editor detected');
+            console.log('[Navigation Permit Form] Skipping initialization - Elementor editor detected');
             return;
         }
 
         document.addEventListener('DOMContentLoaded', function() {
             // Variables globales
             let stripe, elements, clientSecret, signaturePad;
-            let currentPrice = 29.99;
-            const basePrice = 29.99;
+            
+            // 🛡️ PROTECCIÓN ANTI-DUPLICADOS
+            let isSubmitting = false;
+            let submitController = null;
+            let currentPrice = <?php echo NAVIGATION_PERMIT_SERVICE_PRICE; ?>;
+            const basePrice = <?php echo NAVIGATION_PERMIT_SERVICE_PRICE; ?>;
 
             // Almacenamiento de archivos
             const fileStorage = {
-                'upload-dni-propietario': []
+                'upload-dni-propietario': [],
+                'upload-documento-barco': []
             };
 
             // Sistema de múltiples archivos
@@ -1909,7 +1789,7 @@ function hoja_asiento_form_shortcode() {
 
                         // Crear preview
                         const previewItem = document.createElement('div');
-                        previewItem.className = 'ha-file-preview-item';
+                        previewItem.className = 'npn-file-preview-item';
                         previewItem.dataset.fileName = file.name;
 
                         // Crear contenido según tipo de archivo
@@ -1934,13 +1814,13 @@ function hoja_asiento_form_shortcode() {
 
                         // Nombre del archivo
                         const fileName = document.createElement('div');
-                        fileName.className = 'ha-file-name';
+                        fileName.className = 'npn-file-name';
                         fileName.textContent = file.name.length > 12 ? file.name.substring(0, 12) + '...' : file.name;
                         previewItem.appendChild(fileName);
 
                         // Botón de eliminar
                         const removeBtn = document.createElement('div');
-                        removeBtn.className = 'ha-file-remove-btn';
+                        removeBtn.className = 'npn-file-remove-btn';
                         removeBtn.innerHTML = '<i class="fa-solid fa-times"></i>';
                         removeBtn.onclick = function(e) {
                             e.stopPropagation();
@@ -1969,13 +1849,14 @@ function hoja_asiento_form_shortcode() {
 
             // Inicializar inputs de archivo
             initFileUpload('upload-dni-propietario', 'preview-dni-propietario');
+            initFileUpload('upload-documento-barco', 'preview-documento-barco');
 
             // Navegación entre páginas
-            const formPages = document.querySelectorAll('.ha-form-page');
-            const navItems = document.querySelectorAll('.ha-nav-item');
+            const formPages = document.querySelectorAll('.npn-form-page');
+            const navItems = document.querySelectorAll('.npn-nav-item');
             let currentPageIndex = 0;
 
-            function hojaAsientoShowPage(pageId) {
+            function navigationPermitShowPage(pageId) {
                 formPages.forEach((page, index) => {
                     if (page.id === pageId) {
                         page.classList.remove('hidden');
@@ -2008,9 +1889,34 @@ function hoja_asiento_form_shortcode() {
                 }
             }
 
+            // Event listeners para navegación
+            document.querySelectorAll('.npn-btn-next').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (navigationPermitValidateCurrentPage()) {
+                        const nextPage = this.getAttribute('data-next');
+                        navigationPermitShowPage(nextPage);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.npn-btn-prev').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const prevPage = this.getAttribute('data-prev');
+                    navigationPermitShowPage(prevPage);
+                });
+            });
+
+            navItems.forEach(nav => {
+                nav.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const pageId = this.getAttribute('data-page-id');
+                    navigationPermitShowPage(pageId);
+                });
+            });
+
             // Validación de página actual
-            function hojaAsientoValidateCurrentPage() {
-                const currentPage = document.querySelector('.ha-form-page:not(.hidden)');
+            function navigationPermitValidateCurrentPage() {
+                const currentPage = document.querySelector('.npn-form-page:not(.hidden)');
 
                 // Validación especial para página de documentos
                 if (currentPage.id === 'page-documents') {
@@ -2018,7 +1924,10 @@ function hoja_asiento_form_shortcode() {
                         alert('Por favor, suba al menos un archivo de DNI del Propietario.');
                         return false;
                     }
-                    // Solo validar DNI para hoja de asiento
+                    if (fileStorage['upload-documento-barco'].length === 0) {
+                        alert('Por favor, suba al menos un documento de la embarcación (Registro Marítimo o Permiso de Navegación).');
+                        return false;
+                    }
                     return true;
                 }
 
@@ -2027,13 +1936,13 @@ function hoja_asiento_form_shortcode() {
 
                 requiredFields.forEach(field => {
                     // Saltar inputs de archivo porque ahora se validan con fileStorage
-                    if (!field || field.type === 'file') return;
+                    if (field.type === 'file') return;
 
                     if (!field.value || (field.type === 'checkbox' && !field.checked)) {
-                        if (field.style) field.style.borderColor = 'rgb(var(--error))';
+                        field.style.borderColor = 'rgb(var(--error))';
                         isValid = false;
                     } else {
-                        if (field.style) field.style.borderColor = '';
+                        field.style.borderColor = '';
                     }
                 });
 
@@ -2043,31 +1952,6 @@ function hoja_asiento_form_shortcode() {
 
                 return isValid;
             }
-
-            // Event listeners para navegación
-            document.querySelectorAll('.ha-btn-next').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    if (hojaAsientoValidateCurrentPage()) {
-                        const nextPage = this.getAttribute('data-next');
-                        hojaAsientoShowPage(nextPage);
-                    }
-                });
-            });
-
-            document.querySelectorAll('.ha-btn-prev').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const prevPage = this.getAttribute('data-prev');
-                    hojaAsientoShowPage(prevPage);
-                });
-            });
-
-            navItems.forEach(nav => {
-                nav.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const pageId = this.getAttribute('data-page-id');
-                    hojaAsientoShowPage(pageId);
-                });
-            });
 
             // Generar documento de autorización
             function generateAuthorizationDocument() {
@@ -2083,9 +1967,9 @@ function hoja_asiento_form_shortcode() {
             async function initializeStripe() {
                 console.log('💳 Inicializando Stripe...');
 
-                const loadingIndicator = document.getElementById('ha-stripe-loading');
+                const loadingIndicator = document.getElementById('npn-stripe-loading');
                 const stripeContainer = document.getElementById('payment-element');
-                const paymentMessage = document.getElementById('ha-payment-message');
+                const paymentMessage = document.getElementById('npn-payment-message');
 
                 // Limpiar elementos anteriores
                 if (stripeContainer) stripeContainer.innerHTML = '';
@@ -2112,9 +1996,9 @@ function hoja_asiento_form_shortcode() {
 
                 // Inicializar Stripe con la clave pública
                 console.log('💳 Inicializando Stripe con clave pública...');
-                const stripePublicKey = '<?php echo (HOJA_ASIENTO_STRIPE_MODE === "test") ? HOJA_ASIENTO_STRIPE_TEST_PUBLIC_KEY : HOJA_ASIENTO_STRIPE_LIVE_PUBLIC_KEY; ?>';
+                const stripePublicKey = '<?php echo (NAVIGATION_PERMIT_STRIPE_MODE === "test") ? NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY : NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY; ?>';
                 console.log('💳 Usando clave:', stripePublicKey.substring(0, 15) + '...');
-                console.log('💳 Modo:', '<?php echo HOJA_ASIENTO_STRIPE_MODE; ?>');
+                console.log('💳 Modo:', '<?php echo NAVIGATION_PERMIT_STRIPE_MODE; ?>');
                 stripe = Stripe(stripePublicKey);
                 console.log('✅ Stripe object creado:', stripe);
 
@@ -2125,7 +2009,7 @@ function hoja_asiento_form_shortcode() {
                     const response = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: `action=create_payment_intent_hoja_asiento_renewal&amount=${totalAmountCents}`
+                        body: `action=create_payment_intent_navigation_permit_renewal&amount=${totalAmountCents}`
                     });
 
                     if (!response.ok) {
@@ -2388,8 +2272,7 @@ function hoja_asiento_form_shortcode() {
             // Abrir modal de pago
             document.getElementById('show-payment-modal').addEventListener('click', function() {
                 // Validar términos y condiciones
-                const termsCheckbox = document.querySelector('input[name="terms_accept"]');
-                if (!termsCheckbox || !termsCheckbox.checked) {
+                if (!document.querySelector('input[name="terms_accept"]').checked) {
                     alert('Debe aceptar la Política de Privacidad y los Términos y Condiciones.');
                     return;
                 }
@@ -2397,7 +2280,7 @@ function hoja_asiento_form_shortcode() {
                 // Validar firma
                 if (signaturePad.isEmpty() && (!mainSignatureData || mainSignatureData === null)) {
                     alert('Por favor, firme el documento de autorización.');
-                    hojaAsientoShowPage('page-authorization');
+                    navigationPermitShowPage('page-authorization');
                     return;
                 }
 
@@ -2405,64 +2288,64 @@ function hoja_asiento_form_shortcode() {
                 const customerEmail = document.getElementById('customer_email').value.trim();
                 if (!customerEmail) {
                     alert('Debe ingresar su correo electrónico en la sección de datos personales.');
-                    hojaAsientoShowPage('page-personal-info');
+                    navigationPermitShowPage('page-personal-info');
                     return;
                 }
 
-                // Mostrar el modal
+                // Ocultar todos los popups antes de mostrar el modal
                 hideAllPopups();
-                document.getElementById('ha-payment-modal').classList.add('show');
+                
+                // Mostrar el modal
+                document.getElementById('npn-payment-modal').classList.add('show');
 
                 // SIEMPRE reinicializar Stripe para obtener un nuevo Payment Intent
                 console.log('🔄 Reinicializando Stripe para nuevo intento de pago...');
-                console.log('🔍 Verificando elementos del DOM...');
-                console.log('- Modal:', document.getElementById('ha-payment-modal'));
-                console.log('- Loading:', document.getElementById('ha-stripe-loading'));
-                console.log('- Payment element:', document.getElementById('payment-element'));
-                
-                setTimeout(async () => {
-                    try {
-                        console.log('🚀 Llamando a initializeStripe()...');
-                        await initializeStripe();
-                        console.log('✅ initializeStripe() completado');
-                    } catch (error) {
-                        console.error('❌ Error en initializeStripe():', error);
-                        alert('Error al inicializar el sistema de pago: ' + error.message);
-                    }
+                setTimeout(() => {
+                    initializeStripe();
                 }, 300);
             });
 
             // Cerrar modal de pago
-            document.querySelector('.ha-close-payment-modal').addEventListener('click', function() {
-                document.getElementById('ha-payment-modal').classList.remove('show');
+            document.querySelector('.npn-close-payment-modal').addEventListener('click', function() {
+                document.getElementById('npn-payment-modal').classList.remove('show');
+                // Restaurar popups al cerrar
                 restoreAllPopups();
             });
 
-            document.getElementById('ha-payment-modal').addEventListener('click', function(event) {
+            document.getElementById('npn-payment-modal').addEventListener('click', function(event) {
                 if (event.target === this) {
                     this.classList.remove('show');
-                restoreAllPopups();
+                    // Restaurar popups al cerrar
+                    restoreAllPopups();
                 }
             });
 
             // Confirmar pago desde el modal
-            document.getElementById('ha-confirm-payment-btn').addEventListener('click', async function() {
-                console.log('🔄 Botón de pago presionado');
-                
-                // Verificar que Stripe esté inicializado
-                if (!stripe || !elements) {
-                    console.error('❌ Stripe no está inicializado');
-                    alert('Error: Sistema de pago no inicializado. Por favor, cierre este modal y vuelva a intentarlo.');
+            document.getElementById('npn-confirm-payment-btn').addEventListener('click', async function() {
+                // 🛡️ PROTECCIÓN ANTI-DUPLICADOS - Verificar si ya está procesando
+                if (isSubmitting) {
+                    console.warn('⚠️ Envío ya en proceso, ignorando clic adicional');
                     return;
                 }
                 
-                const paymentMessage = document.getElementById('ha-payment-message');
+                // Marcar como procesando inmediatamente
+                isSubmitting = true;
+                
+                // Cancelar cualquier envío anterior si existe
+                if (submitController) {
+                    submitController.abort();
+                    console.log('🚫 Cancelando envío anterior');
+                }
+                
+                // Crear nuevo controller para este envío
+                submitController = new AbortController();
+                
+                const paymentMessage = document.getElementById('npn-payment-message');
                 paymentMessage.className = 'hidden';
                 paymentMessage.textContent = '';
 
                 // Deshabilitar botón
                 this.disabled = true;
-                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Procesando pago...</span>';
 
                 // Mostrar overlay de carga
                 const loadingOverlay = document.getElementById('loading-overlay');
@@ -2512,20 +2395,14 @@ function hoja_asiento_form_shortcode() {
                 }
             });
 
-            // OPTIMIZACIONES MÓVILES (copiado de renovación-permiso)
+            // OPTIMIZACIONES MÓVILES
             function isMobile() {
                 return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
             }
 
             async function compressImageForMobile(file, maxSizeMB = 2) {
                 return new Promise((resolve) => {
-                    if (!file.type.startsWith('image/')) {
-                        resolve(file);
-                        return;
-                    }
-
-                    const needsCompression = isMobile() || file.size > (3 * 1024 * 1024);
-                    if (!needsCompression) {
+                    if (!file.type.startsWith('image/') || !isMobile()) {
                         resolve(file);
                         return;
                     }
@@ -2536,7 +2413,7 @@ function hoja_asiento_form_shortcode() {
                     
                     img.onload = function() {
                         let { width, height } = img;
-                        const maxDimension = isMobile() ? 1200 : 1600;
+                        const maxDimension = 1200;
                         
                         if (width > height && width > maxDimension) {
                             height = (height * maxDimension) / width;
@@ -2555,39 +2432,140 @@ function hoja_asiento_form_shortcode() {
                                 type: 'image/jpeg',
                                 lastModified: Date.now()
                             });
-                            console.log(`📸 Comprimido: ${file.name} ${Math.round(file.size/1024)}KB → ${Math.round(compressedFile.size/1024)}KB`);
                             resolve(compressedFile);
                         }, 'image/jpeg', 0.8);
                     };
                     
-                    img.onerror = () => resolve(file);
                     img.src = URL.createObjectURL(file);
                 });
             }
 
             function validateFileSize(file) {
-                const maxSize = isMobile() ? 10 * 1024 * 1024 : 20 * 1024 * 1024;
+                const maxSize = isMobile() ? 10 * 1024 * 1024 : 20 * 1024 * 1024; // 10MB móvil, 20MB escritorio
                 
                 if (file.size > maxSize) {
                     const maxSizeMB = Math.round(maxSize / (1024 * 1024));
                     const currentSizeMB = (file.size / (1024 * 1024)).toFixed(1);
-                    alert(`⚠️ Archivo "${file.name}" demasiado grande\\n\\n📱 Máximo: ${maxSizeMB}MB\\n📊 Actual: ${currentSizeMB}MB`);
+                    alert(`⚠️ Archivo "${file.name}" demasiado grande\\n\\n📱 Tamaño máximo: ${maxSizeMB}MB\\n📊 Tamaño actual: ${currentSizeMB}MB\\n\\n💡 Consejo: Toma la foto desde la app para compresión automática`);
                     return false;
                 }
                 return true;
             }
 
-            // GESTIÓN PROFESIONAL DE POPUPS (copiado de renovación-permiso)
+            // Progress bar para móvil
+            function createMobileProgressBar() {
+                if (document.querySelector('.mobile-progress-container')) return;
+                
+                const progressContainer = document.createElement('div');
+                progressContainer.className = 'mobile-progress-container';
+                progressContainer.innerHTML = `
+                    <div style="
+                        background: #f0f0f0; 
+                        border-radius: 20px; 
+                        height: 6px; 
+                        margin: 15px 0;
+                        overflow: hidden;
+                        box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+                    ">
+                        <div class="mobile-progress-bar" style="
+                            background: linear-gradient(90deg, #016d86, #4f46e5); 
+                            height: 100%; 
+                            width: 0%; 
+                            transition: width 0.5s ease;
+                            border-radius: 20px;
+                        "></div>
+                    </div>
+                    <div class="mobile-progress-text" style="
+                        font-size: 14px; 
+                        color: #666; 
+                        text-align: center;
+                        font-weight: 500;
+                    ">Preparando archivos...</div>
+                `;
+                
+                const submitBtn = document.querySelector('.npn-submit-btn');
+                if (submitBtn && submitBtn.parentNode) {
+                    submitBtn.parentNode.insertBefore(progressContainer, submitBtn.nextSibling);
+                }
+                
+                return progressContainer;
+            }
+
+            function updateMobileProgress(progress, message) {
+                if (!isMobile()) return;
+                
+                const container = document.querySelector('.mobile-progress-container') || createMobileProgressBar();
+                const progressBar = container.querySelector('.mobile-progress-bar');
+                const progressText = container.querySelector('.mobile-progress-text');
+                
+                if (progressBar) progressBar.style.width = progress + '%';
+                if (progressText) progressText.textContent = message;
+            }
+
+            // Retry fetch para conexiones móviles inestables
+            async function fetchWithRetry(url, options, maxRetries = 3) {
+                for (let i = 0; i < maxRetries; i++) {
+                    try {
+                        const controller = new AbortController();
+                        const timeout = isMobile() ? 180000 : 120000; // 3 min móvil, 2 min escritorio
+                        
+                        const timeoutId = setTimeout(() => controller.abort(), timeout);
+                        
+                        const response = await fetch(url, {
+                            ...options,
+                            signal: controller.signal
+                        });
+                        
+                        clearTimeout(timeoutId);
+                        
+                        if (response.ok) return response;
+                        
+                        if (i < maxRetries - 1) {
+                            console.log(`🔄 Reintentando (${i + 1}/${maxRetries})...`);
+                            if (isMobile()) updateMobileProgress(30 + i * 10, `Reintentando conexión... (${i + 1}/${maxRetries})`);
+                            await new Promise(resolve => setTimeout(resolve, 2000 * (i + 1)));
+                        }
+                        
+                    } catch (error) {
+                        if (i < maxRetries - 1) {
+                            console.log(`❌ Error en intento ${i + 1}:`, error.message);
+                            if (isMobile()) updateMobileProgress(30 + i * 10, `Error de conexión... Reintentando`);
+                            await new Promise(resolve => setTimeout(resolve, 3000 * (i + 1)));
+                        } else {
+                            throw error;
+                        }
+                    }
+                }
+            }
+
+            // GESTIÓN PROFESIONAL DE POPUPS EN MODAL DE PAGO
             let hiddenPopups = [];
             
             function hideAllPopups() {
+                // Lista completa de selectores de popups comunes
                 const popupSelectors = [
+                    // WhatsApp
                     '.wa__popup_chat_box', '#whatsapp-button', '.wa__btn_popup', '.wa__stt', 
                     '[class*="wa__"]', '[id*="whatsapp"]', '.whatsapp-chat', '.wa-button',
+                    '.whatsapp-widget', '.whatsapp-popup', '[class*="whats"]',
+                    
+                    // Cookies
                     '.cookie-banner', '.cookie-consent', '.cookie-notice', '.cookie-popup',
                     '.gdpr-banner', '.privacy-banner', '#cookie-consent', '[class*="cookie"]',
-                    '.newsletter-popup', '.exit-intent', '.promotion-popup', '.chat-widget',
-                    '.elementor-popup', '.popup-maker', '.pum-popup'
+                    '.cc-banner', '.cookie-law-info-bar', '.moove_gdpr_cookie_info_bar',
+                    
+                    // Otros popups comunes
+                    '.newsletter-popup', '.exit-intent', '.promotion-popup', '.discount-popup',
+                    '.notification-popup', '.chat-widget', '.help-widget', '.support-widget',
+                    '.feedback-widget', '.survey-popup',
+                    
+                    // WordPress/Elementor popups
+                    '.elementor-popup', '.popup-maker', '.pum-popup', '.lightbox-popup',
+                    '.fancybox-overlay', '.mfp-bg', '.ui-widget-overlay',
+                    
+                    // Específicos de plugins comunes
+                    '.tawk-widget', '.crisp-chat', '.intercom-messenger', '.zendesk-widget',
+                    '.mailchimp-popup', '.optinmonster', '.hustle-popup'
                 ];
                 
                 hiddenPopups = [];
@@ -2596,21 +2574,45 @@ function hoja_asiento_form_shortcode() {
                     try {
                         const elements = document.querySelectorAll(selector);
                         elements.forEach(element => {
-                            if (element && !element.closest('.ha-payment-modal') && 
-                                element.id !== 'ha-payment-modal' &&
-                                element.style.display !== 'none') {
+                            // NO ocultar nuestro modal de pago
+                            if (element && !element.closest('.npn-payment-modal') && 
+                                element.id !== 'npn-payment-modal' &&
+                                element.style.display !== 'none' && 
+                                element.style.visibility !== 'hidden') {
                                 
+                                // Guardar estado original
                                 hiddenPopups.push({
                                     element: element,
-                                    originalDisplay: element.style.display || getComputedStyle(element).display
+                                    originalDisplay: element.style.display || getComputedStyle(element).display,
+                                    originalVisibility: element.style.visibility || getComputedStyle(element).visibility,
+                                    originalZIndex: element.style.zIndex || getComputedStyle(element).zIndex
                                 });
                                 
+                                // Ocultar elemento
                                 element.style.display = 'none';
                                 element.style.visibility = 'hidden';
+                                element.style.zIndex = '-9999';
                             }
                         });
                     } catch (e) {
                         console.warn('Error ocultando popup:', selector, e);
+                    }
+                });
+                
+                // Ocultar también cualquier overlay o backdrop (excepto nuestro modal)
+                const overlays = document.querySelectorAll('[class*="overlay"]:not(.npn-payment-modal), [class*="backdrop"]:not(.npn-payment-modal), [id*="overlay"]:not(#npn-payment-modal), [id*="backdrop"]:not(#npn-payment-modal)');
+                overlays.forEach(overlay => {
+                    if (overlay !== document.querySelector('.npn-payment-modal') && 
+                        !overlay.closest('.npn-payment-modal')) {
+                        if (overlay.style.display !== 'none') {
+                            hiddenPopups.push({
+                                element: overlay,
+                                originalDisplay: overlay.style.display || getComputedStyle(overlay).display,
+                                originalVisibility: overlay.style.visibility || getComputedStyle(overlay).visibility,
+                                originalZIndex: overlay.style.zIndex || getComputedStyle(overlay).zIndex
+                            });
+                            overlay.style.display = 'none';
+                        }
                     }
                 });
                 
@@ -2622,7 +2624,8 @@ function hoja_asiento_form_shortcode() {
                     try {
                         if (item.element) {
                             item.element.style.display = item.originalDisplay === 'none' ? '' : item.originalDisplay;
-                            item.element.style.visibility = '';
+                            item.element.style.visibility = item.originalVisibility === 'hidden' ? '' : item.originalVisibility;
+                            item.element.style.zIndex = item.originalZIndex === '-9999' ? '' : item.originalZIndex;
                         }
                     } catch (e) {
                         console.warn('Error restaurando popup:', e);
@@ -2644,38 +2647,74 @@ function hoja_asiento_form_shortcode() {
                 formData.append('customer_dni', document.getElementById('customer_dni').value);
                 formData.append('customer_email', document.getElementById('customer_email').value);
                 formData.append('customer_phone', document.getElementById('customer_phone').value);
-                formData.append('boat_name', document.getElementById('boat_name').value);
-                formData.append('boat_matricula', document.getElementById('boat_matricula').value);
 
                 // Añadir firma (priorizar mainSignatureData si existe)
                 const signatureData = mainSignatureData || signaturePad.toDataURL();
                 formData.append('signature', signatureData);
 
-                // Añadir archivos desde fileStorage con indexación mejorada
+                // Añadir archivos desde fileStorage
                 console.log('🔍 FileStorage al enviar:', {
-                    'upload-dni-propietario': fileStorage['upload-dni-propietario'].length
+                    'upload-dni-propietario': fileStorage['upload-dni-propietario'].length,
+                    'upload-documento-barco': fileStorage['upload-documento-barco'].length
                 });
                 
-                // Procesar archivos DNI con optimizaciones móviles
+                // Procesar archivos con optimizaciones móviles
                 const dniFiles = fileStorage['upload-dni-propietario'] || [];
+                const docFiles = fileStorage['upload-documento-barco'] || [];
+                
+                // Mostrar progreso en móvil
+                if (isMobile()) {
+                    updateMobileProgress(10, 'Procesando archivos...');
+                }
+
+                // Validar tamaños y comprimir si es móvil
+                const totalFiles = dniFiles.length + docFiles.length;
+                let processedFiles = 0;
+
                 for (let index = 0; index < dniFiles.length; index++) {
                     const file = dniFiles[index];
                     if (!validateFileSize(file)) continue;
+                    
+                    if (isMobile()) {
+                        const progress = 10 + (processedFiles / totalFiles) * 30;
+                        updateMobileProgress(progress, `Comprimiendo DNI ${index + 1}...`);
+                    }
                     
                     console.log(`📎 Procesando DNI ${index}:`, file.name, `${Math.round(file.size/1024)}KB`);
                     const processedFile = await compressImageForMobile(file);
                     console.log(`✅ DNI ${index} procesado:`, processedFile.name, `${Math.round(processedFile.size/1024)}KB`);
                     formData.append(`upload_dni_propietario_${index}`, processedFile);
+                    processedFiles++;
+                }
+                
+                for (let index = 0; index < docFiles.length; index++) {
+                    const file = docFiles[index];
+                    if (!validateFileSize(file)) continue;
+                    
+                    if (isMobile()) {
+                        const progress = 10 + (processedFiles / totalFiles) * 30;
+                        updateMobileProgress(progress, `Comprimiendo documento ${index + 1}...`);
+                    }
+                    
+                    console.log(`📎 Procesando Doc ${index}:`, file.name, `${Math.round(file.size/1024)}KB`);
+                    const processedFile = await compressImageForMobile(file);
+                    console.log(`✅ Doc ${index} procesado:`, processedFile.name, `${Math.round(processedFile.size/1024)}KB`);
+                    formData.append(`upload_documento_barco_${index}`, processedFile);
+                    processedFiles++;
+                }
+
+                if (isMobile()) {
+                    updateMobileProgress(40, 'Archivos listos. Enviando...');
                 }
 
                 // Añadir datos adicionales
                 formData.append('final_amount', currentPrice);
                 formData.append('has_signature', 'true');
-                formData.append('renewal_type', 'duplicado');
-                formData.append('coupon_code', document.getElementById('coupon_code')?.value || '');
+                formData.append('renewal_type', 'renovacion');
+                formData.append('coupon_code', document.getElementById('coupon_code').value || '');
                 formData.append('terms_accept', 'true');
                 formData.append('payment_intent_id', paymentIntentId || '');
-                formData.append('action', 'send_hoja_asiento_to_tramitfy');
+                formData.append('action', 'send_navigation_permit_to_tramitfy');
 
                 // Ya no necesitamos deshabilitar inputs porque creamos FormData manual
 
@@ -2693,10 +2732,15 @@ function hoja_asiento_form_shortcode() {
                 try {
                     // PASO 1: Enviar datos y crear trámite
                     console.log('📤 PASO 1: Enviando datos al servidor...');
-                    const response = await fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                    
+                    if (isMobile()) {
+                        updateMobileProgress(50, 'Conectando con servidor...');
+                    }
+                    
+                    const response = await fetchWithRetry('<?php echo admin_url('admin-ajax.php'); ?>', {
                         method: 'POST',
                         body: formData,
-                        signal: AbortSignal.timeout(30000) // 30 segundos timeout
+                        signal: submitController.signal // Usar controller para cancelación
                     });
 
                     console.log('🌐 Response status:', response.status);
@@ -2728,16 +2772,16 @@ function hoja_asiento_form_shortcode() {
 
                     // PASO 2: Enviar emails
                     console.log('📧 PASO 2: Enviando emails de confirmación...');
-                    const submitButton = document.getElementById('ha-confirm-payment-btn');
+                    const submitButton = document.getElementById('npn-confirm-payment-btn');
                     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Enviando emails de confirmación...</span>';
 
                     const emailFormData = new FormData();
-                    emailFormData.append('action', 'send_hoja_asiento_emails');
+                    emailFormData.append('action', 'send_navigation_permit_emails');
                     emailFormData.append('customerName', document.getElementById('customer_name').value);
                     emailFormData.append('customerEmail', document.getElementById('customer_email').value);
                     emailFormData.append('customerDni', document.getElementById('customer_dni').value);
                     emailFormData.append('customerPhone', document.getElementById('customer_phone').value);
-                    emailFormData.append('renewalType', 'duplicado');
+                    emailFormData.append('renewalType', 'renovacion');
                     emailFormData.append('finalAmount', currentPrice);
                     emailFormData.append('paymentIntentId', paymentIntentId || '');
                     emailFormData.append('tramiteId', result.tramiteId);
@@ -2746,7 +2790,7 @@ function hoja_asiento_form_shortcode() {
                     const emailResponse = await fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
                         method: 'POST',
                         body: emailFormData,
-                        signal: AbortSignal.timeout(20000) // 20 segundos timeout para emails
+                        signal: submitController.signal // Usar controller para cancelación
                     });
 
                     const emailResult = await emailResponse.json();
@@ -2759,39 +2803,38 @@ function hoja_asiento_form_shortcode() {
                         console.log('✅ Emails enviados correctamente');
                     }
 
-                    // Cerrar modal y redirigir a página de éxito
-                    document.getElementById('ha-payment-modal').classList.remove('show');
-                restoreAllPopups();
+                    // Cerrar modal y redirigir
+                    document.getElementById('npn-payment-modal').classList.remove('show');
+                    // Restaurar popups antes de redireccionar
+                    restoreAllPopups();
                     
-                    // Guardar información del trámite en localStorage para mostrar en página de éxito
-                    localStorage.setItem('tramitfy_last_tramite', JSON.stringify({
-                        tramiteId: result.tramiteId,
-                        trackingUrl: result.trackingUrl,
-                        dashboardUrl: result.dashboardUrl,
-                        timestamp: new Date().toISOString(),
-                        type: 'hoja-asiento'
-                    }));
+                    // Redirección directa sin alert - la página de seguimiento ya confirma el éxito
+                    console.log(`✅ Formulario enviado con éxito. ID del trámite: ${result.tramiteId}`);
                     
-                    // Redirigir a página de pago completado
-                    window.location.href = 'https://tramitfy.es/pago-realizado-con-exito/';
+                    // 🛡️ NO resetear isSubmitting aquí - el usuario va a ser redirigido
+                    window.location.href = result.trackingUrl;
 
                 } catch (error) {
                     console.error('❌ Error:', error);
                     
-                    const paymentMessage = document.getElementById('ha-payment-message');
+                    // 🛡️ Resetear flag de protección en caso de error
+                    isSubmitting = false;
+                    
+                    const paymentMessage = document.getElementById('npn-payment-message');
                     
                     // Mensaje específico para timeouts
                     if (error.name === 'TimeoutError' || error.message.includes('timeout')) {
                         paymentMessage.textContent = 'El envío está tomando más tiempo de lo esperado. Por favor, intente de nuevo en unos minutos.';
                     } else if (error.name === 'AbortError') {
                         paymentMessage.textContent = 'El envío fue cancelado. Por favor, intente de nuevo.';
+                        console.log('🚫 Envío cancelado por el usuario o timeout');
                     } else {
                         paymentMessage.textContent = 'Error al enviar el formulario: ' + error.message;
                     }
                     
                     paymentMessage.className = 'error';
                     document.getElementById('loading-overlay').classList.remove('active');
-                    const submitBtn = document.getElementById('ha-confirm-payment-btn');
+                    const submitBtn = document.getElementById('npn-confirm-payment-btn');
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = '<i class="fa-solid fa-check-circle"></i> Confirmar Pago';
                 }
@@ -2807,14 +2850,9 @@ function hoja_asiento_form_shortcode() {
                     document.getElementById('customer_dni').value = '12345678Z';
                     document.getElementById('customer_email').value = 'joanpinyol@hotmail.es';
                     document.getElementById('customer_phone').value = '682246937';
-                    
-                    // Rellenar datos del barco
-                    document.getElementById('boat_name').value = 'Tramitfy Test';
-                    document.getElementById('boat_matricula').value = 'MA-1234-AB';
 
                     // Marcar términos
-                    const termsBox = document.querySelector('input[name="terms_accept"]');
-                    if (termsBox) termsBox.checked = true;
+                    document.querySelector('input[name="terms_accept"]').checked = true;
 
                     // Simular firma
                     setTimeout(() => {
@@ -2831,7 +2869,7 @@ function hoja_asiento_form_shortcode() {
             <?php endif; ?>
 
             // Inicializar la primera página
-            hojaAsientoShowPage('page-personal-info');
+            navigationPermitShowPage('page-personal-info');
         });
     })();
     </script>
@@ -2874,6 +2912,8 @@ function hoja_asiento_form_shortcode() {
                 // Configurar imagen según el tipo de documento
                 if (docType === 'dni') {
                     exampleImage.src = '/wp-content/uploads/exampledocs/dni-comprador.jpg';
+                } else if (docType === 'registro') {
+                    exampleImage.src = '/wp-content/uploads/exampledocs/permiso-caducado.jpg';
                 } else {
                     // Fallback para otros tipos de documento
                     const baseUrl = '<?php echo get_template_directory_uri(); ?>/assets/examples/';
@@ -2919,25 +2959,38 @@ function hoja_asiento_form_shortcode() {
     </script>
 
     <style>
+    #document-popup {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
     @keyframes slideIn {
         from {
-            transform: translateY(-50px);
             opacity: 0;
+            transform: translateY(-50px) scale(0.9);
         }
         to {
-            transform: translateY(0);
             opacity: 1;
+            transform: translateY(0) scale(1);
         }
     }
-
+    
     .close-popup:hover {
         background-color: rgba(255,255,255,0.2) !important;
-        color: white !important;
+        transform: scale(1.1);
     }
-
-    #document-popup {
-        transition: opacity 0.3s ease;
-        opacity: 0;
+    
+    .view-example {
+        color: #1976d2 !important;
+        text-decoration: none !important;
+        font-weight: 500 !important;
+        cursor: pointer !important;
+        transition: color 0.2s ease !important;
+    }
+    
+    .view-example:hover {
+        color: #0d47a1 !important;
+        text-decoration: underline !important;
     }
     </style>
 
@@ -2948,9 +3001,8 @@ function hoja_asiento_form_shortcode() {
 // ==========================================
 // FUNCIÓN 1: Enviar formulario a TRAMITFY (SIN EMAILS)
 // ==========================================
-function send_hoja_asiento_to_tramitfy() {
-    error_log('=== HOJA ASIENTO: FUNCIÓN AJAX EJECUTÁNDOSE ===');
-    error_log('=== HOJA DE ASIENTO SEND TO TRAMITFY: INICIO ===');
+function send_navigation_permit_to_tramitfy() {
+    error_log('=== PERMISO NAVEGACIÓN SEND TO TRAMITFY: INICIO ===');
     error_log('📊 Límites del servidor:');
     error_log('   - upload_max_filesize: ' . ini_get('upload_max_filesize'));
     error_log('   - post_max_size: ' . ini_get('post_max_size'));
@@ -2996,7 +3048,7 @@ function send_hoja_asiento_to_tramitfy() {
     try {
 
         $uploadDir = wp_upload_dir();
-        $baseUploadPath = $uploadDir['basedir'] . '/tramitfy-hoja-asiento/';
+        $baseUploadPath = $uploadDir['basedir'] . '/tramitfy-permiso-navegacion/';
 
         if (!file_exists($baseUploadPath)) {
             mkdir($baseUploadPath, 0755, true);
@@ -3010,8 +3062,8 @@ function send_hoja_asiento_to_tramitfy() {
             'customerDni' => isset($_POST['customer_dni']) ? sanitize_text_field($_POST['customer_dni']) : '',
             'customerEmail' => isset($_POST['customer_email']) ? sanitize_email($_POST['customer_email']) : '',
             'customerPhone' => isset($_POST['customer_phone']) ? sanitize_text_field($_POST['customer_phone']) : '',
-            'renewalType' => isset($_POST['renewal_type']) ? sanitize_text_field($_POST['renewal_type']) : 'duplicado',
-            'finalAmount' => isset($_POST['final_amount']) ? floatval($_POST['final_amount']) : 29.99,
+            'renewalType' => isset($_POST['renewal_type']) ? sanitize_text_field($_POST['renewal_type']) : 'renovacion',
+            'finalAmount' => isset($_POST['final_amount']) ? floatval($_POST['final_amount']) : 65.00,
             'paymentIntentId' => isset($_POST['payment_intent_id']) ? sanitize_text_field($_POST['payment_intent_id']) : '',
             'hasSignature' => isset($_POST['has_signature']) ? sanitize_text_field($_POST['has_signature']) : '',
             'couponCode' => isset($_POST['coupon_code']) ? sanitize_text_field($_POST['coupon_code']) : '',
@@ -3068,18 +3120,18 @@ function send_hoja_asiento_to_tramitfy() {
         $pdf->Cell(0, 10, utf8_decode('AUTORIZACIÓN'), 0, 1, 'L');
         $pdf->SetFont('Arial', '', 11);
 
-        $requestTypes = array(
-            'duplicado' => 'copia de hoja de asiento',
-            'perdida' => 'copia por pérdida de original',
-            'deterioro' => 'copia por deterioro de original',
-            'actualizacion' => 'copia actualizada'
+        $renewalTypes = array(
+            'renovacion' => 'renovación estándar',
+            'perdida' => 'renovación por pérdida',
+            'deterioro' => 'renovación por deterioro',
+            'robo' => 'renovación por robo'
         );
-        $requestTypeText = isset($requestTypes[$formData['renewalType']]) ? $requestTypes[$formData['renewalType']] : 'copia de hoja de asiento';
+        $renewalTypeText = isset($renewalTypes[$formData['renewalType']]) ? $renewalTypes[$formData['renewalType']] : 'renovación';
 
         $customerName = $formData['customerName'];
         $customerDni = $formData['customerDni'];
 
-        $texto = "Por la presente, yo $customerName, con DNI/NIE $customerDni, AUTORIZO a Tramitfy S.L. con CIF B55388557 a actuar como mi representante legal para la tramitación y gestión de la solicitud de $requestTypeText ante las autoridades competentes.";
+        $texto = "Por la presente, yo $customerName, con DNI/NIE $customerDni, AUTORIZO a Tramitfy S.L. con CIF B55388557 a actuar como mi representante legal para la tramitación y gestión del procedimiento de $renewalTypeText de permiso de navegación ante las autoridades competentes.";
         $pdf->MultiCell(0, 6, utf8_decode($texto), 0, 'J');
         $pdf->Ln(3);
 
@@ -3117,7 +3169,7 @@ function send_hoja_asiento_to_tramitfy() {
         });
 
         $uploadedFiles = array();
-        error_log("=== HOJA DE ASIENTO: Procesando archivos ===");
+        error_log("=== PERMISO NAVEGACIÓN: Procesando archivos ===");
 
         if (!empty($_FILES)) {
             foreach ($_FILES as $fieldName => $file) {
@@ -3224,7 +3276,7 @@ function send_hoja_asiento_to_tramitfy() {
         }
 
         // Enviar al webhook de Node.js usando CURLFile
-        $webhookUrl = 'https://tramitfy.org/api/herramientas/hoja-asiento/webhook';
+        $webhookUrl = 'https://tramitfy.org/api/herramientas/permiso-navegacion/webhook';
 
         // Preparar datos como strings
         $form_data = array();
@@ -3247,28 +3299,18 @@ function send_hoja_asiento_to_tramitfy() {
         // Agregar archivos adjuntos
         foreach ($uploadedFiles as $file) {
             if (file_exists($file['path'])) {
-                // Usar nombre del campo para categorización
-                if (strpos($file['fieldname'], 'documento') !== false || strpos($file['fieldname'], 'hoja') !== false) {
-                    $form_data['documento_referencia'] = new CURLFile($file['path'], $file['type'], $file['name']);
-                    error_log("✅ Documento de referencia agregado: {$file['name']}");
-                } else {
-                    $form_data[$file['fieldname']] = new CURLFile($file['path'], $file['type'], $file['name']);
-                    error_log("✅ Archivo agregado ({$file['fieldname']}): {$file['name']}");
-                }
+                // MANTENER nombres de campo exactos para múltiples archivos
+                $form_data[$file['fieldname']] = new CURLFile($file['path'], $file['type'], $file['name']);
+                error_log("✅ Archivo agregado ({$file['fieldname']}): {$file['name']}");
             }
         }
 
-        // Usar CURL con CURLFile (CON MEJORAS DE MEMORIA Y TIMEOUT)
-        ini_set('memory_limit', '256M'); // Aumentar límite de memoria temporalmente
-        
+        // Usar CURL con CURLFile
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $webhookUrl);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $form_data);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 45); // Aumentar timeout a 45 segundos
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10); // Timeout de conexión
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false); // No seguir redirects automáticamente
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -3276,44 +3318,51 @@ function send_hoja_asiento_to_tramitfy() {
         curl_close($ch);
 
         error_log("📡 CURL Response Code: $httpCode");
-        error_log("📡 CURL Response Body: $response");
+        error_log("📡 CURL Response Length: " . strlen($response));
+        error_log("📡 CURL Response (first 200 chars): " . substr($response, 0, 200));
+        
         if ($curlError) {
             error_log("❌ CURL Error: $curlError");
-        }
-
-        $responseBody = json_decode($response, true);
-
-        // Mejorar manejo de errores de CURL
-        if ($curlError) {
-            error_log('❌ CURL Error específico: ' . $curlError);
-            if (strpos($curlError, 'timeout') !== false) {
-                wp_send_json(['success' => false, 'error' => 'Timeout al enviar datos - intente de nuevo'], 504);
-                return;
-            } else {
-                wp_send_json(['success' => false, 'error' => 'Error de conexión: ' . $curlError], 500);
-                return;
-            }
-        }
-
-        // La API ahora funciona correctamente, no necesitamos manejar redirects localmente
-
-        if ($httpCode !== 200) {
-            error_log('❌ HTTP Error: código ' . $httpCode);
-            wp_send_json(['success' => false, 'error' => 'Error del servidor: HTTP ' . $httpCode], 500);
+            wp_send_json(['success' => false, 'error' => 'Error de conexión'], 500);
             return;
         }
 
-        // Solo validar JSON si HTTP 200
-        if (!$responseBody || !isset($responseBody['success']) || !$responseBody['success']) {
-            error_log('❌ Error: Respuesta del webhook no válida - Response: ' . substr($response, 0, 200));
-            wp_send_json(['success' => false, 'error' => 'Error al procesar el formulario - respuesta inválida'], 500);
+        if ($httpCode !== 200) {
+            error_log("❌ HTTP Error: $httpCode");
+            wp_send_json(['success' => false, 'error' => 'Error del servidor'], 500);
+            return;
+        }
+
+        if (empty($response)) {
+            error_log("❌ Empty response");
+            wp_send_json(['success' => false, 'error' => 'Respuesta vacía'], 500);
+            return;
+        }
+
+        $responseBody = json_decode($response, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log("❌ JSON Error: " . json_last_error_msg());
+            error_log("❌ Raw response: " . $response);
+            wp_send_json(['success' => false, 'error' => 'Respuesta inválida: ' . json_last_error_msg()], 500);
+            return;
+        }
+
+        if (!isset($responseBody['success'])) {
+            error_log("❌ Missing success field in: " . print_r($responseBody, true));
+            wp_send_json(['success' => false, 'error' => 'Respuesta incompleta'], 500);
+            return;
+        }
+
+        if (!$responseBody['success']) {
+            error_log("❌ Webhook returned success=false: " . ($responseBody['error'] ?? 'No error message'));
+            wp_send_json(['success' => false, 'error' => 'Error: ' . ($responseBody['error'] ?? 'Error desconocido')], 500);
             return;
         }
 
         // Obtener datos del webhook
         $tramiteId = $responseBody['tramiteId'];
         $tramiteDbId = $responseBody['id'];
-        $trackingUrl = "https://tramitfy.org/seguimiento/{$tramiteDbId}";
+        $trackingUrl = "https://tramitfy.es/pago-realizado-con-exito/";
         $dashboardUrl = "https://tramitfy.org/tramites/{$tramiteDbId}";
 
         error_log("✅ Trámite creado: $tramiteId (DB ID: $tramiteDbId)");
@@ -3329,7 +3378,7 @@ function send_hoja_asiento_to_tramitfy() {
         ]);
 
     } catch (Exception $e) {
-        error_log('❌ Error in send_hoja_asiento_to_tramitfy: ' . $e->getMessage());
+        error_log('❌ Error in send_navigation_permit_to_tramitfy: ' . $e->getMessage());
         error_log('❌ Stack trace: ' . $e->getTraceAsString());
         wp_send_json(['success' => false, 'error' => $e->getMessage()], 500);
     }
@@ -3338,8 +3387,8 @@ function send_hoja_asiento_to_tramitfy() {
 // ==========================================
 // FUNCIÓN 2: Enviar EMAILS (separada del envío de datos)
 // ==========================================
-function send_hoja_asiento_emails() {
-    error_log('=== HOJA DE ASIENTO SEND EMAILS: INICIO ===');
+function send_navigation_permit_emails() {
+    error_log('=== PERMISO NAVEGACIÓN SEND EMAILS: INICIO ===');
     error_log('🔍 POST Data for emails: ' . print_r($_POST, true));
 
     try {
@@ -3349,7 +3398,7 @@ function send_hoja_asiento_emails() {
         $customerDni = isset($_POST['customerDni']) ? sanitize_text_field($_POST['customerDni']) : '';
         $customerPhone = isset($_POST['customerPhone']) ? sanitize_text_field($_POST['customerPhone']) : '';
         $renewalType = isset($_POST['renewalType']) ? sanitize_text_field($_POST['renewalType']) : 'renovacion';
-        $finalAmount = isset($_POST['finalAmount']) ? floatval($_POST['finalAmount']) : 29.99;
+        $finalAmount = isset($_POST['finalAmount']) ? floatval($_POST['finalAmount']) : 65.00;
         $paymentIntentId = isset($_POST['paymentIntentId']) ? sanitize_text_field($_POST['paymentIntentId']) : '';
         $tramiteId = isset($_POST['tramiteId']) ? sanitize_text_field($_POST['tramiteId']) : '';
         $tramiteDbId = isset($_POST['tramiteDbId']) ? sanitize_text_field($_POST['tramiteDbId']) : '';
@@ -3362,7 +3411,7 @@ function send_hoja_asiento_emails() {
 
         error_log("✅ Datos recibidos para tramiteId: $tramiteId");
 
-        $trackingUrl = "https://tramitfy.org/seguimiento/{$tramiteDbId}";
+        $trackingUrl = "https://tramitfy.es/pago-realizado-con-exito/";
         $dashboardUrl = "https://tramitfy.org/tramites/{$tramiteDbId}";
 
         // Calcular contabilidad
@@ -3373,14 +3422,14 @@ function send_hoja_asiento_emails() {
         $honorariosNetos = round($honorariosBrutos / 1.21, 2);
         $iva = round($honorariosBrutos - $honorariosNetos, 2);
 
-        // Texto del tipo de solicitud
-        $requestTypes = array(
-            'duplicado' => 'Copia de hoja de asiento',
-            'perdida' => 'Copia por pérdida de original',
-            'deterioro' => 'Copia por deterioro de original',
-            'actualizacion' => 'Copia actualizada'
+        // Texto del tipo de renovación
+        $renewalTypes = array(
+            'renovacion' => 'Renovación estándar',
+            'perdida' => 'Renovación por pérdida',
+            'deterioro' => 'Renovación por deterioro',
+            'robo' => 'Renovación por robo'
         );
-        $requestTypeText = isset($requestTypes[$renewalType]) ? $requestTypes[$renewalType] : 'Copia de hoja de asiento';
+        $renewalTypeText = isset($renewalTypes[$renewalType]) ? $renewalTypes[$renewalType] : 'Renovación estándar';
 
         error_log("💰 Contabilidad calculada - Total: $finalAmount€, Honorarios netos: $honorariosNetos€");
 
@@ -3394,145 +3443,111 @@ function send_hoja_asiento_emails() {
 
         error_log("📧 Preparando email al cliente: $customerEmail");
 
-        $customerSubject = 'Solicitud de Copia de Hoja de Asiento - ' . $tramiteId;
+        $customerSubject = '✓ Solicitud Recibida - Renovar Permiso de Navegación';
         $customerMessage = "
         <!DOCTYPE html>
         <html>
         <head>
         <meta charset='UTF-8'>
         <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-        <style>
-            @media only screen and (max-width: 600px) {
-                .container { width: 100% !important; }
-                .mobile-padding { padding: 20px !important; }
-            }
-        </style>
         </head>
-        <body style='margin: 0; padding: 0; font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif; background-color: #f7f9fc; color: #333333;'>
-            
-        <table width='100%' cellpadding='0' cellspacing='0' border='0' style='background-color: #f7f9fc; padding: 20px 0;'>
+        <body style='margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif; background-color: #f4f7fa;'>
+        <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #f4f7fa; padding: 40px 20px;'>
             <tr>
                 <td align='center'>
-                    
-                    <!-- Main Container -->
-                    <table class='container' width='600' cellpadding='0' cellspacing='0' border='0' style='background-color: #ffffff; max-width: 600px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);'>
-                        
-                        <!-- Header -->
+                    <!-- Email Content Container -->
+                    <table width='600' cellpadding='0' cellspacing='0' style='background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden;'>
+
+                        <!-- Header Gradient -->
                         <tr>
-                            <td style='background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); padding: 40px 30px; text-align: center;'>
-                                <h1 style='margin: 0; color: #ffffff; font-size: 24px; font-weight: 600; letter-spacing: 0.5px;'>
-                                    TRAMITFY
-                                </h1>
-                                <p style='margin: 8px 0 0; color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 400;'>
-                                    Gestión Profesional de Trámites Marítimos
+                            <td style='background: linear-gradient(135deg, rgb(1, 109, 134) 0%, rgb(0, 86, 106) 100%); padding: 45px 40px; text-align: center;'>
+                                <div style='margin: 0 0 12px 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;'>
+                                    ✓ Solicitud Recibida
+                                </div>
+                                <p style='margin: 0 0 20px 0; color: rgba(255,255,255,0.95); font-size: 16px;'>
+                                    Renovación de Permiso de Navegación
                                 </p>
+                                <div style='background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 14px 24px; border-radius: 8px; display: inline-block;'>
+                                    <p style='margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;'>
+                                        Número de trámite
+                                    </p>
+                                    <p style='margin: 6px 0 0 0; color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: 0.5px;'>
+                                        {$tramiteId}
+                                    </p>
+                                </div>
                             </td>
                         </tr>
-                        
-                        <!-- Content -->
+
+                        <!-- Body Content -->
                         <tr>
-                            <td class='mobile-padding' style='padding: 40px 30px;'>
-                                
-                                <!-- Reference Number -->
-                                <table width='100%' cellpadding='0' cellspacing='0' style='margin-bottom: 30px; background-color: #f8fafc; border-radius: 6px; border-left: 4px solid #1e40af;'>
-                                    <tr>
-                                        <td style='padding: 20px 25px;'>
-                                            <p style='margin: 0 0 5px; color: #64748b; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>
-                                                NÚMERO DE REFERENCIA
-                                            </p>
-                                            <p style='margin: 0; color: #1e40af; font-size: 18px; font-weight: 700; letter-spacing: 0.5px;'>
-                                                {$tramiteId}
-                                            </p>
-                                        </td>
-                                    </tr>
-                                </table>
-                                
-                                <!-- Main Content -->
-                                <p style='margin: 0 0 20px; color: #1f2937; font-size: 16px; line-height: 1.6;'>
+                            <td style='padding: 45px 40px;'>
+
+                                <p style='margin: 0 0 24px 0; color: #2c3e50; font-size: 16px; line-height: 1.6;'>
                                     Estimado/a <strong>{$customerName}</strong>,
                                 </p>
-                                
-                                <p style='margin: 0 0 25px; color: #4b5563; font-size: 15px; line-height: 1.7;'>
-                                    Le confirmamos que hemos recibido su solicitud de <strong>copia de hoja de asiento</strong> correctamente. 
-                                    Nuestro equipo especializado procederá a revisar la documentación proporcionada y gestionar 
-                                    su trámite ante las autoridades competentes.
+
+                                <p style='margin: 0 0 28px 0; color: #546e7a; font-size: 15px; line-height: 1.7;'>
+                                    Hemos recibido correctamente su solicitud de renovación de permiso de navegación. Nuestro equipo revisará su documentación y comenzará con la tramitación a la mayor brevedad posible.
                                 </p>
-                                
-                                <!-- Details Box -->
-                                <table width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0; background-color: #fefefe; border: 1px solid #e5e7eb; border-radius: 6px;'>
+
+                                <!-- Status Box -->
+                                <table width='100%' cellpadding='0' cellspacing='0' style='background: linear-gradient(to right, #e3f2fd, #f0f7ff); border-radius: 10px; border-left: 4px solid rgb(1, 109, 134); margin: 32px 0;'>
                                     <tr>
-                                        <td style='padding: 25px;'>
-                                            <table width='100%' cellpadding='0' cellspacing='0'>
+                                        <td style='padding: 24px 28px;'>
+                                            <table width='100%' cellpadding='8' cellspacing='0'>
                                                 <tr>
-                                                    <td style='color: #6b7280; font-size: 14px; padding: 8px 0; border-bottom: 1px solid #f3f4f6;'>
-                                                        <strong>Tipo de solicitud:</strong>
+                                                    <td style='color: #546e7a; font-size: 14px; font-weight: 600;'>
+                                                        Estado actual:
                                                     </td>
-                                                    <td style='color: #1f2937; font-size: 14px; padding: 8px 0; border-bottom: 1px solid #f3f4f6; text-align: right;'>
-                                                        {$requestTypeText}
+                                                    <td align='right'>
+                                                        <span style='background-color: #fff3e0; color: #e65100; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;'>
+                                                            Pendiente
+                                                        </span>
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td style='color: #6b7280; font-size: 14px; padding: 8px 0; border-bottom: 1px solid #f3f4f6;'>
-                                                        <strong>Fecha de recepción:</strong>
+                                                    <td style='color: #546e7a; font-size: 14px; font-weight: 600;'>
+                                                        Fecha de solicitud:
                                                     </td>
-                                                    <td style='color: #1f2937; font-size: 14px; padding: 8px 0; border-bottom: 1px solid #f3f4f6; text-align: right;'>
+                                                    <td align='right' style='color: #2c3e50; font-size: 14px; font-weight: 600;'>
                                                         " . date('d/m/Y H:i') . "
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td style='color: #6b7280; font-size: 14px; padding: 8px 0 0;'>
-                                                        <strong>Estado:</strong>
-                                                    </td>
-                                                    <td style='color: #1f2937; font-size: 14px; padding: 8px 0 0; text-align: right;'>
-                                                        En revisión
                                                     </td>
                                                 </tr>
                                             </table>
                                         </td>
                                     </tr>
                                 </table>
-                                
-                                <p style='margin: 25px 0 0; color: #4b5563; font-size: 15px; line-height: 1.7;'>
-                                    Le notificaremos por email cualquier actualización importante sobre el estado de su expediente. 
-                                    Si necesita información adicional, no dude en contactar con nosotros.
+
+                                <p style='margin: 32px 0 24px 0; color: #546e7a; font-size: 15px; line-height: 1.7;'>
+                                    Le mantendremos informado del progreso de su solicitud por email y le contactaremos si necesitamos documentación adicional.
                                 </p>
-                                
-                                <p style='margin: 30px 0 0; color: #1f2937; font-size: 15px; line-height: 1.6;'>
+
+
+                                <p style='margin: 32px 0 0 0; color: #2c3e50; font-size: 15px;'>
                                     Atentamente,<br>
-                                    <strong>Equipo de Gestión</strong><br>
-                                    <span style='color: #1e40af; font-weight: 600;'>TRAMITFY</span>
+                                    <strong style='color: rgb(1, 109, 134);'>Equipo Tramitfy</strong>
                                 </p>
-                                
+
                             </td>
                         </tr>
-                        
+
                         <!-- Footer -->
                         <tr>
-                            <td style='background-color: #f9fafb; padding: 25px 30px; border-top: 1px solid #e5e7eb;'>
-                                <table width='100%' cellpadding='0' cellspacing='0'>
-                                    <tr>
-                                        <td align='center'>
-                                            <p style='margin: 0 0 10px; color: #6b7280; font-size: 14px; font-weight: 600;'>
-                                                TRAMITFY
-                                            </p>
-                                            <p style='margin: 0 0 8px; color: #9ca3af; font-size: 13px; line-height: 1.4;'>
-                                                info@tramitfy.es • +34 689 170 273
-                                            </p>
-                                            <p style='margin: 0; color: #9ca3af; font-size: 12px;'>
-                                                Paseo Castellana 194 puerta B, Madrid, España
-                                            </p>
-                                        </td>
-                                    </tr>
-                                </table>
+                            <td style='background-color: #f8f9fa; padding: 32px 40px; border-top: 1px solid #e0e0e0;'>
+                                <p style='margin: 0 0 8px 0; color: #78909c; font-size: 13px; text-align: center; line-height: 1.5;'>
+                                    <strong style='color: #546e7a;'>Tramitfy</strong><br>
+                                    info@tramitfy.es | +34 689 170 273
+                                </p>
+                                <p style='margin: 8px 0 0 0; color: #90a4ae; font-size: 12px; text-align: center;'>
+                                    Paseo Castellana 194 puerta B, Madrid, España
+                                </p>
                             </td>
                         </tr>
-                        
+
                     </table>
-                    
                 </td>
             </tr>
         </table>
-        
         </body>
         </html>
         ";
@@ -3546,7 +3561,7 @@ function send_hoja_asiento_emails() {
         error_log("📧 Preparando email al admin: ipmgroup24@gmail.com");
 
         $adminEmail = 'ipmgroup24@gmail.com';
-        $adminSubject = 'Nueva Solicitud Hoja de Asiento - ' . $tramiteId;
+        $adminSubject = '🔔 Nueva Solicitud - ' . $tramiteId . ' - Renovación Permiso Navegación';
         $adminMessage = "
         <!DOCTYPE html>
         <html>
@@ -3558,7 +3573,7 @@ function send_hoja_asiento_emails() {
 
             <div style='background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%); padding: 25px 30px; color: white;'>
                 <div style='margin: 0; font-size: 22px; font-weight: 600;'>🔔 NUEVA SOLICITUD</div>
-                <p style='margin: 6px 0 0; font-size: 14px; opacity: 0.95;'>Hoja de Asiento</p>
+                <p style='margin: 6px 0 0; font-size: 14px; opacity: 0.95;'>Renovar Permiso de Navegación</p>
                 <p style='margin: 10px 0 0; font-size: 16px; font-weight: 700; background: rgba(255,255,255,0.2); padding: 8px 12px; border-radius: 4px; display: inline-block;'>📋 {$tramiteId}</p>
             </div>
 
@@ -3566,6 +3581,9 @@ function send_hoja_asiento_emails() {
 
                 <div style='margin-bottom: 25px; background-color: #e3f2fd; padding: 16px 20px; border-radius: 6px; text-align: center;'>
                     <a href='{$dashboardUrl}' style='display: inline-block; background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; padding: 10px 24px; text-decoration: none; border-radius: 5px; font-weight: 600; font-size: 14px; box-shadow: 0 3px 8px rgba(25,118,210,0.3);'>
+                        🔍 Ver Detalle Completo del Trámite
+                    </a>
+                </div>
 
                 <div style='margin-bottom: 25px;'>
                     <h3 style='margin: 0 0 15px; color: #d32f2f; font-size: 16px; border-bottom: 2px solid #d32f2f; padding-bottom: 8px;'>👤 DATOS DEL CLIENTE</h3>
@@ -3587,8 +3605,8 @@ function send_hoja_asiento_emails() {
                             <td style='color: #333; font-weight: 600;'>{$customerPhone}</td>
                         </tr>
                         <tr>
-                            <td style='color: #666;'>Tipo de solicitud:</td>
-                            <td style='color: #333; font-weight: 600;'>{$requestTypeText}</td>
+                            <td style='color: #666;'>Tipo renovación:</td>
+                            <td style='color: #333; font-weight: 600;'>{$renewalTypeText}</td>
                         </tr>
                     </table>
                 </div>
@@ -3608,7 +3626,7 @@ function send_hoja_asiento_emails() {
                             <td align='right' style='color: #666;'>15.00 €</td>
                         </tr>
                         <tr>
-                            <td style='color: #666; padding-left: 15px;'>Obtención copia:</td>
+                            <td style='color: #666; padding-left: 15px;'>Emisión permiso:</td>
                             <td align='right' style='color: #666;'>8.00 €</td>
                         </tr>
                         <tr>
@@ -3639,18 +3657,20 @@ function send_hoja_asiento_emails() {
                         </tr>
                         <tr>
                             <td style='color: #666;'>Modo Stripe:</td>
-                            <td style='color: #333; font-weight: 600;'>" . HOJA_ASIENTO_STRIPE_MODE . "</td>
+                            <td style='color: #333; font-weight: 600;'>" . NAVIGATION_PERMIT_STRIPE_MODE . "</td>
                         </tr>
                     </table>
                 </div>
 
                 <div style='margin-bottom: 25px;'>
                     <h3 style='margin: 0 0 15px; color: #333; font-size: 16px;'>📎 DOCUMENTOS</h3>
-                    <p style='font-size: 13px; color: #666;'>Los documentos están guardados en el dashboard</p>
+                    <p style='font-size: 13px; color: #666;'>Los documentos están guardados en el dashboard (DNI por ambas caras incluido)</p>
                 </div>
 
                 <div style='text-align: center; margin-top: 30px;'>
                     <a href='https://tramitfy.org' style='display: inline-block; background: linear-gradient(135deg, #0066cc 0%, #004a99 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 10px rgba(0,102,204,0.3);'>
+                        🖥 Ver en Dashboard TRAMITFY
+                    </a>
                 </div>
 
             </div>
@@ -3687,19 +3707,19 @@ function send_hoja_asiento_emails() {
         }
 
     } catch (Exception $e) {
-        error_log('❌ Error in send_hoja_asiento_emails: ' . $e->getMessage());
+        error_log('❌ Error in send_navigation_permit_emails: ' . $e->getMessage());
         error_log('❌ Stack trace: ' . $e->getTraceAsString());
         wp_send_json_error(['message' => $e->getMessage()], 500);
     }
 }
 
 // Función para crear Payment Intent de Stripe - IGUAL QUE RECUPERAR DOCUMENTACIÓN
-function create_payment_intent_hoja_asiento_renewal() {
+function create_payment_intent_navigation_permit_renewal() {
     // Configurar Stripe dentro de la función (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
-    if (HOJA_ASIENTO_STRIPE_MODE === 'test') {
-        $ha_stripe_secret_key = HOJA_ASIENTO_STRIPE_TEST_SECRET_KEY;
+    if (NAVIGATION_PERMIT_STRIPE_MODE === 'test') {
+        $stripe_secret_key = NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY;
     } else {
-        $ha_stripe_secret_key = HOJA_ASIENTO_STRIPE_LIVE_SECRET_KEY;
+        $stripe_secret_key = NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY;
     }
 
     header('Content-Type: application/json');
@@ -3707,16 +3727,16 @@ function create_payment_intent_hoja_asiento_renewal() {
     require_once get_template_directory() . '/vendor/autoload.php';
 
     try {
-        error_log('=== HOJA DE ASIENTO PAYMENT INTENT ===');
-        error_log('STRIPE MODE: ' . HOJA_ASIENTO_STRIPE_MODE);
-        error_log('Using Stripe key starting with: ' . substr($ha_stripe_secret_key, 0, 25));
+        error_log('=== NAVIGATION PERMIT PAYMENT INTENT ===');
+        error_log('STRIPE MODE: ' . NAVIGATION_PERMIT_STRIPE_MODE);
+        error_log('Using Stripe key starting with: ' . substr($stripe_secret_key, 0, 25));
 
-        \Stripe\Stripe::setApiKey($ha_stripe_secret_key);
+        \Stripe\Stripe::setApiKey($stripe_secret_key);
 
         $currentKey = \Stripe\Stripe::getApiKey();
         error_log('Stripe API Key confirmed: ' . substr($currentKey, 0, 25));
 
-        $amount = HOJA_ASIENTO_SERVICE_PRICE * 100; // 29.99 EUR = 6500 cents
+        $amount = NAVIGATION_PERMIT_SERVICE_PRICE * 100; // 65.00 EUR = 6500 cents
 
         $paymentIntent = \Stripe\PaymentIntent::create([
             'amount' => $amount,
@@ -3724,12 +3744,12 @@ function create_payment_intent_hoja_asiento_renewal() {
             'automatic_payment_methods' => [
                 'enabled' => true,
             ],
-            'description' => 'Hoja de Asiento',
+            'description' => 'Renovar Permiso de Navegación',
             'metadata' => [
-                'service' => 'Hoja de Asiento',
+                'service' => 'Permiso Navegación',
                 'source' => 'tramitfy_web',
-                'form' => 'hoja_asiento',
-                'mode' => HOJA_ASIENTO_STRIPE_MODE
+                'form' => 'renovacion_permiso',
+                'mode' => NAVIGATION_PERMIT_STRIPE_MODE
             ]
         ]);
 
@@ -3738,8 +3758,8 @@ function create_payment_intent_hoja_asiento_renewal() {
         echo json_encode([
             'clientSecret' => $paymentIntent->client_secret,
             'debug' => [
-                'mode' => HOJA_ASIENTO_STRIPE_MODE,
-                'keyUsed' => substr($ha_stripe_secret_key, 0, 25) . '...',
+                'mode' => NAVIGATION_PERMIT_STRIPE_MODE,
+                'keyUsed' => substr($stripe_secret_key, 0, 25) . '...',
                 'keyConfirmed' => substr($currentKey, 0, 25) . '...',
                 'paymentIntentId' => $paymentIntent->id
             ]
@@ -3753,18 +3773,13 @@ function create_payment_intent_hoja_asiento_renewal() {
 }
 
 // Registrar shortcode y handlers AJAX al nivel global (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
-add_shortcode('hoja_asiento_form', 'hoja_asiento_form_shortcode');
+add_shortcode('navigation_permit_renewal_form', 'navigation_permit_renewal_form_shortcode');
 
-add_action('wp_ajax_create_payment_intent_hoja_asiento_renewal', 'create_payment_intent_hoja_asiento_renewal');
-add_action('wp_ajax_nopriv_create_payment_intent_hoja_asiento_renewal', 'create_payment_intent_hoja_asiento_renewal');
+add_action('wp_ajax_create_payment_intent_navigation_permit_renewal', 'create_payment_intent_navigation_permit_renewal');
+add_action('wp_ajax_nopriv_create_payment_intent_navigation_permit_renewal', 'create_payment_intent_navigation_permit_renewal');
 
-// Debug: Confirmar que las acciones se registran
-error_log('=== HOJA ASIENTO: Registrando acciones AJAX ===');
+add_action('wp_ajax_send_navigation_permit_to_tramitfy', 'send_navigation_permit_to_tramitfy');
+add_action('wp_ajax_nopriv_send_navigation_permit_to_tramitfy', 'send_navigation_permit_to_tramitfy');
 
-add_action('wp_ajax_send_hoja_asiento_to_tramitfy', 'send_hoja_asiento_to_tramitfy');
-add_action('wp_ajax_nopriv_send_hoja_asiento_to_tramitfy', 'send_hoja_asiento_to_tramitfy');
-
-error_log('=== HOJA ASIENTO: Acciones AJAX registradas ===');
-
-add_action('wp_ajax_send_hoja_asiento_emails', 'send_hoja_asiento_emails');
-add_action('wp_ajax_nopriv_send_hoja_asiento_emails', 'send_hoja_asiento_emails');
+add_action('wp_ajax_send_navigation_permit_emails', 'send_navigation_permit_emails');
+add_action('wp_ajax_nopriv_send_navigation_permit_emails', 'send_navigation_permit_emails');

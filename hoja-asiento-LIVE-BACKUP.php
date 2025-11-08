@@ -13,17 +13,17 @@ if (!defined('HOJA_ASIENTO_STRIPE_MODE')) {
 }
 
 if (!defined('HOJA_ASIENTO_STRIPE_TEST_PUBLIC_KEY')) {
-    define('HOJA_ASIENTO_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
+    define('HOJA_ASIENTO_STRIPE_TEST_PUBLIC_KEY', 'pk_test_51SBOq2GXJ2PkUN8kmrKUUjCLbvY3v8sAsgr6rNtg8zHyUZjB6pFrB7Vz3Gm0l2Wm7y5xVoMap2NY8utwgdJOogNQ000qBYIX5V');
 }
 if (!defined('HOJA_ASIENTO_STRIPE_TEST_SECRET_KEY')) {
-    define('HOJA_ASIENTO_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
+    define('HOJA_ASIENTO_STRIPE_TEST_SECRET_KEY', 'sk_test_51SBOq2GXJ2PkUN8kFlbLBQU3pd1kTVpWsSooQzdPMcqC8jKFSykeptf5XKOtbBzwMT4yjVHM0AbHUFoncbWIe4V600wkzJwpXC');
 }
 
 if (!defined('HOJA_ASIENTO_STRIPE_LIVE_PUBLIC_KEY')) {
-    define('HOJA_ASIENTO_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
+    define('HOJA_ASIENTO_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_51QHhtNGXGHYLV5CXu3P7PrAFezBnDuf0JsZzb2AxjSsV0okn4y19VOMIjW0NUOLpaFdI3CCRhiC4fvNBDDbPhiW100KkF6Uo2x');
 }
 if (!defined('HOJA_ASIENTO_STRIPE_LIVE_SECRET_KEY')) {
-    define('HOJA_ASIENTO_STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
+    define('HOJA_ASIENTO_STRIPE_LIVE_SECRET_KEY', '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');
 }
 
 if (!defined('HOJA_ASIENTO_SERVICE_PRICE')) {
@@ -520,6 +520,100 @@ function hoja_asiento_form_shortcode() {
 
         .ha-upload-item .view-example:hover {
             text-decoration: underline;
+        }
+
+        /* Vista previa de archivos */
+        .ha-file-preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .ha-file-preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: rgb(var(--neutral-100));
+            border: 2px solid rgb(var(--neutral-200));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .ha-file-preview-item:hover {
+            border-color: rgb(var(--primary));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(var(--primary), 0.15);
+        }
+
+        .ha-file-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .ha-file-preview-item i {
+            font-size: 32px;
+            color: rgb(var(--neutral-400));
+        }
+
+        .ha-file-remove-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(220, 38, 38, 0.95);
+            border: 2px solid white;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 11px;
+            opacity: 0;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .ha-file-preview-item:hover .ha-file-remove-btn {
+            opacity: 1;
+        }
+
+        .ha-file-remove-btn:hover {
+            background: rgba(185, 28, 28, 1);
+            transform: scale(1.1);
+        }
+
+        .ha-file-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 6px 4px;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            color: white;
+            font-size: 10px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.8);
+            }
         }
 
         /* Layout 2 columnas para autorización */
@@ -1422,6 +1516,15 @@ function hoja_asiento_form_shortcode() {
                 padding: 16px 24px;
                 font-size: 16px;
             }
+
+            /* Modal de pago más arriba en móvil */
+            .ha-payment-modal-content {
+                margin: 20px auto 5% auto !important;
+                width: 95% !important;
+                padding: 20px !important;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
         }
     </style>
 
@@ -1612,6 +1715,10 @@ function hoja_asiento_form_shortcode() {
                             <label for="upload-dni-propietario">
                                 <i class="fa-solid fa-id-card"></i> DNI del Propietario *
                             </label>
+                            <div style="font-size: 12px; color: #666; margin-top: 4px; margin-bottom: 8px;">
+                                <i class="fa-solid fa-info-circle" style="margin-right: 4px;"></i>
+                                Fotografías de <strong>ambas caras</strong> del DNI
+                            </div>
                             <input type="file" id="upload-dni-propietario" name="upload_dni_propietario[]" accept="image/*,.pdf" multiple>
                             <div id="preview-dni-propietario" class="ha-file-preview-container"></div>
                             
@@ -1792,15 +1899,6 @@ function hoja_asiento_form_shortcode() {
             function initFileUpload(inputId, previewId) {
                 const input = document.getElementById(inputId);
                 const preview = document.getElementById(previewId);
-
-                if (!input) {
-                    console.error('❌ Element not found:', inputId);
-                    return;
-                }
-                if (!preview) {
-                    console.error('❌ Preview element not found:', previewId);
-                    return;
-                }
 
                 input.addEventListener('change', function(e) {
                     const files = Array.from(e.target.files);
@@ -2312,6 +2410,7 @@ function hoja_asiento_form_shortcode() {
                 }
 
                 // Mostrar el modal
+                hideAllPopups();
                 document.getElementById('ha-payment-modal').classList.add('show');
 
                 // SIEMPRE reinicializar Stripe para obtener un nuevo Payment Intent
@@ -2336,11 +2435,13 @@ function hoja_asiento_form_shortcode() {
             // Cerrar modal de pago
             document.querySelector('.ha-close-payment-modal').addEventListener('click', function() {
                 document.getElementById('ha-payment-modal').classList.remove('show');
+                restoreAllPopups();
             });
 
             document.getElementById('ha-payment-modal').addEventListener('click', function(event) {
                 if (event.target === this) {
                     this.classList.remove('show');
+                restoreAllPopups();
                 }
             });
 
@@ -2411,6 +2512,127 @@ function hoja_asiento_form_shortcode() {
                 }
             });
 
+            // OPTIMIZACIONES MÓVILES (copiado de renovación-permiso)
+            function isMobile() {
+                return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+            }
+
+            async function compressImageForMobile(file, maxSizeMB = 2) {
+                return new Promise((resolve) => {
+                    if (!file.type.startsWith('image/')) {
+                        resolve(file);
+                        return;
+                    }
+
+                    const needsCompression = isMobile() || file.size > (3 * 1024 * 1024);
+                    if (!needsCompression) {
+                        resolve(file);
+                        return;
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const img = new Image();
+                    
+                    img.onload = function() {
+                        let { width, height } = img;
+                        const maxDimension = isMobile() ? 1200 : 1600;
+                        
+                        if (width > height && width > maxDimension) {
+                            height = (height * maxDimension) / width;
+                            width = maxDimension;
+                        } else if (height > maxDimension) {
+                            width = (width * maxDimension) / height;
+                            height = maxDimension;
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        canvas.toBlob((blob) => {
+                            const compressedFile = new File([blob], file.name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            });
+                            console.log(`📸 Comprimido: ${file.name} ${Math.round(file.size/1024)}KB → ${Math.round(compressedFile.size/1024)}KB`);
+                            resolve(compressedFile);
+                        }, 'image/jpeg', 0.8);
+                    };
+                    
+                    img.onerror = () => resolve(file);
+                    img.src = URL.createObjectURL(file);
+                });
+            }
+
+            function validateFileSize(file) {
+                const maxSize = isMobile() ? 10 * 1024 * 1024 : 20 * 1024 * 1024;
+                
+                if (file.size > maxSize) {
+                    const maxSizeMB = Math.round(maxSize / (1024 * 1024));
+                    const currentSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+                    alert(`⚠️ Archivo "${file.name}" demasiado grande\\n\\n📱 Máximo: ${maxSizeMB}MB\\n📊 Actual: ${currentSizeMB}MB`);
+                    return false;
+                }
+                return true;
+            }
+
+            // GESTIÓN PROFESIONAL DE POPUPS (copiado de renovación-permiso)
+            let hiddenPopups = [];
+            
+            function hideAllPopups() {
+                const popupSelectors = [
+                    '.wa__popup_chat_box', '#whatsapp-button', '.wa__btn_popup', '.wa__stt', 
+                    '[class*="wa__"]', '[id*="whatsapp"]', '.whatsapp-chat', '.wa-button',
+                    '.cookie-banner', '.cookie-consent', '.cookie-notice', '.cookie-popup',
+                    '.gdpr-banner', '.privacy-banner', '#cookie-consent', '[class*="cookie"]',
+                    '.newsletter-popup', '.exit-intent', '.promotion-popup', '.chat-widget',
+                    '.elementor-popup', '.popup-maker', '.pum-popup'
+                ];
+                
+                hiddenPopups = [];
+                
+                popupSelectors.forEach(selector => {
+                    try {
+                        const elements = document.querySelectorAll(selector);
+                        elements.forEach(element => {
+                            if (element && !element.closest('.ha-payment-modal') && 
+                                element.id !== 'ha-payment-modal' &&
+                                element.style.display !== 'none') {
+                                
+                                hiddenPopups.push({
+                                    element: element,
+                                    originalDisplay: element.style.display || getComputedStyle(element).display
+                                });
+                                
+                                element.style.display = 'none';
+                                element.style.visibility = 'hidden';
+                            }
+                        });
+                    } catch (e) {
+                        console.warn('Error ocultando popup:', selector, e);
+                    }
+                });
+                
+                console.log(`🧹 Popups ocultados: ${hiddenPopups.length} elementos`);
+            }
+            
+            function restoreAllPopups() {
+                hiddenPopups.forEach(item => {
+                    try {
+                        if (item.element) {
+                            item.element.style.display = item.originalDisplay === 'none' ? '' : item.originalDisplay;
+                            item.element.style.visibility = '';
+                        }
+                    } catch (e) {
+                        console.warn('Error restaurando popup:', e);
+                    }
+                });
+                
+                console.log(`🔄 Popups restaurados: ${hiddenPopups.length} elementos`);
+                hiddenPopups = [];
+            }
+
             // Enviar datos del formulario
             async function submitFormData() {
                 const form = document.getElementById('navigation-permit-renewal-form');
@@ -2429,15 +2651,22 @@ function hoja_asiento_form_shortcode() {
                 const signatureData = mainSignatureData || signaturePad.toDataURL();
                 formData.append('signature', signatureData);
 
-                // Añadir archivos desde fileStorage
+                // Añadir archivos desde fileStorage con indexación mejorada
                 console.log('🔍 FileStorage al enviar:', {
                     'upload-dni-propietario': fileStorage['upload-dni-propietario'].length
                 });
                 
-                fileStorage['upload-dni-propietario'].forEach((file, index) => {
-                    console.log(`📎 Añadiendo DNI archivo ${index}:`, file.name, file.size);
-                    formData.append('upload_dni_propietario[]', file);
-                });
+                // Procesar archivos DNI con optimizaciones móviles
+                const dniFiles = fileStorage['upload-dni-propietario'] || [];
+                for (let index = 0; index < dniFiles.length; index++) {
+                    const file = dniFiles[index];
+                    if (!validateFileSize(file)) continue;
+                    
+                    console.log(`📎 Procesando DNI ${index}:`, file.name, `${Math.round(file.size/1024)}KB`);
+                    const processedFile = await compressImageForMobile(file);
+                    console.log(`✅ DNI ${index} procesado:`, processedFile.name, `${Math.round(processedFile.size/1024)}KB`);
+                    formData.append(`upload_dni_propietario_${index}`, processedFile);
+                }
 
                 // Añadir datos adicionales
                 formData.append('final_amount', currentPrice);
@@ -2532,6 +2761,7 @@ function hoja_asiento_form_shortcode() {
 
                     // Cerrar modal y redirigir a página de éxito
                     document.getElementById('ha-payment-modal').classList.remove('show');
+                restoreAllPopups();
                     
                     // Guardar información del trámite en localStorage para mostrar en página de éxito
                     localStorage.setItem('tramitfy_last_tramite', JSON.stringify({
@@ -2605,6 +2835,111 @@ function hoja_asiento_form_shortcode() {
         });
     })();
     </script>
+
+    <!-- Modal para mostrar ejemplos de documentos -->
+    <div id="document-popup" style="display: none; position: fixed; z-index: 999999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px);">
+        <div style="position: relative; background-color: #fff; margin: 5% auto; padding: 0; width: 90%; max-width: 800px; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); animation: slideIn 0.3s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; border-bottom: 1px solid #e0e6ed; background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; border-radius: 12px 12px 0 0;">
+                <h3 style="margin: 0; font-size: 20px; font-weight: 600;">
+                    <i class="fa-solid fa-image" style="margin-right: 10px;"></i>
+                    Ejemplo de Documento
+                </h3>
+                <span class="close-popup" style="color: rgba(255,255,255,0.8); font-size: 28px; font-weight: bold; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s ease;">&times;</span>
+            </div>
+            <div style="padding: 25px; text-align: center;">
+                <img id="document-example-image" src="" alt="Ejemplo de documento" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" />
+                <div style="margin-top: 20px; padding: 15px; background-color: #e3f2fd; border-radius: 8px; border-left: 4px solid #1976d2;">
+                    <p style="margin: 0; color: #1976d2; font-weight: 600; font-size: 14px;">
+                        <i class="fa-solid fa-info-circle" style="margin-right: 8px;"></i>
+                        Este es un ejemplo de cómo debe ser el documento que necesitas subir
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Sistema de ejemplos de documentos
+    document.addEventListener('DOMContentLoaded', function() {
+        const popup = document.getElementById('document-popup');
+        const closePopup = document.querySelector('.close-popup');
+        const exampleImage = document.getElementById('document-example-image');
+
+        // Manejar clicks en "Ver ejemplo"
+        document.querySelectorAll('.view-example').forEach(link => {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+                const docType = this.getAttribute('data-doc');
+                
+                // Configurar imagen según el tipo de documento
+                if (docType === 'dni') {
+                    exampleImage.src = '/wp-content/uploads/exampledocs/dni-comprador.jpg';
+                } else {
+                    // Fallback para otros tipos de documento
+                    const baseUrl = '<?php echo get_template_directory_uri(); ?>/assets/examples/';
+                    exampleImage.src = baseUrl + docType + '.jpg';
+                }
+                
+                // Mostrar modal
+                popup.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+                
+                // Animación de entrada
+                setTimeout(() => {
+                    popup.style.opacity = '1';
+                }, 10);
+            });
+        });
+
+        // Cerrar modal
+        function closeModal() {
+            popup.style.opacity = '0';
+            document.body.style.overflow = 'auto';
+            setTimeout(() => {
+                popup.style.display = 'none';
+            }, 300);
+        }
+
+        closePopup.addEventListener('click', closeModal);
+        
+        // Cerrar al hacer click fuera del modal
+        popup.addEventListener('click', function(event) {
+            if (event.target === popup) {
+                closeModal();
+            }
+        });
+
+        // Cerrar con ESC
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && popup.style.display === 'block') {
+                closeModal();
+            }
+        });
+    });
+    </script>
+
+    <style>
+    @keyframes slideIn {
+        from {
+            transform: translateY(-50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .close-popup:hover {
+        background-color: rgba(255,255,255,0.2) !important;
+        color: white !important;
+    }
+
+    #document-popup {
+        transition: opacity 0.3s ease;
+        opacity: 0;
+    }
+    </style>
 
     <?php
     return ob_get_clean();
@@ -2734,7 +3069,7 @@ function send_hoja_asiento_to_tramitfy() {
         $pdf->SetFont('Arial', '', 11);
 
         $requestTypes = array(
-            'duplicado' => 'copia duplicada',
+            'duplicado' => 'copia de hoja de asiento',
             'perdida' => 'copia por pérdida de original',
             'deterioro' => 'copia por deterioro de original',
             'actualizacion' => 'copia actualizada'
@@ -3040,7 +3375,7 @@ function send_hoja_asiento_emails() {
 
         // Texto del tipo de solicitud
         $requestTypes = array(
-            'duplicado' => 'Copia duplicada',
+            'duplicado' => 'Copia de hoja de asiento',
             'perdida' => 'Copia por pérdida de original',
             'deterioro' => 'Copia por deterioro de original',
             'actualizacion' => 'Copia actualizada'
