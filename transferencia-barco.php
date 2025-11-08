@@ -67,10 +67,10 @@ tramitfy_barco_log('========== INICIO CARGA FORMULARIO BARCO ==========', 'INIT'
 define('BARCO_STRIPE_MODE', 'live'); // 'test' o 'live'
 // CLAVES STRIPE - CONFIGURAR EN PRODUCCIÓN
 // Reemplazar con las claves reales en el servidor de producción
-define('BARCO_STRIPE_TEST_PUBLIC_KEY', 'pk_test_51Q3cLbRojhm8dCiULtMTJmyUP37N4QGbMuSKBrGJKaH8LQBhYMKPz7s9VzAqOKhjEWO1oajjqJhIYuFb4xpJz1Cg00N7oBJDJO');
-define('BARCO_STRIPE_TEST_SECRET_KEY', 'sk_test_51Q3cLbRojhm8dCiUfWvRoIgdHheCOTDgkh9o5eH9x8ZHZGF3PY5hMQ5dTuYZ1oQ9EqrCqJHIqMO8zKX4AXQhvUGl004zV6QaZK');
-define('BARCO_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_51QHhtNGXGHYLV5CXu3P7PrAFezBnDuf0JsZzb2AxjSsV0okn4y19VOMIjW0NUOLpaFdI3CCRhiC4fvNBDDbPhiW100KkF6Uo2x');
-define('BARCO_STRIPE_LIVE_SECRET_KEY', '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');
+define('BARCO_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
+define('BARCO_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
+define('BARCO_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
+define('BARCO_STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
 
 // Asignar claves a variables globales (igual que hoja-asiento.php - evita cache)
 if (BARCO_STRIPE_MODE === 'test') {
@@ -14202,8 +14202,8 @@ add_action('wp_ajax_barco_create_payment_intent', 'tpb_create_payment_intent');
 add_action('wp_ajax_nopriv_barco_create_payment_intent', 'tpb_create_payment_intent');
 function tpb_create_payment_intent() {
     // FORZAR claves directamente para evitar cache de constantes
-    $force_test_key = 'sk_test_51Q3cLbRojhm8dCiUfWvRoIgdHheCOTDgkh9o5eH9x8ZHZGF3PY5hMQ5dTuYZ1oQ9EqrCqJHIqMO8zKX4AXQhvUGl004zV6QaZK';
-    $force_live_key = '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';
+    $force_test_key = 'YOUR_STRIPE_TEST_SECRET_KEY_HERE';
+    $force_live_key = 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE';
     
     if (BARCO_STRIPE_MODE === 'test') {
         $stripe_secret_key = $force_test_key;
