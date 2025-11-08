@@ -8,11 +8,11 @@ require_once(get_template_directory() . '/vendor/autoload.php');
 // Configuración de Stripe AL NIVEL GLOBAL (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
 define('NAVIGATION_PERMIT_STRIPE_MODE', 'live'); // 'test' o 'live'
 
-define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
-define('NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
+define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'pk_test_51SBOq2GXJ2PkUN8kmrKUUjCLbvY3v8sAsgr6rNtg8zHyUZjB6pFrB7Vz3Gm0l2Wm7y5xVoMap2NY8utwgdJOogNQ000qBYIX5V');
+define('NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY', 'sk_test_51SBOq2GXJ2PkUN8kFlbLBQU3pd1kTVpWsSooQzdPMcqC8jKFSykeptf5XKOtbBzwMT4yjVHM0AbHUFoncbWIe4V600wkzJwpXC');
 
-define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
-define('NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
+define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_51QHhtNGXGHYLV5CXu3P7PrAFezBnDuf0JsZzb2AxjSsV0okn4y19VOMIjW0NUOLpaFdI3CCRhiC4fvNBDDbPhiW100KkF6Uo2x');
+define('NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY', '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');
 
 define('NAVIGATION_PERMIT_SERVICE_PRICE', 65.00);
 define('NAVIGATION_PERMIT_TASA_CERTIFICADO', 15.00);
@@ -1544,6 +1544,7 @@ function navigation_permit_renewal_form_shortcode() {
                         <div class="npn-upload-item">
                             <label for="upload-dni-propietario">
                                 <i class="fa-solid fa-id-card"></i> DNI del Propietario *
+                                <small style="display: block; color: #016d86; font-weight: 500; margin-top: 4px;">(ambas caras)</small>
                             </label>
                             <input type="file" id="upload-dni-propietario" name="upload_dni_propietario[]" accept="image/*,.pdf" multiple>
                             <div id="preview-dni-propietario" class="npn-file-preview-container"></div>
@@ -2553,6 +2554,127 @@ function navigation_permit_renewal_form_shortcode() {
     })();
     </script>
 
+    <!-- Modal para mostrar ejemplos de documentos -->
+    <div id="document-popup" style="display: none; position: fixed; z-index: 999999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px);">
+        <div style="position: relative; background-color: #fff; margin: 5% auto; padding: 0; width: 90%; max-width: 800px; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); animation: slideIn 0.3s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; border-bottom: 1px solid #e0e6ed; background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; border-radius: 12px 12px 0 0;">
+                <h3 style="margin: 0; font-size: 20px; font-weight: 600;">
+                    <i class="fa-solid fa-image" style="margin-right: 10px;"></i>
+                    Ejemplo de Documento
+                </h3>
+                <span class="close-popup" style="color: rgba(255,255,255,0.8); font-size: 28px; font-weight: bold; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s ease;">&times;</span>
+            </div>
+            <div style="padding: 25px; text-align: center;">
+                <img id="document-example-image" src="" alt="Ejemplo de documento" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" />
+                <div style="margin-top: 20px; padding: 15px; background-color: #e3f2fd; border-radius: 8px; border-left: 4px solid #1976d2;">
+                    <p style="margin: 0; color: #1976d2; font-weight: 600; font-size: 14px;">
+                        <i class="fa-solid fa-info-circle" style="margin-right: 8px;"></i>
+                        Este es un ejemplo de cómo debe ser el documento que necesitas subir
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Sistema de ejemplos de documentos
+    document.addEventListener('DOMContentLoaded', function() {
+        const popup = document.getElementById('document-popup');
+        const closePopup = document.querySelector('.close-popup');
+        const exampleImage = document.getElementById('document-example-image');
+
+        // Manejar clicks en "Ver ejemplo"
+        document.querySelectorAll('.view-example').forEach(link => {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+                const docType = this.getAttribute('data-doc');
+                
+                // Configurar imagen según el tipo de documento
+                if (docType === 'dni') {
+                    exampleImage.src = '/wp-content/uploads/exampledocs/dni-comprador.jpg';
+                } else if (docType === 'registro') {
+                    // Usar la misma imagen de DNI como ejemplo por ahora
+                    exampleImage.src = '/wp-content/uploads/exampledocs/dni-comprador.jpg';
+                } else {
+                    // Fallback para otros tipos de documento
+                    const baseUrl = '<?php echo get_template_directory_uri(); ?>/assets/examples/';
+                    exampleImage.src = baseUrl + docType + '.jpg';
+                }
+                
+                // Mostrar modal
+                popup.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+                
+                // Animación de entrada
+                setTimeout(() => {
+                    popup.style.opacity = '1';
+                }, 10);
+            });
+        });
+
+        // Cerrar modal
+        function closeModal() {
+            popup.style.opacity = '0';
+            document.body.style.overflow = 'auto';
+            setTimeout(() => {
+                popup.style.display = 'none';
+            }, 300);
+        }
+
+        closePopup.addEventListener('click', closeModal);
+        
+        // Cerrar al hacer click fuera del modal
+        popup.addEventListener('click', function(event) {
+            if (event.target === popup) {
+                closeModal();
+            }
+        });
+
+        // Cerrar con ESC
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && popup.style.display === 'block') {
+                closeModal();
+            }
+        });
+    });
+    </script>
+
+    <style>
+    #document-popup {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-50px) scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    
+    .close-popup:hover {
+        background-color: rgba(255,255,255,0.2) !important;
+        transform: scale(1.1);
+    }
+    
+    .view-example {
+        color: #1976d2 !important;
+        text-decoration: none !important;
+        font-weight: 500 !important;
+        cursor: pointer !important;
+        transition: color 0.2s ease !important;
+    }
+    
+    .view-example:hover {
+        color: #0d47a1 !important;
+        text-decoration: underline !important;
+    }
+    </style>
+
     <?php
     return ob_get_clean();
 }
@@ -2835,7 +2957,7 @@ function send_navigation_permit_to_tramitfy() {
         }
 
         // Enviar al webhook de Node.js usando CURLFile
-        $webhookUrl = 'https://46-202-128-35.sslip.io/api/herramientas/permiso-navegacion/webhook';
+        $webhookUrl = 'https://tramitfy.org/api/herramientas/permiso-navegacion/webhook';
 
         // Preparar datos como strings
         $form_data = array();
@@ -2899,7 +3021,7 @@ function send_navigation_permit_to_tramitfy() {
         $tramiteId = $responseBody['tramiteId'];
         $tramiteDbId = $responseBody['id'];
         $trackingUrl = "https://tramitfy.es/pago-realizado-con-exito/";
-        $dashboardUrl = "https://46-202-128-35.sslip.io/tramites/{$tramiteDbId}";
+        $dashboardUrl = "https://tramitfy.org/tramites/{$tramiteDbId}";
 
         error_log("✅ Trámite creado: $tramiteId (DB ID: $tramiteDbId)");
 
@@ -2948,7 +3070,7 @@ function send_navigation_permit_emails() {
         error_log("✅ Datos recibidos para tramiteId: $tramiteId");
 
         $trackingUrl = "https://tramitfy.es/pago-realizado-con-exito/";
-        $dashboardUrl = "https://46-202-128-35.sslip.io/tramites/{$tramiteDbId}";
+        $dashboardUrl = "https://tramitfy.org/tramites/{$tramiteDbId}";
 
         // Calcular contabilidad
         $certificado = 15.00;
@@ -3023,7 +3145,7 @@ function send_navigation_permit_emails() {
                                 </p>
 
                                 <p style='margin: 0 0 28px 0; color: #546e7a; font-size: 15px; line-height: 1.7;'>
-                                    Hemos recibido correctamente su solicitud de renovación de permiso de navegación. Nuestro equipo revisará su documentación y comenzará con la tramitación a la mayor brevedad posible.
+                                    Hemos recibido correctamente su solicitud de renovación de permiso de navegación. Nuestro equipo revisará su documentación <strong>(incluido DNI por ambas caras)</strong> y comenzará con la tramitación a la mayor brevedad posible.
                                 </p>
 
                                 <!-- Status Box -->
@@ -3055,23 +3177,9 @@ function send_navigation_permit_emails() {
                                 </table>
 
                                 <p style='margin: 32px 0 24px 0; color: #546e7a; font-size: 15px; line-height: 1.7;'>
-                                    Puede consultar el estado de su trámite en cualquier momento desde el siguiente enlace:
+                                    Le mantendremos informado del progreso de su solicitud por email y le contactaremos si necesitamos documentación adicional.
                                 </p>
 
-                                <!-- CTA Button -->
-                                <table width='100%' cellpadding='0' cellspacing='0' style='margin: 32px 0;'>
-                                    <tr>
-                                        <td align='center'>
-                                            <a href='{$trackingUrl}' style='display: inline-block; background: linear-gradient(135deg, rgb(1, 109, 134) 0%, rgb(0, 86, 106) 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 15px; font-weight: 600; box-shadow: 0 4px 12px rgba(1, 109, 134, 0.3);'>
-                                                🔍 Ver Estado del Trámite
-                                            </a>
-                                        </td>
-                                    </tr>
-                                </table>
-
-                                <p style='margin: 32px 0 0 0; color: #546e7a; font-size: 14px; line-height: 1.7;'>
-                                    Le mantendremos informado del progreso de su solicitud.
-                                </p>
 
                                 <p style='margin: 32px 0 0 0; color: #2c3e50; font-size: 15px;'>
                                     Atentamente,<br>
@@ -3214,11 +3322,11 @@ function send_navigation_permit_emails() {
 
                 <div style='margin-bottom: 25px;'>
                     <h3 style='margin: 0 0 15px; color: #333; font-size: 16px;'>📎 DOCUMENTOS</h3>
-                    <p style='font-size: 13px; color: #666;'>Los documentos están guardados en el dashboard</p>
+                    <p style='font-size: 13px; color: #666;'>Los documentos están guardados en el dashboard (DNI por ambas caras incluido)</p>
                 </div>
 
                 <div style='text-align: center; margin-top: 30px;'>
-                    <a href='https://46-202-128-35.sslip.io' style='display: inline-block; background: linear-gradient(135deg, #0066cc 0%, #004a99 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 10px rgba(0,102,204,0.3);'>
+                    <a href='https://tramitfy.org' style='display: inline-block; background: linear-gradient(135deg, #0066cc 0%, #004a99 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 10px rgba(0,102,204,0.3);'>
                         🖥 Ver en Dashboard TRAMITFY
                     </a>
                 </div>
