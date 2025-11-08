@@ -870,8 +870,8 @@ function boat_deregistration_form_shortcode() {
                 <?php
                 $baja_stripe_mode = 'test'; // 'test' o 'live'
                 $baja_stripe_key = ($baja_stripe_mode === 'test')
-                    ? 'pk_test_YOUR_STRIPE_TEST_PUBLIC_KEY'
-                    : 'pk_live_YOUR_STRIPE_LIVE_PUBLIC_KEY';
+                    ? 'pk_test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+                    : 'pk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
                 ?>
                 stripe = Stripe('<?php echo $baja_stripe_key; ?>');
 
@@ -1422,8 +1422,8 @@ function create_payment_intent_boat_deregistration() {
     // Configuración de claves secretas Stripe - debe coincidir con el modo del frontend
     $baja_stripe_mode = 'test'; // 'test' o 'live' - DEBE coincidir con el modo del frontend
     $baja_secret_key = ($baja_stripe_mode === 'test')
-        ? 'sk_test_YOUR_STRIPE_TEST_SECRET_KEY'
-        : 'sk_live_YOUR_STRIPE_LIVE_SECRET_KEY';
+        ? 'sk_test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        : 'sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
 
     \Stripe\Stripe::setApiKey($baja_secret_key);
 

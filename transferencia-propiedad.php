@@ -10,8 +10,8 @@ Author: GPT-4
 defined('ABSPATH') || exit;
 
 // Claves de Stripe (mismas que transferencia-propiedad-definitivo.php)
-define('STRIPE_PUBLIC_KEY', 'pk_live_REPLACE_WITH_YOUR_LIVE_PUBLIC_KEY');
-define('STRIPE_SECRET_KEY', 'sk_live_REPLACE_WITH_YOUR_LIVE_SECRET_KEY');
+define('STRIPE_PUBLIC_KEY', 'pk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+define('STRIPE_SECRET_KEY', 'sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
 
 /**
  * Carga datos desde archivos CSV según el tipo de vehículo
