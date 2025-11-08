@@ -1,13 +1,14 @@
 <?php
 /**
- * TRAMITFY - TRANSFERENCIA EMBARCACIONES V2 
+ * TRAMITFY - TRANSFERENCIA EMBARCACIONES V2 CON REDSYS
  * 
- * Versión refactorizada IDÉNTICA al formulario original
+ * Versión refactorizada con integración Redsys (CaixaBank TPV)
  * Estructura exacta: layout wrapper → two-column → sidebar + main-form
  * 
- * @version 2.1.0
+ * @version 2.2.0 - REDSYS EDITION
  * @author Claude Code  
  * @created 2025-11-08
+ * @updated 2025-11-08 - Integración Redsys TPV
  * @reference Formulario producción /transferencia-barco.php
  */
 
@@ -16,28 +17,34 @@ if (!defined('ABSPATH')) {
 }
 
 // =====================================================
-// CONSTANTES DE CONFIGURACIÓN V2
+// CONSTANTES DE CONFIGURACIÓN REDSYS V2
 // =====================================================
 
-if (!defined('TBV2_STRIPE_MODE')) define('TBV2_STRIPE_MODE', 'live');
+if (!defined('TBV2_REDSYS_MODE')) define('TBV2_REDSYS_MODE', 'test'); // test o live
 
-// Stripe Keys V2 (copiadas del original)
-if (!defined('TBV2_STRIPE_LIVE_PUBLIC_KEY')) define('TBV2_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
-if (!defined('TBV2_STRIPE_LIVE_SECRET_KEY')) define('TBV2_STRIPE_LIVE_SECRET_KEY', 'sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
-if (!defined('TBV2_STRIPE_TEST_PUBLIC_KEY')) define('TBV2_STRIPE_TEST_PUBLIC_KEY', 'pk_test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
-if (!defined('TBV2_STRIPE_TEST_SECRET_KEY')) define('TBV2_STRIPE_TEST_SECRET_KEY', 'sk_test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+// Datos del comercio Redsys
+if (!defined('TBV2_REDSYS_MERCHANT_CODE')) define('TBV2_REDSYS_MERCHANT_CODE', '363391103');
+if (!defined('TBV2_REDSYS_TERMINAL')) define('TBV2_REDSYS_TERMINAL', '2');
+if (!defined('TBV2_REDSYS_CURRENCY')) define('TBV2_REDSYS_CURRENCY', '978'); // EUR
 
-// Webhook URL V2
+// Claves de cifrado
+if (!defined('TBV2_REDSYS_SECRET_KEY')) define('TBV2_REDSYS_SECRET_KEY', 'sq7HjrUOBfKmC576ILgskD5srU870gJ7');
+if (!defined('TBV2_REDSYS_SIGNATURE_VERSION')) define('TBV2_REDSYS_SIGNATURE_VERSION', 'HMAC_SHA256_V1');
+
+// URLs según entorno
+if (!defined('TBV2_REDSYS_URL_TEST')) define('TBV2_REDSYS_URL_TEST', 'https://sis-t.redsys.es:25443/sis/realizarPago');
+if (!defined('TBV2_REDSYS_URL_LIVE')) define('TBV2_REDSYS_URL_LIVE', 'https://sis.redsys.es/sis/realizarPago');
+
+// Webhook URL V2 (sin cambios)
 if (!defined('TBV2_WEBHOOK_URL')) define('TBV2_WEBHOOK_URL', 'https://tramitfy.org/api/herramientas/barcos/webhook');
 
-// Asignar claves según modo
-if (TBV2_STRIPE_MODE === 'test') {
-    $tbv2_stripe_public_key = TBV2_STRIPE_TEST_PUBLIC_KEY;
-    $tbv2_stripe_secret_key = TBV2_STRIPE_TEST_SECRET_KEY;
-} else {
-    $tbv2_stripe_public_key = TBV2_STRIPE_LIVE_PUBLIC_KEY;
-    $tbv2_stripe_secret_key = TBV2_STRIPE_LIVE_SECRET_KEY;
-}
+// URLs de retorno
+if (!defined('TBV2_REDSYS_URL_OK')) define('TBV2_REDSYS_URL_OK', get_site_url() . '/?tbv2_redsys_return=success');
+if (!defined('TBV2_REDSYS_URL_KO')) define('TBV2_REDSYS_URL_KO', get_site_url() . '/?tbv2_redsys_return=error');
+if (!defined('TBV2_REDSYS_URL_NOTIFICATION')) define('TBV2_REDSYS_URL_NOTIFICATION', get_site_url() . '/?tbv2_redsys_callback=notification');
+
+// Asignar URL según modo
+$tbv2_redsys_url = (TBV2_REDSYS_MODE === 'test') ? TBV2_REDSYS_URL_TEST : TBV2_REDSYS_URL_LIVE;
 
 /**
  * Carga datos desde archivo CSV (función simplificada)
@@ -60,6 +67,113 @@ function tbv2_cargar_datos_csv() {
     }
 
     return $data;
+}
+
+// =====================================================
+// FUNCIONES CORE REDSYS V2
+// =====================================================
+
+/**
+ * Genera firma HMAC SHA256 para Redsys
+ */
+function tbv2_redsys_generate_signature($data) {
+    $key = base64_decode(TBV2_REDSYS_SECRET_KEY);
+    $key = substr(hash_hmac('sha256', $data['Ds_Merchant_Order'], $key, true), 0, 24);
+    $signature = base64_encode(hash_hmac('sha256', base64_encode(json_encode($data)), $key, true));
+    return $signature;
+}
+
+/**
+ * Crea formulario de pago Redsys
+ */
+function tbv2_redsys_create_payment_form($order_data) {
+    global $tbv2_redsys_url;
+    
+    // Parámetros obligatorios
+    $params = [
+        'Ds_Merchant_MerchantCode' => TBV2_REDSYS_MERCHANT_CODE,
+        'Ds_Merchant_Terminal' => TBV2_REDSYS_TERMINAL,
+        'Ds_Merchant_Order' => $order_data['order_id'],
+        'Ds_Merchant_Amount' => $order_data['amount_cents'],
+        'Ds_Merchant_Currency' => TBV2_REDSYS_CURRENCY,
+        'Ds_Merchant_TransactionType' => '0', // Autorización
+        'Ds_Merchant_MerchantURL' => TBV2_REDSYS_URL_NOTIFICATION,
+        'Ds_Merchant_UrlOK' => TBV2_REDSYS_URL_OK,
+        'Ds_Merchant_UrlKO' => TBV2_REDSYS_URL_KO,
+        'Ds_Merchant_MerchantName' => 'Tramitfy',
+        'Ds_Merchant_ProductDescription' => $order_data['description'],
+        'Ds_Merchant_ConsumerLanguage' => '001' // Español
+    ];
+    
+    $signature = tbv2_redsys_generate_signature($params);
+    $merchant_parameters = base64_encode(json_encode($params));
+    
+    return [
+        'url' => $tbv2_redsys_url,
+        'Ds_MerchantParameters' => $merchant_parameters,
+        'Ds_SignatureVersion' => TBV2_REDSYS_SIGNATURE_VERSION,
+        'Ds_Signature' => $signature
+    ];
+}
+
+/**
+ * Valida respuesta de Redsys
+ */
+function tbv2_redsys_validate_response($merchant_params, $signature_received) {
+    $params = json_decode(base64_decode($merchant_params), true);
+    $signature_calculated = tbv2_redsys_generate_signature($params);
+    
+    return hash_equals($signature_calculated, $signature_received) && 
+           isset($params['Ds_Response']) && 
+           $params['Ds_Response'] >= 0 && 
+           $params['Ds_Response'] <= 99;
+}
+
+/**
+ * Procesa callback de Redsys
+ */
+function tbv2_redsys_process_callback() {
+    if (!isset($_POST['Ds_MerchantParameters'], $_POST['Ds_Signature'])) {
+        return false;
+    }
+    
+    $merchant_params = $_POST['Ds_MerchantParameters'];
+    $signature = $_POST['Ds_Signature'];
+    
+    if (!tbv2_redsys_validate_response($merchant_params, $signature)) {
+        error_log('TBV2 Redsys: Firma inválida o respuesta no autorizada');
+        return false;
+    }
+    
+    $params = json_decode(base64_decode($merchant_params), true);
+    
+    // Si pago exitoso, activar webhook a Tramitfy
+    if ($params['Ds_Response'] <= 99) {
+        tbv2_trigger_webhook($params);
+        return true;
+    }
+    
+    return false;
+}
+
+/**
+ * Activa webhook hacia Tramitfy (mantiene estructura original)
+ */
+function tbv2_trigger_webhook($redsys_params) {
+    // Extraer datos del formulario del session storage o recrear
+    $form_data = [
+        'order_id' => $redsys_params['Ds_Order'],
+        'amount' => $redsys_params['Ds_Amount'] / 100, // Convertir de céntimos
+        'payment_method' => 'redsys',
+        'payment_status' => 'completed',
+        'authorization_code' => $redsys_params['Ds_AuthorisationCode'] ?? null
+    ];
+    
+    // Enviar al webhook de Tramitfy (misma estructura que Stripe)
+    wp_remote_post(TBV2_WEBHOOK_URL, [
+        'body' => json_encode($form_data),
+        'headers' => ['Content-Type' => 'application/json']
+    ]);
 }
 
 /**
@@ -656,21 +770,44 @@ function tbv2_render_form() {
                     <!-- PÁGINA 5: PAGO -->
                     <div id="page-pago" class="form-page form-section-compact hidden">
                         <h2 style="margin-bottom: 10px;">Método de Pago</h2>
-                        <p style="color: #666; margin-bottom: 25px; font-size: 15px; line-height: 1.6;">Pago seguro con Stripe. Procesamos tu trámite inmediatamente tras la confirmación del pago.</p>
+                        <p style="color: #666; margin-bottom: 25px; font-size: 15px; line-height: 1.6;">Pago seguro con TPV CaixaBank. Será redirigido a la pasarela segura para completar el pago.</p>
 
-                        <!-- Stripe Container -->
-                        <div id="stripe-container" style="max-width: 100%; margin: 0 auto;">
-                            <!-- Loading Spinner -->
-                            <div id="stripe-loading" style="text-align: center; padding: 40px;">
-                                <div class="stripe-spinner" style="margin: 0 auto 20px; border: 4px solid #f3f3f3; border-top: 4px solid #016d86; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
-                                <p style="color: #666;">Cargando sistema de pago seguro...</p>
+                        <!-- Redsys Container -->
+                        <div id="redsys-container" style="max-width: 100%; margin: 0 auto;">
+                            <!-- Redsys Payment Info -->
+                            <div class="redsys-payment-info" style="background: #f8f9ff; border: 1px solid #e0e7ff; border-radius: 12px; padding: 24px; margin-bottom: 25px;">
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                                    <div style="background: #016d86; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fa-solid fa-credit-card"></i>
+                                    </div>
+                                    <div>
+                                        <h4 style="margin: 0 0 4px 0; color: #1f2937; font-size: 18px; font-weight: 600;">Pago Seguro CaixaBank</h4>
+                                        <p style="margin: 0; color: #6b7280; font-size: 14px;">TPV certificado con máxima seguridad</p>
+                                    </div>
+                                </div>
+                                
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px;">
+                                    <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(1, 109, 134, 0.1); border-radius: 6px;">
+                                        <i class="fa-solid fa-shield-check" style="color: #10b981;"></i>
+                                        <span style="font-size: 13px; color: #374151;">Cifrado SSL 256-bit</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(1, 109, 134, 0.1); border-radius: 6px;">
+                                        <i class="fa-solid fa-university" style="color: #10b981;"></i>
+                                        <span style="font-size: 13px; color: #374151;">Tecnología CaixaBank</span>
+                                    </div>
+                                </div>
+                                
+                                <div style="background: rgba(59, 130, 246, 0.1); padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                                    <p style="margin: 0; font-size: 14px; color: #1e40af; line-height: 1.5;">
+                                        <i class="fa-solid fa-info-circle"></i> 
+                                        Al hacer clic en "Proceder al Pago", será redirigido a la pasarela segura de CaixaBank para completar el pago con tarjeta.
+                                    </p>
+                                </div>
                             </div>
 
-                            <!-- Payment Element Container -->
-                            <div id="payment-element" class="payment-element-container" style="margin-bottom: 30px; display: none;"></div>
 
                             <!-- Terms and Conditions Checkbox -->
-                            <div class="terms-container payment-terms" style="margin: 30px 0; text-align: center; padding: 20px; border: 2px solid rgba(1, 109, 134, 0.3); border-radius: 12px; background-color: rgba(1, 109, 134, 0.05); display: none;">
+                            <div class="terms-container payment-terms" style="margin: 30px 0; text-align: center; padding: 20px; border: 2px solid rgba(1, 109, 134, 0.3); border-radius: 12px; background-color: rgba(1, 109, 134, 0.05);">
                                 <label style="display: flex; align-items: center; justify-content: center; gap: 12px; font-weight: 500; cursor: pointer;">
                                     <div class="custom-checkbox-container" style="position: relative; width: 18px; height: 18px;">
                                         <input type="checkbox" id="terms_accept_pago" name="terms_accept_pago" required style="position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0;">
@@ -705,8 +842,8 @@ function tbv2_render_form() {
                             <div id="payment-message" class="hidden" style="margin: 20px 0; padding: 15px; border-radius: 8px; text-align: center; font-weight: 500; display: none;"></div>
 
                             <!-- Payment Button -->
-                            <button type="button" id="submit-payment" class="btn-primary" style="width: 100%; padding: 16px; font-size: 18px; font-weight: 600; background: linear-gradient(135deg, #016d86 0%, #015266 100%); color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px; transition: all 0.3s ease; box-shadow: 0 4px 6px -1px rgba(1, 109, 134, 0.3), 0 2px 4px -1px rgba(1, 109, 134, 0.2); display: none;" disabled>
-                                <i class="fa-solid fa-lock"></i> Pagar Ahora
+                            <button type="button" id="submit-payment" class="btn-primary" style="width: 100%; padding: 16px; font-size: 18px; font-weight: 600; background: linear-gradient(135deg, #016d86 0%, #015266 100%); color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px; transition: all 0.3s ease; box-shadow: 0 4px 6px -1px rgba(1, 109, 134, 0.3), 0 2px 4px -1px rgba(1, 109, 134, 0.2);" disabled>
+                                <i class="fa-solid fa-credit-card"></i> Proceder al Pago
                             </button>
                         </div>
 
@@ -4173,13 +4310,9 @@ function tbv2_render_scripts() {
                 });
             }
             
-            // Initialize Stripe if available
-            if (typeof Stripe !== 'undefined' && tbv2StripePublicKey) {
-                this.initializeStripe();
-            } else {
-                console.warn('⚠️ Stripe no disponible o clave pública no configurada');
-                this.showPaymentElements();
-            }
+            // Initialize Redsys payment page
+            console.log('🏦 Inicializando página de pago Redsys...');
+            this.showPaymentElements();
         },
 
         initializeStripe() {
@@ -4241,7 +4374,7 @@ function tbv2_render_scripts() {
         },
 
         submitForm() {
-            console.log('📤 Enviando formulario...');
+            console.log('💳 Procesando pago con Redsys...');
             
             // Validate terms acceptance
             const termsCheckbox = document.getElementById('terms_accept_pago');
@@ -4254,21 +4387,125 @@ function tbv2_render_scripts() {
             const submitButton = document.getElementById('submit-payment');
             if (submitButton) {
                 submitButton.disabled = true;
-                submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...';
+                submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Redirigiendo...';
             }
             
             // Collect form data
             const formData = this.collectFormData();
             console.log('📋 Datos del formulario:', formData);
             
-            // In a real implementation, this would submit to the server
-            setTimeout(() => {
-                alert('¡Formulario enviado correctamente!\n\nEn producción, esto procesaría el pago con Stripe y enviaría los datos al servidor.');
-                if (submitButton) {
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = '<i class="fa-solid fa-check"></i> ¡Completado!';
+            // Flatten data structure for PHP compatibility
+            const flatFormData = {
+                // Customer data
+                customerName: formData.customer.name,
+                customerEmail: formData.customer.email,
+                customerPhone: formData.customer.phone,
+                customerDni: formData.customer.dni,
+                // Vehicle data
+                matricula: formData.vehicle.matricula,
+                manufacturer: formData.vehicle.manufacturer,
+                model: formData.vehicle.model,
+                year: formData.vehicle.year,
+                length: formData.vehicle.length,
+                region: formData.vehicle.region,
+                purchase_price: formData.vehicle.purchase_price,
+                matriculation_date: formData.vehicle.matriculation_date,
+                // Pricing data
+                finalAmount: formData.pricing.total_amount,
+                tasas: 0, // No taxes handled by client for now
+                iva: 0,   // No VAT handled by client for now
+                honorarios: formData.pricing.base_price,
+                honorariosNetos: formData.pricing.base_price / 1.21,
+                attachments: [] // No file handling for now
+            };
+            
+            // Generate order ID and prepare for Redsys
+            const orderId = 'TBV2' + Date.now().toString().substr(-8);
+            const finalAmount = parseFloat(flatFormData.finalAmount) || 134.99;
+            const amountCents = Math.round(finalAmount * 100);
+            
+            // Create Redsys payment form and submit
+            this.createRedsysPaymentForm({
+                order_id: orderId,
+                amount_cents: amountCents,
+                description: `Transferencia Embarcación ${flatFormData.matricula || 'TBV2'}`,
+                customer_name: flatFormData.customerName,
+                form_data: flatFormData
+            });
+        },
+        
+        createRedsysPaymentForm(orderData) {
+            console.log('🏦 Creando formulario Redsys...', orderData);
+            
+            // Store form data in sessionStorage for retrieval after payment
+            sessionStorage.setItem('tbv2_form_data', JSON.stringify(orderData.form_data));
+            sessionStorage.setItem('tbv2_order_id', orderData.order_id);
+            
+            // Create invisible form for Redsys
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '<?php echo (TBV2_REDSYS_MODE === "test") ? TBV2_REDSYS_URL_TEST : TBV2_REDSYS_URL_LIVE; ?>';
+            form.style.display = 'none';
+            
+            // Prepare data for AJAX
+            const ajaxData = new FormData();
+            ajaxData.append('action', 'tbv2_create_redsys_payment');
+            ajaxData.append('nonce', '<?php echo wp_create_nonce("tbv2_nonce"); ?>');
+            ajaxData.append('formData', JSON.stringify(orderData.form_data));
+            ajaxData.append('orderId', orderData.order_id);
+            
+            // Send order data to server to get signed parameters
+            fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
+                method: 'POST',
+                body: ajaxData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('📡 Respuesta AJAX completa:', data);
+                
+                if (data.success) {
+                    console.log('✅ AJAX exitoso, datos Redsys:', data.data);
+                    
+                    // Add Redsys parameters to form
+                    const redsysData = data.data.redsysData;
+                    console.log('🔧 Parámetros Redsys a enviar:', redsysData);
+                    console.log('🌐 URL destino TPV:', form.action);
+                    
+                    Object.keys(redsysData).forEach(key => {
+                        if (key !== 'url') {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = key;
+                            input.value = redsysData[key];
+                            form.appendChild(input);
+                            console.log(`📋 Agregado campo: ${key} = ${redsysData[key].substring(0, 50)}...`);
+                        }
+                    });
+                    
+                    // Submit form to Redsys
+                    document.body.appendChild(form);
+                    console.log('🚀 Formulario completo, enviando a:', form.action);
+                    console.log('📝 Campos del formulario:', form.children.length);
+                    form.submit();
+                } else {
+                    console.error('❌ Error creando pago Redsys:', data);
+                    alert('Error procesando el pago. Por favor, inténtelo de nuevo.');
+                    this.resetPaymentButton();
                 }
-            }, 2000);
+            })
+            .catch(error => {
+                console.error('❌ Error AJAX:', error);
+                alert('Error de conexión. Por favor, inténtelo de nuevo.');
+                this.resetPaymentButton();
+            });
+        },
+        
+        resetPaymentButton() {
+            const submitButton = document.getElementById('submit-payment');
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fa-solid fa-credit-card"></i> Proceder al Pago';
+            }
         },
 
         collectFormData() {
@@ -4641,7 +4878,7 @@ function tbv2_render_scripts() {
         if (prevBtn) {
             prevBtn.addEventListener('click', () => {
                 console.log('⬅️ Navegando a página precio...');
-                TBV2Manager.showPage('page-precio');
+                TBV2_Form.goToPage('page-precio');
             });
         }
 
@@ -4650,7 +4887,7 @@ function tbv2_render_scripts() {
         if (nextBtn) {
             nextBtn.addEventListener('click', () => {
                 console.log('➡️ Navegando a página pago...');
-                TBV2Manager.showPage('page-pago');
+                TBV2_Form.goToPage('page-pago');
             });
         }
     }
@@ -4661,7 +4898,7 @@ function tbv2_render_scripts() {
         if (submitPaymentBtn) {
             submitPaymentBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                TBV2Manager.submitForm();
+                TBV2_Form.submitForm();
             });
         }
     });
@@ -4704,3 +4941,274 @@ function tbv2_enqueue_scripts() {
     }
 }
 add_action('wp_enqueue_scripts', 'tbv2_enqueue_scripts');
+
+// =====================================================
+// AJAX HANDLERS PARA REDSYS
+// =====================================================
+
+/**
+ * AJAX handler para crear el formulario de pago Redsys
+ */
+function tbv2_handle_create_redsys_payment() {
+    // Verificar nonce de seguridad
+    if (!wp_verify_nonce($_POST['nonce'], 'tbv2_nonce')) {
+        wp_die('Error de seguridad');
+    }
+    
+    try {
+        // Obtener datos del formulario
+        $formData = json_decode(stripslashes($_POST['formData']), true);
+        $orderId = sanitize_text_field($_POST['orderId']);
+        
+        if (!$formData || !$orderId) {
+            throw new Exception('Datos del formulario inválidos');
+        }
+        
+        // Validar datos requeridos
+        if (empty($formData['customerName']) || empty($formData['customerEmail'])) {
+            throw new Exception('Faltan datos requeridos del cliente');
+        }
+        
+        // Almacenar datos del formulario temporalmente para el callback
+        $transientData = [
+            'customerName' => $formData['customerName'],
+            'customerEmail' => $formData['customerEmail'],
+            'customerPhone' => $formData['customerPhone'],
+            'customerDni' => $formData['customerDni'],
+            'finalAmount' => $formData['finalAmount'],
+            'tasas' => $formData['tasas'],
+            'iva' => $formData['iva'],
+            'honorarios' => $formData['honorarios'],
+            'honorariosNetos' => $formData['honorariosNetos'],
+            'attachments' => $formData['attachments'] ?? []
+        ];
+        
+        // Guardar datos por 1 hora (3600 segundos)
+        set_transient('tbv2_transfer_' . $orderId, $transientData, 3600);
+        
+        // Preparar datos para Redsys en formato correcto
+        $orderData = [
+            'order_id' => $orderId,
+            'amount_cents' => round(floatval($formData['finalAmount']) * 100),
+            'description' => 'Transferencia Embarcación TBV2 - ' . ($formData['matricula'] ?? ''),
+            'customer_name' => $formData['customerName']
+        ];
+        
+        // Generar parámetros de Redsys
+        $paymentData = tbv2_redsys_create_payment_form($orderData);
+        
+        if (!$paymentData) {
+            throw new Exception('Error al generar parámetros de pago');
+        }
+        
+        // Respuesta exitosa
+        wp_send_json_success([
+            'message' => 'Parámetros de pago generados exitosamente',
+            'redsysData' => $paymentData
+        ]);
+        
+    } catch (Exception $e) {
+        error_log('TBV2 Redsys Error: ' . $e->getMessage());
+        wp_send_json_error([
+            'message' => 'Error al procesar el pago: ' . $e->getMessage()
+        ]);
+    }
+}
+add_action('wp_ajax_tbv2_create_redsys_payment', 'tbv2_handle_create_redsys_payment');
+add_action('wp_ajax_nopriv_tbv2_create_redsys_payment', 'tbv2_handle_create_redsys_payment');
+
+/**
+ * Handler para procesar el callback de Redsys (URL de retorno)
+ */
+function tbv2_handle_redsys_callback() {
+    try {
+        // Verificar que vengan datos de Redsys
+        if (empty($_POST['Ds_MerchantParameters']) || empty($_POST['Ds_Signature'])) {
+            throw new Exception('Callback de Redsys incompleto');
+        }
+        
+        // Decodificar parámetros
+        $merchantData = json_decode(base64_decode($_POST['Ds_MerchantParameters']), true);
+        $receivedSignature = $_POST['Ds_Signature'];
+        
+        // Verificar firma de seguridad
+        $calculatedSignature = tbv2_redsys_generate_signature($merchantData);
+        
+        if ($receivedSignature !== $calculatedSignature) {
+            throw new Exception('Firma de seguridad inválida');
+        }
+        
+        // Procesar respuesta según el código de resultado
+        $responseCode = $merchantData['Ds_Response'];
+        $orderId = $merchantData['Ds_Order'];
+        
+        if ($responseCode <= '0099') {
+            // Pago exitoso
+            tbv2_process_successful_payment($orderId, $merchantData);
+            
+            // Redirigir a página de éxito
+            wp_redirect(home_url('/confirmacion-pago/?success=true&order=' . $orderId));
+        } else {
+            // Pago fallido
+            tbv2_process_failed_payment($orderId, $merchantData);
+            
+            // Redirigir a página de error
+            wp_redirect(home_url('/error-pago/?error=payment_failed&order=' . $orderId));
+        }
+        
+    } catch (Exception $e) {
+        error_log('TBV2 Callback Error: ' . $e->getMessage());
+        wp_redirect(home_url('/error-pago/?error=callback_error'));
+    }
+    
+    exit;
+}
+add_action('init', 'tbv2_handle_redsys_callback_init');
+
+function tbv2_handle_redsys_callback_init() {
+    // Handle notification callback (server-to-server from Redsys)
+    if (isset($_GET['tbv2_redsys_callback']) && $_GET['tbv2_redsys_callback'] === 'notification') {
+        tbv2_handle_redsys_notification();
+    }
+    
+    // Handle return URLs (user redirected back from Redsys)
+    if (isset($_GET['tbv2_redsys_return'])) {
+        tbv2_handle_redsys_return();
+    }
+}
+
+/**
+ * Handler para notificaciones server-to-server de Redsys
+ */
+function tbv2_handle_redsys_notification() {
+    try {
+        // Log de la notificación para debug
+        error_log('TBV2: Recibiendo notificación Redsys: ' . print_r($_POST, true));
+        
+        // Verificar que vengan datos de Redsys
+        if (empty($_POST['Ds_MerchantParameters']) || empty($_POST['Ds_Signature'])) {
+            throw new Exception('Notificación de Redsys incompleta');
+        }
+        
+        // Decodificar parámetros
+        $merchantData = json_decode(base64_decode($_POST['Ds_MerchantParameters']), true);
+        $receivedSignature = $_POST['Ds_Signature'];
+        
+        // Verificar firma de seguridad
+        $calculatedSignature = tbv2_redsys_generate_signature($merchantData);
+        
+        if ($receivedSignature !== $calculatedSignature) {
+            throw new Exception('Firma de seguridad inválida');
+        }
+        
+        // Procesar según el código de respuesta
+        $responseCode = $merchantData['Ds_Response'];
+        $orderId = $merchantData['Ds_Order'];
+        
+        if ($responseCode <= '0099') {
+            // Pago exitoso - enviar al webhook
+            tbv2_process_successful_payment($orderId, $merchantData);
+            echo '[OK]'; // Respuesta requerida por Redsys
+        } else {
+            // Pago fallido
+            tbv2_process_failed_payment($orderId, $merchantData);
+            echo '[OK]'; // Respuesta requerida por Redsys
+        }
+        
+    } catch (Exception $e) {
+        error_log('TBV2 Notification Error: ' . $e->getMessage());
+        echo '[KO]'; // Respuesta de error para Redsys
+    }
+    
+    exit;
+}
+
+/**
+ * Handler para URLs de retorno (usuario redirigido desde Redsys)
+ */
+function tbv2_handle_redsys_return() {
+    $return_type = sanitize_text_field($_GET['tbv2_redsys_return']);
+    
+    if ($return_type === 'success') {
+        // Redirigir a página de confirmación
+        wp_redirect(home_url('/transferencia-barco-confirmacion/?success=true'));
+    } else {
+        // Redirigir a página de error
+        wp_redirect(home_url('/transferencia-barco-error/?error=payment_failed'));
+    }
+    
+    exit;
+}
+
+/**
+ * Procesar pago exitoso y enviar a la API webhook
+ */
+function tbv2_process_successful_payment($orderId, $paymentData) {
+    try {
+        // Recuperar datos del formulario desde sessionStorage via POST o GET
+        $transferData = get_transient('tbv2_transfer_' . $orderId);
+        
+        if (!$transferData) {
+            throw new Exception('Datos de transferencia no encontrados');
+        }
+        
+        // Preparar datos para el webhook
+        $webhookData = [
+            'tramiteId' => $orderId,
+            'tramiteType' => 'transferencia-barco',
+            'customerName' => $transferData['customerName'],
+            'customerEmail' => $transferData['customerEmail'],
+            'customerPhone' => $transferData['customerPhone'],
+            'customerDni' => $transferData['customerDni'],
+            'finalAmount' => floatval($transferData['finalAmount']),
+            'tasas' => floatval($transferData['tasas']),
+            'iva' => floatval($transferData['iva']),
+            'honorarios' => floatval($transferData['honorarios']),
+            'honorariosNetos' => floatval($transferData['honorariosNetos']),
+            'paymentIntentId' => $paymentData['Ds_AuthorisationCode'],
+            'redsysData' => $paymentData,
+            'attachments' => $transferData['attachments'] ?? [],
+            'status' => 'pending'
+        ];
+        
+        // Enviar al webhook de la API
+        $webhookUrl = 'https://46-202-128-35.sslip.io/api/herramientas/barcos/webhook';
+        
+        $response = wp_remote_post($webhookUrl, [
+            'method' => 'POST',
+            'timeout' => 45,
+            'headers' => [
+                'Content-Type' => 'application/json',
+            ],
+            'body' => json_encode($webhookData)
+        ]);
+        
+        if (is_wp_error($response)) {
+            throw new Exception('Error al conectar con el webhook: ' . $response->get_error_message());
+        }
+        
+        $responseCode = wp_remote_retrieve_response_code($response);
+        if ($responseCode !== 200) {
+            throw new Exception('Webhook respondió con código: ' . $responseCode);
+        }
+        
+        // Limpiar datos temporales
+        delete_transient('tbv2_transfer_' . $orderId);
+        
+        error_log('TBV2: Pago exitoso procesado para orden ' . $orderId);
+        
+    } catch (Exception $e) {
+        error_log('TBV2 Webhook Error: ' . $e->getMessage());
+        // No lanzar excepción para no afectar la experiencia del usuario
+    }
+}
+
+/**
+ * Procesar pago fallido
+ */
+function tbv2_process_failed_payment($orderId, $paymentData) {
+    error_log('TBV2: Pago fallido para orden ' . $orderId . ' - Código: ' . $paymentData['Ds_Response']);
+    
+    // Mantener datos para reintento
+    // No eliminar transient para permitir reintento del usuario
+}
