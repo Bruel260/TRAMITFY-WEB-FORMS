@@ -135,6 +135,11 @@ function navigation_permit_renewal_form_shortcode() {
             font-weight: 600;
             line-height: 1.3;
             margin-bottom: 8px;
+            background: white;
+            color: #333;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: -5px -5px 15px -5px;
         }
 
         .npn-subheadline {
