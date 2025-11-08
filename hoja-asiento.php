@@ -2646,8 +2646,13 @@ function hoja_asiento_form_shortcode() {
                 const docType = this.getAttribute('data-doc');
                 
                 // Configurar imagen según el tipo de documento
-                const baseUrl = '<?php echo get_template_directory_uri(); ?>/assets/examples/';
-                exampleImage.src = baseUrl + docType + '.jpg';
+                if (docType === 'dni') {
+                    exampleImage.src = '/wp-content/uploads/exampledocs/dni-comprador.jpg';
+                } else {
+                    // Fallback para otros tipos de documento
+                    const baseUrl = '<?php echo get_template_directory_uri(); ?>/assets/examples/';
+                    exampleImage.src = baseUrl + docType + '.jpg';
+                }
                 
                 // Mostrar modal
                 popup.style.display = 'block';
