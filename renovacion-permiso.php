@@ -131,7 +131,7 @@ function navigation_permit_renewal_form_shortcode() {
         }
 
         .npn-headline {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: 600;
             line-height: 1.3;
             margin-bottom: 8px;
@@ -294,9 +294,9 @@ function navigation_permit_renewal_form_shortcode() {
         }
 
         .npn-form-title {
-            font-size: 12px;
-            font-weight: 400;
-            color: rgb(var(--neutral-500));
+            font-size: 18px;
+            font-weight: 700;
+            color: rgb(var(--neutral-900));
             margin-bottom: 4px;
         }
 
@@ -1322,7 +1322,7 @@ function navigation_permit_renewal_form_shortcode() {
             }
 
             .npn-form-title {
-                font-size: 11px;
+                font-size: 16px;
             }
 
             .npn-upload-grid {
@@ -1382,7 +1382,7 @@ function navigation_permit_renewal_form_shortcode() {
 
                 <div>
                     <div class="npn-headline">
-                        <h1>Renovar Permiso de Navegación</h1>
+                        <h2>Renovar Permiso de Navegación</h2>
                     </div>
                     <div class="npn-subheadline">
                         Renueva tu permiso de navegación de forma rápida y segura. Gestión completa online sin desplazamientos.
