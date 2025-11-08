@@ -294,9 +294,9 @@ function navigation_permit_renewal_form_shortcode() {
         }
 
         .npn-form-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: rgb(var(--neutral-700));
+            font-size: 14px;
+            font-weight: 500;
+            color: rgb(var(--neutral-600));
             margin-bottom: 4px;
         }
 
@@ -1322,7 +1322,7 @@ function navigation_permit_renewal_form_shortcode() {
             }
 
             .npn-form-title {
-                font-size: 14px;
+                font-size: 12px;
             }
 
             .npn-upload-grid {
