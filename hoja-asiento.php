@@ -2843,7 +2843,7 @@ function send_hoja_asiento_to_tramitfy() {
         $pdf->SetFont('Arial', '', 11);
 
         $requestTypes = array(
-            'duplicado' => 'copia duplicada',
+            'duplicado' => 'copia de hoja de asiento',
             'perdida' => 'copia por pérdida de original',
             'deterioro' => 'copia por deterioro de original',
             'actualizacion' => 'copia actualizada'
@@ -3149,7 +3149,7 @@ function send_hoja_asiento_emails() {
 
         // Texto del tipo de solicitud
         $requestTypes = array(
-            'duplicado' => 'Copia duplicada',
+            'duplicado' => 'Copia de hoja de asiento',
             'perdida' => 'Copia por pérdida de original',
             'deterioro' => 'Copia por deterioro de original',
             'actualizacion' => 'Copia actualizada'
