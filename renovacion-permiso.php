@@ -294,7 +294,7 @@ function navigation_permit_renewal_form_shortcode() {
         }
 
         .npn-form-title {
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 700;
             color: rgb(var(--neutral-900));
             margin-bottom: 4px;
@@ -1322,7 +1322,7 @@ function navigation_permit_renewal_form_shortcode() {
             }
 
             .npn-form-title {
-                font-size: 22px;
+                font-size: 16px;
             }
 
             .npn-upload-grid {
@@ -1454,7 +1454,7 @@ function navigation_permit_renewal_form_shortcode() {
             <form id="navigation-permit-renewal-form" action="" method="POST" enctype="multipart/form-data">
                 
                 <div class="npn-form-header">
-                    <div class="npn-form-title">Solicitud de Renovación</div>
+                    <h2 class="npn-form-title">Solicitud de Renovación</h2>
                     <p class="npn-form-subtitle">Complete el formulario para renovar su permiso de navegación</p>
                 </div>
 
