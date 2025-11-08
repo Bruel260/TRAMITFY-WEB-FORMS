@@ -2593,8 +2593,7 @@ function navigation_permit_renewal_form_shortcode() {
                 if (docType === 'dni') {
                     exampleImage.src = '/wp-content/uploads/exampledocs/dni-comprador.jpg';
                 } else if (docType === 'registro') {
-                    // Usar la misma imagen de DNI como ejemplo por ahora
-                    exampleImage.src = '/wp-content/uploads/exampledocs/dni-comprador.jpg';
+                    exampleImage.src = '/wp-content/uploads/exampledocs/permiso-caducado.jpg';
                 } else {
                     // Fallback para otros tipos de documento
                     const baseUrl = '<?php echo get_template_directory_uri(); ?>/assets/examples/';
