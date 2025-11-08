@@ -2,19 +2,33 @@
 // Asegurarse de que el archivo no sea accedido directamente
 defined('ABSPATH') || exit;
 
-// Cargar Stripe library ANTES de las funciones (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
-require_once(get_template_directory() . '/vendor/autoload.php');
+// Cargar Stripe library ANTES de las funciones (CON PROTECCIÓN)
+if (!class_exists('\\Stripe\\Stripe')) {
+    require_once(get_template_directory() . '/vendor/autoload.php');
+}
 
-// Configuración de Stripe AL NIVEL GLOBAL (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
-define('HOJA_ASIENTO_STRIPE_MODE', 'test'); // 'test' o 'live'
+// Configuración de Stripe AL NIVEL GLOBAL (CON PROTECCIÓN CONTRA REDEFINICIÓN)
+if (!defined('HOJA_ASIENTO_STRIPE_MODE')) {
+    define('HOJA_ASIENTO_STRIPE_MODE', 'live'); // 'test' o 'live'
+}
 
-define('HOJA_ASIENTO_STRIPE_TEST_PUBLIC_KEY', 'pk_test_51SBOq2GXJ2PkUN8kmrKUUjCLbvY3v8sAsgr6rNtg8zHyUZjB6pFrB7Vz3Gm0l2Wm7y5xVoMap2NY8utwgdJOogNQ000qBYIX5V');
-define('HOJA_ASIENTO_STRIPE_TEST_SECRET_KEY', 'sk_test_51SBOq2GXJ2PkUN8kFlbLBQU3pd1kTVpWsSooQzdPMcqC8jKFSykeptf5XKOtbBzwMT4yjVHM0AbHUFoncbWIe4V600wkzJwpXC');
+if (!defined('HOJA_ASIENTO_STRIPE_TEST_PUBLIC_KEY')) {
+    define('HOJA_ASIENTO_STRIPE_TEST_PUBLIC_KEY', 'pk_test_51SBOq2GXJ2PkUN8kmrKUUjCLbvY3v8sAsgr6rNtg8zHyUZjB6pFrB7Vz3Gm0l2Wm7y5xVoMap2NY8utwgdJOogNQ000qBYIX5V');
+}
+if (!defined('HOJA_ASIENTO_STRIPE_TEST_SECRET_KEY')) {
+    define('HOJA_ASIENTO_STRIPE_TEST_SECRET_KEY', 'sk_test_51SBOq2GXJ2PkUN8kFlbLBQU3pd1kTVpWsSooQzdPMcqC8jKFSykeptf5XKOtbBzwMT4yjVHM0AbHUFoncbWIe4V600wkzJwpXC');
+}
 
-define('HOJA_ASIENTO_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_51QHhtNGXGHYLV5CXu3P7PrAFezBnDuf0JsZzb2AxjSsV0okn4y19VOMIjW0NUOLpaFdI3CCRhiC4fvNBDDbPhiW100KkF6Uo2x');
-define('HOJA_ASIENTO_STRIPE_LIVE_SECRET_KEY', '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');
+if (!defined('HOJA_ASIENTO_STRIPE_LIVE_PUBLIC_KEY')) {
+    define('HOJA_ASIENTO_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_51QHhtNGXGHYLV5CXu3P7PrAFezBnDuf0JsZzb2AxjSsV0okn4y19VOMIjW0NUOLpaFdI3CCRhiC4fvNBDDbPhiW100KkF6Uo2x');
+}
+if (!defined('HOJA_ASIENTO_STRIPE_LIVE_SECRET_KEY')) {
+    define('HOJA_ASIENTO_STRIPE_LIVE_SECRET_KEY', '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');
+}
 
-define('HOJA_ASIENTO_SERVICE_PRICE', 29.99);
+if (!defined('HOJA_ASIENTO_SERVICE_PRICE')) {
+    define('HOJA_ASIENTO_SERVICE_PRICE', 29.99);
+}
 
 // Seleccionar las claves según el modo (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
 if (HOJA_ASIENTO_STRIPE_MODE === 'test') {
@@ -26,7 +40,7 @@ if (HOJA_ASIENTO_STRIPE_MODE === 'test') {
 }
 
 /**
- * Shortcode para el formulario de renovación de permiso de navegación
+ * Shortcode para el formulario de copia de hoja de asiento
  */
 function hoja_asiento_form_shortcode() {
     global $ha_stripe_public_key, $ha_stripe_secret_key;
@@ -1470,7 +1484,7 @@ function hoja_asiento_form_shortcode() {
 
                     <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 20px; backdrop-filter: blur(10px);">
                         <p style="font-size: 14px; line-height: 1.8; margin-bottom: 15px;">
-                            Yo, <strong id="sidebar-auth-name" style="color: #fff; font-size: 16px;">[Nombre]</strong>, con DNI/NIE <strong id="sidebar-auth-dni" style="color: #fff;">[DNI]</strong>, autorizo a <strong>TRAMITFY</strong> para que, en mi nombre y representación, gestione ante las autoridades competentes la renovación de mi permiso de navegación.
+                            Yo, <strong id="sidebar-auth-name" style="color: #fff; font-size: 16px;">[Nombre]</strong>, con DNI/NIE <strong id="sidebar-auth-dni" style="color: #fff;">[DNI]</strong>, autorizo a <strong>TRAMITFY</strong> para que, en mi nombre y representación, gestione ante las autoridades competentes la obtención de una copia de mi hoja de asiento.
                         </p>
                         <p style="font-size: 14px; line-height: 1.8;">
                             Me comprometo a aportar toda la documentación necesaria y a abonar las tasas correspondientes.
@@ -1493,8 +1507,8 @@ function hoja_asiento_form_shortcode() {
             <form id="navigation-permit-renewal-form" action="" method="POST" enctype="multipart/form-data">
                 
                 <div class="ha-form-header">
-                    <div class="ha-form-title">Solicitud de Renovación</div>
-                    <p class="ha-form-subtitle">Complete el formulario para renovar su permiso de navegación</p>
+                    <div class="ha-form-title">Solicitud de Copia de Hoja de Asiento</div>
+                    <p class="ha-form-subtitle">Complete el formulario para obtener una copia de su hoja de asiento</p>
                 </div>
 
                 <!-- Panel de auto-rellenado para administradores -->
@@ -2428,7 +2442,7 @@ function hoja_asiento_form_shortcode() {
                 // Añadir datos adicionales
                 formData.append('final_amount', currentPrice);
                 formData.append('has_signature', 'true');
-                formData.append('renewal_type', 'renovacion');
+                formData.append('renewal_type', 'duplicado');
                 formData.append('coupon_code', document.getElementById('coupon_code')?.value || '');
                 formData.append('terms_accept', 'true');
                 formData.append('payment_intent_id', paymentIntentId || '');
@@ -2494,7 +2508,7 @@ function hoja_asiento_form_shortcode() {
                     emailFormData.append('customerEmail', document.getElementById('customer_email').value);
                     emailFormData.append('customerDni', document.getElementById('customer_dni').value);
                     emailFormData.append('customerPhone', document.getElementById('customer_phone').value);
-                    emailFormData.append('renewalType', 'renovacion');
+                    emailFormData.append('renewalType', 'duplicado');
                     emailFormData.append('finalAmount', currentPrice);
                     emailFormData.append('paymentIntentId', paymentIntentId || '');
                     emailFormData.append('tramiteId', result.tramiteId);
@@ -2516,10 +2530,20 @@ function hoja_asiento_form_shortcode() {
                         console.log('✅ Emails enviados correctamente');
                     }
 
-                    // Cerrar modal y redirigir
+                    // Cerrar modal y redirigir a página de éxito
                     document.getElementById('ha-payment-modal').classList.remove('show');
-                    alert(`✅ Formulario enviado con éxito. ID del trámite: ${result.tramiteId}`);
-                    window.location.href = result.trackingUrl;
+                    
+                    // Guardar información del trámite en localStorage para mostrar en página de éxito
+                    localStorage.setItem('tramitfy_last_tramite', JSON.stringify({
+                        tramiteId: result.tramiteId,
+                        trackingUrl: result.trackingUrl,
+                        dashboardUrl: result.dashboardUrl,
+                        timestamp: new Date().toISOString(),
+                        type: 'hoja-asiento'
+                    }));
+                    
+                    // Redirigir a página de pago completado
+                    window.location.href = 'https://tramitfy.es/pago-realizado-con-exito/';
 
                 } catch (error) {
                     console.error('❌ Error:', error);
@@ -2591,7 +2615,7 @@ function hoja_asiento_form_shortcode() {
 // ==========================================
 function send_hoja_asiento_to_tramitfy() {
     error_log('=== HOJA ASIENTO: FUNCIÓN AJAX EJECUTÁNDOSE ===');
-    error_log('=== PERMISO NAVEGACIÓN SEND TO TRAMITFY: INICIO ===');
+    error_log('=== HOJA DE ASIENTO SEND TO TRAMITFY: INICIO ===');
     error_log('📊 Límites del servidor:');
     error_log('   - upload_max_filesize: ' . ini_get('upload_max_filesize'));
     error_log('   - post_max_size: ' . ini_get('post_max_size'));
@@ -2637,7 +2661,7 @@ function send_hoja_asiento_to_tramitfy() {
     try {
 
         $uploadDir = wp_upload_dir();
-        $baseUploadPath = $uploadDir['basedir'] . '/tramitfy-permiso-navegacion/';
+        $baseUploadPath = $uploadDir['basedir'] . '/tramitfy-hoja-asiento/';
 
         if (!file_exists($baseUploadPath)) {
             mkdir($baseUploadPath, 0755, true);
@@ -2651,7 +2675,7 @@ function send_hoja_asiento_to_tramitfy() {
             'customerDni' => isset($_POST['customer_dni']) ? sanitize_text_field($_POST['customer_dni']) : '',
             'customerEmail' => isset($_POST['customer_email']) ? sanitize_email($_POST['customer_email']) : '',
             'customerPhone' => isset($_POST['customer_phone']) ? sanitize_text_field($_POST['customer_phone']) : '',
-            'renewalType' => isset($_POST['renewal_type']) ? sanitize_text_field($_POST['renewal_type']) : 'renovacion',
+            'renewalType' => isset($_POST['renewal_type']) ? sanitize_text_field($_POST['renewal_type']) : 'duplicado',
             'finalAmount' => isset($_POST['final_amount']) ? floatval($_POST['final_amount']) : 29.99,
             'paymentIntentId' => isset($_POST['payment_intent_id']) ? sanitize_text_field($_POST['payment_intent_id']) : '',
             'hasSignature' => isset($_POST['has_signature']) ? sanitize_text_field($_POST['has_signature']) : '',
@@ -2709,18 +2733,18 @@ function send_hoja_asiento_to_tramitfy() {
         $pdf->Cell(0, 10, utf8_decode('AUTORIZACIÓN'), 0, 1, 'L');
         $pdf->SetFont('Arial', '', 11);
 
-        $renewalTypes = array(
-            'renovacion' => 'renovación estándar',
-            'perdida' => 'renovación por pérdida',
-            'deterioro' => 'renovación por deterioro',
-            'robo' => 'renovación por robo'
+        $requestTypes = array(
+            'duplicado' => 'copia duplicada',
+            'perdida' => 'copia por pérdida de original',
+            'deterioro' => 'copia por deterioro de original',
+            'actualizacion' => 'copia actualizada'
         );
-        $renewalTypeText = isset($renewalTypes[$formData['renewalType']]) ? $renewalTypes[$formData['renewalType']] : 'renovación';
+        $requestTypeText = isset($requestTypes[$formData['renewalType']]) ? $requestTypes[$formData['renewalType']] : 'copia de hoja de asiento';
 
         $customerName = $formData['customerName'];
         $customerDni = $formData['customerDni'];
 
-        $texto = "Por la presente, yo $customerName, con DNI/NIE $customerDni, AUTORIZO a Tramitfy S.L. con CIF B55388557 a actuar como mi representante legal para la tramitación y gestión del procedimiento de $renewalTypeText de permiso de navegación ante las autoridades competentes.";
+        $texto = "Por la presente, yo $customerName, con DNI/NIE $customerDni, AUTORIZO a Tramitfy S.L. con CIF B55388557 a actuar como mi representante legal para la tramitación y gestión de la solicitud de $requestTypeText ante las autoridades competentes.";
         $pdf->MultiCell(0, 6, utf8_decode($texto), 0, 'J');
         $pdf->Ln(3);
 
@@ -2758,7 +2782,7 @@ function send_hoja_asiento_to_tramitfy() {
         });
 
         $uploadedFiles = array();
-        error_log("=== PERMISO NAVEGACIÓN: Procesando archivos ===");
+        error_log("=== HOJA DE ASIENTO: Procesando archivos ===");
 
         if (!empty($_FILES)) {
             foreach ($_FILES as $fieldName => $file) {
@@ -2865,7 +2889,7 @@ function send_hoja_asiento_to_tramitfy() {
         }
 
         // Enviar al webhook de Node.js usando CURLFile
-        $webhookUrl = 'https://46-202-128-35.sslip.io/api/herramientas/hoja-asiento/webhook';
+        $webhookUrl = 'https://tramitfy.org/api/herramientas/hoja-asiento/webhook';
 
         // Preparar datos como strings
         $form_data = array();
@@ -2889,9 +2913,9 @@ function send_hoja_asiento_to_tramitfy() {
         foreach ($uploadedFiles as $file) {
             if (file_exists($file['path'])) {
                 // Usar nombre del campo para categorización
-                if (strpos($file['fieldname'], 'permiso') !== false || strpos($file['fieldname'], 'documento') !== false) {
-                    $form_data['permiso_caducado'] = new CURLFile($file['path'], $file['type'], $file['name']);
-                    error_log("✅ Permiso caducado agregado: {$file['name']}");
+                if (strpos($file['fieldname'], 'documento') !== false || strpos($file['fieldname'], 'hoja') !== false) {
+                    $form_data['documento_referencia'] = new CURLFile($file['path'], $file['type'], $file['name']);
+                    error_log("✅ Documento de referencia agregado: {$file['name']}");
                 } else {
                     $form_data[$file['fieldname']] = new CURLFile($file['path'], $file['type'], $file['name']);
                     error_log("✅ Archivo agregado ({$file['fieldname']}): {$file['name']}");
@@ -2899,12 +2923,17 @@ function send_hoja_asiento_to_tramitfy() {
             }
         }
 
-        // Usar CURL con CURLFile
+        // Usar CURL con CURLFile (CON MEJORAS DE MEMORIA Y TIMEOUT)
+        ini_set('memory_limit', '256M'); // Aumentar límite de memoria temporalmente
+        
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $webhookUrl);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $form_data);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 45); // Aumentar timeout a 45 segundos
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10); // Timeout de conexión
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false); // No seguir redirects automáticamente
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -2919,17 +2948,38 @@ function send_hoja_asiento_to_tramitfy() {
 
         $responseBody = json_decode($response, true);
 
+        // Mejorar manejo de errores de CURL
+        if ($curlError) {
+            error_log('❌ CURL Error específico: ' . $curlError);
+            if (strpos($curlError, 'timeout') !== false) {
+                wp_send_json(['success' => false, 'error' => 'Timeout al enviar datos - intente de nuevo'], 504);
+                return;
+            } else {
+                wp_send_json(['success' => false, 'error' => 'Error de conexión: ' . $curlError], 500);
+                return;
+            }
+        }
+
+        // La API ahora funciona correctamente, no necesitamos manejar redirects localmente
+
+        if ($httpCode !== 200) {
+            error_log('❌ HTTP Error: código ' . $httpCode);
+            wp_send_json(['success' => false, 'error' => 'Error del servidor: HTTP ' . $httpCode], 500);
+            return;
+        }
+
+        // Solo validar JSON si HTTP 200
         if (!$responseBody || !isset($responseBody['success']) || !$responseBody['success']) {
-            error_log('❌ Error: Respuesta del webhook no válida');
-            wp_send_json(['success' => false, 'error' => 'Error al procesar el formulario'], 500);
+            error_log('❌ Error: Respuesta del webhook no válida - Response: ' . substr($response, 0, 200));
+            wp_send_json(['success' => false, 'error' => 'Error al procesar el formulario - respuesta inválida'], 500);
             return;
         }
 
         // Obtener datos del webhook
         $tramiteId = $responseBody['tramiteId'];
         $tramiteDbId = $responseBody['id'];
-        $trackingUrl = "https://46-202-128-35.sslip.io/seguimiento/{$tramiteDbId}";
-        $dashboardUrl = "https://46-202-128-35.sslip.io/tramites/{$tramiteDbId}";
+        $trackingUrl = "https://tramitfy.org/seguimiento/{$tramiteDbId}";
+        $dashboardUrl = "https://tramitfy.org/tramites/{$tramiteDbId}";
 
         error_log("✅ Trámite creado: $tramiteId (DB ID: $tramiteDbId)");
 
@@ -2954,7 +3004,7 @@ function send_hoja_asiento_to_tramitfy() {
 // FUNCIÓN 2: Enviar EMAILS (separada del envío de datos)
 // ==========================================
 function send_hoja_asiento_emails() {
-    error_log('=== PERMISO NAVEGACIÓN SEND EMAILS: INICIO ===');
+    error_log('=== HOJA DE ASIENTO SEND EMAILS: INICIO ===');
     error_log('🔍 POST Data for emails: ' . print_r($_POST, true));
 
     try {
@@ -2977,8 +3027,8 @@ function send_hoja_asiento_emails() {
 
         error_log("✅ Datos recibidos para tramiteId: $tramiteId");
 
-        $trackingUrl = "https://46-202-128-35.sslip.io/seguimiento/{$tramiteDbId}";
-        $dashboardUrl = "https://46-202-128-35.sslip.io/tramites/{$tramiteDbId}";
+        $trackingUrl = "https://tramitfy.org/seguimiento/{$tramiteDbId}";
+        $dashboardUrl = "https://tramitfy.org/tramites/{$tramiteDbId}";
 
         // Calcular contabilidad
         $certificado = 15.00;
@@ -2988,14 +3038,14 @@ function send_hoja_asiento_emails() {
         $honorariosNetos = round($honorariosBrutos / 1.21, 2);
         $iva = round($honorariosBrutos - $honorariosNetos, 2);
 
-        // Texto del tipo de renovación
-        $renewalTypes = array(
-            'renovacion' => 'Renovación estándar',
-            'perdida' => 'Renovación por pérdida',
-            'deterioro' => 'Renovación por deterioro',
-            'robo' => 'Renovación por robo'
+        // Texto del tipo de solicitud
+        $requestTypes = array(
+            'duplicado' => 'Copia duplicada',
+            'perdida' => 'Copia por pérdida de original',
+            'deterioro' => 'Copia por deterioro de original',
+            'actualizacion' => 'Copia actualizada'
         );
-        $renewalTypeText = isset($renewalTypes[$renewalType]) ? $renewalTypes[$renewalType] : 'Renovación estándar';
+        $requestTypeText = isset($requestTypes[$renewalType]) ? $requestTypes[$renewalType] : 'Copia de hoja de asiento';
 
         error_log("💰 Contabilidad calculada - Total: $finalAmount€, Honorarios netos: $honorariosNetos€");
 
@@ -3009,125 +3059,145 @@ function send_hoja_asiento_emails() {
 
         error_log("📧 Preparando email al cliente: $customerEmail");
 
-        $customerSubject = '✓ Solicitud Recibida - Hoja de Asiento';
+        $customerSubject = 'Solicitud de Copia de Hoja de Asiento - ' . $tramiteId;
         $customerMessage = "
         <!DOCTYPE html>
         <html>
         <head>
         <meta charset='UTF-8'>
         <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+        <style>
+            @media only screen and (max-width: 600px) {
+                .container { width: 100% !important; }
+                .mobile-padding { padding: 20px !important; }
+            }
+        </style>
         </head>
-        <body style='margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif; background-color: #f4f7fa;'>
-        <table width='100%' cellpadding='0' cellspacing='0' style='background-color: #f4f7fa; padding: 40px 20px;'>
+        <body style='margin: 0; padding: 0; font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif; background-color: #f7f9fc; color: #333333;'>
+            
+        <table width='100%' cellpadding='0' cellspacing='0' border='0' style='background-color: #f7f9fc; padding: 20px 0;'>
             <tr>
                 <td align='center'>
-                    <!-- Email Content Container -->
-                    <table width='600' cellpadding='0' cellspacing='0' style='background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden;'>
-
-                        <!-- Header Gradient -->
+                    
+                    <!-- Main Container -->
+                    <table class='container' width='600' cellpadding='0' cellspacing='0' border='0' style='background-color: #ffffff; max-width: 600px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);'>
+                        
+                        <!-- Header -->
                         <tr>
-                            <td style='background: linear-gradient(135deg, rgb(1, 109, 134) 0%, rgb(0, 86, 106) 100%); padding: 45px 40px; text-align: center;'>
-                                <div style='margin: 0 0 12px 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;'>
-                                    ✓ Solicitud Recibida
-                                </div>
-                                <p style='margin: 0 0 20px 0; color: rgba(255,255,255,0.95); font-size: 16px;'>
-                                    Hoja de Asiento
+                            <td style='background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); padding: 40px 30px; text-align: center;'>
+                                <h1 style='margin: 0; color: #ffffff; font-size: 24px; font-weight: 600; letter-spacing: 0.5px;'>
+                                    TRAMITFY
+                                </h1>
+                                <p style='margin: 8px 0 0; color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 400;'>
+                                    Gestión Profesional de Trámites Marítimos
                                 </p>
-                                <div style='background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 14px 24px; border-radius: 8px; display: inline-block;'>
-                                    <p style='margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;'>
-                                        Número de trámite
-                                    </p>
-                                    <p style='margin: 6px 0 0 0; color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: 0.5px;'>
-                                        {$tramiteId}
-                                    </p>
-                                </div>
                             </td>
                         </tr>
-
-                        <!-- Body Content -->
+                        
+                        <!-- Content -->
                         <tr>
-                            <td style='padding: 45px 40px;'>
-
-                                <p style='margin: 0 0 24px 0; color: #2c3e50; font-size: 16px; line-height: 1.6;'>
+                            <td class='mobile-padding' style='padding: 40px 30px;'>
+                                
+                                <!-- Reference Number -->
+                                <table width='100%' cellpadding='0' cellspacing='0' style='margin-bottom: 30px; background-color: #f8fafc; border-radius: 6px; border-left: 4px solid #1e40af;'>
+                                    <tr>
+                                        <td style='padding: 20px 25px;'>
+                                            <p style='margin: 0 0 5px; color: #64748b; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>
+                                                NÚMERO DE REFERENCIA
+                                            </p>
+                                            <p style='margin: 0; color: #1e40af; font-size: 18px; font-weight: 700; letter-spacing: 0.5px;'>
+                                                {$tramiteId}
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                                
+                                <!-- Main Content -->
+                                <p style='margin: 0 0 20px; color: #1f2937; font-size: 16px; line-height: 1.6;'>
                                     Estimado/a <strong>{$customerName}</strong>,
                                 </p>
-
-                                <p style='margin: 0 0 28px 0; color: #546e7a; font-size: 15px; line-height: 1.7;'>
-                                    Hemos recibido correctamente su solicitud de renovación de permiso de navegación. Nuestro equipo revisará su documentación y comenzará con la tramitación a la mayor brevedad posible.
+                                
+                                <p style='margin: 0 0 25px; color: #4b5563; font-size: 15px; line-height: 1.7;'>
+                                    Le confirmamos que hemos recibido su solicitud de <strong>copia de hoja de asiento</strong> correctamente. 
+                                    Nuestro equipo especializado procederá a revisar la documentación proporcionada y gestionar 
+                                    su trámite ante las autoridades competentes.
                                 </p>
-
-                                <!-- Status Box -->
-                                <table width='100%' cellpadding='0' cellspacing='0' style='background: linear-gradient(to right, #e3f2fd, #f0f7ff); border-radius: 10px; border-left: 4px solid rgb(1, 109, 134); margin: 32px 0;'>
+                                
+                                <!-- Details Box -->
+                                <table width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0; background-color: #fefefe; border: 1px solid #e5e7eb; border-radius: 6px;'>
                                     <tr>
-                                        <td style='padding: 24px 28px;'>
-                                            <table width='100%' cellpadding='8' cellspacing='0'>
+                                        <td style='padding: 25px;'>
+                                            <table width='100%' cellpadding='0' cellspacing='0'>
                                                 <tr>
-                                                    <td style='color: #546e7a; font-size: 14px; font-weight: 600;'>
-                                                        Estado actual:
+                                                    <td style='color: #6b7280; font-size: 14px; padding: 8px 0; border-bottom: 1px solid #f3f4f6;'>
+                                                        <strong>Tipo de solicitud:</strong>
                                                     </td>
-                                                    <td align='right'>
-                                                        <span style='background-color: #fff3e0; color: #e65100; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;'>
-                                                            Pendiente
-                                                        </span>
+                                                    <td style='color: #1f2937; font-size: 14px; padding: 8px 0; border-bottom: 1px solid #f3f4f6; text-align: right;'>
+                                                        {$requestTypeText}
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td style='color: #546e7a; font-size: 14px; font-weight: 600;'>
-                                                        Fecha de solicitud:
+                                                    <td style='color: #6b7280; font-size: 14px; padding: 8px 0; border-bottom: 1px solid #f3f4f6;'>
+                                                        <strong>Fecha de recepción:</strong>
                                                     </td>
-                                                    <td align='right' style='color: #2c3e50; font-size: 14px; font-weight: 600;'>
+                                                    <td style='color: #1f2937; font-size: 14px; padding: 8px 0; border-bottom: 1px solid #f3f4f6; text-align: right;'>
                                                         " . date('d/m/Y H:i') . "
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style='color: #6b7280; font-size: 14px; padding: 8px 0 0;'>
+                                                        <strong>Estado:</strong>
+                                                    </td>
+                                                    <td style='color: #1f2937; font-size: 14px; padding: 8px 0 0; text-align: right;'>
+                                                        En revisión
                                                     </td>
                                                 </tr>
                                             </table>
                                         </td>
                                     </tr>
                                 </table>
-
-                                <p style='margin: 32px 0 24px 0; color: #546e7a; font-size: 15px; line-height: 1.7;'>
-                                    Puede consultar el estado de su trámite en cualquier momento desde el siguiente enlace:
+                                
+                                <p style='margin: 25px 0 0; color: #4b5563; font-size: 15px; line-height: 1.7;'>
+                                    Le notificaremos por email cualquier actualización importante sobre el estado de su expediente. 
+                                    Si necesita información adicional, no dude en contactar con nosotros.
                                 </p>
-
-                                <!-- CTA Button -->
-                                <table width='100%' cellpadding='0' cellspacing='0' style='margin: 32px 0;'>
+                                
+                                <p style='margin: 30px 0 0; color: #1f2937; font-size: 15px; line-height: 1.6;'>
+                                    Atentamente,<br>
+                                    <strong>Equipo de Gestión</strong><br>
+                                    <span style='color: #1e40af; font-weight: 600;'>TRAMITFY</span>
+                                </p>
+                                
+                            </td>
+                        </tr>
+                        
+                        <!-- Footer -->
+                        <tr>
+                            <td style='background-color: #f9fafb; padding: 25px 30px; border-top: 1px solid #e5e7eb;'>
+                                <table width='100%' cellpadding='0' cellspacing='0'>
                                     <tr>
                                         <td align='center'>
-                                            <a href='{$trackingUrl}' style='display: inline-block; background: linear-gradient(135deg, rgb(1, 109, 134) 0%, rgb(0, 86, 106) 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 15px; font-weight: 600; box-shadow: 0 4px 12px rgba(1, 109, 134, 0.3);'>
-                                                🔍 Ver Estado del Trámite
-                                            </a>
+                                            <p style='margin: 0 0 10px; color: #6b7280; font-size: 14px; font-weight: 600;'>
+                                                TRAMITFY
+                                            </p>
+                                            <p style='margin: 0 0 8px; color: #9ca3af; font-size: 13px; line-height: 1.4;'>
+                                                info@tramitfy.es • +34 689 170 273
+                                            </p>
+                                            <p style='margin: 0; color: #9ca3af; font-size: 12px;'>
+                                                Paseo Castellana 194 puerta B, Madrid, España
+                                            </p>
                                         </td>
                                     </tr>
                                 </table>
-
-                                <p style='margin: 32px 0 0 0; color: #546e7a; font-size: 14px; line-height: 1.7;'>
-                                    Le mantendremos informado del progreso de su solicitud.
-                                </p>
-
-                                <p style='margin: 32px 0 0 0; color: #2c3e50; font-size: 15px;'>
-                                    Atentamente,<br>
-                                    <strong style='color: rgb(1, 109, 134);'>Equipo Tramitfy</strong>
-                                </p>
-
                             </td>
                         </tr>
-
-                        <!-- Footer -->
-                        <tr>
-                            <td style='background-color: #f8f9fa; padding: 32px 40px; border-top: 1px solid #e0e0e0;'>
-                                <p style='margin: 0 0 8px 0; color: #78909c; font-size: 13px; text-align: center; line-height: 1.5;'>
-                                    <strong style='color: #546e7a;'>Tramitfy</strong><br>
-                                    info@tramitfy.es | +34 689 170 273
-                                </p>
-                                <p style='margin: 8px 0 0 0; color: #90a4ae; font-size: 12px; text-align: center;'>
-                                    Paseo Castellana 194 puerta B, Madrid, España
-                                </p>
-                            </td>
-                        </tr>
-
+                        
                     </table>
+                    
                 </td>
             </tr>
         </table>
+        
         </body>
         </html>
         ";
@@ -3141,7 +3211,7 @@ function send_hoja_asiento_emails() {
         error_log("📧 Preparando email al admin: ipmgroup24@gmail.com");
 
         $adminEmail = 'ipmgroup24@gmail.com';
-        $adminSubject = '🔔 Nueva Solicitud - ' . $tramiteId . ' - Renovación Permiso Navegación';
+        $adminSubject = 'Nueva Solicitud Hoja de Asiento - ' . $tramiteId;
         $adminMessage = "
         <!DOCTYPE html>
         <html>
@@ -3161,9 +3231,6 @@ function send_hoja_asiento_emails() {
 
                 <div style='margin-bottom: 25px; background-color: #e3f2fd; padding: 16px 20px; border-radius: 6px; text-align: center;'>
                     <a href='{$dashboardUrl}' style='display: inline-block; background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; padding: 10px 24px; text-decoration: none; border-radius: 5px; font-weight: 600; font-size: 14px; box-shadow: 0 3px 8px rgba(25,118,210,0.3);'>
-                        🔍 Ver Detalle Completo del Trámite
-                    </a>
-                </div>
 
                 <div style='margin-bottom: 25px;'>
                     <h3 style='margin: 0 0 15px; color: #d32f2f; font-size: 16px; border-bottom: 2px solid #d32f2f; padding-bottom: 8px;'>👤 DATOS DEL CLIENTE</h3>
@@ -3185,8 +3252,8 @@ function send_hoja_asiento_emails() {
                             <td style='color: #333; font-weight: 600;'>{$customerPhone}</td>
                         </tr>
                         <tr>
-                            <td style='color: #666;'>Tipo renovación:</td>
-                            <td style='color: #333; font-weight: 600;'>{$renewalTypeText}</td>
+                            <td style='color: #666;'>Tipo de solicitud:</td>
+                            <td style='color: #333; font-weight: 600;'>{$requestTypeText}</td>
                         </tr>
                     </table>
                 </div>
@@ -3206,7 +3273,7 @@ function send_hoja_asiento_emails() {
                             <td align='right' style='color: #666;'>15.00 €</td>
                         </tr>
                         <tr>
-                            <td style='color: #666; padding-left: 15px;'>Emisión permiso:</td>
+                            <td style='color: #666; padding-left: 15px;'>Obtención copia:</td>
                             <td align='right' style='color: #666;'>8.00 €</td>
                         </tr>
                         <tr>
@@ -3248,9 +3315,7 @@ function send_hoja_asiento_emails() {
                 </div>
 
                 <div style='text-align: center; margin-top: 30px;'>
-                    <a href='https://46-202-128-35.sslip.io' style='display: inline-block; background: linear-gradient(135deg, #0066cc 0%, #004a99 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 10px rgba(0,102,204,0.3);'>
-                        🖥 Ver en Dashboard TRAMITFY
-                    </a>
+                    <a href='https://tramitfy.org' style='display: inline-block; background: linear-gradient(135deg, #0066cc 0%, #004a99 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 10px rgba(0,102,204,0.3);'>
                 </div>
 
             </div>

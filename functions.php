@@ -4521,4 +4521,5 @@ require_once get_template_directory() . '/generador_contrato_compraventa.php';
 require_once get_template_directory() . '/transferencia-barco.php';  // NUEVO
 require_once get_template_directory() . '/transferencia-moto.php';  // NUEVO
 require_once get_template_directory() . '/recuperar-documentacion.php';
+require_once get_template_directory() . '/consulta-registro.php';  // CONSULTA REGISTRO
 
