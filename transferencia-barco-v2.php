@@ -76,10 +76,10 @@ function tbv2_render_main_content() {
         .tbv2-sidebar {
             background: linear-gradient(180deg, rgb(var(--primary)) 0%, rgb(var(--primary-dark)) 100%);
             color: white;
-            padding: 30px 25px 40px 25px;
+            padding: 35px 30px 40px 30px;
             display: flex;
             flex-direction: column;
-            gap: 25px;
+            gap: 20px;
             min-height: 100%;
             position: relative;
         }
@@ -91,100 +91,79 @@ function tbv2_render_main_content() {
             background-color: transparent !important;
         }
 
-        .tbv2-logo {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .tbv2-logo i {
-            font-size: 28px;
-        }
-
         .tbv2-headline {
-            font-size: 18px;
-            font-weight: 600;
-            line-height: 1.3;
-            margin-bottom: 8px;
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 10px;
             background: transparent;
             color: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin: -5px -5px 15px -5px;
         }
 
         .tbv2-subheadline {
-            font-size: 13px;
-            opacity: 0.92;
-            line-height: 1.4;
-            margin-bottom: 10px;
+            font-size: 14px;
+            opacity: 0.95;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            font-weight: 400;
         }
 
-        /* Caja de precio destacada */
+        /* Caja de precio destacada - Estilo idéntico a sidebar.png */
         .tbv2-price-box {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.12);
             backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 15px;
+            border-radius: 15px;
+            padding: 20px;
             text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            margin: 15px 0 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin: 20px 0 25px 0;
         }
 
         .tbv2-price-label {
-            font-size: 11px;
-            opacity: 0.85;
+            font-size: 12px;
+            opacity: 0.9;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 6px;
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
+            font-weight: 500;
         }
 
         .tbv2-price-amount {
-            font-size: 38px;
+            font-size: 42px;
             font-weight: 700;
-            margin: 4px 0;
+            margin: 5px 0;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .tbv2-price-detail {
-            font-size: 12px;
-            opacity: 0.88;
+            font-size: 13px;
+            opacity: 0.95;
+            line-height: 1.3;
+            margin-top: 8px;
         }
 
         /* Lista de beneficios */
         .tbv2-benefits {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            margin: 15px 0 20px 0;
-        }
-
-        .tbv2-reviews-widget {
-            margin-top: 25px;
-            padding: 25px 15px 20px 15px;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(5px);
+            gap: 15px;
+            margin: 25px 0;
         }
 
         .tbv2-benefit {
             display: flex;
-            align-items: start;
-            gap: 8px;
-            font-size: 12px;
-            line-height: 1.4;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 14px;
+            line-height: 1.5;
         }
 
         .tbv2-benefit i {
             font-size: 14px;
             color: rgb(var(--success));
             background: white;
-            width: 22px;
-            height: 22px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -193,39 +172,57 @@ function tbv2_render_main_content() {
             margin-top: 1px;
         }
 
-        /* Trust badges */
-        .tbv2-trust-badges {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
+        /* Widget de reseñas Google - Nuevo */
+        .tbv2-reviews-widget {
             margin-top: auto;
-            padding-top: 30px;
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        .tbv2-badge {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-size: 10px;
+        .tbv2-google-logo {
+            font-family: 'Product Sans', Arial, sans-serif;
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
-            gap: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            justify-content: center;
+            gap: 2px;
         }
 
-        .tbv2-badge i {
-            font-size: 11px;
+        .tbv2-google-logo .g-blue { color: #4285F4; }
+        .tbv2-google-logo .g-red { color: #EA4335; }
+        .tbv2-google-logo .g-yellow { color: #FBBC04; }
+        .tbv2-google-logo .g-green { color: #34A853; }
+
+        .tbv2-stars {
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+            margin-bottom: 8px;
         }
-        
-        .tbv2-badge:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+        .tbv2-stars i {
+            color: #FBBC04;
+            font-size: 18px;
+        }
+
+        .tbv2-reviews-text {
+            color: rgb(var(--neutral-800));
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .tbv2-reviews-text .rating-number {
+            font-weight: 700;
+        }
+
+        .tbv2-reviews-text .separator {
+            color: rgb(var(--neutral-500));
+            margin: 0 5px;
         }
 
         /* ÁREA PRINCIPAL DEL FORMULARIO */
@@ -257,63 +254,59 @@ function tbv2_render_main_content() {
         
         <!-- SIDEBAR IZQUIERDO -->
         <div class="tbv2-sidebar">
-            <div class="tbv2-logo">
-                <i class="fa-solid fa-anchor"></i>
-                Tramitfy
-            </div>
             
             <div class="tbv2-headline">
                 Transferencia de Embarcación
             </div>
             
             <div class="tbv2-subheadline">
-                Gestión completa del cambio de titularidad con firma digital y trámites ante la DGMM
+                Gestión completa del cambio de titularidad de tu embarcación. Tramitación online sin desplazamientos.
             </div>
             
             <!-- Caja de precio -->
             <div class="tbv2-price-box">
-                <div class="tbv2-price-label">Precio Final</div>
-                <div class="tbv2-price-amount">Variable</div>
-                <div class="tbv2-price-detail">Según características de la embarcación</div>
+                <div class="tbv2-price-label">PRECIO TOTAL</div>
+                <div class="tbv2-price-amount">134.99€</div>
+                <div class="tbv2-price-detail">IVA y tasas DGMM incluidas</div>
             </div>
             
             <!-- Lista de beneficios -->
             <div class="tbv2-benefits">
                 <div class="tbv2-benefit">
                     <i class="fa-solid fa-check"></i>
-                    <span>Gestión completa ante DGMM</span>
+                    <span>Presentamos tu solicitud en menos de 24h desde que la recibimos</span>
                 </div>
                 <div class="tbv2-benefit">
                     <i class="fa-solid fa-check"></i>
-                    <span>Firma digital de documentos</span>
+                    <span>Tramitación completa ante la DGMM</span>
                 </div>
                 <div class="tbv2-benefit">
                     <i class="fa-solid fa-check"></i>
-                    <span>Tramitación de tasas incluida</span>
-                </div>
-                <div class="tbv2-benefit">
-                    <i class="fa-solid fa-check"></i>
-                    <span>Seguimiento en tiempo real</span>
-                </div>
-                <div class="tbv2-benefit">
-                    <i class="fa-solid fa-check"></i>
-                    <span>Documentación certificada</span>
+                    <span>Consulta el estado del trámite vía whatsapp</span>
                 </div>
             </div>
             
-            <!-- Trust badges -->
-            <div class="tbv2-trust-badges">
-                <div class="tbv2-badge">
-                    <i class="fa-solid fa-shield-check"></i>
-                    Seguro
+            <!-- Widget de reseñas Google -->
+            <div class="tbv2-reviews-widget">
+                <div class="tbv2-google-logo">
+                    <span class="g-blue">G</span>
+                    <span class="g-red">o</span>
+                    <span class="g-yellow">o</span>
+                    <span class="g-blue">g</span>
+                    <span class="g-green">l</span>
+                    <span class="g-red">e</span>
                 </div>
-                <div class="tbv2-badge">
-                    <i class="fa-solid fa-clock"></i>
-                    24-48h
+                <div class="tbv2-stars">
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
                 </div>
-                <div class="tbv2-badge">
-                    <i class="fa-solid fa-certificate"></i>
-                    Oficial
+                <div class="tbv2-reviews-text">
+                    <span class="rating-number">4.9</span>
+                    <span class="separator">|</span>
+                    <span class="reviews-count">58 reseñas</span>
                 </div>
             </div>
         </div>
