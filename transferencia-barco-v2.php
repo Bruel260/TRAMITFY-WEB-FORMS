@@ -4623,6 +4623,12 @@ function tbv2_render_scripts() {
                                     console.log('🔍 Parámetros decodificados:', decoded);
                                     console.log('🔍 Order ID en parámetros:', decoded.Ds_Merchant_Order);
                                     console.log('🔍 Amount en parámetros:', decoded.Ds_Merchant_Amount);
+                                    
+                                    // GUARDAR ORDER ID para detección posterior de pago exitoso
+                                    if (decoded.Ds_Merchant_Order) {
+                                        localStorage.setItem('tbv2_last_order_id', decoded.Ds_Merchant_Order);
+                                        console.log('💾 Order ID guardado en localStorage:', decoded.Ds_Merchant_Order);
+                                    }
                                 } catch (e) {
                                     console.error('❌ Error decodificando parámetros:', e);
                                 }
@@ -5205,100 +5211,145 @@ function tbv2_render_scripts() {
     });
     
     /**
-     * Detecta si venimos de un pago exitoso y dispara el upload de archivos
+     * Verifica periódicamente si hay un pago exitoso pendiente de upload
      */
     function checkForSuccessfulPaymentAndUpload() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const result = urlParams.get('result');
-        const orderId = urlParams.get('order');
+        // Solo ejecutar si hay datos en localStorage de un pago reciente
+        const lastOrderId = localStorage.getItem('tbv2_last_order_id');
+        if (!lastOrderId) {
+            console.log('🔍 No hay Order ID en localStorage');
+            return;
+        }
         
-        console.log('🔍 Verificando parámetros de retorno de pago:');
-        console.log('   result:', result);
-        console.log('   order:', orderId);
+        console.log('🔍 Verificando estado de pago para Order ID:', lastOrderId);
         
-        if (result === 'ok' && orderId) {
-            console.log('✅ ¡Pago exitoso detectado! Iniciando upload de archivos...');
+        // Verificar con el servidor si este pago fue exitoso
+        const formData = new FormData();
+        formData.append('action', 'tbv2_check_payment_status');
+        formData.append('orderId', lastOrderId);
+        formData.append('nonce', '<?php echo wp_create_nonce("tbv2_nonce"); ?>');
+        
+        fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('📡 Respuesta verificación pago:', data);
             
-            // Mostrar mensaje de procesamiento
-            const body = document.body;
-            const processingOverlay = document.createElement('div');
-            processingOverlay.id = 'processing-files-overlay';
-            processingOverlay.innerHTML = `
+            if (data.success && data.data.needsUpload) {
+                console.log('✅ ¡Pago exitoso detectado! Iniciando upload de archivos...');
+                
+                // Limpiar localStorage para evitar uploads duplicados
+                localStorage.removeItem('tbv2_last_order_id');
+                
+                // Mostrar mensaje de procesamiento
+                showProcessingOverlay();
+                
+                // Disparar el upload de archivos
+                TBV2_Form.uploadFilesToWebhook(lastOrderId)
+                    .then(result => {
+                        console.log('📤 Resultado del upload de archivos:', result);
+                        hideProcessingOverlay();
+                        
+                        // Mostrar mensaje de éxito
+                        showSuccessMessage('✅ Archivos subidos correctamente');
+                    })
+                    .catch(error => {
+                        console.error('❌ Error en upload de archivos:', error);
+                        hideProcessingOverlay();
+                        
+                        // Mostrar mensaje de error pero continuar (el trámite ya se creó)
+                        showSuccessMessage('✅ Trámite creado correctamente (error en upload de archivos)');
+                    });
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error verificando estado de pago:', error);
+        });
+    }
+    
+    function showProcessingOverlay() {
+        const body = document.body;
+        const processingOverlay = document.createElement('div');
+        processingOverlay.id = 'processing-files-overlay';
+        processingOverlay.innerHTML = `
+            <div style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+                font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            ">
                 <div style="
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0, 0, 0, 0.8);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 9999;
-                    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                    background: white;
+                    padding: 40px;
+                    border-radius: 12px;
+                    text-align: center;
+                    max-width: 400px;
+                    margin: 20px;
                 ">
                     <div style="
-                        background: white;
-                        padding: 40px;
-                        border-radius: 12px;
-                        text-align: center;
-                        max-width: 400px;
-                        margin: 20px;
-                    ">
-                        <div style="
-                            width: 48px;
-                            height: 48px;
-                            border: 4px solid #f3f3f3;
-                            border-top: 4px solid #016d86;
-                            border-radius: 50%;
-                            animation: spin 1s linear infinite;
-                            margin: 0 auto 20px auto;
-                        "></div>
-                        <h3 style="margin: 0 0 10px 0; color: #333;">Procesando documentos</h3>
-                        <p style="margin: 0; color: #666;">Subiendo archivos y firma digital al servidor...</p>
-                    </div>
+                        width: 48px;
+                        height: 48px;
+                        border: 4px solid #f3f3f3;
+                        border-top: 4px solid #016d86;
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                        margin: 0 auto 20px auto;
+                    "></div>
+                    <h3 style="margin: 0 0 10px 0; color: #333;">Procesando documentos</h3>
+                    <p style="margin: 0; color: #666;">Subiendo archivos y firma digital al servidor...</p>
                 </div>
-                <style>
-                    @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                    }
-                </style>
-            `;
-            body.appendChild(processingOverlay);
-            
-            // Disparar el upload de archivos
-            TBV2_Form.uploadFilesToWebhook(orderId)
-                .then(result => {
-                    console.log('📤 Resultado del upload de archivos:', result);
-                    
-                    // Remover overlay de procesamiento
-                    const overlay = document.getElementById('processing-files-overlay');
-                    if (overlay) {
-                        overlay.remove();
-                    }
-                    
-                    // Redirigir a página de confirmación
-                    setTimeout(() => {
-                        const filesStatus = result.success ? 'uploaded' : 'error';
-                        window.location.href = '<?php echo home_url("/transferencia-barco-confirmacion/"); ?>?success=true&files=' + filesStatus;
-                    }, 1000);
-                })
-                .catch(error => {
-                    console.error('❌ Error en upload de archivos:', error);
-                    
-                    // Remover overlay de procesamiento
-                    const overlay = document.getElementById('processing-files-overlay');
-                    if (overlay) {
-                        overlay.remove();
-                    }
-                    
-                    // Redirigir a página de confirmación (el trámite se creó, solo falló el upload)
-                    setTimeout(() => {
-                        window.location.href = '<?php echo home_url("/transferencia-barco-confirmacion/"); ?>?success=true&files=error';
-                    }, 1000);
-                });
+            </div>
+            <style>
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            </style>
+        `;
+        body.appendChild(processingOverlay);
+    }
+    
+    function hideProcessingOverlay() {
+        const overlay = document.getElementById('processing-files-overlay');
+        if (overlay) {
+            overlay.remove();
         }
+    }
+    
+    function showSuccessMessage(message) {
+        // Mostrar mensaje de éxito temporal
+        const successDiv = document.createElement('div');
+        successDiv.innerHTML = `
+            <div style="
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #10b981;
+                color: white;
+                padding: 16px 24px;
+                border-radius: 8px;
+                z-index: 10000;
+                font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            ">
+                ${message}
+            </div>
+        `;
+        document.body.appendChild(successDiv);
+        
+        // Remover después de 3 segundos
+        setTimeout(() => {
+            successDiv.remove();
+        }, 3000);
     }
     </script>
     <?php
@@ -5457,6 +5508,35 @@ add_action('wp_ajax_tbv2_create_redsys_payment', 'tbv2_handle_create_redsys_paym
 add_action('wp_ajax_nopriv_tbv2_create_redsys_payment', 'tbv2_handle_create_redsys_payment');
 
 /**
+ * AJAX handler para verificar si un pago fue exitoso y necesita upload de archivos
+ */
+function tbv2_check_payment_status() {
+    $orderId = sanitize_text_field($_POST['orderId'] ?? '');
+    
+    if (empty($orderId)) {
+        wp_send_json_error(['message' => 'Order ID requerido']);
+        return;
+    }
+    
+    $paymentStatus = get_transient('tbv2_successful_payment_' . $orderId);
+    
+    if ($paymentStatus && $paymentStatus['needsFileUpload']) {
+        wp_send_json_success([
+            'needsUpload' => true,
+            'orderId' => $orderId,
+            'message' => 'Pago exitoso, proceder con upload de archivos'
+        ]);
+    } else {
+        wp_send_json_success([
+            'needsUpload' => false,
+            'message' => 'No hay upload pendiente'
+        ]);
+    }
+}
+add_action('wp_ajax_tbv2_check_payment_status', 'tbv2_check_payment_status');
+add_action('wp_ajax_nopriv_tbv2_check_payment_status', 'tbv2_check_payment_status');
+
+/**
  * Handler para procesar el callback de Redsys (URL de retorno)
  */
 function tbv2_handle_redsys_callback() {
@@ -5567,23 +5647,14 @@ function tbv2_handle_redsys_notification() {
  */
 function tbv2_handle_redsys_return($result) {
     if ($result === 'ok') {
-        // Extraer orderId de la URL para permitir upload de archivos
-        $orderId = isset($_GET['order']) ? sanitize_text_field($_GET['order']) : null;
-        
-        if ($orderId) {
-            // Marcar este orderId como listo para upload de archivos
-            set_transient('tbv2_ready_for_upload_' . $orderId, true, 600); // 10 minutos
-            error_log('TBV2: Marcando orden ' . $orderId . ' como lista para upload de archivos');
-        }
-        
-        // NO REDIRIGIR INMEDIATAMENTE - permitir que JS detecte el éxito y haga upload
-        // Solo marcar que el pago fue exitoso
-        return; 
+        // Redirigir a página de confirmación (comportamiento original restaurado)
+        wp_redirect(home_url('/transferencia-barco-confirmacion/?success=true'));
     } else {
         // Redirigir a página de error  
         wp_redirect(home_url('/transferencia-barco-error/?error=payment_failed'));
-        exit;
     }
+    
+    exit;
 }
 
 /**
@@ -5638,10 +5709,17 @@ function tbv2_process_successful_payment($orderId, $paymentData) {
             throw new Exception('Webhook respondió con código: ' . $responseCode);
         }
         
-        // Limpiar datos temporales
+        // Marcar este orderId como exitoso para que JS haga upload de archivos
+        set_transient('tbv2_successful_payment_' . $orderId, [
+            'orderId' => $orderId,
+            'timestamp' => current_time('timestamp'),
+            'needsFileUpload' => true
+        ], 600); // 10 minutos
+        
+        // Limpiar datos temporales del formulario
         delete_transient('tbv2_transfer_' . $orderId);
         
-        error_log('TBV2: Pago exitoso procesado para orden ' . $orderId);
+        error_log('TBV2: Pago exitoso procesado para orden ' . $orderId . ' - Marcado para upload de archivos');
         
     } catch (Exception $e) {
         error_log('TBV2 Webhook Error: ' . $e->getMessage());
