@@ -4674,6 +4674,163 @@ function tbv2_render_scripts() {
             }
         },
 
+        // ============================================
+        // SISTEMA DE UPLOAD DE ARCHIVOS AL WEBHOOK
+        // ============================================
+        
+        /**
+         * Obtiene la firma digital como blob desde el canvas
+         */
+        getSignatureBlob() {
+            try {
+                const canvas = document.getElementById('enhanced-signature-canvas');
+                if (!canvas || !window.signaturePad) {
+                    console.log('📝 No hay firma digital disponible');
+                    return null;
+                }
+                
+                if (window.signaturePad.isEmpty()) {
+                    console.log('📝 Canvas de firma está vacío');
+                    return null;
+                }
+                
+                // Convertir canvas a blob
+                const dataURL = canvas.toDataURL('image/png');
+                const binaryString = atob(dataURL.split(',')[1]);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                
+                const blob = new Blob([bytes], { type: 'image/png' });
+                console.log('✅ Firma digital convertida a blob:', blob.size, 'bytes');
+                return blob;
+            } catch (error) {
+                console.error('❌ Error obteniendo firma digital:', error);
+                return null;
+            }
+        },
+        
+        /**
+         * Recolecta todos los archivos del formulario y los añade al FormData
+         */
+        appendFilesToFormData(formData, tramiteId) {
+            console.log('📎 Recolectando archivos del formulario...');
+            
+            // Hoja de asiento
+            const hojaAsientoFiles = document.getElementById('upload-hoja-asiento');
+            if (hojaAsientoFiles && hojaAsientoFiles.files.length > 0) {
+                for (let i = 0; i < hojaAsientoFiles.files.length; i++) {
+                    formData.append('upload_hoja_asiento', hojaAsientoFiles.files[i]);
+                    console.log(`📄 Hoja asiento ${i + 1}:`, hojaAsientoFiles.files[i].name);
+                }
+            }
+            
+            // DNI Comprador
+            const dniCompradorFiles = document.getElementById('upload-dni-comprador');
+            if (dniCompradorFiles && dniCompradorFiles.files.length > 0) {
+                for (let i = 0; i < dniCompradorFiles.files.length; i++) {
+                    formData.append('upload_dni_comprador', dniCompradorFiles.files[i]);
+                    console.log(`🆔 DNI comprador ${i + 1}:`, dniCompradorFiles.files[i].name);
+                }
+            }
+            
+            // DNI Vendedor
+            const dniVendedorFiles = document.getElementById('upload-dni-vendedor');
+            if (dniVendedorFiles && dniVendedorFiles.files.length > 0) {
+                for (let i = 0; i < dniVendedorFiles.files.length; i++) {
+                    formData.append('upload_dni_vendedor', dniVendedorFiles.files[i]);
+                    console.log(`🆔 DNI vendedor ${i + 1}:`, dniVendedorFiles.files[i].name);
+                }
+            }
+            
+            // Contrato de compraventa
+            const contratoFiles = document.getElementById('upload-contrato-compraventa');
+            if (contratoFiles && contratoFiles.files.length > 0) {
+                for (let i = 0; i < contratoFiles.files.length; i++) {
+                    formData.append('upload_contrato_compraventa', contratoFiles.files[i]);
+                    console.log(`📋 Contrato ${i + 1}:`, contratoFiles.files[i].name);
+                }
+            }
+            
+            // Modelo 620 (si existe)
+            const modelo620Files = document.getElementById('upload-modelo-620');
+            if (modelo620Files && modelo620Files.files.length > 0) {
+                for (let i = 0; i < modelo620Files.files.length; i++) {
+                    formData.append('upload_modelo_620', modelo620Files.files[i]);
+                    console.log(`📊 Modelo 620 ${i + 1}:`, modelo620Files.files[i].name);
+                }
+            }
+            
+            // Firma digital
+            const signatureBlob = this.getSignatureBlob();
+            if (signatureBlob) {
+                formData.append('authorization_pdf', signatureBlob, `firma_digital_${tramiteId}.png`);
+                console.log('✍️ Firma digital añadida al FormData');
+            }
+            
+            console.log('✅ Todos los archivos recolectados');
+        },
+        
+        /**
+         * Envía los archivos al webhook después del pago exitoso
+         */
+        async uploadFilesToWebhook(tramiteId) {
+            try {
+                console.log('🚀 Iniciando upload de archivos al webhook para trámite:', tramiteId);
+                
+                // Crear FormData para multipart upload
+                const formData = new FormData();
+                formData.append('tramiteId', tramiteId);
+                formData.append('files_update', 'true');
+                formData.append('tramiteType', 'transferencia-barco-v2');
+                
+                // Recolectar todos los archivos
+                this.appendFilesToFormData(formData, tramiteId);
+                
+                // Debug: Mostrar contenido del FormData
+                console.log('📦 FormData preparado para envío:');
+                for (let [key, value] of formData.entries()) {
+                    if (value instanceof File) {
+                        console.log(`   ${key}: [File] ${value.name} (${value.size} bytes)`);
+                    } else {
+                        console.log(`   ${key}:`, value);
+                    }
+                }
+                
+                // Enviar al webhook
+                const webhookUrl = 'https://46-202-128-35.sslip.io/api/herramientas/barcos/webhook';
+                
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    body: formData // No Content-Type header - let browser set it for multipart
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                console.log('✅ Upload de archivos exitoso:', result);
+                
+                return {
+                    success: true,
+                    message: 'Archivos enviados correctamente al servidor',
+                    data: result
+                };
+                
+            } catch (error) {
+                console.error('❌ Error enviando archivos al webhook:', error);
+                
+                // No lanzar error - el trámite ya está creado, solo falla el upload
+                return {
+                    success: false,
+                    message: 'Error enviando archivos, pero el trámite se creó correctamente',
+                    error: error.message
+                };
+            }
+        },
+
         collectFormData() {
             const data = {};
             
@@ -5040,7 +5197,109 @@ function tbv2_render_scripts() {
             initFileUploadSystem();
             initDocumentsNavigation();
         }, 500);
+        
+        // DETECTOR DE PAGO EXITOSO - Upload automático de archivos
+        setTimeout(() => {
+            checkForSuccessfulPaymentAndUpload();
+        }, 1000);
     });
+    
+    /**
+     * Detecta si venimos de un pago exitoso y dispara el upload de archivos
+     */
+    function checkForSuccessfulPaymentAndUpload() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const result = urlParams.get('result');
+        const orderId = urlParams.get('order');
+        
+        console.log('🔍 Verificando parámetros de retorno de pago:');
+        console.log('   result:', result);
+        console.log('   order:', orderId);
+        
+        if (result === 'ok' && orderId) {
+            console.log('✅ ¡Pago exitoso detectado! Iniciando upload de archivos...');
+            
+            // Mostrar mensaje de procesamiento
+            const body = document.body;
+            const processingOverlay = document.createElement('div');
+            processingOverlay.id = 'processing-files-overlay';
+            processingOverlay.innerHTML = `
+                <div style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.8);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 9999;
+                    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                ">
+                    <div style="
+                        background: white;
+                        padding: 40px;
+                        border-radius: 12px;
+                        text-align: center;
+                        max-width: 400px;
+                        margin: 20px;
+                    ">
+                        <div style="
+                            width: 48px;
+                            height: 48px;
+                            border: 4px solid #f3f3f3;
+                            border-top: 4px solid #016d86;
+                            border-radius: 50%;
+                            animation: spin 1s linear infinite;
+                            margin: 0 auto 20px auto;
+                        "></div>
+                        <h3 style="margin: 0 0 10px 0; color: #333;">Procesando documentos</h3>
+                        <p style="margin: 0; color: #666;">Subiendo archivos y firma digital al servidor...</p>
+                    </div>
+                </div>
+                <style>
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
+            `;
+            body.appendChild(processingOverlay);
+            
+            // Disparar el upload de archivos
+            TBV2_Form.uploadFilesToWebhook(orderId)
+                .then(result => {
+                    console.log('📤 Resultado del upload de archivos:', result);
+                    
+                    // Remover overlay de procesamiento
+                    const overlay = document.getElementById('processing-files-overlay');
+                    if (overlay) {
+                        overlay.remove();
+                    }
+                    
+                    // Redirigir a página de confirmación
+                    setTimeout(() => {
+                        const filesStatus = result.success ? 'uploaded' : 'error';
+                        window.location.href = '<?php echo home_url("/transferencia-barco-confirmacion/"); ?>?success=true&files=' + filesStatus;
+                    }, 1000);
+                })
+                .catch(error => {
+                    console.error('❌ Error en upload de archivos:', error);
+                    
+                    // Remover overlay de procesamiento
+                    const overlay = document.getElementById('processing-files-overlay');
+                    if (overlay) {
+                        overlay.remove();
+                    }
+                    
+                    // Redirigir a página de confirmación (el trámite se creó, solo falló el upload)
+                    setTimeout(() => {
+                        window.location.href = '<?php echo home_url("/transferencia-barco-confirmacion/"); ?>?success=true&files=error';
+                    }, 1000);
+                });
+        }
+    }
     </script>
     <?php
 }
@@ -5308,14 +5567,23 @@ function tbv2_handle_redsys_notification() {
  */
 function tbv2_handle_redsys_return($result) {
     if ($result === 'ok') {
-        // Redirigir a página de confirmación
-        wp_redirect(home_url('/transferencia-barco-confirmacion/?success=true'));
+        // Extraer orderId de la URL para permitir upload de archivos
+        $orderId = isset($_GET['order']) ? sanitize_text_field($_GET['order']) : null;
+        
+        if ($orderId) {
+            // Marcar este orderId como listo para upload de archivos
+            set_transient('tbv2_ready_for_upload_' . $orderId, true, 600); // 10 minutos
+            error_log('TBV2: Marcando orden ' . $orderId . ' como lista para upload de archivos');
+        }
+        
+        // NO REDIRIGIR INMEDIATAMENTE - permitir que JS detecte el éxito y haga upload
+        // Solo marcar que el pago fue exitoso
+        return; 
     } else {
         // Redirigir a página de error  
         wp_redirect(home_url('/transferencia-barco-error/?error=payment_failed'));
+        exit;
     }
-    
-    exit;
 }
 
 /**
