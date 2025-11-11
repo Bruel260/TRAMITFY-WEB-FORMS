@@ -297,8 +297,26 @@ function tbv2_render_form() {
                 <div class="tramitfy-main-form">
 
                     <!-- Navegación en borde superior del formulario -->
-                    <div id="form-navigation-top">
-                        <div class="nav-tabs-container">
+                    <div id="form-navigation-top" style="
+                        position: relative;
+                        top: -32px;
+                        left: -32px;
+                        right: -32px;
+                        width: calc(100% + 64px);
+                        z-index: 10;
+                        background: white;
+                        border-bottom: 2px solid #f1f5f9;
+                        border-radius: 16px 16px 0 0;
+                        margin: 0;
+                        padding: 0;
+                    ">
+                        <div class="nav-tabs-container" style="
+                            display: flex;
+                            background: transparent;
+                            padding: 0;
+                            margin: 0;
+                            width: 100%;
+                        ">
                             <div class="nav-tab active" data-page-id="page-vehiculo" data-step="1">
                                 <div class="tab-content-centered">
                                     <div class="tab-title">Embarcación</div>
@@ -410,11 +428,16 @@ function tbv2_render_form() {
                             <div class="form-group">
                                 <label for="matriculation_date" id="matriculation_date_label">Fecha Matriculación</label>
                                 <input type="date" id="matriculation_date" name="matriculation_date" max="<?php echo date('Y-m-d'); ?>" required>
+                                <div class="validation-feedback">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <span class="feedback-message"></span>
+                                </div>
                             </div>
 
                             <div class="form-group">
                                 <label for="purchase_price">Precio de Compra (€)</label>
                                 <input type="number" id="purchase_price" name="purchase_price" placeholder="Ej: 12000" required />
+                                <span class="input-hint">Precio real de la operación</span>
                             </div>
 
                             <div class="form-group">
@@ -441,6 +464,10 @@ function tbv2_render_form() {
                                     <option value="Ceuta">Ceuta</option>
                                     <option value="Melilla">Melilla</option>
                                 </select>
+                                <div class="validation-feedback">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <span class="feedback-message"></span>
+                                </div>
                             </div>
                         </div>
 
@@ -921,7 +948,7 @@ function tbv2_render_styles() {
 
     .tramitfy-two-column {
         display: grid !important;
-        grid-template-columns: 384px 1fr !important; /* Sidebar fijo 384px (20% más ancho) + formulario resto */
+        grid-template-columns: auto 1fr !important; /* Sidebar flexible + formulario resto */
         grid-template-areas: "sidebar content" !important;
         gap: 0;
         align-items: stretch; /* Sidebar se ajusta a altura del form */
@@ -945,9 +972,7 @@ function tbv2_render_styles() {
         color: #ffffff;
         display: flex;
         flex-direction: column;
-        width: 384px; /* Ancho aumentado 20% (antes 320px) */
-        min-height: 100%; /* Se extiende con el contenido */
-        height: auto; /* Altura automática */
+        width: 320px; /* Ancho base normal */
         transition: width 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
     }
 
@@ -1119,28 +1144,10 @@ function tbv2_render_styles() {
     }
 
 
-    /* NAVEGACIÓN EN DESKTOP */
-    #form-navigation-top {
-        position: relative;
-        top: -32px;
-        left: -32px;
-        right: -32px;
-        width: calc(100% + 64px);
-        z-index: 10;
-        background: white;
-        border-bottom: 2px solid #f1f5f9;
-        border-radius: 16px 16px 0 0;
-        margin: 0;
-        padding: 0;
-    }
-
     /* NAVEGACIÓN TABS PROFESIONAL */
     .nav-tabs-container {
         display: flex;
-        background: transparent;
-        padding: 0;
-        margin: 0;
-        width: 100%;
+        background: #ffffff;
     }
 
     .nav-tab {
@@ -1207,12 +1214,17 @@ function tbv2_render_styles() {
     /* PÁGINAS DEL FORMULARIO */
     .form-page {
         transition: opacity var(--transition);
+        animation: fadeIn 0.3s ease;
     }
 
     .form-page.hidden {
         display: none;
     }
 
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 
     .form-page h2 {
         color: #016d86;
@@ -1455,12 +1467,11 @@ function tbv2_render_styles() {
     /* RESPONSIVE (IDÉNTICO AL ORIGINAL) */
     @media (max-width: 1200px) {
         .tramitfy-two-column {
-            grid-template-columns: 336px 1fr !important; /* Sidebar más estrecho pero 20% más ancho que antes (280px × 1.2) */
+            grid-template-columns: 280px 1fr !important; /* Sidebar más estrecho */
         }
 
         .tramitfy-sidebar {
             padding: 24px 16px;
-            width: 336px; /* Ancho para tablets */
         }
 
         .form-page {
@@ -1468,539 +1479,76 @@ function tbv2_render_styles() {
         }
     }
 
-    /* ============================================
-       MOBILE RESPONSIVE - PROFESIONAL CORREGIDO
-       ============================================ */
     @media (max-width: 768px) {
-        /* Layout principal móvil */
+
         .tramitfy-two-column {
             grid-template-columns: 1fr !important;
             grid-template-areas: "sidebar" "content" !important;
             gap: 0;
-            box-shadow: 0 0 20px rgba(0,0,0,0.08);
         }
-        
-        /* Sidebar móvil */
+
         .tramitfy-sidebar {
             position: relative;
             top: auto;
             min-height: auto;
             height: auto;
-            width: 100%;
             border-radius: 12px 12px 0 0;
-            padding: 20px 16px;
         }
-        
-        .tramitfy-sidebar h3 {
-            font-size: 22px !important;
-            margin-bottom: 12px !important;
-        }
-        
-        /* Formulario principal móvil */
+
         .tramitfy-main-form {
-            padding: 20px 16px; /* Sin padding extra ya que botones dentro del form */
+            padding: 30px 25px;
             border-radius: 0 0 12px 12px;
         }
         
-        /* MENÚ MÓVIL - JUSTO DEBAJO DEL SIDEBAR */
-        #form-navigation-top {
-            position: relative !important;
-            width: calc(100% + 32px) !important; /* Compensar padding del contenedor */
-            margin-left: -16px !important; /* Centrar horizontalmente */
-            margin-right: -16px !important;
-            margin-top: 20px !important; /* Espacio después del sidebar */
-            margin-bottom: 20px !important; /* Espacio antes del form */
-            background: #f8f9fa;
-            padding: 12px 8px;
-            border-radius: 8px;
-            order: -1; /* Asegurar que esté antes del form */
-            top: 0 !important; /* Reset position */
-            left: 0 !important;
-            right: 0 !important;
+        .nav-items-container {
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
         }
         
-        .nav-tabs-container {
-            display: grid !important;
-            grid-template-columns: repeat(5, 1fr) !important;
-            gap: 6px !important;
-            padding: 0 4px !important; /* Pequeño padding para centrar */
-            overflow: visible !important;
-            max-width: 100% !important;
-            margin: 0 auto !important; /* Centrar el contenedor */
-        }
-        
-        /* Cuadrados tamaño intermedio con iconos */
-        .nav-tab {
-            aspect-ratio: 1 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            background: white !important;
-            border: 1.5px solid #e5e7eb !important;
-            border-radius: 10px !important;
-            transition: all 0.2s ease !important;
-            cursor: pointer !important;
-            padding: 6px !important;
-            position: relative !important;
-            min-height: 48px !important;
-            max-height: 48px !important;
-        }
-        
-        /* Iconos tamaño intermedio y discretos */
-        .nav-tab::before {
-            content: '';
-            font-family: 'Font Awesome 5 Free';
-            font-weight: 900;
-            font-size: 16px;
-            color: #9ca3af;
-            margin-bottom: 3px;
-            transition: all 0.2s ease;
-        }
-        
-        .nav-tab[data-step="1"]::before { content: '\f21a'; } /* ship */
-        .nav-tab[data-step="2"]::before { content: '\f007'; } /* user */
-        .nav-tab[data-step="3"]::before { content: '\f153'; } /* euro */
-        .nav-tab[data-step="4"]::before { content: '\f15c'; } /* file */
-        .nav-tab[data-step="5"]::before { content: '\f09d'; } /* card */
-        
-        /* Texto pequeño pero legible debajo */
-        .nav-tab .tab-title {
-            font-size: 8px !important;
-            font-weight: 600 !important;
-            color: #9ca3af !important;
-            text-align: center !important;
-            line-height: 1.1 !important;
-            transition: all 0.2s ease !important;
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-        }
-        
-        /* Estado activo */
-        .nav-tab.active {
-            background: #016d86 !important;
-            border-color: #016d86 !important;
-            box-shadow: 0 4px 6px rgba(1, 109, 134, 0.15) !important;
-        }
-        
-        .nav-tab.active::before {
-            color: white !important;
-        }
-        
-        .nav-tab.active .tab-title {
-            color: white !important;
-        }
-        
-        /* Estado completado (sombreado) */
-        .nav-tab.completed {
-            background: #e8f5f8 !important; /* Fondo azul muy claro */
-            border-color: #016d86 !important;
-            opacity: 1 !important; /* Mantener opacidad normal */
-        }
-        
-        .nav-tab.completed::before {
-            color: #016d86 !important; /* Color azul para indicar completado */
-            /* NO cambiar el icono - mantener el original de cada paso */
-        }
-        
-        .nav-tab.completed .tab-title {
-            color: #016d86 !important; /* Texto azul */
-            display: block !important; /* Mantener texto visible */
-            font-size: 8px !important; /* Mismo tamaño que los demás */
-        }
-        
-        /* Páginas del formulario móvil */
-        .form-page {
-            padding: 0;
-            margin-bottom: 20px;
-        }
-        
-        /* PÁGINA DE PRECIO - ESTILOS MÓVIL */
-        #page-precio #itp-question-container {
-            padding: 16px 12px !important;
-        }
-        
-        #page-precio #itp-question-container > div {
-            flex-direction: column !important;
-            gap: 16px !important;
-        }
-        
-        #page-precio #itp-question-container h4 {
-            text-align: center !important;
-            font-size: 18px !important;
-        }
-        
-        #page-precio #itp-question-container p {
-            text-align: center !important;
-            font-size: 14px !important;
-            margin-bottom: 8px !important;
-        }
-        
-        /* Botones ITP en móvil */
-        #page-precio .itp-choice-btn {
-            width: 100% !important;
-            padding: 14px 20px !important;
-            font-size: 15px !important;
-            border-radius: 8px !important;
-            border-width: 2px !important;
-            transition: all 0.2s ease !important;
-        }
-        
-        #page-precio .itp-choice-btn:active {
-            transform: scale(0.98) !important;
-        }
-        
-        /* Estado seleccionado de botón ITP */
-        #page-precio .itp-choice-btn.selected {
-            background: #016d86 !important;
-            color: white !important;
-            box-shadow: 0 4px 6px rgba(1, 109, 134, 0.2) !important;
-        }
-        
-        #page-precio #itp-question-container > div > div:last-child {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 12px !important;
-            width: 100% !important;
-        }
-        
-        /* Cálculo ITP móvil */
-        #page-precio #tbv2-itp-display {
-            font-size: 24px !important;
-        }
-        
-        #page-precio #ver-calculo-itp {
-            padding: 12px 16px !important;
-            font-size: 14px !important;
-        }
-        
-        /* Desglose móvil */
-        #precio-step-2 > div > div {
-            padding: 20px 16px !important;
-        }
-        
-        #precio-step-2 .precio-desglose-item {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 8px !important;
-        }
-        
-        /* Botón modificar ITP móvil */
-        #modificar-itp {
-            width: 100% !important;
-            padding: 14px !important;
-            font-size: 15px !important;
-        }
-        
-        .form-page h2 {
-            font-size: 20px;
-            margin-bottom: 10px;
-            color: #016d86;
-        }
-        
-        .form-page p {
-            font-size: 13px;
-            line-height: 1.5;
-            color: #666;
-            margin-bottom: 16px;
-        }
-        
-        /* Campos de formulario móvil - IMPORTANTE */
-        .form-compact-row {
-            display: grid !important;
-            grid-template-columns: 1fr !important;
-            gap: 16px !important;
-        }
-        
-        /* Forzar grid de 3 columnas a 1 en móvil */
-        div[style*="grid-template-columns: 1fr 1fr 1fr"] {
-            grid-template-columns: 1fr !important;
-        }
-        
-        .form-group {
-            margin-bottom: 16px;
-        }
-        
-        .form-group label {
-            font-size: 13px;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 6px;
-            display: block;
-        }
-        
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            font-size: 16px; /* Evita zoom en iOS */
-            border: 1.5px solid #d1d5db;
-            border-radius: 8px;
-            background: white;
-            -webkit-appearance: none;
-        }
-        
-        /* Checkbox móvil */
-        .checkbox-container {
-            background: #f8f9fa;
-            padding: 12px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .checkbox-container input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-        }
-        
-        /* NAVEGACIÓN BOTONES - DENTRO DEL FORMULARIO */
-        .form-navigation {
-            position: relative !important;
-            margin-top: 24px !important;
-            background: #f8f9fa !important;
-            border-radius: 8px !important;
-            padding: 16px !important;
-            display: flex !important;
-            flex-direction: row !important;
-            justify-content: space-between !important;
-            gap: 12px !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
-        }
-        
-        .form-navigation button {
-            flex: 1 !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            padding: 14px 12px !important;
-            font-size: 14px !important;
-            font-weight: 600 !important;
-            border-radius: 8px !important;
-            border: none !important;
-            cursor: pointer !important;
-            transition: all 0.2s !important;
-            white-space: nowrap !important;
-        }
-        
-        .form-navigation .button-secondary {
-            background: #f3f4f6 !important;
-            color: #374151 !important;
-        }
-        
-        .form-navigation .button-primary {
-            background: #016d86 !important;
-            color: white !important;
-        }
-        
-        /* Asegurar que los botones sean visibles */
-        #tbv2-prevButton,
-        #tbv2-nextButton,
-        #tbv2-datos-prevButton,
-        #tbv2-datos-nextButton,
-        #tbv2-precio-prevButton,
-        #tbv2-precio-nextButton,
-        #tbv2-documentos-prevButton,
-        #tbv2-documentos-nextButton,
-        #tbv2-pago-prevButton,
-        #tbv2-pago-nextButton {
-            display: inline-flex !important;
-        }
-        
-        /* Ocultar el botón anterior en la primera página */
-        #page-vehiculo #tbv2-prevButton {
-            display: none !important;
-        }
-        
-        /* Upload grid móvil */
-        .upload-grid {
-            display: grid;
+        .form-grid {
             grid-template-columns: 1fr;
+        }
+        
+        /* Layouts compactos responsive */
+        .form-compact-row {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+        }
+        
+        .form-compact-triple {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+        }
+        
+        .form-navigation {
+            flex-direction: column;
             gap: 12px;
-        }
-        
-        .upload-box {
-            padding: 16px;
-        }
-        
-        .upload-button {
-            width: 100%;
-            padding: 12px;
-            font-size: 14px;
         }
     }
 
-    /* ============================================
-       MOBILE PEQUEÑO - CORREGIDO Y OPTIMIZADO
-       ============================================ */
     @media (max-width: 480px) {
         .tramitfy-layout-wrapper {
             padding: 0;
-            margin: 8px;
+            margin: 15px 15px 0 15px;
         }
-        
+
         .tramitfy-two-column {
-            border-radius: 8px;
+            border-radius: 12px;
         }
-        
-        /* Sidebar móvil pequeño */
+
         .tramitfy-sidebar {
-            padding: 16px 12px;
+            padding: 20px;
             min-height: auto;
         }
-        
-        .tramitfy-sidebar h3 {
-            font-size: 20px !important;
-            margin-bottom: 12px !important;
-        }
-        
-        /* Formulario móvil pequeño */
+
         .tramitfy-main-form {
-            padding: 16px 12px !important; /* Sin espacio extra */
+            padding: 18px 12px;
             max-width: 100%;
         }
-        
-        /* Navegación móvil pequeña - Mantener centrado */
-        #form-navigation-top {
-            margin-top: -8px !important;
-            margin-bottom: 16px !important;
-            padding: 10px 6px !important;
-        }
-        
-        .nav-tabs-container {
-            gap: 4px !important;
-        }
-        
-        .nav-tab {
-            min-height: 42px !important;
-            max-height: 42px !important;
-            padding: 4px !important;
-        }
-        
-        .nav-tab::before {
-            font-size: 14px !important;
-            margin-bottom: 2px !important;
-        }
-        
-        .nav-tab .tab-title {
-            font-size: 7px !important;
-        }
-        
-        /* Formulario compacto */
+
         .form-page {
             padding: 0;
-        }
-        
-        .form-page h2 {
-            font-size: 18px;
-            margin-bottom: 8px;
-        }
-        
-        .form-page p {
-            font-size: 12px;
-            margin-bottom: 12px;
-        }
-        
-        .form-group {
-            margin-bottom: 14px;
-        }
-        
-        .form-group label {
-            font-size: 12px;
-        }
-        
-        .form-group input,
-        .form-group select {
-            padding: 10px;
-            font-size: 16px; /* Mantener 16px para evitar zoom */
-        }
-        
-        /* Navegación inferior compacta pero dentro del form */
-        .form-navigation {
-            padding: 12px !important;
-            margin-top: 20px !important;
-        }
-        
-        .form-navigation button {
-            padding: 12px 8px !important;
-            font-size: 13px !important;
-        }
-        
-        .form-navigation button i {
-            margin: 0 2px !important;
-        }
-        
-        /* Upload boxes compactos */
-        .upload-box {
-            padding: 14px;
-        }
-        
-        .upload-box h4 {
-            font-size: 12px;
-        }
-        
-        .upload-button {
-            padding: 10px;
-            font-size: 13px;
-        }
-        
-        /* Modales fullscreen */
-        .tbv2-preview-content,
-        .tbv2-modal-content {
-            width: 100vw !important;
-            height: 100vh !important;
-            max-width: 100vw !important;
-            max-height: 100vh !important;
-            border-radius: 0 !important;
-            margin: 0 !important;
-        }
-    }
-    
-    /* ============================================
-       MOBILE MUY PEQUEÑO - SOLO ICONOS
-       ============================================ */
-    @media (max-width: 360px) {
-        /* Menú compacto pero visible */
-        #form-navigation-top {
-            padding: 8px 4px !important;
-        }
-        
-        .nav-tabs-container {
-            gap: 3px !important;
-        }
-        
-        .nav-tab {
-            min-height: 38px !important;
-            max-height: 38px !important;
-            padding: 3px !important;
-            border-radius: 8px !important;
-        }
-        
-        /* Solo iconos, sin texto */
-        .nav-tab .tab-title {
-            display: none !important;
-        }
-        
-        .nav-tab::before {
-            font-size: 14px !important;
-            margin-bottom: 0 !important;
-        }
-        
-        /* Ajustes adicionales para pantallas muy pequeñas */
-        .tramitfy-sidebar h3 {
-            font-size: 18px !important;
-        }
-        
-        .form-navigation button i {
-            display: none;
-        }
-        
-        .form-navigation button {
-            font-size: 12px;
-            padding: 10px 8px;
+            max-width: 100%;
         }
     }
 
@@ -2124,6 +1672,18 @@ function tbv2_render_styles() {
     
     #itp-calculation-details {
         display: none;
+        animation: slideDown 0.3s ease;
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     /* ============================================
@@ -2257,6 +1817,7 @@ function tbv2_render_styles() {
         align-items: center;
         justify-content: center;
         overflow: hidden;
+        animation: fadeIn 0.3s ease;
     }
 
     .tbv2-preview-modal.active {
@@ -2427,12 +1988,17 @@ function tbv2_render_styles() {
         align-items: center;
         justify-content: center;
         overflow: hidden;
+        animation: fadeIn 0.3s ease;
     }
 
     .tbv2-signature-modal.active {
         display: flex;
     }
 
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
 
     .tbv2-modal-content {
         position: relative;
@@ -2586,9 +2152,14 @@ function tbv2_render_styles() {
         border-radius: 50%;
         width: 40px;
         height: 40px;
+        animation: spin 1s linear infinite;
         display: inline-block;
     }
 
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
 
     #submit-payment {
         transition: all 0.3s ease;
@@ -3303,37 +2874,31 @@ function tbv2_render_scripts() {
             }
             
             return `
-                <div style="padding: 0;">
-                    <h3 style="color: white; font-size: 32px; margin: 0 0 16px 0; font-weight: 700; line-height: 1.2;">
-                        Transferencia de Embarcación
+                <div style="background: rgba(255,255,255,0.1); padding: 18px; border-radius: 8px;">
+                    <h3 style="color: white; font-size: 16px; margin: 0 0 16px 0; font-weight: 600; line-height: 1.3;">
+                        Cambio Titularidad<br>Embarcación
                     </h3>
                     
-                    <!-- Subtítulo -->
-                    <p style="color: rgba(255,255,255,0.95); font-size: 14px; line-height: 1.5; margin: 0 0 20px 0;">
-                        Gestión completa del cambio de titularidad de tu embarcación. Tramitación online sin desplazamientos.
-                    </p>
-                    
-                    <!-- Cuadro de precio más discreto -->
-                    <div style="background: rgba(255,255,255,0.08); border-radius: 12px; padding: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.15); margin-bottom: 20px;">
-                        <div style="font-size: 11px; opacity: 0.8; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px; color: rgba(255,255,255,0.85); font-weight: 500;">PRECIO TOTAL</div>
-                        <div style="font-size: 32px; font-weight: 600; margin: 4px 0; color: rgba(255,255,255,0.95);">134.99€</div>
-                        <div style="font-size: 12px; opacity: 0.85; color: rgba(255,255,255,0.85); line-height: 1.3; margin-top: 6px;">IVA y tasas DGMM incluidas</div>
+                    <!-- 3 puntos destacados -->
+                    <div style="margin-bottom: 16px;">
+                        <div style="display: flex; align-items: center; margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; border-left: 3px solid rgba(255,255,255,0.6);">
+                            <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Presentamos tu solicitud en menos de 24h desde que la recibimos</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; border-left: 3px solid rgba(255,255,255,0.6);">
+                            <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Envío de provisional en menos de 24h</span>
+                        </div>
                     </div>
                     
-                    <!-- 3 beneficios principales con checkmarks verdes - Más discretos -->
-                    <div style="margin-bottom: 20px;">
-                        <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px;">
-                            <i class="fas fa-check" style="background: rgba(255,255,255,0.9); color: #10b981; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; font-size: 11px;"></i>
-                            <span style="color: rgba(255,255,255,0.85); font-size: 12px; line-height: 1.4;">Presentamos tu solicitud en menos de 24h desde que la recibimos</span>
-                        </div>
-                        <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px;">
-                            <i class="fas fa-check" style="background: rgba(255,255,255,0.9); color: #10b981; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; font-size: 11px;"></i>
-                            <span style="color: rgba(255,255,255,0.85); font-size: 12px; line-height: 1.4;">Tramitación completa ante la DGMM</span>
-                        </div>
-                        <div style="display: flex; align-items: flex-start; gap: 10px;">
-                            <i class="fas fa-check" style="background: rgba(255,255,255,0.9); color: #10b981; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; font-size: 11px;"></i>
-                            <span style="color: rgba(255,255,255,0.85); font-size: 12px; line-height: 1.4;">Consulta el estado del trámite vía whatsapp</span>
-                        </div>
+                    <!-- Cuadro de tiempo estimado (discreto) -->
+                    <div style="background: rgba(255,255,255,0.03); padding: 8px; border-radius: 4px; text-align: center; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <span style="color: rgba(255,255,255,0.6); font-size: 10px;">Proceso rápido • Solo 5 minutos</span>
+                    </div>
+                    
+                    <!-- Cuadro de precio (compacto) -->
+                    <div style="background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 100%); border-radius: 6px; padding: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.2);">
+                        <div style="font-size: 10px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; color: rgba(255,255,255,0.7);">Desde</div>
+                        <div style="font-size: 24px; font-weight: 700; margin: 2px 0; color: white;">134,99€</div>
+                        <div style="font-size: 9px; opacity: 0.7; color: rgba(255,255,255,0.6);">IVA y tasas incluidos</div>
                     </div>
                 </div>
             `;
@@ -3410,62 +2975,46 @@ function tbv2_render_scripts() {
         getDocumentosSidebarContent() {
             
             return `
-                <div style="padding: 0;">
-                    <h3 style="color: white; font-size: 24px; margin: 0 0 16px 0; font-weight: 600; line-height: 1.2;">
-                        Documentación Necesaria
+                <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
+                    <h3 style="color: white; font-size: 15px; margin: 0 0 12px 0; font-weight: 600; line-height: 1.3;">
+                        Información del ITP
                     </h3>
                     
-                    <p style="color: rgba(255,255,255,0.9); font-size: 13px; line-height: 1.5; margin: 0 0 20px 0;">
-                        Sube los documentos requeridos para completar la transferencia de tu embarcación.
-                    </p>
-                    
-                    <!-- Lista de documentos requeridos -->
-                    <div style="background: rgba(255,255,255,0.08); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
-                        <div style="color: rgba(255,255,255,0.95); font-size: 12px; font-weight: 600; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
-                            Documentos Obligatorios
+                    <!-- Contenido compacto -->
+                    <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 6px; border-left: 3px solid rgba(255,255,255,0.6); margin-bottom: 10px;">
+                        <div style="color: rgba(255,255,255,0.9); font-size: 12px; font-weight: 600; margin-bottom: 6px;">
+                            ¿Quién lo impone?
+                        </div>
+                        <div style="color: rgba(255,255,255,0.8); font-size: 11px; margin-bottom: 8px;">
+                            Hacienda de cada comunidad autónoma
                         </div>
                         
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                            <i class="fas fa-file-alt" style="color: #10b981; font-size: 14px;"></i>
-                            <span style="color: rgba(255,255,255,0.85); font-size: 12px;">DNI del comprador (ambas caras)</span>
+                        <div style="color: rgba(255,255,255,0.9); font-size: 12px; font-weight: 600; margin-bottom: 6px;">
+                            ¿Cómo se gestiona?
+                        </div>
+                        <div style="color: rgba(255,255,255,0.8); font-size: 11px; margin-bottom: 8px;">
+                            • Tú puedes pagarlo directamente<br>
+                            • Nosotros podemos gestionarlo por ti
                         </div>
                         
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                            <i class="fas fa-file-alt" style="color: #10b981; font-size: 14px;"></i>
-                            <span style="color: rgba(255,255,255,0.85); font-size: 12px;">DNI del vendedor (ambas caras)</span>
+                        <div style="color: rgba(255,255,255,0.9); font-size: 12px; font-weight: 600; margin-bottom: 6px;">
+                            ¿Qué incluimos?
                         </div>
-                        
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                            <i class="fas fa-file-alt" style="color: #10b981; font-size: 14px;"></i>
-                            <span style="color: rgba(255,255,255,0.85); font-size: 12px;">Permiso de circulación</span>
-                        </div>
-                        
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <i class="fas fa-file-alt" style="color: #10b981; font-size: 14px;"></i>
-                            <span style="color: rgba(255,255,255,0.85); font-size: 12px;">Hoja de asiento o tarjeta náutica</span>
+                        <div style="color: rgba(255,255,255,0.8); font-size: 11px;">
+                            Gestión completa en DGMM, tasas oficiales e IVA
                         </div>
                     </div>
                     
-                    <!-- Información de formato -->
-                    <div style="background: rgba(255,255,255,0.05); border-left: 3px solid rgba(255,255,255,0.3); padding: 12px; margin-bottom: 12px;">
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                            <i class="fas fa-info-circle" style="color: rgba(255,255,255,0.7); font-size: 12px;"></i>
-                            <span style="color: rgba(255,255,255,0.8); font-size: 11px; font-weight: 600;">Formatos aceptados</span>
-                        </div>
-                        <p style="color: rgba(255,255,255,0.7); font-size: 11px; line-height: 1.4; margin: 0;">
-                            PDF, JPG, PNG, JPEG (máx. 10MB por archivo)
-                        </p>
+                    <!-- Cálculo automático compacto -->
+                    <div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 6px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.2);">
+                        <span style="color: rgba(255,255,255,0.8); font-size: 11px;">
+                            ITP calculado automáticamente según precio y región
+                        </span>
                     </div>
                     
-                    <!-- Tiempo de procesamiento -->
-                    <div style="background: rgba(255,255,255,0.05); border-left: 3px solid rgba(255,255,255,0.3); padding: 12px; margin-bottom: 20px;">
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                            <i class="fas fa-clock" style="color: rgba(255,255,255,0.7); font-size: 12px;"></i>
-                            <span style="color: rgba(255,255,255,0.8); font-size: 11px; font-weight: 600;">Tiempo estimado</span>
-                        </div>
-                        <p style="color: rgba(255,255,255,0.7); font-size: 11px; line-height: 1.4; margin: 0;">
-                            Revisión de documentos en menos de 24h
-                        </p>
+                    <!-- Info técnica compacta -->
+                    <div style="padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; border-left: 3px solid rgba(255,255,255,0.6);">
+                        <span style="color: rgba(255,255,255,0.9); font-size: 11px;">Admitimos PDF e imágenes</span>
                     </div>
                 </div>
             `;
@@ -3564,34 +3113,63 @@ function tbv2_render_scripts() {
                 return; // No hacer nada si ya estamos en esa página
             }
             
-            // Ocultar página actual sin animación
+            // Obtener elementos ANTES de cualquier animación
             const currentPageElement = document.getElementById(this.currentPage);
-            if (currentPageElement) {
-                currentPageElement.classList.add('hidden');
+            const newPageElement = document.getElementById(pageId);
+            
+            if (!newPageElement) return;
+            
+            // POSICIONAMIENTO ABSOLUTO PARA EVITAR SUMA DE ALTURAS
+            // 1. Preparar nueva página en posición absoluta (mismo espacio)
+            newPageElement.style.position = 'absolute';
+            newPageElement.style.top = '0';
+            newPageElement.style.left = '0';
+            newPageElement.style.width = '100%';
+            newPageElement.style.opacity = '0';
+            newPageElement.classList.remove('hidden');
+            
+            // 2. Actualizar estado interno ANTES de la transición visual
+            this.currentPage = pageId;
+            this.updateNavigationState();
+            this.updateProgressBar();
+            this.updateSidebarContent();
+            
+            // 3. Setup específico por página
+            if (pageId === 'page-precio') {
+                this.setupITPFunctionality();
+            } else if (pageId === 'page-pago') {
+                this.setupPaymentPage();
             }
             
-            // Mostrar nueva página sin animación
-            const newPageElement = document.getElementById(pageId);
-            if (newPageElement) {
-                newPageElement.classList.remove('hidden');
-                
-                // Actualizar estado interno
-                this.currentPage = pageId;
-                this.updateNavigationState();
-                this.updateProgressBar();
-                this.updateSidebarContent();
-                
-                // Setup específico por página
-                if (pageId === 'page-precio') {
-                    this.setupITPFunctionality();
-                } else if (pageId === 'page-pago') {
-                    this.setupPaymentPage();
+            // 4. Transición visual sin ocupar espacio extra
+            requestAnimationFrame(() => {
+                // Fade out página actual
+                if (currentPageElement) {
+                    currentPageElement.style.transition = 'opacity 0.25s ease-out';
+                    currentPageElement.style.opacity = '0';
                 }
                 
-                console.log('✅ Navegado a página:', pageId);
+                // Fade in nueva página en mismo espacio
+                newPageElement.style.transition = 'opacity 0.25s ease-in';
+                newPageElement.style.opacity = '1';
                 
-                // Scroll automático eliminado para mejor UX
-            }
+                // Cleanup: restaurar posicionamiento normal
+                setTimeout(() => {
+                    if (currentPageElement) {
+                        currentPageElement.classList.add('hidden');
+                        currentPageElement.style.opacity = '';
+                        currentPageElement.style.transition = '';
+                    }
+                    // Restaurar posición normal de la nueva página
+                    newPageElement.style.position = '';
+                    newPageElement.style.top = '';
+                    newPageElement.style.left = '';
+                    newPageElement.style.width = '';
+                    newPageElement.style.transition = '';
+                }, 250);
+            });
+            
+            console.log('✨ Navegación sin expansión a página:', pageId);
         },
         
         nextPage() {
@@ -3856,6 +3434,7 @@ function tbv2_render_scripts() {
                 padding: 16px;
                 margin-bottom: 20px;
                 box-shadow: 0 4px 6px rgba(239, 68, 68, 0.1);
+                animation: tbv2-slide-in 0.4s ease-out;
             `;
             
             summaryDiv.innerHTML = `
@@ -3882,6 +3461,7 @@ function tbv2_render_scripts() {
                 if (summaryDiv && summaryDiv.parentElement) {
                     summaryDiv.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
                     summaryDiv.style.opacity = '0';
+                    summaryDiv.style.transform = 'translateY(-10px)';
                     setTimeout(() => {
                         if (summaryDiv.parentElement) {
                             summaryDiv.remove();
@@ -4072,15 +3652,15 @@ function tbv2_render_scripts() {
         selectITPOption(option) {
             // Resetear estado de botones
             document.querySelectorAll('.itp-choice-btn').forEach(btn => {
-                btn.classList.remove('selected');
-                btn.style.background = '';
-                btn.style.color = '';
+                btn.style.background = 'white';
+                btn.style.color = '#016d86';
             });
             
             // Marcar botón seleccionado
             const selectedBtn = option === 'si' ? this.itpSiBtn : this.itpNoBtn;
             if (selectedBtn) {
-                selectedBtn.classList.add('selected');
+                selectedBtn.style.background = '#016d86';
+                selectedBtn.style.color = 'white';
             }
             
             console.log(`🏛️ ITP seleccionado: ${option === 'si' ? 'YA PAGADO' : 'NO PAGADO'}`);
@@ -4719,6 +4299,30 @@ function tbv2_render_scripts() {
         }
     };
 
+    // CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes tbv2-slide-in {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .validation-feedback {
+            transition: all 0.3s ease;
+        }
+
+        .validation-feedback i {
+            min-width: 16px;
+            text-align: center;
+        }
+    `;
+    document.head.appendChild(style);
 
     // ============================================
     // SIGNATURE PAD SYSTEM & FILE UPLOADS
@@ -4806,6 +4410,27 @@ function tbv2_render_scripts() {
 
             // Construir el documento HTML
             const documentContent = `
+                <div class="document-section">
+                    <h4>DATOS DEL SOLICITANTE</h4>
+                    <p><strong>Nombre:</strong> ${buyerName}</p>
+                    <p><strong>DNI:</strong> ${buyerDni}</p>
+                    <p><strong>Email:</strong> ${buyerEmail}</p>
+                </div>
+
+                <div class="document-section">
+                    <h4>DATOS DEL VEHÍCULO</h4>
+                    <p><strong>Tipo:</strong> Embarcación</p>
+                    <p><strong>Fabricante:</strong> ${manufacturer}</p>
+                    <p><strong>Modelo:</strong> ${model}</p>
+                    <p><strong>Matrícula:</strong> ${matricula}</p>
+                </div>
+
+                <div class="document-section">
+                    <h4>VENDEDOR ACTUAL</h4>
+                    <p><strong>Nombre:</strong> ${sellerName}</p>
+                    <p><strong>DNI:</strong> ${sellerDni}</p>
+                </div>
+
                 <div class="document-section">
                     <h4>AUTORIZACIÓN</h4>
                     <p style="text-align: justify; margin-bottom: 16px;">
@@ -5390,14 +5015,3 @@ function tbv2_process_failed_payment($orderId, $paymentData) {
     // Mantener datos para reintento
     // No eliminar transient para permitir reintento del usuario
 }
-
-// Registro del shortcode
-if (!shortcode_exists('transferencia_barco_v2')) {
-    add_shortcode('transferencia_barco_v2', 'tbv2_render_form');
-}
-
-// Registro alternativo del shortcode con _form
-if (!shortcode_exists('transferencia_barco_v2_form')) {
-    add_shortcode('transferencia_barco_v2_form', 'tbv2_render_form');
-}
-

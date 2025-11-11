@@ -12,11 +12,11 @@ error_log("=== RDOC FILE START ===");
 // Configuración de Stripe
 define('STRIPE_MODE', 'live'); // test o live
 
-define('STRIPE_TEST_PUBLIC_KEY', 'pk_test_51SBOq2GXJ2PkUN8kmrKUUjCLbvY3v8sAsgr6rNtg8zHyUZjB6pFrB7Vz3Gm0l2Wm7y5xVoMap2NY8utwgdJOogNQ000qBYIX5V');
-define('STRIPE_TEST_SECRET_KEY', 'sk_test_51SBOq2GXJ2PkUN8kFlbLBQU3pd1kTVpWsSooQzdPMcqC8jKFSykeptf5XKOtbBzwMT4yjVHM0AbHUFoncbWIe4V600wkzJwpXC');
+define('STRIPE_TEST_PUBLIC_KEY', 'pk_test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+define('STRIPE_TEST_SECRET_KEY', 'sk_test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
 
-define('STRIPE_LIVE_PUBLIC_KEY', 'pk_live_51QHhtNGXGHYLV5CXu3P7PrAFezBnDuf0JsZzb2AxjSsV0okn4y19VOMIjW0NUOLpaFdI3CCRhiC4fvNBDDbPhiW100KkF6Uo2x');
-define('STRIPE_LIVE_SECRET_KEY', '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');
+define('STRIPE_LIVE_PUBLIC_KEY', 'pk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+define('STRIPE_LIVE_SECRET_KEY', 'sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
 
 if (STRIPE_MODE === 'test') {
     $stripe_public_key = STRIPE_TEST_PUBLIC_KEY;
@@ -209,47 +209,35 @@ function rdoc_send_to_tramitfy() {
             return $mimes;
         });
 
-        error_log("=== RECUPERAR DOC: Procesando archivos indexados ===");
-        error_log("🔍 DEBUG FILES: " . print_r($_FILES, true));
-        error_log("🔍 DEBUG Claves FILES: " . implode(', ', array_keys($_FILES)));
-        
-        // Debug específico de archivos indexados
-        for ($i = 0; $i < 10; $i++) {
-            $key = "upload_dni_documento_$i";
-            if (isset($_FILES[$key])) {
-                error_log("✅ ENCONTRADO: \$_FILES['$key'] = " . $_FILES[$key]['name']);
-            } else {
-                error_log("❌ NO EXISTE: \$_FILES['$key']");
-                if ($i > 2) break; // Solo verificar hasta que no haya más
-            }
-        }
-        
-        // Procesar archivos indexados como upload_dni_documento_0, upload_dni_documento_1, etc.
-        $fileIndex = 0;
-        while (isset($_FILES["upload_dni_documento_$fileIndex"])) {
-            $fileData = $_FILES["upload_dni_documento_$fileIndex"];
-            
-            if ($fileData['error'] === UPLOAD_ERR_OK) {
-                $uploaded_file = wp_handle_upload($fileData, ['test_form' => false]);
-                error_log("Resultado wp_handle_upload archivo $fileIndex: " . print_r($uploaded_file, true));
-                
-                if (isset($uploaded_file['file'])) {
-                    $uploadedFiles[] = [
-                        'name' => $fileData['name'],
-                        'filename' => basename($uploaded_file['file']),
-                        'size' => $fileData['size'],
-                        'path' => $uploaded_file['file']
-                    ];
-                    error_log("✅ Archivo indexado agregado [$fileIndex]: {$fileData['name']}");
-                } else {
-                    error_log("❌ wp_handle_upload falló para archivo $fileIndex: " . (isset($uploaded_file['error']) ? $uploaded_file['error'] : 'sin error'));
+        error_log("=== RECUPERAR DOC: Procesando archivos ===");
+        if (isset($_FILES['dniDocumento']) && !empty($_FILES['dniDocumento']['name'][0])) {
+            $file_count = count($_FILES['dniDocumento']['name']);
+            for ($i = 0; $i < $file_count; $i++) {
+                if ($_FILES['dniDocumento']['error'][$i] === UPLOAD_ERR_OK) {
+                    $file_array = array(
+                        'name'     => $_FILES['dniDocumento']['name'][$i],
+                        'type'     => $_FILES['dniDocumento']['type'][$i],
+                        'tmp_name' => $_FILES['dniDocumento']['tmp_name'][$i],
+                        'error'    => $_FILES['dniDocumento']['error'][$i],
+                        'size'     => $_FILES['dniDocumento']['size'][$i]
+                    );
+                    $uploaded_file = wp_handle_upload($file_array, ['test_form' => false]);
+                    error_log("Resultado wp_handle_upload: " . print_r($uploaded_file, true));
+
+                    if (isset($uploaded_file['file'])) {
+                        $uploadedFiles[] = [
+                            'name' => $_FILES['dniDocumento']['name'][$i],
+                            'filename' => basename($uploaded_file['file']),
+                            'size' => $_FILES['dniDocumento']['size'][$i],
+                            'path' => $uploaded_file['file']
+                        ];
+                        error_log("✅ Archivo agregado: {$_FILES['dniDocumento']['name'][$i]}");
+                    } else {
+                        error_log("❌ wp_handle_upload falló: " . (isset($uploaded_file['error']) ? $uploaded_file['error'] : 'sin error'));
+                    }
                 }
             }
-            
-            $fileIndex++;
         }
-        
-        error_log("📊 Total archivos procesados: $fileIndex");
 
         $postData = [
             'customerName' => $formData['customerName'],
@@ -283,19 +271,18 @@ function rdoc_send_to_tramitfy() {
             error_log("❌ PDF autorización NO existe: $authorizationPdfPath");
         }
 
-        // Agregar archivos con CURLFile (INDEXADOS CORRECTAMENTE)
-        $dniFileIndex = 0;
+        // Agregar archivos con CURLFile (mantener categorización)
+        $fileIndex = 0;
         foreach ($uploadedFiles as $file) {
             if (file_exists($file['path'])) {
-                // Usar nombre específico para firma, campos indexados para documentos
+                // Usar nombre específico para firma, dni_documento para el resto
                 if ($file['name'] === 'firma.png') {
                     $form_data['firma'] = new CURLFile($file['path'], 'image/png', $file['filename']);
                     error_log("✅ Firma agregada: {$file['filename']}");
                 } else {
-                    // ✅ CAMPOS INDEXADOS PARA MÚLTIPLES ARCHIVOS
-                    $form_data["upload_dni_documento_$dniFileIndex"] = new CURLFile($file['path'], mime_content_type($file['path']), $file['filename']);
-                    error_log("✅ DNI documento agregado [$dniFileIndex]: {$file['filename']}");
-                    $dniFileIndex++;
+                    $form_data['dni_documento'] = new CURLFile($file['path'], mime_content_type($file['path']), $file['filename']);
+                    error_log("✅ DNI documento agregado: {$file['filename']}");
+                    $fileIndex++;
                 }
             } else {
                 error_log("❌ Archivo NO existe: {$file['path']}");
@@ -402,7 +389,7 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
                                 TRAMITFY
                             </h1>
                             <p style='margin: 8px 0 0; color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 400;'>
-                                Servicios de tramitación marítima
+                                Gestión Profesional de Trámites Marítimos
                             </p>
                         </td>
                     </tr>
@@ -431,8 +418,9 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
                             </p>
                             
                             <p style='margin: 0 0 25px; color: #4b5563; font-size: 15px; line-height: 1.7;'>
-                                Hemos recibido su solicitud de <strong>recuperación de documentación</strong>. Gracias por confiar en nosotros.
-                                Revisaremos la documentación y procederemos con la tramitación.
+                                Le confirmamos que hemos recibido su solicitud de <strong>recuperación de documentación</strong> correctamente. 
+                                Nuestro equipo especializado procederá a revisar la documentación proporcionada (incluido DNI por ambas caras) y gestionar 
+                                su trámite ante las autoridades competentes.
                             </p>
                             
                             <!-- Details Box -->
@@ -458,13 +446,12 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
                             </table>
                             
                             <p style='margin: 30px 0 0; color: #4b5563; font-size: 15px; line-height: 1.7;'>
-                                Le notificaremos por email del estado de su trámite en cada etapa del proceso. Si requiriéramos documentación adicional, nos pondremos en contacto con usted.
+                                Le mantendremos informado del progreso por email y le contactaremos si necesitamos información adicional.
                             </p>
                             
                             <p style='margin: 25px 0 0; color: #1f2937; font-size: 15px;'>
                                 Atentamente,<br>
-                                <strong style='color: #1e40af;'>Equipo Tramitfy</strong><br>
-                                <span style='color: #6b7280; font-size: 13px;'>Servicios de tramitación marítima</span>
+                                <strong style='color: #1e40af;'>Equipo Tramitfy</strong>
                             </p>
                             
                         </td>
@@ -495,7 +482,7 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
     // EMAIL AL ADMINISTRADOR
     // ============================================
     $adminEmail = 'info@tramitfy.es';
-    $adminSubject = 'Nueva Solicitud - ' . $tramiteDisplayId . ' - Recuperar Documentación';
+    $adminSubject = '🔔 Nueva Solicitud - ' . $tramiteDisplayId . ' - Recuperar Documentación';
     $adminMessage = "
     <!DOCTYPE html>
     <html>
@@ -649,14 +636,6 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
     wp_mail($adminEmail, $adminSubject, $adminMessage, $headers);
 }
 
-// Registrar handlers de WordPress AJAX (CRÍTICO)
-add_action('wp_ajax_rdoc_create_payment_intent', 'rdoc_create_payment_intent');
-add_action('wp_ajax_nopriv_rdoc_create_payment_intent', 'rdoc_create_payment_intent');
-
-add_action('wp_ajax_rdoc_send_to_tramitfy', 'rdoc_send_to_tramitfy');
-add_action('wp_ajax_nopriv_rdoc_send_to_tramitfy', 'rdoc_send_to_tramitfy');
-
-// Fallback directo (mantener compatibilidad)
 if (isset($_POST['action'])) {
     if ($_POST['action'] === 'rdoc_create_payment_intent') {
         rdoc_create_payment_intent();
@@ -2369,10 +2348,7 @@ function recuperar_documentacion_form_shortcode() {
         let rdocStripe = null;
         let rdocElements, rdocCardElement;
         let rdocClientSecret = null;
-        // Sistema de almacenamiento de archivos unificado (como hoja-asiento)
-        const fileStorage = {
-            'upload-dni-documento': []
-        };
+        let rdocDniFiles = [];
         let rdocSignatureCanvas, rdocSignatureCtx;
         let rdocIsDrawing = false;
         let rdocHasSignature = false;
@@ -2625,8 +2601,8 @@ function recuperar_documentacion_form_shortcode() {
                 vesselReg.classList.remove('error');
             }
 
-            console.log('Archivos subidos:', fileStorage['upload-dni-documento'].length);
-            if (fileStorage['upload-dni-documento'].length === 0) {
+            console.log('Archivos subidos:', rdocDniFiles.length);
+            if (rdocDniFiles.length === 0) {
                 errors.push('Documento DNI/NIE');
                 isValid = false;
             }
@@ -2663,12 +2639,9 @@ function recuperar_documentacion_form_shortcode() {
             return true;
         }
 
-        // ====== FIRMA DIGITAL MEJORADA ======
-        let rdocLastPoint = null;
-        let rdocCurrentPath = [];
-        
+        // ====== FIRMA DIGITAL ======
         function rdocInitializeSignature() {
-            console.log('✍️ Inicializando canvas de firma mejorada...');
+            console.log('✍️ Inicializando canvas de firma...');
 
             rdocSignatureCanvas = document.getElementById('rdoc-signature-canvas');
             if (!rdocSignatureCanvas) {
@@ -2679,12 +2652,10 @@ function recuperar_documentacion_form_shortcode() {
             const placeholder = document.getElementById('rdoc-signature-placeholder');
 
             rdocSignatureCtx = rdocSignatureCanvas.getContext('2d');
-            rdocSignatureCtx.strokeStyle = '#1a1a1a';
-            rdocSignatureCtx.lineWidth = 2.8;
+            rdocSignatureCtx.strokeStyle = '#000';
+            rdocSignatureCtx.lineWidth = 2.5;
             rdocSignatureCtx.lineCap = 'round';
             rdocSignatureCtx.lineJoin = 'round';
-            rdocSignatureCtx.globalCompositeOperation = 'source-over';
-            rdocSignatureCtx.imageSmoothingEnabled = true;
 
             // Mouse events
             rdocSignatureCanvas.addEventListener('mousedown', rdocStartDrawing);
@@ -2710,77 +2681,38 @@ function recuperar_documentacion_form_shortcode() {
                 rdocStopDrawing();
             }, { passive: false });
 
-            console.log('✅ Canvas de firma mejorada inicializado correctamente');
-        }
-
-        function rdocGetCanvasPoint(e) {
-            const rect = rdocSignatureCanvas.getBoundingClientRect();
-            const scaleX = rdocSignatureCanvas.width / rect.width;
-            const scaleY = rdocSignatureCanvas.height / rect.height;
-            return {
-                x: (e.clientX - rect.left) * scaleX,
-                y: (e.clientY - rect.top) * scaleY
-            };
+            console.log('✅ Canvas de firma inicializado correctamente');
         }
 
         function rdocStartDrawing(e) {
             rdocIsDrawing = true;
-            rdocCurrentPath = [];
 
             const placeholder = document.getElementById('rdoc-signature-placeholder');
             if (placeholder) {
                 placeholder.classList.add('hidden');
             }
 
-            const point = rdocGetCanvasPoint(e);
-            rdocLastPoint = point;
-            rdocCurrentPath.push(point);
+            const rect = rdocSignatureCanvas.getBoundingClientRect();
+            const scaleX = rdocSignatureCanvas.width / rect.width;
+            const scaleY = rdocSignatureCanvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
 
             rdocSignatureCtx.beginPath();
-            rdocSignatureCtx.moveTo(point.x, point.y);
+            rdocSignatureCtx.moveTo(x, y);
         }
 
         function rdocDraw(e) {
             if (!rdocIsDrawing) return;
 
-            const currentPoint = rdocGetCanvasPoint(e);
-            rdocCurrentPath.push(currentPoint);
+            const rect = rdocSignatureCanvas.getBoundingClientRect();
+            const scaleX = rdocSignatureCanvas.width / rect.width;
+            const scaleY = rdocSignatureCanvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
 
-            // Solo dibujar curva suave si tenemos suficientes puntos
-            if (rdocCurrentPath.length >= 3) {
-                const len = rdocCurrentPath.length;
-                const p0 = rdocCurrentPath[len - 3];
-                const p1 = rdocCurrentPath[len - 2]; 
-                const p2 = rdocCurrentPath[len - 1];
-
-                // Calcular punto de control para curva cuadrática suave
-                const cp = {
-                    x: p1.x,
-                    y: p1.y
-                };
-
-                // Punto medio entre p1 y p2
-                const midPoint = {
-                    x: (p1.x + p2.x) / 2,
-                    y: (p1.y + p2.y) / 2
-                };
-
-                // Dibujar curva suave usando quadraticCurveTo
-                rdocSignatureCtx.lineWidth = rdocCalculateLineWidth(p0, p2);
-                rdocSignatureCtx.beginPath();
-                rdocSignatureCtx.moveTo(rdocLastPoint.x, rdocLastPoint.y);
-                rdocSignatureCtx.quadraticCurveTo(cp.x, cp.y, midPoint.x, midPoint.y);
-                rdocSignatureCtx.stroke();
-
-                rdocLastPoint = midPoint;
-            } else if (rdocCurrentPath.length === 2) {
-                // Para los primeros puntos, usar línea simple
-                rdocSignatureCtx.beginPath();
-                rdocSignatureCtx.moveTo(rdocLastPoint.x, rdocLastPoint.y);
-                rdocSignatureCtx.lineTo(currentPoint.x, currentPoint.y);
-                rdocSignatureCtx.stroke();
-                rdocLastPoint = currentPoint;
-            }
+            rdocSignatureCtx.lineTo(x, y);
+            rdocSignatureCtx.stroke();
 
             if (!rdocHasSignature) {
                 rdocHasSignature = true;
@@ -2788,25 +2720,8 @@ function recuperar_documentacion_form_shortcode() {
             }
         }
 
-        function rdocCalculateLineWidth(p1, p2) {
-            // Calcular grosor dinámico basado en velocidad del trazo
-            const distance = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-            const minWidth = 1.8;
-            const maxWidth = 3.5;
-            
-            // Líneas más gruesas para movimientos más lentos (más realista)
-            const speed = Math.min(distance / 5, 10);
-            const width = Math.max(minWidth, maxWidth - (speed * 0.2));
-            
-            return width;
-        }
-
         function rdocStopDrawing() {
-            if (!rdocIsDrawing) return;
-            
             rdocIsDrawing = false;
-            rdocCurrentPath = [];
-            rdocLastPoint = null;
             rdocSignatureCtx.closePath();
         }
 
@@ -2815,8 +2730,6 @@ function recuperar_documentacion_form_shortcode() {
 
             rdocSignatureCtx.clearRect(0, 0, rdocSignatureCanvas.width, rdocSignatureCanvas.height);
             rdocHasSignature = false;
-            rdocCurrentPath = [];
-            rdocLastPoint = null;
 
             const placeholder = document.getElementById('rdoc-signature-placeholder');
             if (placeholder) {
@@ -2865,7 +2778,7 @@ function recuperar_documentacion_form_shortcode() {
                 files.forEach((file, index) => {
                     console.log(`📄 [${index}] Procesando:`, file.name, 'Tamaño:', file.size, 'bytes');
 
-                    const isDuplicate = fileStorage['upload-dni-documento'].some(
+                    const isDuplicate = rdocDniFiles.some(
                         f => f.name === file.name && f.size === file.size
                     );
 
@@ -2884,12 +2797,12 @@ function recuperar_documentacion_form_shortcode() {
                         return;
                     }
 
-                    fileStorage['upload-dni-documento'].push(file);
-                    console.log(`✅ Archivo agregado [${fileStorage['upload-dni-documento'].length}]:`, file.name);
+                    rdocDniFiles.push(file);
+                    console.log(`✅ Archivo agregado [${rdocDniFiles.length}]:`, file.name);
                 });
 
-                console.log('📦 Total de archivos en array:', fileStorage['upload-dni-documento'].length);
-                console.log('📦 Array completo:', fileStorage['upload-dni-documento'].map(f => f.name));
+                console.log('📦 Total de archivos en array:', rdocDniFiles.length);
+                console.log('📦 Array completo:', rdocDniFiles.map(f => f.name));
 
                 rdocRenderFiles();
 
@@ -2919,9 +2832,9 @@ function recuperar_documentacion_form_shortcode() {
             }
 
             console.log('✅ List element encontrado:', list);
-            console.log('📦 Archivos para renderizar:', fileStorage['upload-dni-documento'].length);
+            console.log('📦 Archivos para renderizar:', rdocDniFiles.length);
 
-            if (fileStorage['upload-dni-documento'].length === 0) {
+            if (rdocDniFiles.length === 0) {
                 console.log('ℹ️ No hay archivos, limpiando lista');
                 list.innerHTML = '';
                 list.style.display = 'none';
@@ -2930,7 +2843,7 @@ function recuperar_documentacion_form_shortcode() {
 
             list.style.display = 'flex';
 
-            const html = fileStorage['upload-dni-documento'].map((file, index) => {
+            const html = rdocDniFiles.map((file, index) => {
                 const icon = file.type === 'application/pdf' ? 'fa-file-pdf' : 'fa-image';
                 const truncatedName = file.name.length > 20 ? file.name.substring(0, 17) + '...' : file.name;
                 const sizeKB = (file.size / 1024).toFixed(0);
@@ -2955,139 +2868,8 @@ function recuperar_documentacion_form_shortcode() {
         }
 
         function rdocRemoveFile(index) {
-            fileStorage['upload-dni-documento'].splice(index, 1);
+            rdocDniFiles.splice(index, 1);
             rdocRenderFiles();
-        }
-
-        // ====== OPTIMIZACIONES MÓVILES (copiado de hoja-asiento) ======
-        function isMobile() {
-            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
-        }
-
-        async function compressImageForMobile(file, maxSizeMB = 2) {
-            return new Promise((resolve) => {
-                if (!file.type.startsWith('image/')) {
-                    resolve(file);
-                    return;
-                }
-
-                const needsCompression = isMobile() || file.size > (3 * 1024 * 1024);
-                if (!needsCompression) {
-                    resolve(file);
-                    return;
-                }
-
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const img = new Image();
-                
-                img.onload = function() {
-                    let { width, height } = img;
-                    const maxDimension = isMobile() ? 1920 : 2048;
-                    
-                    if (width > height && width > maxDimension) {
-                        height = (height * maxDimension) / width;
-                        width = maxDimension;
-                    } else if (height > maxDimension) {
-                        width = (width * maxDimension) / height;
-                        height = maxDimension;
-                    }
-                    
-                    canvas.width = width;
-                    canvas.height = height;
-                    
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    let quality = 0.8;
-                    let blob = null;
-                    
-                    const compress = () => {
-                        canvas.toBlob((newBlob) => {
-                            if (newBlob && newBlob.size <= maxSizeMB * 1024 * 1024) {
-                                const newFile = new File([newBlob], file.name, {
-                                    type: 'image/jpeg',
-                                    lastModified: Date.now()
-                                });
-                                resolve(newFile);
-                            } else if (quality > 0.1) {
-                                quality -= 0.1;
-                                compress();
-                            } else {
-                                resolve(file);
-                            }
-                        }, 'image/jpeg', quality);
-                    };
-                    
-                    compress();
-                };
-                
-                img.onerror = () => resolve(file);
-                img.src = URL.createObjectURL(file);
-            });
-        }
-
-        function validateFileSize(file) {
-            const maxSize = isMobile() ? 10 * 1024 * 1024 : 20 * 1024 * 1024;
-            
-            if (file.size > maxSize) {
-                const maxSizeMB = Math.round(maxSize / (1024 * 1024));
-                const currentSizeMB = (file.size / (1024 * 1024)).toFixed(1);
-                alert(`⚠️ Archivo "${file.name}" demasiado grande\\n\\n📱 Máximo: ${maxSizeMB}MB\\n📊 Actual: ${currentSizeMB}MB`);
-                return false;
-            }
-            return true;
-        }
-
-        // GESTIÓN PROFESIONAL DE POPUPS (copiado de hoja-asiento)
-        let hiddenPopups = [];
-        
-        function hideAllPopups() {
-            console.log('🚫 Ocultando todos los popups...');
-            
-            // Popups comunes de WordPress/Elementor
-            const popupSelectors = [
-                '.elementor-popup-modal',
-                '.eael-modal',
-                '.pp-modal',
-                '.elementor-lightbox',
-                '[id*="popup"]',
-                '[class*="popup"]',
-                '[class*="modal"]',
-                '[id*="modal"]'
-            ];
-            
-            popupSelectors.forEach(selector => {
-                document.querySelectorAll(selector).forEach(popup => {
-                    if (popup.style.display !== 'none') {
-                        hiddenPopups.push({
-                            element: popup,
-                            originalDisplay: popup.style.display,
-                            originalVisibility: popup.style.visibility,
-                            originalZIndex: popup.style.zIndex
-                        });
-                        
-                        popup.style.display = 'none';
-                        popup.style.visibility = 'hidden';
-                        popup.style.zIndex = '-1';
-                    }
-                });
-            });
-            
-            console.log(`🚫 ${hiddenPopups.length} popups ocultados`);
-        }
-        
-        function restoreAllPopups() {
-            console.log('🔄 Restaurando popups...');
-            
-            hiddenPopups.forEach(popupInfo => {
-                const popup = popupInfo.element;
-                popup.style.display = popupInfo.originalDisplay;
-                popup.style.visibility = popupInfo.originalVisibility;
-                popup.style.zIndex = popupInfo.originalZIndex;
-            });
-            
-            hiddenPopups = [];
-            console.log('✅ Popups restaurados');
         }
 
         // ====== STRIPE PAYMENT ======
@@ -3311,28 +3093,9 @@ function recuperar_documentacion_form_shortcode() {
             formData.append('action', 'rdoc_send_to_tramitfy');
             formData.append('formData', JSON.stringify(data));
 
-            // Procesar archivos con optimizaciones móviles (PATRÓN CORRECTO de renovacion-permiso)
-            const documentFiles = fileStorage['upload-dni-documento'] || [];
-            console.log(`📦 Total archivos a procesar: ${documentFiles.length}`);
-            
-            let processedFiles = 0;
-            for (let index = 0; index < documentFiles.length; index++) {
-                const file = documentFiles[index];
-                console.log(`🔍 Validando archivo ${index}:`, file.name, `${Math.round(file.size/1024)}KB`);
-                
-                if (!validateFileSize(file)) {
-                    console.warn(`⚠️ Archivo ${index} descartado por tamaño:`, file.name);
-                    continue;
-                }
-                
-                console.log(`📎 Procesando archivo ${index}:`, file.name, `${Math.round(file.size/1024)}KB`);
-                const processedFile = await compressImageForMobile(file);
-                console.log(`✅ Archivo ${index} procesado:`, processedFile.name, `${Math.round(processedFile.size/1024)}KB`);
-                formData.append(`upload_dni_documento_${index}`, processedFile);
-                processedFiles++;
-            }
-            
-            console.log(`📊 Archivos finalmente enviados: ${processedFiles}/${documentFiles.length}`);
+            rdocDniFiles.forEach(file => {
+                formData.append('dniDocumento[]', file);
+            });
 
             // Enviar a WordPress para que genere el PDF y lo suba al API
             const response = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
@@ -3414,7 +3177,7 @@ function rdoc_send_emails() {
     $tracking_url = 'https://tramitfy.org/seguimiento/' . $tramite_id;
 
     // Email al cliente
-    $subject_customer = "Confirmación de Solicitud - Recuperación de Documentación";
+    $subject_customer = "✅ Confirmación de Solicitud - Recuperación de Documentación";
     $message_customer = "
     <!DOCTYPE html>
     <html lang='es'>
@@ -3538,7 +3301,7 @@ function rdoc_send_emails() {
                     Estimado/a <strong>$customer_name</strong>,
                 </div>
                 
-                <p>Hemos recibido correctamente su solicitud de recuperación de documentación marítima. Nuestro equipo se encarga de gestionar la tramitación y le mantendremos informado del progreso.</p>
+                <p>Hemos recibido correctamente su solicitud de recuperación de documentación. Nuestro equipo especializado se encargará de gestionar su trámite con la máxima eficiencia.</p>
                 
                 <div class='info-card'>
                     <div class='info-row'>
@@ -3559,8 +3322,13 @@ function rdoc_send_emails() {
                     </div>
                 </div>
                 
+                <div style='background: #e8f4f8; padding: 25px; text-align: center; border-radius: 8px; margin: 25px 0;'>
+                    <h3 style='color: #016d86; margin-bottom: 10px;'>📧 Contacto Profesional</h3>
+                    <p>Le mantendremos informado del progreso por email profesional y le contactaremos si necesitamos documentación adicional (DNI por ambas caras incluido).</p>
+                </div>
+                
                 <p style='margin-top: 25px; color: #6c757d;'>
-                    Le notificaremos por email del estado de su trámite en cada etapa del proceso. Si requiriéramos documentación adicional, nos pondremos en contacto con usted.
+                    Le mantendremos informado sobre el progreso de su solicitud. Recibirá notificaciones por email en cada etapa del proceso.
                 </p>
             </div>
             
@@ -3568,7 +3336,7 @@ function rdoc_send_emails() {
                 <div class='signature'>
                     Atentamente,<br>
                     <span class='company-name'>Equipo Tramitfy</span><br>
-                    <small style='color: #888;'>Servicios de tramitación marítima</small>
+                    <small style='color: #adb5bd;'>Especialistas en Trámites Marítimos</small>
                 </div>
             </div>
         </div>
