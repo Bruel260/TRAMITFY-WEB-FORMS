@@ -190,87 +190,76 @@ function tbv2_render_form() {
     
     tbv2_log('Renderizando formulario TBV2', 'RENDER', 'INFO');
     
-    ?>
-    <div id="tbv2-container" style="max-width: 1200px; margin: 40px auto; padding: 20px; background: #f8f9fa; border-radius: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
-        <h1 style="color: #016d86; text-align: center; margin-bottom: 30px;">
-            🚢 Transferencia Embarcación V2 - FASE 1
-        </h1>
-        
-        <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start;">
-                
-                <!-- COLUMN 1: Estado actual -->
-                <div>
-                    <h3 style="color: #016d86; border-bottom: 2px solid #016d86; padding-bottom: 10px;">
-                        📋 Estado Actual
-                    </h3>
-                    
-                    <div style="background: #e8f5e8; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
-                        <strong>✅ FASE 1: ARQUITECTURA BASE</strong><br>
-                        <small>Sistema de logging, callbacks TPV, estructura de datos</small>
-                    </div>
-                    
-                    <div style="background: #fff3e0; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
-                        <strong>⏳ Pendiente: FASE 2</strong><br>
-                        <small>Backend crítico - Archivos, firma, cálculos</small>
-                    </div>
-                    
-                    <div style="background: #e3f2fd; padding: 15px; border-radius: 6px;">
-                        <strong>🎯 Objetivo Final</strong><br>
-                        <small>Formulario idéntico al original con TPV Redsys</small>
-                    </div>
-                </div>
-                
-                <!-- COLUMN 2: Configuración verificada -->
-                <div>
-                    <h3 style="color: #016d86; border-bottom: 2px solid #016d86; padding-bottom: 10px;">
-                        ⚙️ Configuración Verificada
-                    </h3>
-                    
-                    <?php 
-                    $redsys_config = tbv2_get_redsys_config();
-                    $webhook_config = tbv2_get_webhook_config();
-                    $callback_urls = tbv2_get_callback_urls();
-                    ?>
-                    
-                    <div style="font-family: monospace; font-size: 12px; background: #f5f5f5; padding: 15px; border-radius: 6px;">
-                        <strong>🏦 TPV Redsys:</strong><br>
-                        Modo: <?php echo $redsys_config['mode']; ?><br>
-                        Comercio: <?php echo $redsys_config['merchant_code']; ?><br><br>
-                        
-                        <strong>🔗 Webhook API:</strong><br>
-                        <?php echo substr($webhook_config['webhook_url'], 0, 50) . '...'; ?><br><br>
-                        
-                        <strong>📞 Callbacks:</strong><br>
-                        ✅ Success configurado<br>
-                        ✅ Error configurado<br>
-                        ✅ Notification configurado
-                    </div>
-                </div>
-                
-            </div>
-            
-            <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #016d86, #0891b2); color: white; border-radius: 8px; text-align: center;">
-                <h3 style="margin: 0 0 10px 0;">🧪 Testing FASE 1</h3>
-                <p style="margin: 0; opacity: 0.9;">
-                    Si ves este mensaje, la FASE 1 se ha cargado correctamente sin errores PHP.
-                </p>
-                <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.8;">
-                    Shortcode: <code>[transferencia_barco_v2_nuevo]</code>
-                </p>
-            </div>
-        </div>
-    </div>
+    // Obtener configuraciones
+    $redsys_config = tbv2_get_redsys_config();
+    $webhook_config = tbv2_get_webhook_config();
+    $callback_urls = tbv2_get_callback_urls();
     
-    <script>
-    console.log('🚀 TBV2 FASE 1 - JavaScript cargado correctamente');
-    console.log('📋 Configuración verificada:');
-    console.log('  ✅ Logging system: ACTIVO');
-    console.log('  ✅ TPV Callbacks: CONFIGURADOS'); 
-    console.log('  ✅ Webhook format: DEFINIDO');
-    console.log('  ✅ Sin errores PHP: CONFIRMADO');
-    </script>
-    <?php
+    echo '<div id="tbv2-container" style="max-width: 1200px; margin: 40px auto; padding: 20px; background: #f8f9fa; border-radius: 12px; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', sans-serif;">';
+    echo '<h1 style="color: #016d86; text-align: center; margin-bottom: 30px;">🚢 Transferencia Embarcación V2 - FASE 1</h1>';
+    
+    echo '<div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+    echo '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start;">';
+    
+    // COLUMN 1: Estado actual
+    echo '<div>';
+    echo '<h3 style="color: #016d86; border-bottom: 2px solid #016d86; padding-bottom: 10px;">📋 Estado Actual</h3>';
+    
+    echo '<div style="background: #e8f5e8; padding: 15px; border-radius: 6px; margin-bottom: 15px;">';
+    echo '<strong>✅ FASE 1: ARQUITECTURA BASE</strong><br>';
+    echo '<small>Sistema de logging, callbacks TPV, estructura de datos</small>';
+    echo '</div>';
+    
+    echo '<div style="background: #fff3e0; padding: 15px; border-radius: 6px; margin-bottom: 15px;">';
+    echo '<strong>⏳ Pendiente: FASE 2</strong><br>';
+    echo '<small>Backend crítico - Archivos, firma, cálculos</small>';
+    echo '</div>';
+    
+    echo '<div style="background: #e3f2fd; padding: 15px; border-radius: 6px;">';
+    echo '<strong>🎯 Objetivo Final</strong><br>';
+    echo '<small>Formulario idéntico al original con TPV Redsys</small>';
+    echo '</div>';
+    echo '</div>';
+    
+    // COLUMN 2: Configuración verificada
+    echo '<div>';
+    echo '<h3 style="color: #016d86; border-bottom: 2px solid #016d86; padding-bottom: 10px;">⚙️ Configuración Verificada</h3>';
+    
+    echo '<div style="font-family: monospace; font-size: 12px; background: #f5f5f5; padding: 15px; border-radius: 6px;">';
+    echo '<strong>🏦 TPV Redsys:</strong><br>';
+    echo 'Modo: ' . esc_html($redsys_config['mode']) . '<br>';
+    echo 'Comercio: ' . esc_html($redsys_config['merchant_code']) . '<br><br>';
+    
+    echo '<strong>🔗 Webhook API:</strong><br>';
+    echo esc_html(substr($webhook_config['webhook_url'], 0, 50) . '...') . '<br><br>';
+    
+    echo '<strong>📞 Callbacks:</strong><br>';
+    echo '✅ Success configurado<br>';
+    echo '✅ Error configurado<br>';
+    echo '✅ Notification configurado';
+    echo '</div>';
+    echo '</div>';
+    
+    echo '</div>'; // Cerrar grid
+    
+    echo '<div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #016d86, #0891b2); color: white; border-radius: 8px; text-align: center;">';
+    echo '<h3 style="margin: 0 0 10px 0;">🧪 Testing FASE 1</h3>';
+    echo '<p style="margin: 0; opacity: 0.9;">Si ves este mensaje, la FASE 1 se ha cargado correctamente sin errores PHP.</p>';
+    echo '<p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.8;">Shortcode: <code>[transferencia_barco_v2_nuevo]</code></p>';
+    echo '</div>';
+    
+    echo '</div>'; // Cerrar container principal
+    echo '</div>'; // Cerrar tbv2-container
+    
+    // JavaScript
+    echo '<script>';
+    echo 'console.log("🚀 TBV2 FASE 1 - JavaScript cargado correctamente");';
+    echo 'console.log("📋 Configuración verificada:");';
+    echo 'console.log("  ✅ Logging system: ACTIVO");';
+    echo 'console.log("  ✅ TPV Callbacks: CONFIGURADOS");';
+    echo 'console.log("  ✅ Webhook format: DEFINIDO");';
+    echo 'console.log("  ✅ Sin errores PHP: CONFIRMADO");';
+    echo '</script>';
     
     return ob_get_clean();
 }
@@ -297,5 +286,3 @@ add_action('template_redirect', 'tbv2_handle_tpv_callbacks');
 
 // Log de finalización
 tbv2_log('========== TBV2 NUEVO CARGADO CORRECTAMENTE ==========', 'INIT', 'SUCCESS');
-
-?>
