@@ -41,7 +41,7 @@ if (!defined('TBV2_WEBHOOK_URL')) define('TBV2_WEBHOOK_URL', 'https://tramitfy.o
 // URLs de retorno - Apuntan a la página de WordPress para procesar callbacks
 if (!defined('TBV2_REDSYS_URL_OK')) define('TBV2_REDSYS_URL_OK', 'https://tramitfy.es/transferencia-propiedad-v2/?redsys_result=ok');
 if (!defined('TBV2_REDSYS_URL_KO')) define('TBV2_REDSYS_URL_KO', 'https://tramitfy.es/transferencia-propiedad-v2/?redsys_result=ko');
-if (!defined('TBV2_REDSYS_URL_NOTIFICATION')) define('TBV2_REDSYS_URL_NOTIFICATION', 'https://46-202-128-35.sslip.io/api/temporal/confirm');
+if (!defined('TBV2_REDSYS_URL_NOTIFICATION')) define('TBV2_REDSYS_URL_NOTIFICATION', 'https://tramitfy.org/api/temporal/confirm');
 
 // Asignar URL según modo
 $tbv2_redsys_url = (TBV2_REDSYS_MODE === 'test') ? TBV2_REDSYS_URL_TEST : TBV2_REDSYS_URL_LIVE;
@@ -5634,8 +5634,13 @@ function tbv2_render_scripts() {
                 return;
             }
 
-            // Capturar firma
+            // Capturar firma y guardar persistentemente
             isSignatureCaptured = true;
+            
+            // ✅ CAPTURAR DATOS DE FIRMA PERSISTENTEMENTE
+            window.tbv2SignatureData = signaturePad.toDataURL('image/png');
+            console.log('✅ Firma capturada y guardada persistentemente');
+            console.log('📏 Tamaño datos firma:', window.tbv2SignatureData.length, 'caracteres');
             
             // Actualizar estado visual
             const signatureStatus = document.getElementById('signature-status');
@@ -5653,7 +5658,7 @@ function tbv2_render_scripts() {
             }
 
             closeSignatureModal();
-            console.log('✅ Firma capturada correctamente');
+            console.log('✅ Firma capturada correctamente y guardada en window.tbv2SignatureData');
         }
 
         // Verificar si hay firma al validar página documentos
@@ -7914,23 +7919,42 @@ const TBV2_TEMPORAL = {
             }
         }
         
-        // Buscar firma digital
-        const signatureCanvas = document.querySelector('#signature-pad canvas');
-        if (signatureCanvas) {
-            try {
-                const signatureData = signatureCanvas.toDataURL('image/png');
-                if (signatureData && signatureData !== 'data:image/png;base64,') {
-                    extractedFiles['firmaAutorizacion'] = [{
-                        name: 'firma_autorizacion.png',
-                        base64: signatureData,
-                        size: signatureData.length,
-                        type: 'image/png'
-                    }];
-                    console.log('✅ Firma digital capturada');
+        // Buscar firma digital - PRIORIDAD A DATOS PERSISTENTES
+        let signatureData = null;
+        
+        // 1. Buscar en variable global persistente (desde acceptSignature)
+        if (window.tbv2SignatureData && window.tbv2SignatureData !== 'data:image/png;base64,') {
+            signatureData = window.tbv2SignatureData;
+            console.log('✅ Firma obtenida desde variable persistente');
+        } 
+        // 2. Fallback: Buscar en canvas activo
+        else {
+            const signatureCanvas = document.querySelector('#signature-pad canvas');
+            if (signatureCanvas) {
+                try {
+                    const canvasData = signatureCanvas.toDataURL('image/png');
+                    if (canvasData && canvasData !== 'data:image/png;base64,') {
+                        signatureData = canvasData;
+                        console.log('✅ Firma obtenida desde canvas activo');
+                    }
+                } catch (error) {
+                    console.error('❌ Error leyendo canvas de firma:', error);
                 }
-            } catch (error) {
-                console.error('❌ Error capturando firma:', error);
             }
+        }
+        
+        // Añadir firma si se encontró
+        if (signatureData) {
+            extractedFiles['firmaAutorizacion'] = [{
+                name: 'firma_autorizacion.png',
+                base64: signatureData,
+                size: signatureData.length,
+                type: 'image/png'
+            }];
+            console.log('✅ Firma digital incluida en extractedFiles');
+            console.log('📏 Tamaño de firma:', signatureData.length, 'caracteres');
+        } else {
+            console.log('⚠️ No se encontró firma digital');
         }
         
         return extractedFiles;
