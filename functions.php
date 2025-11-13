@@ -4524,3 +4524,6 @@ require_once get_template_directory() . '/transferencia-moto.php';  // NUEVO
 require_once get_template_directory() . '/recuperar-documentacion.php';
 require_once get_template_directory() . '/consulta-registro.php';  // CONSULTA REGISTRO
 
+// ===== TBV2 NUEVO - DESARROLLO POR FASES =====
+require_once get_template_directory() . '/transferencia-barco-v2-NUEVO.php';  // ✅ FASE 1: TESTING
+
