@@ -1153,7 +1153,7 @@ function tbv2_render_form() {
                     
                     filesData.append('files_data', JSON.stringify(processedFiles));
                     
-                    fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                    fetch(tbv2_ajax.ajax_url, {
                         method: 'POST',
                         body: filesData
                     })
@@ -1176,7 +1176,7 @@ function tbv2_render_form() {
                 paymentData.append('nonce', document.querySelector('[name="tbv2_nonce"]').value);
                 paymentData.append('formData', JSON.stringify(formData));
                 
-                return fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                return fetch(tbv2_ajax.ajax_url, {
                     method: 'POST',
                     body: paymentData
                 })
@@ -1258,6 +1258,13 @@ if (!function_exists('tbv2_enqueue_scripts_safe')) {
         global $post;
         if (isset($post->post_content) && has_shortcode($post->post_content, 'transferencia_barco_v2')) {
             wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
+            
+            // Localizar ajaxurl para JavaScript
+            wp_enqueue_script('jquery');
+            wp_localize_script('jquery', 'tbv2_ajax', array(
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('tbv2_nonce')
+            ));
         }
     }
     add_action('wp_enqueue_scripts', 'tbv2_enqueue_scripts_safe');
