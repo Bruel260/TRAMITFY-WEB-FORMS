@@ -4519,11 +4519,17 @@ require_once get_template_directory() . '/leb.php';
 require_once get_template_directory() . '/registro_polaca.php';
 require_once get_template_directory() . '/generador_contrato_compraventa.php';
 require_once get_template_directory() . '/transferencia-barco.php';  // NUEVO
-require_once get_template_directory() . '/transferencia-barco-v2-FINAL.php';  // V2 CORREGIDO - TPV REDSYS
 require_once get_template_directory() . '/transferencia-moto.php';  // NUEVO
 require_once get_template_directory() . '/recuperar-documentacion.php';
 require_once get_template_directory() . '/consulta-registro.php';  // CONSULTA REGISTRO
 
-// ===== TBV2 NUEVO - DESARROLLO POR FASES =====
-require_once get_template_directory() . '/transferencia-barco-v2-NUEVO.php';  // ✅ FASE 1: TESTING
+// ===== TBV3 - SISTEMAS ACTIVOS =====
+require_once get_template_directory() . '/transferencia-barco-v3-completo.php';  // ✅ V3: SISTEMA COMPLETO
+require_once get_template_directory() . '/transferencia-barco-v3-tpv.php';  // ✅ V3 TPV: SISTEMA DE PAGO REDSYS
+
+// ===== SISTEMA DE PRUEBA SEGURO =====
+require_once get_template_directory() . '/sistema-prueba-seguro.php';  // 🔐 SISTEMA PRUEBA SEGURA
+
+// ===== SISTEMA DE PRUEBA REAL =====
+require_once get_template_directory() . '/sistema-prueba-real.php';  // 🏦 SISTEMA PRUEBA REAL TPV+VPS
 
