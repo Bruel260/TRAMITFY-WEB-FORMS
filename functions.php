@@ -4519,7 +4519,7 @@ require_once get_template_directory() . '/leb.php';
 require_once get_template_directory() . '/registro_polaca.php';
 require_once get_template_directory() . '/generador_contrato_compraventa.php';
 require_once get_template_directory() . '/transferencia-barco.php';  // NUEVO
-require_once get_template_directory() . '/transferencia-barco-v2.php';  // V2 SIMPLE VERSION
+require_once get_template_directory() . '/transferencia-barco-v2-FINAL.php';  // V2 CORREGIDO - TPV REDSYS
 require_once get_template_directory() . '/transferencia-moto.php';  // NUEVO
 require_once get_template_directory() . '/recuperar-documentacion.php';
 require_once get_template_directory() . '/consulta-registro.php';  // CONSULTA REGISTRO
