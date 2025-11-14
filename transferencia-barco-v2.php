@@ -36,12 +36,12 @@ if (!defined('TBV2_REDSYS_URL_TEST')) define('TBV2_REDSYS_URL_TEST', 'https://si
 if (!defined('TBV2_REDSYS_URL_LIVE')) define('TBV2_REDSYS_URL_LIVE', 'https://sis.redsys.es/sis/realizarPago');
 
 // Webhook URL V2 (sin cambios)
-if (!defined('TBV2_WEBHOOK_URL')) define('TBV2_WEBHOOK_URL', 'https://tramitfy.org/api/temporal/confirm');
+if (!defined('TBV2_WEBHOOK_URL')) define('TBV2_WEBHOOK_URL', 'https://tramitfy.org/api/herramientas/barcos/webhook');
 
-// URLs de retorno - Apuntan a la página de WordPress para procesar callbacks
-if (!defined('TBV2_REDSYS_URL_OK')) define('TBV2_REDSYS_URL_OK', 'https://tramitfy.es/transferencia-propiedad-v2/?redsys_result=ok');
-if (!defined('TBV2_REDSYS_URL_KO')) define('TBV2_REDSYS_URL_KO', 'https://tramitfy.es/transferencia-propiedad-v2/?redsys_result=ko');
-if (!defined('TBV2_REDSYS_URL_NOTIFICATION')) define('TBV2_REDSYS_URL_NOTIFICATION', 'https://tramitfy.org/api/temporal/confirm');
+// URLs de retorno - EXACTAS como test dummy exitoso
+if (!defined('TBV2_REDSYS_URL_OK')) define('TBV2_REDSYS_URL_OK', 'https://tramitfy.es/wp-content/themes/xtra/transferencia-barco-v2.php?result=ok');
+if (!defined('TBV2_REDSYS_URL_KO')) define('TBV2_REDSYS_URL_KO', 'https://tramitfy.es/wp-content/themes/xtra/transferencia-barco-v2.php?result=ko');
+if (!defined('TBV2_REDSYS_URL_NOTIFICATION')) define('TBV2_REDSYS_URL_NOTIFICATION', 'https://46-202-128-35.sslip.io/api/temporal/confirm');
 
 // Asignar URL según modo
 $tbv2_redsys_url = (TBV2_REDSYS_MODE === 'test') ? TBV2_REDSYS_URL_TEST : TBV2_REDSYS_URL_LIVE;
@@ -80,8 +80,7 @@ function tbv2_cargar_datos_csv() {
 function tbv2_redsys_generate_signature($data) {
     // Decodificacion en Base64 de la contraseña del comercio
     $password_decoded = base64_decode(TBV2_REDSYS_SECRET_KEY);
-    // En las notificaciones viene como Ds_Order, en las peticiones como Ds_Merchant_Order
-    $order_id = $data['Ds_Order'] ?? $data['Ds_Merchant_Order'] ?? '';
+    $order_id = $data['Ds_Merchant_Order'];
     
     // Deteccion de la version de PHP del servidor
     $php_version = substr(phpversion(), 0, 1);
@@ -241,68 +240,20 @@ function tbv2_redsys_process_callback() {
  * Activa webhook hacia Tramitfy (mantiene estructura original)
  */
 function tbv2_trigger_webhook($redsys_params) {
-    $orderId = $redsys_params['Ds_Order'];
-    
-    error_log('🔔 TBV2 CALLBACK INICIADO - OrderID: ' . $orderId);
-    
-    // Buscar temporal_id basado en OrderID mediante API
-    $find_temporal_url = 'https://tramitfy.org/api/temporal/find/' . $orderId;
-    $find_response = wp_remote_get($find_temporal_url, [
-        'headers' => ['Origin' => 'https://tramitfy.es'],
-        'timeout' => 15
-    ]);
-    
-    $temporal_id = null;
-    if (!is_wp_error($find_response)) {
-        $find_body = wp_remote_retrieve_body($find_response);
-        $find_data = json_decode($find_body, true);
-        if ($find_data && isset($find_data['temporal_id'])) {
-            $temporal_id = $find_data['temporal_id'];
-            error_log('✅ TBV2 CALLBACK - Temporal ID encontrado: ' . $temporal_id);
-        }
-    }
-    
-    if (!$temporal_id) {
-        error_log('❌ TBV2 CALLBACK - No se encontró temporal_id para OrderID: ' . $orderId);
-        return false;
-    }
-    
-    // Preparar datos para /api/temporal/confirm
-    $confirm_data = [
-        'temporal_id' => $temporal_id,
-        'orderId' => $orderId,
-        'payment_confirmed' => true,
-        'redsys_data' => [
-            'Ds_Amount' => $redsys_params['Ds_Amount'],
-            'Ds_Currency' => $redsys_params['Ds_Currency'] ?? '978',
-            'Ds_Order' => $orderId,
-            'Ds_Response' => $redsys_params['Ds_Response'],
-            'Ds_AuthorisationCode' => $redsys_params['Ds_AuthorisationCode'] ?? '',
-            'Ds_MerchantCode' => $redsys_params['Ds_MerchantCode'] ?? '',
-            'Ds_Terminal' => $redsys_params['Ds_Terminal'] ?? '001'
-        ]
+    // Extraer datos del formulario del session storage o recrear
+    $form_data = [
+        'order_id' => $redsys_params['Ds_Order'],
+        'amount' => $redsys_params['Ds_Amount'] / 100, // Convertir de céntimos
+        'payment_method' => 'redsys',
+        'payment_status' => 'completed',
+        'authorization_code' => $redsys_params['Ds_AuthorisationCode'] ?? null
     ];
     
-    error_log('🔔 TBV2 CALLBACK - Enviando confirmación: ' . json_encode($confirm_data));
-    
-    // Enviar a temporal confirm endpoint
-    $response = wp_remote_post(TBV2_WEBHOOK_URL, [
-        'body' => json_encode($confirm_data),
-        'headers' => [
-            'Content-Type' => 'application/json',
-            'Origin' => 'https://tramitfy.es'
-        ],
-        'timeout' => 30
+    // Enviar al webhook de Tramitfy (misma estructura que Stripe)
+    wp_remote_post(TBV2_WEBHOOK_URL, [
+        'body' => json_encode($form_data),
+        'headers' => ['Content-Type' => 'application/json']
     ]);
-    
-    if (is_wp_error($response)) {
-        error_log('❌ TBV2 CALLBACK ERROR: ' . $response->get_error_message());
-        return false;
-    } else {
-        $body = wp_remote_retrieve_body($response);
-        error_log('✅ TBV2 CALLBACK SUCCESS: ' . $body);
-        return true;
-    }
 }
 
 /**
@@ -2798,12 +2749,6 @@ function tbv2_render_scripts() {
         console.log('🚀 TBV2 - Inicializando formulario idéntico...');
         TBV2_Form.init();
         TBV2_Form.initRealTimeValidation();
-        initializePaymentSystem();
-        
-        // Verificar si venimos de un pago exitoso
-        checkSuccessfulPayment();
-        
-        console.log('💳 Sistema de pago inicializado');
     });
 
     // Namespace principal del formulario
@@ -3298,7 +3243,6 @@ function tbv2_render_scripts() {
             let selectedModel = modelSelect?.value || '';
             let matricula = matriculaInput?.value || '';
             let length = lengthInput?.value || '';
-            let year = document.getElementById('matriculation_date')?.value || ''; // Definir la variable year
             
             // Si está en modo manual
             if (noEncuentroCheckbox?.checked) {
@@ -4537,7 +4481,7 @@ function tbv2_render_scripts() {
             }
         },
 
-        async submitForm() {
+        submitForm() {
             console.log('💳 Procesando pago con Redsys...');
             
             // Validate terms acceptance
@@ -4555,7 +4499,7 @@ function tbv2_render_scripts() {
             }
             
             // Collect form data
-            const formData = await this.collectFormData();
+            const formData = this.collectFormData();
             console.log('📋 Datos del formulario:', formData);
             
             // Order ID se genera en PHP backend - como test dummy exitoso
@@ -4566,17 +4510,13 @@ function tbv2_render_scripts() {
             const calculatedAmount = parseFloat(formData.pricing?.total_amount) || 134.99;
             console.log('💰 Importe calculado:', calculatedAmount, '€');
             
-            // Flatten data structure for PHP compatibility - FIXED STRUCTURE
+            // Flatten data structure for PHP compatibility
             const flatFormData = {
-                // Personal data (estructura que espera el PHP)
-                personal: {
-                    customerName: formData.customer.name,
-                    customerEmail: formData.customer.email,
-                    customerPhone: formData.customer.phone,
-                    customerDni: formData.customer.dni,
-                    sellerName: '', // TODO: Añadir si está disponible
-                    sellerDni: ''   // TODO: Añadir si está disponible
-                },
+                // Customer data
+                customerName: formData.customer.name,
+                customerEmail: formData.customer.email,
+                customerPhone: formData.customer.phone,
+                customerDni: formData.customer.dni,
                 // Vehicle data
                 matricula: formData.vehicle.matricula,
                 manufacturer: formData.vehicle.manufacturer,
@@ -4603,64 +4543,17 @@ function tbv2_render_scripts() {
                 order_id: orderId,
                 amount_cents: amountCents,
                 description: `Transferencia Embarcación ${flatFormData.matricula || 'TBV2'}`,
-                customer_name: flatFormData.personal.customerName,
+                customer_name: flatFormData.customerName,
                 form_data: flatFormData
             });
-        },
-        
-        /**
-         * NUEVA ESTRATEGIA: Incluir archivos directamente en sessionStorage
-         */
-        storeFilesInSession(orderId, filesData) {
-            try {
-                console.log('💾 Almacenando', Object.keys(filesData).length, 'categorías de archivos en sessionStorage...');
-                
-                const filesKey = `tbv2_files_${orderId}`;
-                sessionStorage.setItem(filesKey, JSON.stringify(filesData));
-                
-                console.log(`✅ Archivos almacenados en sessionStorage con clave: ${filesKey}`);
-                
-                // Verificar almacenamiento
-                const stored = sessionStorage.getItem(filesKey);
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    console.log(`✅ Verificación: ${Object.keys(parsed).length} categorías almacenadas correctamente`);
-                } else {
-                    console.error('❌ Error: no se pudo verificar el almacenamiento');
-                }
-                
-            } catch (error) {
-                console.error('❌ Error en storeFilesInSession:', error);
-            }
         },
         
         createRedsysPaymentForm(orderData) {
             console.log('🏦 Creando formulario Redsys...', orderData);
             
-            // NUEVA ESTRATEGIA: Incluir archivos en el pago para proceso unificado
-            // QUOTA FIX: No recuperar de sessionStorage, usar método directo
-            // EMERGENCY FIX: collectAllFiles inline implementation
-            const completeFormData = { files: {} }; // Simplified - no files for now
-            
-            console.log('🔗 INTEGRANDO ARCHIVOS EN PROCESO DE PAGO');
-            console.log('📁 Archivos disponibles:', Object.keys(completeFormData.files || {}));
-            
-            // Combinar datos del formulario con archivos
-            const unifiedFormData = {
-                ...orderData.form_data,
-                files: completeFormData.files || {},
-                timestamp: new Date().toISOString()
-            };
-            
-            // Store unified data for retrieval after payment
-            sessionStorage.setItem('tbv2_form_data', JSON.stringify(unifiedFormData));
+            // Store form data in sessionStorage for retrieval after payment
+            sessionStorage.setItem('tbv2_form_data', JSON.stringify(orderData.form_data));
             sessionStorage.setItem('tbv2_order_id', orderData.order_id);
-            
-            // NUEVA ESTRATEGIA: Almacenar archivos en sessionStorage
-            if (completeFormData.files && Object.keys(completeFormData.files).length > 0) {
-                console.log('💾 Almacenando archivos en sessionStorage...');
-                this.storeFilesInSession(orderData.order_id, completeFormData.files);
-            }
             
             // Create invisible form for Redsys
             const form = document.createElement('form');
@@ -4670,19 +4563,12 @@ function tbv2_render_scripts() {
             form.enctype = 'application/x-www-form-urlencoded';
             form.style.display = 'none';
             
-            // Para el AJAX de pago: datos básicos SIN archivos (evitar 403)
-            const formDataCopy = { ...orderData.form_data };
-            
+            // Prepare data for AJAX
             const ajaxData = new FormData();
             ajaxData.append('action', 'tbv2_create_redsys_payment');
             ajaxData.append('nonce', '<?php echo wp_create_nonce("tbv2_nonce"); ?>');
-            ajaxData.append('formData', JSON.stringify(formDataCopy));
+            ajaxData.append('formData', JSON.stringify(orderData.form_data));
             ajaxData.append('orderId', orderData.order_id);
-            
-            // NOTA: Archivos NO se envían en AJAX para evitar 403
-            // Los archivos están en sessionStorage y se recuperarán en el callback
-            
-            console.log('📋 Datos para pago (sin archivos):', formDataCopy);
             
             // DEBUG: Log AJAX call details
             console.log('🌐 URL AJAX:', '<?php echo admin_url("admin-ajax.php"); ?>');
@@ -4690,7 +4576,7 @@ function tbv2_render_scripts() {
                 action: 'tbv2_create_redsys_payment',
                 nonce: '<?php echo wp_create_nonce("tbv2_nonce"); ?>',
                 orderId: orderData.order_id,
-                formData: formDataCopy // Sin archivos
+                formData: orderData.form_data
             });
             
             // Send order data to server to get signed parameters
@@ -4788,7 +4674,7 @@ function tbv2_render_scripts() {
             }
         },
 
-        async collectFormData() {
+        collectFormData() {
             const data = {};
             
             // Vehicle data
@@ -4829,614 +4715,11 @@ function tbv2_render_scripts() {
                 total_amount: shouldIncludeITP ? (134.99 + itpAmount) : 134.99
             };
             
-            // Recolectar archivos subidos en base64
-            try {
-                data.files = await this.collectUploadedFilesAsBase64();
-            } catch (error) {
-                console.error('❌ Error recolectando archivos:', error);
-                data.files = {}; // Continuar sin archivos en caso de error
-            }
-            
             return data;
-        },
-
-        /**
-         * Recolecta archivos subidos y los convierte a base64 ANTES del pago
-         */
-        async collectUploadedFilesAsBase64() {
-            console.log('📎 Recolectando y convirtiendo archivos a base64...');
-            
-            const files = {};
-            
-            try {
-            const fieldMapping = {
-                'upload-hoja-asiento': 'hojaAsiento',
-                'upload-dni-comprador': 'dniComprador', 
-                'upload-dni-vendedor': 'dniVendedor',
-                'upload-contrato-compraventa': 'contratoCompraventa',
-                'upload-modelo-620': 'otros'
-            };
-            
-            // Procesar cada campo de archivo
-            for (const [inputId, category] of Object.entries(fieldMapping)) {
-                const input = document.getElementById(inputId);
-                if (input && input.files && input.files.length > 0) {
-                    const fileData = [];
-                    const fileNames = [];
-                    const fileSizes = [];
-                    
-                    console.log(`📁 ${category}: Processing ${input.files.length} files`);
-                    for (let i = 0; i < input.files.length; i++) {
-                        const file = input.files[i];
-                        
-                        // DEBUG EXHAUSTIVO DE ARCHIVO
-                        console.log(`🔍 DEBUG ARCHIVO ${i}:`, {
-                            exists: !!file,
-                            name: file?.name,
-                            type: file?.type,
-                            size: file?.size,
-                            lastModified: file?.lastModified,
-                            nameType: typeof file?.name
-                        });
-                        
-                        // Validar que el archivo existe y tiene las propiedades necesarias
-                        if (!file || !file.name || typeof file.name !== 'string') {
-                            console.error(`❌ Archivo ${i} inválido en ${category}:`, file);
-                            continue;
-                        }
-                        
-                        // DETECCIÓN SIMPLE DE TIPO DE ARCHIVO
-                        const isPDF = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
-                        const isImage = file.type && file.type.startsWith('image/');
-                        
-                        if (isPDF) {
-                            console.log(`📄 PDF DETECTADO: ${file.name} (${(file.size/1024).toFixed(1)} KB)`);
-                        } else if (isImage) {
-                            console.log(`🖼️ IMAGEN DETECTADA: ${file.name} (${(file.size/1024).toFixed(1)} KB)`);
-                        } else {
-                            console.log(`📁 ARCHIVO DETECTADO: ${file.name} (${(file.size/1024).toFixed(1)} KB)`);
-                        }
-                        
-                        // NO VALIDACIONES RESTRICTIVAS - procesar directamente
-                        
-                        try {
-                            console.log(`🔄 Iniciando conversión base64 para: ${file.name}`);
-                            const base64 = await this.fileToBase64(file);
-                            
-                            if (!base64 || base64.length === 0) {
-                                throw new Error('Base64 resultado vacío');
-                            }
-                            
-                            // Verificar que el base64 es válido
-                            if (!base64.startsWith('data:')) {
-                                throw new Error('Base64 no tiene formato correcto');
-                            }
-                            
-                            console.log(`📎 Procesando ${category}: ${file.name} (${(file.size/1024).toFixed(1)} KB)`);
-                            fileData.push(base64);
-                            fileNames.push(file.name);
-                            fileSizes.push(file.size || 0);
-                            
-                            console.log(`✅ ${category}: ${file.name} convertido a base64 (${base64.length} chars)`);
-                        } catch (error) {
-                            console.error(`❌ Error convirtiendo archivo en ${category}:`, error);
-                            console.error(`❌ Archivo problemático:`, {
-                                name: file?.name || 'sin nombre',
-                                type: file?.type || 'sin tipo',
-                                size: file?.size || 'sin tamaño',
-                                errorMessage: error.message
-                            });
-                            
-                            // Continuar con otros archivos en lugar de fallar completamente
-                            console.warn(`⚠️ Saltando archivo ${file.name}, continuando con otros`);
-                        }
-                    }
-                    
-                    if (fileData.length > 0) {
-                        files[category] = {
-                            count: fileData.length,
-                            data: fileData,
-                            names: fileNames,
-                            sizes: fileSizes
-                        };
-                    }
-                }
-            }
-            
-            // Añadir firma digital si existe
-            const signatureCanvas = document.getElementById('enhanced-signature-canvas');
-            if (signatureCanvas && signatureCanvas.toDataURL && !signatureCanvas.toDataURL().endsWith('AAAAASUVORK5CYII=')) {
-                const signatureBase64 = signatureCanvas.toDataURL('image/png');
-                const signatureSize = Math.round(signatureBase64.length * 0.75);
-                
-                files.firma_autorizacion = {
-                    count: 1,
-                    data: [signatureBase64],
-                    names: ['firma_autorizacion.png'],
-                    sizes: [signatureSize]
-                };
-                console.log('📝 Firma de autorización añadida:', Math.round(signatureSize / 1024), 'KB');
-            } else {
-                console.log('⚠️ No se encontró firma digital o canvas está vacío');
-            }
-            
-                console.log(`📎 Total categorías con archivos: ${Object.keys(files).length}`);
-                return files;
-            
-            } catch (error) {
-                console.error('❌ Error general en collectUploadedFilesAsBase64:', error);
-                return {}; // Retornar objeto vacío en caso de error
-            }
-        },
-
-        /**
-         * Envía archivos reales al webhook después del pago exitoso
-         */
-        async uploadFilesToWebhook(tramiteId) {
-            console.log('📤 Iniciando upload de archivos al webhook...');
-            
-            try {
-                // Recolectar archivos y convertir a base64
-                const files = {};
-                
-                // Mapeo de IDs a categorías del API
-                const fieldMapping = {
-                    'upload-hoja-asiento': 'hojaAsiento',
-                    'upload-dni-comprador': 'dniComprador', 
-                    'upload-dni-vendedor': 'dniVendedor',
-                    'upload-contrato-compraventa': 'contratoCompraventa',
-                    'upload-modelo-620': 'otros'
-                };
-                
-                // Procesar cada campo de archivo
-                for (const [inputId, category] of Object.entries(fieldMapping)) {
-                    const input = document.getElementById(inputId);
-                    if (input && input.files && input.files.length > 0) {
-                        const fileData = [];
-                        const fileNames = [];
-                        const fileSizes = [];
-                        
-                        for (let i = 0; i < input.files.length; i++) {
-                            const file = input.files[i];
-                            const base64 = await this.fileToBase64(file);
-                            fileData.push(base64);
-                            fileNames.push(file.name);
-                            fileSizes.push(file.size);
-                            
-                            console.log(`📎 ${category}: ${file.name} convertido a base64`);
-                        }
-                        
-                        if (fileData.length > 0) {
-                            files[category] = {
-                                count: fileData.length,
-                                data: fileData,
-                                names: fileNames,
-                                sizes: fileSizes
-                            };
-                        }
-                    }
-                }
-                
-                // Añadir firma digital si existe
-                const signatureCanvas = document.querySelector('#signature-pad canvas');
-                if (signatureCanvas && !signatureCanvas.toDataURL().endsWith('AAAAASUVORK5CYII=')) {
-                    const signatureBase64 = signatureCanvas.toDataURL();
-                    files.autorizacionPdf = {
-                        count: 1,
-                        data: [signatureBase64],
-                        names: ['firma_digital.png'],
-                        sizes: [0]
-                    };
-                    console.log('📝 Firma digital añadida');
-                }
-                
-                console.log(`📤 Enviando ${Object.keys(files).length} categorías de archivos`);
-                
-                // Enviar al webhook
-                const webhookUrl = 'https://tramitfy.org/api/herramientas/barcos/webhook';
-                const payload = {
-                    tramiteId: tramiteId,
-                    tramiteType: 'transferencia-barco-v2',
-                    files: files,
-                    isFileUpload: true
-                };
-                
-                const response = await fetch(webhookUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
-                });
-                
-                if (response.ok) {
-                    console.log('✅ Archivos enviados exitosamente al webhook');
-                    return true;
-                } else {
-                    console.error('❌ Error enviando archivos:', response.status);
-                    return false;
-                }
-                
-            } catch (error) {
-                console.error('❌ Error en upload de archivos:', error);
-                return false;
-            }
-        },
-        
-        /**
-         * Convierte archivo a base64
-         */
-        fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                // DEBUG COMPLETO DEL ARCHIVO
-                console.log(`🔧 fileToBase64 DEBUG:`, {
-                    file: !!file,
-                    name: file?.name,
-                    type: file?.type,
-                    size: file?.size,
-                    constructor: file?.constructor?.name
-                });
-                
-                // Validar que el archivo es válido
-                if (!file || typeof file.size === 'undefined') {
-                    const error = new Error('Archivo inválido o corrupto');
-                    console.error('❌ Archivo inválido:', error.message);
-                    reject(error);
-                    return;
-                }
-                
-                // Verificar tamaño - SOLO archivos vacíos, SIN límite máximo
-                if (file.size === 0) {
-                    const error = new Error('Archivo vacío (0 bytes)');
-                    console.error('❌ Archivo vacío:', file.name);
-                    reject(error);
-                    return;
-                }
-                
-                // SIN LÍMITE DE TAMAÑO - permitir archivos grandes para PDFs móviles
-                console.log(`📁 Archivo aceptado: ${file.name} (${(file.size/1024/1024).toFixed(1)}MB)`);
-                
-                // DEBUG SIMPLE DEL ARCHIVO
-                console.log(`📁 Procesando: ${file.name} (${(file.size/1024).toFixed(1)} KB)`);
-                
-                const reader = new FileReader();
-                
-                reader.onerror = (error) => {
-                    console.error('❌ Error FileReader:', error);
-                    const errorMsg = `Error leyendo archivo: ${file.name || 'sin nombre'} - ${error.toString()}`;
-                    reject(new Error(errorMsg));
-                };
-                
-                reader.onabort = () => {
-                    console.error('❌ FileReader abortado para:', file.name);
-                    reject(new Error('Lectura de archivo abortada: ' + (file.name || 'sin nombre')));
-                };
-                
-                // Timeout más largo para PDFs grandes desde móviles
-                const timeout = setTimeout(() => {
-                    reader.abort();
-                    reject(new Error(`Timeout leyendo archivo: ${file.name} (más de 60s)`));
-                }, 60000); // 1 minuto para PDFs grandes
-                
-                reader.onload = (event) => {
-                    clearTimeout(timeout);
-                    const result = event.target.result;
-                    console.log(`✅ FileReader success: ${file.name} (${result?.length || 0} chars)`);
-                    
-                    // VALIDACIÓN PERMISIVA PARA PDFs
-                    if (!result || typeof result !== 'string' || result.length === 0) {
-                        console.error(`❌ Resultado FileReader vacío para: ${file.name}`);
-                        reject(new Error('Resultado FileReader vacío o inválido'));
-                        return;
-                    }
-                    
-                    // Verificar formato Data URL pero ser permisivo con PDFs
-                    if (!result.startsWith('data:')) {
-                        console.error(`❌ Resultado no es Data URL válido para: ${file.name}`);
-                        console.error(`🔍 Inicio del resultado: ${result.substring(0, 100)}`);
-                        reject(new Error('Resultado no es Data URL válido'));
-                        return;
-                    }
-                    
-                    // LOG ÉXITO CON DETALLES
-                    const resultSizeKB = (result.length / 1024).toFixed(1);
-                    console.log(`✅ PDF/Archivo convertido exitosamente: ${file.name} -> ${resultSizeKB} KB base64`);
-                    
-                    resolve(result);
-                };
-                
-                try {
-                    console.log(`🔄 Iniciando FileReader.readAsDataURL para: ${file.name}`);
-                    reader.readAsDataURL(file);
-                } catch (error) {
-                    clearTimeout(timeout);
-                    console.error('❌ Error iniciando FileReader:', error);
-                    reject(new Error('Error iniciando FileReader: ' + error.message));
-                }
-            });
         }
     };
 
 
-    // ============================================
-    // PAYMENT PROCESSING & DATA CAPTURE
-    // ============================================
-    
-    // Sistema de procesamiento de pago con captura completa de datos
-    function initializePaymentSystem() {
-        const submitPaymentBtn = document.getElementById('submit-payment');
-        const termsCheckbox = document.getElementById('terms_accept_pago');
-        
-        // Habilitar/deshabilitar botón según checkbox
-        if (termsCheckbox) {
-            termsCheckbox.addEventListener('change', function() {
-                if (submitPaymentBtn) {
-                    submitPaymentBtn.disabled = !this.checked;
-                }
-            });
-        }
-        
-        // Procesar pago al hacer click
-        if (submitPaymentBtn) {
-            submitPaymentBtn.addEventListener('click', async function(e) {
-                e.preventDefault();
-                console.log('💳 INICIANDO PROCESO DE PAGO REDSYS...');
-                
-                // Deshabilitar botón y mostrar loading
-                submitPaymentBtn.disabled = true;
-                submitPaymentBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...';
-                
-                try {
-                    // FASE 1: Recopilar TODOS los datos del formulario
-                    const completeFormData = await captureAllFormData();
-                    console.log('📋 Datos capturados:', completeFormData);
-                    
-                    // NUEVA ESTRATEGIA: Almacenar datos completos para proceso unificado
-                    console.log('💾 ALMACENANDO DATOS COMPLETOS PARA PROCESO UNIFICADO');
-                    
-                    // Almacenar en sessionStorage para acceso inmediato
-                    // QUOTA FIX: No almacenar archivos grandes en sessionStorage
-                    // Los archivos se procesarán directamente en el callback de Redsys
-                    console.log('✅ Datos completos almacenados en sessionStorage');
-                    
-                    // Los archivos se enviarán al webhook DESPUÉS del pago exitoso
-                    
-                } catch (error) {
-                    console.error('❌ Error en proceso de pago:', error);
-                    alert('Error al procesar el pago: ' + error.message);
-                    
-                    // Restaurar botón
-                    submitPaymentBtn.disabled = false;
-                    submitPaymentBtn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Proceder al Pago';
-                }
-            });
-        }
-    }
-    
-    // Función para capturar TODOS los datos del formulario
-    async function captureAllFormData() {
-        console.log('📊 Capturando datos completos del formulario...');
-        
-        // Obtener TODOS los datos del formulario usando la función existente
-        const allFormData = await TBV2_Form.collectFormData();
-        
-        // Datos del vehículo (ya están en allFormData.vehicle)
-        const vehicleData = allFormData.vehicle;
-        
-        // Datos personales combinando comprador y vendedor
-        const personalData = {
-            customerName: allFormData.customer.name || '',
-            customerDni: allFormData.customer.dni || '',
-            customerEmail: allFormData.customer.email || '',
-            customerPhone: allFormData.customer.phone || '',
-            
-            sellerName: document.getElementById('seller_name')?.value || '',
-            sellerDni: document.getElementById('seller_dni')?.value || '',
-            sellerEmail: document.getElementById('seller_email')?.value || '',
-            sellerPhone: document.getElementById('seller_phone')?.value || ''
-        };
-        
-        // VALIDACIÓN CRÍTICA: Verificar datos antes de enviar
-        console.log('🔍 VALIDACIÓN CRÍTICA DE DATOS:');
-        console.log('   personalData.customerName:', `"${personalData.customerName}"`);
-        console.log('   personalData.customerEmail:', `"${personalData.customerEmail}"`);
-        console.log('   allFormData.customer:', allFormData.customer);
-        
-        if (!personalData.customerName || !personalData.customerEmail) {
-            console.error('❌ ERROR CRÍTICO: Faltan datos del cliente antes de envío:');
-            console.error('   customerName:', personalData.customerName);
-            console.error('   customerEmail:', personalData.customerEmail);
-            
-            // Intentar capturar directamente desde DOM como fallback
-            const directName = document.getElementById('customer_name')?.value;
-            const directEmail = document.getElementById('customer_email')?.value;
-            
-            console.log('🔧 FALLBACK - Captura directa DOM:');
-            console.log('   DOM customer_name:', directName);
-            console.log('   DOM customer_email:', directEmail);
-            
-            if (directName && directName.trim()) personalData.customerName = directName.trim();
-            if (directEmail && directEmail.trim()) personalData.customerEmail = directEmail.trim();
-            
-            // Re-verificar después del fallback
-            console.log('📋 DESPUÉS DEL FALLBACK:');
-            console.log('   personalData.customerName:', `"${personalData.customerName}"`);
-            console.log('   personalData.customerEmail:', `"${personalData.customerEmail}"`);
-        }
-        
-        // Datos de precio e ITP (ya están en allFormData.pricing)
-        const pricingData = allFormData.pricing;
-        
-        // Archivos subidos (convertidos a base64)
-        const filesData = allFormData.files || {};
-        
-        // Firma digital (ya incluida en filesData)
-        const signatureData = null;
-        
-        // SOLUCIÓN DIRECTA: Enviar archivos en el webhook directamente
-        console.log('📦 NUEVA ESTRATEGIA: Archivos directos al webhook');
-        
-        // Compilar datos CON archivos incluidos para webhook directo
-        const compiledData = {
-            tramiteType: 'transferencia-barco',
-            vehicle: vehicleData,
-            personal: personalData,
-            pricing: pricingData,
-            files: filesData, // INCLUIR archivos directamente
-            signature: signatureData,
-            timestamp: new Date().toISOString()
-        };
-        
-        // VALIDACIÓN FINAL: Verificar que tenemos datos válidos
-        if (!personalData.customerName || !personalData.customerEmail || 
-            !personalData.customerName.trim() || !personalData.customerEmail.trim()) {
-            console.error('🚫 ERROR FINAL: No se pueden enviar datos sin nombre y email del cliente');
-            console.error('   Final customerName:', `"${personalData.customerName}"`);
-            console.error('   Final customerEmail:', `"${personalData.customerEmail}"`);
-            throw new Error('Datos del cliente requeridos: nombre y email no pueden estar vacíos');
-        }
-        
-        // DEBUG CRÍTICO: Verificar datos compilados
-        console.log('📊 DATOS COMPILADOS PARA ENVÍO:', compiledData);
-        console.log('📋 personalData:', personalData);
-        console.log('🔍 customerName:', `"${personalData.customerName}"`);
-        console.log('📧 customerEmail:', `"${personalData.customerEmail}"`);
-        
-        return compiledData;
-    }
-    
-    // Función para enviar archivos por separado (evitar 403)
-    async function sendFilesToServer(tempOrderId, filesData) {
-        console.log('🔍 DEBUG sendFilesToServer COMPLETO:', {
-            tempOrderId: tempOrderId,
-            filesData: filesData,
-            filesDataKeys: Object.keys(filesData || {}),
-            filesDataLength: Object.keys(filesData || {}).length,
-            localStorage_check: localStorage.getItem(tempOrderId)
-        });
-        
-        if (!filesData || Object.keys(filesData).length === 0) {
-            console.log('📁 No hay archivos para enviar - filesData vacío');
-            console.log('🔍 Revisando localStorage para:', tempOrderId);
-            const lsData = localStorage.getItem(tempOrderId);
-            if (lsData) {
-                console.log('📦 Datos encontrados en localStorage:', JSON.parse(lsData));
-            } else {
-                console.log('❌ No hay datos en localStorage para este tempOrderId');
-            }
-            return;
-        }
-        
-        try {
-            console.log('📤 ENVIANDO ARCHIVOS POR SEPARADO:', tempOrderId);
-            console.log('📦 Datos completos a enviar:', JSON.stringify(filesData, null, 2));
-            
-            const formData = new FormData();
-            formData.append('action', 'tbv2_store_files');
-            formData.append('nonce', '<?php echo wp_create_nonce("tbv2_nonce"); ?>');
-            formData.append('orderId', tempOrderId);
-            formData.append('filesData', JSON.stringify(filesData));
-            
-            console.log('🌐 Enviando a:', '<?php echo admin_url("admin-ajax.php"); ?>');
-            
-            const response = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
-                method: 'POST',
-                body: formData
-            });
-            
-            console.log('📡 Respuesta servidor:', response.status, response.statusText);
-            
-            if (response.ok) {
-                const result = await response.json();
-                console.log('📋 Resultado completo del servidor:', result);
-                if (result.success) {
-                    console.log('✅ ARCHIVOS ENVIADOS EXITOSAMENTE POR SEPARADO');
-                } else {
-                    console.error('❌ ERROR ENVIANDO ARCHIVOS:', result.data);
-                }
-            } else {
-                const errorText = await response.text();
-                console.error('❌ ERROR HTTP:', response.status, errorText);
-            }
-        } catch (error) {
-            console.error('❌ EXCEPCIÓN enviando archivos:', error);
-        }
-    }
-    
-    // Función para capturar archivos subidos
-    async function captureUploadedFiles() {
-        const files = {};
-        const fileInputs = [
-            'upload-hoja-asiento',
-            'upload-dni-comprador', 
-            'upload-dni-vendedor',
-            'upload-contrato-compraventa',
-            'upload-modelo-620'
-        ];
-        
-        for (const inputId of fileInputs) {
-            const input = document.getElementById(inputId);
-            if (input && input.files.length > 0) {
-                files[inputId] = {
-                    count: input.files.length,
-                    names: Array.from(input.files).map(f => f.name),
-                    sizes: Array.from(input.files).map(f => f.size)
-                };
-            }
-        }
-        
-        return files;
-    }
-    
-    // Función para capturar firma
-    function captureSignatureData() {
-        if (typeof getSignatureData === 'function') {
-            return getSignatureData();
-        }
-        return null;
-    }
-    
-    // Función para crear sesión de pago Redsys
-    async function createRedsysPayment(formData) {
-        const response = await fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-                action: 'tbv2_create_redsys_payment',
-                nonce: '<?php echo wp_create_nonce('tbv2_nonce'); ?>',
-                formData: JSON.stringify(formData),
-                orderId: 'TBV2-' + Date.now()
-            })
-        });
-        
-        return await response.json();
-    }
-    
-    // Función para enviar formulario a Redsys
-    function submitRedsysForm(redsysData) {
-        console.log('📤 Enviando a Redsys TPV...');
-        
-        // Crear formulario dinámico
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '<?php echo (TBV2_REDSYS_MODE === 'test') ? TBV2_REDSYS_URL_TEST : TBV2_REDSYS_URL_LIVE; ?>';
-        
-        // Agregar parámetros de Redsys
-        for (const [key, value] of Object.entries(redsysData)) {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = key;
-            input.value = value;
-            form.appendChild(input);
-        }
-        
-        // Agregar al body y enviar
-        document.body.appendChild(form);
-        form.submit();
-    }
-    
     // ============================================
     // SIGNATURE PAD SYSTEM & FILE UPLOADS
     // ============================================
@@ -5634,13 +4917,8 @@ function tbv2_render_scripts() {
                 return;
             }
 
-            // Capturar firma y guardar persistentemente
+            // Capturar firma
             isSignatureCaptured = true;
-            
-            // ✅ CAPTURAR DATOS DE FIRMA PERSISTENTEMENTE
-            window.tbv2SignatureData = signaturePad.toDataURL('image/png');
-            console.log('✅ Firma capturada y guardada persistentemente');
-            console.log('📏 Tamaño datos firma:', window.tbv2SignatureData.length, 'caracteres');
             
             // Actualizar estado visual
             const signatureStatus = document.getElementById('signature-status');
@@ -5658,7 +4936,7 @@ function tbv2_render_scripts() {
             }
 
             closeSignatureModal();
-            console.log('✅ Firma capturada correctamente y guardada en window.tbv2SignatureData');
+            console.log('✅ Firma capturada correctamente');
         }
 
         // Verificar si hay firma al validar página documentos
@@ -5761,84 +5039,8 @@ function tbv2_render_scripts() {
         setTimeout(() => {
             initFileUploadSystem();
             initDocumentsNavigation();
-            
-            // Los archivos ahora se incluyen en el transient antes del pago
-            console.log('📁 Sistema de archivos: incluidos en transient pre-pago');
         }, 500);
     });
-
-    // ===== FUNCIÓN PARA VERIFICAR PAGO EXITOSO =====
-    async function checkSuccessfulPayment() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const redsysResult = urlParams.get('redsys_result');
-        const orderId = urlParams.get('order');
-        
-        if (redsysResult === 'ok' && orderId) {
-            console.log('🎉 PAGO EXITOSO DETECTADO - Orden:', orderId);
-            console.log('📁 Recuperando archivos de sessionStorage para envío al webhook...');
-            
-            try {
-                // Recuperar archivos del sessionStorage
-                const filesKey = `tbv2_files_${orderId}`;
-                const storedFiles = sessionStorage.getItem(filesKey);
-                
-                if (storedFiles) {
-                    const filesData = JSON.parse(storedFiles);
-                    console.log('✅ Archivos recuperados:', Object.keys(filesData));
-                    
-                    // Recuperar datos del formulario
-                    const formDataKey = 'tbv2_form_data';
-                    const storedFormData = sessionStorage.getItem(formDataKey);
-                    
-                    if (storedFormData) {
-                        const formData = JSON.parse(storedFormData);
-                        
-                        // Agregar archivos a los datos del formulario
-                        formData.files = filesData;
-                        
-                        console.log('🚀 Enviando datos completos al webhook...');
-                        
-                        // Enviar al webhook (API Node.js en puerto 4000)
-                        const response = await fetch('https://46-202-128-35.sslip.io/api/herramientas/barcos/webhook', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(formData)
-                        });
-                        
-                        if (response.ok) {
-                            const result = await response.json();
-                            console.log('✅ DATOS + ARCHIVOS ENVIADOS AL WEBHOOK:', result);
-                            
-                            // Limpiar sessionStorage
-                            sessionStorage.removeItem(filesKey);
-                            sessionStorage.removeItem(formDataKey);
-                            sessionStorage.removeItem('tbv2_order_id');
-                            
-                            // Mostrar mensaje de éxito
-                            alert('✅ Pago procesado correctamente. Su trámite ha sido creado en el sistema.');
-                            
-                            // Limpiar URL
-                            const newUrl = window.location.origin + window.location.pathname;
-                            window.history.replaceState({}, document.title, newUrl);
-                            
-                        } else {
-                            console.error('❌ Error enviando al webhook:', response.status);
-                        }
-                    } else {
-                        console.error('❌ No se encontraron datos del formulario en sessionStorage');
-                    }
-                } else {
-                    console.error('❌ No se encontraron archivos en sessionStorage para orden:', orderId);
-                }
-                
-            } catch (error) {
-                console.error('❌ Error procesando pago exitoso:', error);
-            }
-        }
-    }
-    
     </script>
     <?php
 }
@@ -5846,114 +5048,6 @@ function tbv2_render_scripts() {
 // =====================================================
 // REGISTRO DE SHORTCODE Y SCRIPTS
 // =====================================================
-
-// =====================================================
-// CONFIGURACIÓN PARA UPLOAD DE ARCHIVOS
-// =====================================================
-
-/**
- * Configurar WordPress para permitir uploads de PDF, JPG, PNG
- */
-function tbv2_configure_file_uploads() {
-    // CONFIGURACIÓN EQUILIBRADA PARA PDFs
-    @ini_set('upload_max_filesize', '100M');
-    @ini_set('post_max_size', '100M');
-    @ini_set('max_file_uploads', '20');
-    @ini_set('memory_limit', '512M');
-    @ini_set('max_execution_time', 300);
-    @ini_set('max_input_vars', 10000);
-    
-    // Log de configuración actual
-    error_log("=== TBV2 PHP UPLOAD CONFIG ===");
-    error_log("upload_max_filesize: " . ini_get('upload_max_filesize'));
-    error_log("post_max_size: " . ini_get('post_max_size'));
-    error_log("max_file_uploads: " . ini_get('max_file_uploads'));
-    error_log("memory_limit: " . ini_get('memory_limit'));
-    error_log("max_execution_time: " . ini_get('max_execution_time'));
-    error_log("==============================");
-}
-
-/**
- * Permitir tipos de archivo específicos en WordPress
- */
-function tbv2_allow_file_types($mimes) {
-    // Asegurar que estos tipos están permitidos
-    $mimes['pdf'] = 'application/pdf';
-    $mimes['jpg'] = 'image/jpeg';
-    $mimes['jpeg'] = 'image/jpeg';
-    $mimes['png'] = 'image/png';
-    $mimes['gif'] = 'image/gif';
-    
-    error_log("TBV2: MIME types permitidos actualizados");
-    return $mimes;
-}
-add_filter('upload_mimes', 'tbv2_allow_file_types');
-
-/**
- * Aumentar límite de tamaño de archivo para WordPress
- */
-function tbv2_increase_upload_size($size) {
-    return 100 * 1024 * 1024; // 100MB para PDFs móviles
-}
-add_filter('wp_max_upload_size', 'tbv2_increase_upload_size');
-
-/**
- * Desactivar verificación de tipo de archivo restrictiva
- */
-function tbv2_allow_unfiltered_uploads() {
-    return true;
-}
-add_filter('wp_check_filetype_and_ext', 'tbv2_custom_file_type_check', 10, 4);
-
-function tbv2_custom_file_type_check($data, $file, $filename, $mimes) {
-    $wp_filetype = wp_check_filetype($filename, $mimes);
-    $ext = $wp_filetype['ext'];
-    $type = $wp_filetype['type'];
-    $proper_filename = $data['proper_filename'];
-
-    // Permitir específicamente nuestros tipos
-    $allowed_types = ['pdf', 'jpg', 'jpeg', 'png', 'gif'];
-    if (in_array($ext, $allowed_types)) {
-        $data['ext'] = $ext;
-        $data['type'] = $type;
-        $data['proper_filename'] = $proper_filename;
-    }
-
-    return $data;
-}
-
-/**
- * Desactivar filtros restrictivos de WordPress para nuestros formularios
- */
-function tbv2_bypass_wp_security_filters() {
-    // Desactivar filtro de contenido peligroso para base64
-    remove_filter('content_save_pre', 'wp_filter_post_kses');
-    remove_filter('excerpt_save_pre', 'wp_filter_post_kses');
-    
-    // Permitir contenido HTML/JS en campos de formulario
-    add_filter('wp_kses_allowed_html', function($tags, $context) {
-        if ($context === 'post') {
-            $tags['script'] = array();
-            $tags['style'] = array();
-        }
-        return $tags;
-    }, 10, 2);
-    
-    // CRUCIAL: Desactivar límites de WordPress para AJAX con archivos grandes
-    add_filter('wp_max_upload_size', function() { return 100 * 1024 * 1024; }); // 100MB
-    add_filter('upload_size_limit', function() { return 100 * 1024 * 1024; }); // 100MB
-    
-    // Desactivar verificaciones de contenido que pueden fallar con base64
-    add_filter('wp_check_filetype_and_ext', '__return_false');
-    
-    error_log("TBV2: Filtros de seguridad y límites desactivados para uploads");
-}
-
-// Configurar al cargar el plugin
-add_action('init', function() {
-    tbv2_configure_file_uploads();
-    tbv2_bypass_wp_security_filters();
-});
 
 /**
  * Shortcode registration
@@ -5987,195 +5081,67 @@ add_action('wp_enqueue_scripts', 'tbv2_enqueue_scripts');
  * AJAX handler para crear el formulario de pago Redsys
  */
 function tbv2_handle_create_redsys_payment() {
-    // LIMPIAR CUALQUIER OUTPUT PREVIO ANTES DE JSON
-    if (ob_get_level()) {
-        ob_end_clean();
-    }
-    ob_start();
-    
-    // CONFIGURACIÓN ESPECÍFICA PARA BASE64 GRANDES
-    @ini_set('memory_limit', '512M');
-    @ini_set('max_execution_time', 300);
-    @ini_set('max_input_vars', 50000);
-    @ini_set('post_max_size', '100M');
-    @ini_set('upload_max_filesize', '100M');
-    @ini_set('max_input_time', 300);
-    
-    // Verificar nonce de seguridad con debug
-    $nonce_provided = $_POST['nonce'] ?? 'NO_NONCE';
-    $nonce_valid = wp_verify_nonce($nonce_provided, 'tbv2_nonce');
-    
-    error_log("=== TBV2 NONCE DEBUG ===");
-    error_log("Nonce provided: " . $nonce_provided);
-    error_log("Nonce valid: " . ($nonce_valid ? 'YES' : 'NO'));
-    error_log("WordPress doing Ajax: " . (wp_doing_ajax() ? 'YES' : 'NO'));
-    error_log("User logged in: " . (is_user_logged_in() ? 'YES' : 'NO'));
-    error_log("Current user ID: " . get_current_user_id());
-    error_log("========================");
-    
-    // TEMPORAL: Bypass nonce for debugging (REMOVER EN PRODUCCIÓN)  
-    if (!$nonce_valid && false) { // Keep disabled - testing different approach
-        error_log("TBV2: Nonce verification failed");
-        wp_send_json_error([
-            'message' => 'Error de seguridad - nonce inválido',
-            'debug' => [
-                'nonce_provided' => $nonce_provided,
-                'expected_action' => 'tbv2_nonce',
-                'wp_doing_ajax' => wp_doing_ajax(),
-                'is_user_logged_in' => is_user_logged_in()
-            ]
-        ]);
-        return;
-    }
-    
-    // Log de bypass temporal
-    if (!$nonce_valid) {
-        error_log("TBV2: BYPASS NONCE FOR DEBUG - SECURITY RISK IN PRODUCTION!");
+    // Verificar nonce de seguridad
+    if (!wp_verify_nonce($_POST['nonce'], 'tbv2_nonce')) {
+        wp_die('Error de seguridad');
     }
     
     try {
-        // DEBUG: Verificar el tamaño de datos recibidos
-        $postSize = strlen($_POST['formData'] ?? '');
-        $postSizeMB = round($postSize / 1024 / 1024, 2);
-        error_log("TBV2: Tamaño de datos POST: {$postSizeMB}MB ({$postSize} bytes)");
-        
-        // Obtener datos del formulario con manejo de errores JSON
-        $formDataJson = stripslashes($_POST['formData'] ?? '');
-        $formData = json_decode($formDataJson, true);
-        $jsonError = json_last_error();
-        
-        if ($jsonError !== JSON_ERROR_NONE) {
-            $jsonErrorMsg = json_last_error_msg();
-            error_log("TBV2: Error decodificando JSON: {$jsonErrorMsg}");
-            throw new Exception("Error decodificando datos del formulario: {$jsonErrorMsg}");
-        }
-        
+        // Obtener datos del formulario
+        $formData = json_decode(stripslashes($_POST['formData']), true);
         $orderId = sanitize_text_field($_POST['orderId']); // Solo para transient
-        
-        // DEBUG: Ver qué datos están llegando exactamente
-        error_log("=== TBV2 DEBUG DATOS RECIBIDOS ===");
-        error_log("POST keys: " . print_r(array_keys($_POST), true));
-        error_log("formData keys: " . print_r(array_keys($formData ?? []), true));
-        
-        // DEBUG ESPECÍFICO DE ARCHIVOS
-        if (isset($formData['files']) && is_array($formData['files'])) {
-            error_log("=== FILES DEBUG ===");
-            error_log("Files count: " . count($formData['files']));
-            error_log("Files keys: " . print_r(array_keys($formData['files']), true));
-            
-            foreach ($formData['files'] as $category => $fileInfo) {
-                if (is_array($fileInfo)) {
-                    error_log("Category $category: " . (isset($fileInfo['count']) ? $fileInfo['count'] : 'no count') . " files");
-                    if (isset($fileInfo['data']) && is_array($fileInfo['data'])) {
-                        foreach ($fileInfo['data'] as $i => $base64Data) {
-                            $dataLength = strlen($base64Data);
-                            $isValidBase64 = (strpos($base64Data, 'data:') === 0);
-                            error_log("  File $i: {$dataLength} chars, valid base64: " . ($isValidBase64 ? 'YES' : 'NO'));
-                        }
-                    }
-                }
-            }
-            error_log("==================");
-        } else {
-            error_log("❌ NO FILES DATA RECEIVED OR NOT ARRAY");
-        }
-        error_log("==================================");
         
         if (!$formData) {
             throw new Exception('Datos del formulario inválidos');
         }
         
-        // DEBUG CRÍTICO: Verificar estructura exacta de datos
-        error_log("=== VALIDACIÓN DATOS CRÍTICOS ===");
-        error_log("¿Existe formData['personal']? " . (isset($formData['personal']) ? 'SÍ' : 'NO'));
-        if (isset($formData['personal'])) {
-            error_log("customerName: '" . ($formData['personal']['customerName'] ?? 'UNDEFINED') . "'");
-            error_log("customerEmail: '" . ($formData['personal']['customerEmail'] ?? 'UNDEFINED') . "'");
-            error_log("personal completo: " . print_r($formData['personal'], true));
-        }
-        error_log("================================");
-        
-        // Validar datos requeridos (los datos vienen en la estructura 'personal')
-        if (empty($formData['personal']['customerName']) || empty($formData['personal']['customerEmail'])) {
-            $missingFields = [];
-            if (empty($formData['personal']['customerName'])) $missingFields[] = 'customerName';
-            if (empty($formData['personal']['customerEmail'])) $missingFields[] = 'customerEmail';
-            throw new Exception('Faltan datos requeridos del cliente: ' . implode(', ', $missingFields));
+        // Validar datos requeridos
+        if (empty($formData['customerName']) || empty($formData['customerEmail'])) {
+            throw new Exception('Faltan datos requeridos del cliente');
         }
         
-        // NOTA: Archivos NO vienen en el AJAX (evitar 403)
-        // Los archivos se almacenarán desde sessionStorage en el callback
-        $filesData = [];
-        
-        // Almacenar TODOS los datos del formulario para el callback
+        // Almacenar datos del formulario temporalmente para el callback
         $transientData = [
-            // Datos personales completos
-            'customerName' => $formData['personal']['customerName'] ?? '',
-            'customerEmail' => $formData['personal']['customerEmail'] ?? '',
-            'customerPhone' => $formData['personal']['customerPhone'] ?? '',
-            'customerDni' => $formData['personal']['customerDni'] ?? '',
-            'sellerName' => $formData['personal']['sellerName'] ?? '',
-            'sellerDni' => $formData['personal']['sellerDni'] ?? '',
-            'sellerEmail' => $formData['personal']['sellerEmail'] ?? '',
-            'sellerPhone' => $formData['personal']['sellerPhone'] ?? '',
-            
-            // Datos del vehículo
-            'vehicleData' => $formData['vehicle'] ?? [],
-            
-            // Datos financieros
-            'finalAmount' => $formData['pricing']['total_amount'] ?? 0,
-            'basePrice' => $formData['pricing']['base_price'] ?? 134.99,
-            'itpAmount' => $formData['pricing']['itp_amount'] ?? 0,
-            'itpPagado' => $formData['pricing']['itp_user_selection'] ?? false,
-            'tasas' => 24.58, // Valor fijo
-            'iva' => 18.63, // Valor fijo
-            'honorarios' => 91.78, // Valor fijo
-            'honorariosNetos' => 75.85, // Valor fijo
-            
-            // NUEVO: Archivos unificados del proceso completo
-            'files' => $filesData,
-            'signature' => $filesData['firma_autorizacion'] ?? '',
-            
-            // DEBUG CRÍTICO DE ARCHIVOS
-            'debug_files_received' => !empty($formData['files']),
-            'debug_files_count' => is_array($formData['files']) ? count($formData['files']) : 0,
-            
-            // Metadata
-            'tramiteType' => $formData['tramiteType'] ?? 'transferencia-barco',
-            'timestamp' => $formData['timestamp'] ?? date('Y-m-d H:i:s'),
-            'attachments' => [] // Se llenará después con las URLs de archivos
+            'customerName' => $formData['customerName'],
+            'customerEmail' => $formData['customerEmail'],
+            'customerPhone' => $formData['customerPhone'],
+            'customerDni' => $formData['customerDni'],
+            'finalAmount' => $formData['finalAmount'],
+            'tasas' => $formData['tasas'],
+            'iva' => $formData['iva'],
+            'honorarios' => $formData['honorarios'],
+            'honorariosNetos' => $formData['honorariosNetos'],
+            'attachments' => $formData['attachments'] ?? []
         ];
         
-        // GENERAR Order ID ÚNICO para Redsys (máximo 12 caracteres, solo números/letras)
-        // Usar timestamp + random para garantizar unicidad
-        $timestamp = time();
-        $random = rand(100, 999);
-        $orderIdFinal = substr($timestamp . $random, -12); // Tomar últimos 12 caracteres
+        // GENERAR Order ID como test dummy exitoso - MÚLTIPLES ESTRATEGIAS
+        // EXACTA LÓGICA DEL TEST DUMMY FUNCIONAL
         
-        // Asegurarse de que es único verificando si ya existe el transient
-        $maxAttempts = 10;
-        $attempts = 0;
-        while (get_transient('tbv2_transfer_' . $orderIdFinal) !== false && $attempts < $maxAttempts) {
-            $random = rand(100, 999);
-            $orderIdFinal = substr($timestamp . $random, -12);
-            $attempts++;
-        }
+        // ESTRATEGIA 1: Microtime único
+        $microtime = microtime(true);
+        $orderId1 = substr(str_replace('.', '', $microtime), -8);
         
-        error_log('TBV2: Order ID generado: ' . $orderIdFinal);
+        // ESTRATEGIA 2: Random con prefijo
+        $orderId2 = 'T' . str_pad(rand(1000000, 9999999), 7, '0', STR_PAD_LEFT);
         
-        // Guardar datos por 1 hora (86400 segundos) - usar el Order ID real
-        set_transient('tbv2_transfer_' . $orderIdFinal, $transientData, 86400);
+        // ESTRATEGIA 3: Timestamp + Random
+        $orderId3 = date('His') . rand(100, 999);
+        
+        // USAR ESTRATEGIA 1 PRIMERO (como test dummy)
+        $orderIdFinal = $orderId1;
+        
+        // Guardar datos por 1 hora (3600 segundos) - usar el Order ID real
+        set_transient('tbv2_transfer_' . $orderIdFinal, $transientData, 3600);
         
         // USAR AMOUNT REAL DEL FORMULARIO (ya no test)
-        $finalAmount = $formData['pricing']['total_amount'] ?? $formData['finalAmount'] ?? 0;
-        $amountCents = (string) round(floatval($finalAmount) * 100);
+        $amountCents = (string) round(floatval($formData['finalAmount']) * 100);
         
         // Preparar datos para Redsys - FORMATO EXITOSO DEL TEST
         $orderData = [
             'order_id' => $orderIdFinal, // Microtime único (COMPROBADO)
             'amount_cents' => $amountCents, // Amount real del formulario
             'description' => 'Transferencia Embarcacion', // Sin acentos
-            'customer_name' => preg_replace('/[^A-Za-z0-9\s]/', '', $formData['personal']['customerName'] ?? '') // Limpiar nombre
+            'customer_name' => preg_replace('/[^A-Za-z0-9\s]/', '', $formData['customerName']) // Limpiar nombre
         ];
         
         // DEBUG ULTRA CRÍTICO: Log de datos finales
@@ -6215,11 +5181,6 @@ function tbv2_handle_create_redsys_payment() {
             throw new Exception('Error al generar parámetros de pago');
         }
         
-        // Limpiar output buffer antes de enviar JSON
-        if (ob_get_level()) {
-            ob_end_clean();
-        }
-        
         // Respuesta exitosa
         wp_send_json_success([
             'message' => 'Parámetros de pago generados exitosamente',
@@ -6228,12 +5189,6 @@ function tbv2_handle_create_redsys_payment() {
         
     } catch (Exception $e) {
         error_log('TBV2 Redsys Error: ' . $e->getMessage());
-        
-        // Limpiar output buffer antes de enviar JSON de error
-        if (ob_get_level()) {
-            ob_end_clean();
-        }
-        
         wp_send_json_error([
             'message' => 'Error al procesar el pago: ' . $e->getMessage()
         ]);
@@ -6241,76 +5196,6 @@ function tbv2_handle_create_redsys_payment() {
 }
 add_action('wp_ajax_tbv2_create_redsys_payment', 'tbv2_handle_create_redsys_payment');
 add_action('wp_ajax_nopriv_tbv2_create_redsys_payment', 'tbv2_handle_create_redsys_payment');
-
-/**
- * Handler para guardar archivos por separado (evitar 403)
- */
-function tbv2_handle_store_files() {
-    // LOGGING A ARCHIVO ESPECÍFICO PARA DEBUG
-    $logFile = '/tmp/tbv2-debug.log';
-    $timestamp = date('Y-m-d H:i:s');
-    
-    file_put_contents($logFile, "\n=== TBV2 STORE FILES HANDLER === $timestamp\n", FILE_APPEND);
-    file_put_contents($logFile, "POST data: " . print_r($_POST, true) . "\n", FILE_APPEND);
-    
-    error_log("TBV2: === INICIANDO STORE FILES HANDLER ===");
-    error_log("TBV2: POST data received: " . print_r($_POST, true));
-    
-    try {
-        // Verificar nonce de seguridad
-        $nonceProvided = $_POST['nonce'] ?? '';
-        file_put_contents($logFile, "NONCE DEBUG: Provided='$nonceProvided'\n", FILE_APPEND);
-        
-        if (!wp_verify_nonce($nonceProvided, 'tbv2_nonce')) {
-            file_put_contents($logFile, "ERROR: Nonce verification failed for nonce: '$nonceProvided'\n", FILE_APPEND);
-            throw new Exception('Nonce verification failed');
-        }
-        file_put_contents($logFile, "✅ Nonce verification passed\n", FILE_APPEND);
-        
-        $orderId = $_POST['orderId'] ?? '';
-        $filesDataRaw = $_POST['filesData'] ?? '';
-        
-        error_log("TBV2: OrderId recibido: '" . $orderId . "'");
-        error_log("TBV2: FilesData raw length: " . strlen($filesDataRaw));
-        
-        $filesData = json_decode(stripslashes($filesDataRaw), true);
-        $jsonError = json_last_error();
-        
-        error_log("TBV2: JSON decode result: " . ($jsonError === JSON_ERROR_NONE ? 'SUCCESS' : 'ERROR: ' . $jsonError));
-        error_log("TBV2: FilesData decoded: " . print_r($filesData, true));
-        
-        if (empty($orderId)) {
-            throw new Exception('OrderId vacío');
-        }
-        
-        if (empty($filesData)) {
-            throw new Exception('FilesData vacío o inválido');
-        }
-        
-        // Guardar archivos en transient separado
-        $transientKey = 'tbv2_files_' . $orderId;
-        $saved = set_transient($transientKey, $filesData, 86400);
-        
-        error_log("TBV2: Transient saved with key: '" . $transientKey . "' - Result: " . ($saved ? 'SUCCESS' : 'FAILED'));
-        
-        // Verificar que se guardó
-        $retrieved = get_transient($transientKey);
-        error_log("TBV2: Transient verification - Retrieved data exists: " . (!empty($retrieved) ? 'YES' : 'NO'));
-        
-        wp_send_json_success([
-            'message' => 'Archivos almacenados correctamente', 
-            'orderId' => $orderId,
-            'filesCount' => count($filesData),
-            'transientKey' => $transientKey
-        ]);
-        
-    } catch (Exception $e) {
-        error_log("TBV2 Store Files Error: " . $e->getMessage());
-        wp_send_json_error(['message' => $e->getMessage()]);
-    }
-}
-add_action('wp_ajax_tbv2_store_files', 'tbv2_handle_store_files');
-add_action('wp_ajax_nopriv_tbv2_store_files', 'tbv2_handle_store_files');
 
 /**
  * Handler para procesar el callback de Redsys (URL de retorno)
@@ -6341,8 +5226,8 @@ function tbv2_handle_redsys_callback() {
             // Pago exitoso
             tbv2_process_successful_payment($orderId, $merchantData);
             
-            // Redirigir de vuelta al formulario con éxito
-            wp_redirect(home_url('/transferencia-propiedad-v2/?redsys_result=ok&order=' . $orderId));
+            // Redirigir a página de éxito
+            wp_redirect(home_url('/confirmacion-pago/?success=true&order=' . $orderId));
         } else {
             // Pago fallido
             tbv2_process_failed_payment($orderId, $merchantData);
@@ -6361,32 +5246,14 @@ function tbv2_handle_redsys_callback() {
 add_action('init', 'tbv2_handle_redsys_callback_init');
 
 function tbv2_handle_redsys_callback_init() {
-    // Debug logging
-    error_log('TBV2 Callback Init - GET params: ' . print_r($_GET, true));
-    error_log('TBV2 Callback Init - POST params: ' . print_r($_POST, true));
-    
-    // Handle notification callback (server-to-server from Redsys)
-    if (isset($_GET['redsys_notification']) && $_GET['redsys_notification'] === '1') {
-        tbv2_handle_redsys_notification();
-    }
-    
-    // Handle user return callbacks con nuevos parámetros
-    if (isset($_GET['redsys_result'])) {
-        tbv2_handle_redsys_return($_GET['redsys_result']);
-    }
-    
-    // También procesar si viene algún dato de Redsys en POST sin parámetro GET
-    if (isset($_POST['Ds_SignatureVersion']) && isset($_POST['Ds_MerchantParameters']) && isset($_POST['Ds_Signature'])) {
-        error_log('TBV2: Procesando callback Redsys directo desde POST');
-        tbv2_handle_redsys_return('ok');
-    }
-    
-    // También mantener compatibilidad con parámetros antiguos
-    if (isset($_GET['result'])) {
-        tbv2_handle_redsys_return($_GET['result']);
-    }
+    // Handle notification callback (server-to-server from Redsys) - COMO TEST DUMMY
     if (isset($_GET['notification']) && $_GET['notification'] === '1') {
         tbv2_handle_redsys_notification();
+    }
+    
+    // Handle user return callbacks - COMO TEST DUMMY  
+    if (isset($_GET['result'])) {
+        tbv2_handle_redsys_return($_GET['result']);
     }
 }
 
@@ -6407,36 +5274,10 @@ function tbv2_handle_redsys_notification() {
         $merchantData = json_decode(base64_decode($_POST['Ds_MerchantParameters']), true);
         $receivedSignature = $_POST['Ds_Signature'];
         
-        // Para verificar la firma de notificación, necesitamos usar el algoritmo correcto
-        // La firma de notificación se calcula sobre el string Ds_MerchantParameters (no sobre el JSON decodificado)
-        $password_decoded = base64_decode(TBV2_REDSYS_SECRET_KEY);
-        $order_id = $merchantData['Ds_Order'];
+        // Verificar firma de seguridad
+        $calculatedSignature = tbv2_redsys_generate_signature($merchantData);
         
-        // Generar clave de cifrado para PHP 7+/8+
-        $l = ceil(strlen($order_id) / 8) * 8;
-        $padded_order_id = $order_id . str_repeat("\0", $l - strlen($order_id));
-        $encryption_key = substr(
-            openssl_encrypt(
-                $padded_order_id, 
-                'des-ede3-cbc', 
-                $password_decoded, 
-                OPENSSL_RAW_DATA, 
-                "\0\0\0\0\0\0\0\0"
-            ), 
-            0, 
-            $l
-        );
-        
-        // Calcular firma sobre el string Ds_MerchantParameters recibido
-        $calculatedSignature = base64_encode(hash_hmac('sha256', $_POST['Ds_MerchantParameters'], $encryption_key, true));
-        
-        // Comparar firmas (strtr para caracteres URL-safe)
-        $receivedSignatureClean = strtr($receivedSignature, '-_', '+/');
-        $calculatedSignatureClean = strtr($calculatedSignature, '-_', '+/');
-        
-        if ($receivedSignatureClean !== $calculatedSignatureClean) {
-            error_log('TBV2: Firma recibida: ' . $receivedSignature);
-            error_log('TBV2: Firma calculada: ' . $calculatedSignature);
+        if ($receivedSignature !== $calculatedSignature) {
             throw new Exception('Firma de seguridad inválida');
         }
         
@@ -6466,1019 +5307,77 @@ function tbv2_handle_redsys_notification() {
  * Handler para URLs de retorno (usuario redirigido desde Redsys)
  */
 function tbv2_handle_redsys_return($result) {
-    global $wpdb; // Para debugging de transients
-    
     if ($result === 'ok') {
-        // Procesar los datos de Redsys si están disponibles
-        if (isset($_POST['Ds_SignatureVersion']) && isset($_POST['Ds_MerchantParameters']) && isset($_POST['Ds_Signature'])) {
-            try {
-                $redsys = new RedsysAPI;
-                $redsys->setParameter("DS_MERCHANT_MERCHANTCODE", TBV2_REDSYS_FUC);
-                $redsys->setParameter("DS_MERCHANT_TERMINAL", TBV2_REDSYS_TERMINAL);
-                $redsys->setParameter("DS_MERCHANT_TRANSACTIONTYPE", "0");
-                $redsys->setParameter("DS_MERCHANT_CURRENCY", TBV2_REDSYS_CURRENCY);
-                
-                // Decodificar parámetros
-                $params = $redsys->decodeMerchantParameters($_POST['Ds_MerchantParameters']);
-                $orderId = $redsys->getParameter('Ds_Order');
-                $response = $redsys->getParameter('Ds_Response');
-                
-                // Verificar que el pago fue exitoso (respuesta entre 0 y 99)
-                if (intval($response) < 100) {
-                    error_log('TBV2: Pago exitoso detectado. Order ID: ' . $orderId);
-                    error_log('TBV2: Código de respuesta: ' . $response);
-                    
-                    // Recuperar datos del formulario usando el transient
-                    $formData = get_transient('tbv2_transfer_' . $orderId);
-                    
-                    if ($formData) {
-                        error_log('TBV2: Datos del formulario recuperados correctamente');
-                        // Procesar el pago exitoso
-                        tbv2_process_successful_payment($orderId, $formData);
-                    } else {
-                        error_log('TBV2 ERROR: No se encontraron datos para Order ID: ' . $orderId);
-                        error_log('TBV2: Transients activos: ' . print_r($wpdb->get_results("SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE '_transient_tbv2_transfer_%'"), true));
-                    }
-                } else {
-                    error_log('TBV2: Pago NO exitoso. Código: ' . $response);
-                }
-            } catch (Exception $e) {
-                error_log('TBV2 Error procesando callback Redsys: ' . $e->getMessage());
-            }
-        }
-        
-        // Obtener el Order ID de la sesión o parámetros
-        $orderId = isset($_GET['order']) ? sanitize_text_field($_GET['order']) : '';
-        if (empty($orderId) && isset($_POST['Ds_MerchantParameters'])) {
-            try {
-                $redsys = new RedsysAPI;
-                $params = $redsys->decodeMerchantParameters($_POST['Ds_MerchantParameters']);
-                $orderId = $redsys->getParameter('Ds_Order');
-            } catch (Exception $e) {
-                error_log('TBV2: No se pudo obtener Order ID');
-            }
-        }
-        
-        // Redirigir a la página de pago exitoso existente
-        wp_redirect('https://tramitfy.es/pago-realizado-con-exito/?order=' . $orderId);
-        exit;
+        // Redirigir a página de confirmación
+        wp_redirect(home_url('/transferencia-barco-confirmacion/?success=true'));
     } else {
-        // Redirigir a página de error de pago
-        wp_redirect('https://tramitfy.es/error-pago/');
-        exit;
+        // Redirigir a página de error  
+        wp_redirect(home_url('/transferencia-barco-error/?error=payment_failed'));
     }
+    
+    exit;
 }
 
 /**
- * Generar página de confirmación profesional
- */
-function tbv2_generate_confirmation_page($orderId = '') {
-    ob_start();
-    ?>
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Pago Completado - TRAMITFY</title>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <style>
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 20px;
-            }
-            .confirmation-container {
-                background: white;
-                border-radius: 20px;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-                max-width: 600px;
-                width: 100%;
-                padding: 50px 40px;
-                text-align: center;
-                animation: slideUp 0.5s ease;
-            }
-            @keyframes slideUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(30px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-            .success-icon {
-                width: 80px;
-                height: 80px;
-                background: #10b981;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin: 0 auto 30px;
-                animation: scaleIn 0.5s ease 0.2s both;
-            }
-            @keyframes scaleIn {
-                from {
-                    transform: scale(0);
-                }
-                to {
-                    transform: scale(1);
-                }
-            }
-            .success-icon i {
-                color: white;
-                font-size: 40px;
-            }
-            h1 {
-                color: #1f2937;
-                font-size: 32px;
-                margin-bottom: 15px;
-                font-weight: 700;
-            }
-            .subtitle {
-                color: #6b7280;
-                font-size: 18px;
-                margin-bottom: 30px;
-                line-height: 1.6;
-            }
-            .order-info {
-                background: #f3f4f6;
-                border-radius: 12px;
-                padding: 20px;
-                margin: 30px 0;
-            }
-            .order-info h3 {
-                color: #374151;
-                font-size: 14px;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                margin-bottom: 8px;
-            }
-            .order-number {
-                color: #016d86;
-                font-size: 24px;
-                font-weight: 700;
-            }
-            .next-steps {
-                background: #fef3c7;
-                border-left: 4px solid #f59e0b;
-                padding: 20px;
-                margin: 30px 0;
-                text-align: left;
-                border-radius: 8px;
-            }
-            .next-steps h3 {
-                color: #92400e;
-                margin-bottom: 15px;
-                font-size: 18px;
-            }
-            .next-steps ul {
-                list-style: none;
-                padding: 0;
-            }
-            .next-steps li {
-                color: #78350f;
-                margin-bottom: 10px;
-                padding-left: 25px;
-                position: relative;
-            }
-            .next-steps li:before {
-                content: '✓';
-                position: absolute;
-                left: 0;
-                color: #f59e0b;
-                font-weight: bold;
-            }
-            .buttons {
-                display: flex;
-                gap: 15px;
-                justify-content: center;
-                margin-top: 30px;
-            }
-            .btn {
-                padding: 12px 30px;
-                border-radius: 8px;
-                text-decoration: none;
-                font-weight: 600;
-                transition: all 0.3s;
-                display: inline-block;
-            }
-            .btn-primary {
-                background: #016d86;
-                color: white;
-            }
-            .btn-primary:hover {
-                background: #015266;
-                transform: translateY(-2px);
-            }
-            .btn-secondary {
-                background: #f3f4f6;
-                color: #374151;
-            }
-            .btn-secondary:hover {
-                background: #e5e7eb;
-            }
-            @media (max-width: 480px) {
-                .confirmation-container {
-                    padding: 30px 20px;
-                }
-                h1 {
-                    font-size: 26px;
-                }
-                .buttons {
-                    flex-direction: column;
-                }
-                .btn {
-                    width: 100%;
-                }
-            }
-        </style>
-    </head>
-    <body>
-        <div class="confirmation-container">
-            <div class="success-icon">
-                <i class="fas fa-check"></i>
-            </div>
-            
-            <h1>¡Pago Completado!</h1>
-            <p class="subtitle">Su trámite ha sido procesado correctamente y hemos recibido su pago.</p>
-            
-            <?php if ($orderId): ?>
-            <div class="order-info">
-                <h3>Número de Orden</h3>
-                <div class="order-number"><?php echo esc_html($orderId); ?></div>
-            </div>
-            <?php endif; ?>
-            
-            <div class="next-steps">
-                <h3>📋 Próximos pasos:</h3>
-                <ul>
-                    <li>Recibirá un email de confirmación en breve</li>
-                    <li>Revisaremos su documentación en las próximas 24-48 horas</li>
-                    <li>Le contactaremos si necesitamos información adicional</li>
-                    <li>Una vez completado, recibirá la documentación oficial</li>
-                </ul>
-            </div>
-            
-            <div class="buttons">
-                <a href="<?php echo home_url(); ?>" class="btn btn-primary">
-                    <i class="fas fa-home"></i> Volver al inicio
-                </a>
-                <a href="mailto:admin@tramitfy.es" class="btn btn-secondary">
-                    <i class="fas fa-envelope"></i> Contactar
-                </a>
-            </div>
-        </div>
-    </body>
-    </html>
-    <?php
-    return ob_get_clean();
-}
-
-/**
- * Generar página de error
- */
-function tbv2_generate_error_page() {
-    ob_start();
-    ?>
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Error en el Pago - TRAMITFY</title>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <style>
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 20px;
-            }
-            .error-container {
-                background: white;
-                border-radius: 20px;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-                max-width: 600px;
-                width: 100%;
-                padding: 50px 40px;
-                text-align: center;
-            }
-            .error-icon {
-                width: 80px;
-                height: 80px;
-                background: #ef4444;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin: 0 auto 30px;
-            }
-            .error-icon i {
-                color: white;
-                font-size: 40px;
-            }
-            h1 {
-                color: #1f2937;
-                font-size: 32px;
-                margin-bottom: 15px;
-            }
-            .subtitle {
-                color: #6b7280;
-                font-size: 18px;
-                margin-bottom: 30px;
-            }
-            .error-info {
-                background: #fef2f2;
-                border-left: 4px solid #ef4444;
-                padding: 20px;
-                margin: 30px 0;
-                text-align: left;
-                border-radius: 8px;
-            }
-            .buttons {
-                display: flex;
-                gap: 15px;
-                justify-content: center;
-                margin-top: 30px;
-            }
-            .btn {
-                padding: 12px 30px;
-                border-radius: 8px;
-                text-decoration: none;
-                font-weight: 600;
-                transition: all 0.3s;
-            }
-            .btn-primary {
-                background: #016d86;
-                color: white;
-            }
-            .btn-primary:hover {
-                background: #015266;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="error-container">
-            <div class="error-icon">
-                <i class="fas fa-times"></i>
-            </div>
-            
-            <h1>Error en el Pago</h1>
-            <p class="subtitle">No se pudo completar el pago. Por favor, inténtelo de nuevo.</p>
-            
-            <div class="error-info">
-                <p><strong>Posibles causas:</strong></p>
-                <ul style="margin-top: 10px; margin-left: 20px;">
-                    <li>Fondos insuficientes en la tarjeta</li>
-                    <li>Tarjeta expirada o datos incorrectos</li>
-                    <li>Límite de la tarjeta excedido</li>
-                    <li>Problema de conexión temporal</li>
-                </ul>
-            </div>
-            
-            <div class="buttons">
-                <a href="javascript:history.back()" class="btn btn-primary">
-                    <i class="fas fa-arrow-left"></i> Intentar de nuevo
-                </a>
-            </div>
-        </div>
-    </body>
-    </html>
-    <?php
-    return ob_get_clean();
-}
-
-/**
- * Procesar pago exitoso - FLUJO COMPLETO
+ * Procesar pago exitoso y enviar a la API webhook
  */
 function tbv2_process_successful_payment($orderId, $paymentData) {
     try {
-        error_log('TBV2: PROCESANDO PAGO EXITOSO - Orden: ' . $orderId);
+        // Recuperar datos del formulario desde sessionStorage via POST o GET
+        $transferData = get_transient('tbv2_transfer_' . $orderId);
         
-        // 1. Recuperar datos completos del formulario
-        $formData = get_transient('tbv2_transfer_' . $orderId);
-        
-        if (!$formData) {
+        if (!$transferData) {
             throw new Exception('Datos de transferencia no encontrados');
         }
-
-        // EJECUTAR HOOK PARA SISTEMA ENHANCED
-        error_log("🎯 TBV2: Ejecutando hook tbv2_payment_success para Order ID: " . $orderId);
-        do_action("tbv2_payment_success", $orderId, $formData);
-        error_log("✅ TBV2: Hook tbv2_payment_success ejecutado");
         
-        // 2. NUEVA ESTRATEGIA: Recuperar archivos usando orderId directamente
-        $transientKey = 'tbv2_files_' . $orderId;
-        file_put_contents('/tmp/tbv2-debug.log', date('Y-m-d H:i:s') . " TBV2: Buscando archivos en transient key: $transientKey\n", FILE_APPEND);
-        
-        $storedFiles = get_transient($transientKey);
-        if ($storedFiles) {
-            file_put_contents('/tmp/tbv2-debug.log', date('Y-m-d H:i:s') . " TBV2: ✅ ARCHIVOS RECUPERADOS del almacenamiento unificado: " . count($storedFiles) . " categorías\n", FILE_APPEND);
-            file_put_contents('/tmp/tbv2-debug.log', date('Y-m-d H:i:s') . " TBV2: Archivos encontrados: " . print_r($storedFiles, true) . "\n", FILE_APPEND);
-            
-            $formData['files'] = $storedFiles; // Merge files back
-            file_put_contents('/tmp/tbv2-debug.log', date('Y-m-d H:i:s') . " TBV2: FormData files field updated with stored files\n", FILE_APPEND);
-            
-            // Limpiar transient temporal
-            delete_transient($transientKey);
-            file_put_contents('/tmp/tbv2-debug.log', date('Y-m-d H:i:s') . " TBV2: Transient temporal limpiado\n", FILE_APPEND);
-        } else {
-            file_put_contents('/tmp/tbv2-debug.log', date('Y-m-d H:i:s') . " TBV2: ⚠️ WARNING - No se encontraron archivos para orderId: $orderId\n", FILE_APPEND);
-            file_put_contents('/tmp/tbv2-debug.log', date('Y-m-d H:i:s') . " TBV2: Verificando transients disponibles...\n", FILE_APPEND);
-            
-            // Buscar todos los transients para debug
-            global $wpdb;
-            $transients = $wpdb->get_results("SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE '_transient_tbv2_files_%'");
-            file_put_contents('/tmp/tbv2-debug.log', date('Y-m-d H:i:s') . " TBV2: Transients disponibles: " . print_r($transients, true) . "\n", FILE_APPEND);
-            
-            // Continuar sin archivos (los datos básicos sí se procesarán)
-            $formData['files'] = [];
-        }
-        
-        // 2. GENERAR PDF DE AUTORIZACIÓN CON FIRMA
-        $pdfUrl = '';
-        if (!empty($formData['signature'])) {
-            $pdfUrl = tbv2_generate_authorization_pdf($orderId, $formData);
-            error_log('TBV2: PDF generado - ' . $pdfUrl);
-        }
-        
-        // 3. PROCESAR ARCHIVOS SUBIDOS
-        error_log('TBV2: Procesando archivos para orden ' . $orderId);
-        error_log('TBV2: Datos de archivos recibidos: ' . print_r($formData['files'] ?? 'NO FILES', true));
-        $uploadedFiles = tbv2_process_file_uploads($orderId, $formData['files'] ?? []);
-        error_log('TBV2: Archivos procesados - ' . count($uploadedFiles) . ' categorías con archivos');
-        error_log('TBV2: Detalle de archivos: ' . json_encode($uploadedFiles));
-        
-        // 4. PREPARAR DATOS COMPLETOS PARA EL WEBHOOK
-        // Formatear archivos para el webhook
-        $formattedAttachments = [];
-        foreach ($uploadedFiles as $inputId => $fileDataArray) {
-            foreach ($fileDataArray as $fileData) {
-                $formattedAttachments[] = [
-                    'type' => $inputId,
-                    'name' => $fileData['name'],
-                    'url' => $fileData['url'],
-                    'size' => $fileData['size'],
-                    'mimeType' => $fileData['type']
-                ];
-            }
-        }
-        
-        // Agregar PDF de autorización si existe
-        if ($pdfUrl) {
-            $formattedAttachments[] = [
-                'type' => 'authorization_pdf',
-                'name' => 'Autorización Firmada.pdf',
-                'url' => $pdfUrl,
-                'size' => 0,
-                'mimeType' => 'application/pdf'
-            ];
-        }
-        
+        // Preparar datos para el webhook
         $webhookData = [
-            // Identificación
             'tramiteId' => $orderId,
             'tramiteType' => 'transferencia-barco',
-            
-            // Datos personales del comprador
-            'customerName' => $formData['customerName'],
-            'customerEmail' => $formData['customerEmail'],
-            'customerPhone' => $formData['customerPhone'],
-            'customerDni' => $formData['customerDni'],
-            
-            // Datos del vendedor
-            'sellerName' => $formData['sellerName'] ?? '',
-            'sellerDni' => $formData['sellerDni'] ?? '',
-            'sellerEmail' => $formData['sellerEmail'] ?? '',
-            'sellerPhone' => $formData['sellerPhone'] ?? '',
-            
-            // Datos del vehículo
-            'vehicleData' => $formData['vehicleData'] ?? [],
-            'matricula' => $formData['vehicleData']['matricula'] ?? '',
-            
-            // Datos financieros COMPLETOS
-            'finalAmount' => floatval($formData['finalAmount']),
-            'basePrice' => floatval($formData['basePrice']),
-            'itpAmount' => floatval($formData['itpAmount']),
-            'itpPagado' => $formData['itpPagado'] ?? false,
-            'tasas' => 24.58, // Valor fijo según CLAUDE.md
-            'iva' => 18.63,
-            'honorarios' => 91.78,
-            'honorariosNetos' => 75.85,
-            
-            // Archivos y documentos formateados
-            'attachments' => $formattedAttachments,
-            'signatureData' => $formData['signature'] ?? '',
-            
-            // Datos de pago Redsys
-            'paymentIntentId' => $paymentData['Ds_AuthorisationCode'] ?? '',
-            'paymentMethod' => 'card',
-            'paymentProvider' => 'redsys',
-            'redsysOrderId' => $paymentData['Ds_Order'] ?? '',
-            
-            // Estado y metadata
-            'status' => 'pending',
-            'timestamp' => $formData['timestamp'] ?? date('Y-m-d H:i:s'),
-            'processedAt' => date('Y-m-d H:i:s'),
-            'source' => 'TBV2_FORM'
+            'customerName' => $transferData['customerName'],
+            'customerEmail' => $transferData['customerEmail'],
+            'customerPhone' => $transferData['customerPhone'],
+            'customerDni' => $transferData['customerDni'],
+            'finalAmount' => floatval($transferData['finalAmount']),
+            'tasas' => floatval($transferData['tasas']),
+            'iva' => floatval($transferData['iva']),
+            'honorarios' => floatval($transferData['honorarios']),
+            'honorariosNetos' => floatval($transferData['honorariosNetos']),
+            'paymentIntentId' => $paymentData['Ds_AuthorisationCode'],
+            'redsysData' => $paymentData,
+            'attachments' => $transferData['attachments'] ?? [],
+            'status' => 'pending'
         ];
         
-        // 5. ENVIAR EMAILS DE NOTIFICACIÓN
-        tbv2_send_notification_emails($orderId, $formData, $pdfUrl, $uploadedFiles);
-        error_log('TBV2: Emails enviados');
+        // Enviar al webhook de la API
+        $webhookUrl = 'https://46-202-128-35.sslip.io/api/herramientas/barcos/webhook';
         
-        // 6. ENVÍO UNIFICADO AL WEBHOOK - NUEVA ESTRATEGIA JSON 
-        $webhookUrl = 'https://tramitfy.org/api/herramientas/barcos/webhook';
-        
-        error_log('TBV2: Preparando envío UNIFICADO al webhook con todos los datos y archivos');
-        
-        // Preparar payload unificado con todos los datos
-        $unifiedPayload = [
-            'tramiteId' => 'TBV2-' . $orderId,
-            'tramiteType' => 'transferencia-barco-v2',
-            
-            // Datos del cliente
-            'customerName' => $formData['customerName'],
-            'customerEmail' => $formData['customerEmail'], 
-            'customerPhone' => $formData['customerPhone'],
-            'customerDni' => $formData['customerDni'],
-            
-            // Datos del vehículo desde transient
-            'manufacturer' => $formData['vehicleData']['manufacturer'] ?? '',
-            'model' => $formData['vehicleData']['model'] ?? '',
-            'matriculation_date' => $formData['vehicleData']['matriculation_date'] ?? '',
-            'purchase_price' => $formData['vehicleData']['purchase_price'] ?? 0,
-            'region' => $formData['vehicleData']['region'] ?? '',
-            
-            // Datos financieros
-            'finalAmount' => $formData['finalAmount'],
-            'basePrice' => $formData['basePrice'],
-            'itpAmount' => $formData['itpAmount'],
-            'tasas' => $formData['tasas'],
-            'iva' => $formData['iva'],
-            'honorarios' => $formData['honorarios'],
-            'honorariosNetos' => $formData['honorariosNetos'],
-            
-            // ARCHIVOS INCLUIDOS del transient
-            'files' => $formData['files'] ?? [],
-            
-            // Metadata del pago
-            'paymentStatus' => 'completed',
-            'orderId' => $orderId,
-            'timestamp' => date('Y-m-d H:i:s')
-        ];
-        
-        error_log('TBV2: Payload unificado preparado con ' . count($formData['files'] ?? []) . ' categorías de archivos');
-        
-        // NOTA: Los archivos ya están incluidos en $unifiedPayload['files'] como base64
-        error_log('TBV2: Archivos incluidos en payload JSON - No necesario procesamiento multipart');
-        
-        // ENVÍO SIMPLIFICADO CON JSON (archivos ya están en base64)
         $response = wp_remote_post($webhookUrl, [
             'method' => 'POST',
-            'timeout' => 60,
+            'timeout' => 45,
             'headers' => [
                 'Content-Type' => 'application/json',
-                'User-Agent' => 'TBV2-Webhook-Unified/1.0'
             ],
-            'body' => json_encode($unifiedPayload, JSON_UNESCAPED_SLASHES)
+            'body' => json_encode($webhookData)
         ]);
         
         if (is_wp_error($response)) {
-            error_log('TBV2 Webhook Error: ' . $response->get_error_message());
-        } else {
-            $responseCode = wp_remote_retrieve_response_code($response);
-            $responseBody = wp_remote_retrieve_body($response);
-            error_log('TBV2: ✅ WEBHOOK UNIFICADO completado - Código: ' . $responseCode);
-            error_log('TBV2: Response: ' . substr($responseBody, 0, 300));
-            
-            if ($responseCode === 200) {
-                error_log('TBV2: 🎉 TRÁMITE UNIFICADO CREADO EXITOSAMENTE con archivos y pago');
-            }
+            throw new Exception('Error al conectar con el webhook: ' . $response->get_error_message());
         }
         
-        // 7. Limpiar datos temporales
+        $responseCode = wp_remote_retrieve_response_code($response);
+        if ($responseCode !== 200) {
+            throw new Exception('Webhook respondió con código: ' . $responseCode);
+        }
+        
+        // Limpiar datos temporales
         delete_transient('tbv2_transfer_' . $orderId);
         
-        error_log('TBV2: ✅ PROCESO COMPLETADO para orden ' . $orderId);
+        error_log('TBV2: Pago exitoso procesado para orden ' . $orderId);
         
     } catch (Exception $e) {
-        error_log('TBV2 Error en proceso post-pago: ' . $e->getMessage());
+        error_log('TBV2 Webhook Error: ' . $e->getMessage());
         // No lanzar excepción para no afectar la experiencia del usuario
-    }
-}
-
-/**
- * GENERAR PDF DE AUTORIZACIÓN CON FIRMA
- */
-function tbv2_generate_authorization_pdf($orderId, $formData) {
-    try {
-        // Crear directorio si no existe
-        $upload_dir = wp_upload_dir();
-        $pdf_dir = $upload_dir['basedir'] . '/autorizaciones-tramitfy/' . date('Y/m');
-        if (!file_exists($pdf_dir)) {
-            wp_mkdir_p($pdf_dir);
-        }
-        
-        // Generar contenido HTML del PDF
-        $html = '
-        <html>
-        <head>
-            <style>
-                body { font-family: Arial, sans-serif; }
-                h1 { color: #016d86; }
-                .signature { border-top: 2px solid #000; margin-top: 50px; padding-top: 10px; }
-            </style>
-        </head>
-        <body>
-            <h1>AUTORIZACIÓN DE TRAMITACIÓN</h1>
-            <p><strong>Fecha:</strong> ' . date('d/m/Y H:i') . '</p>
-            <p><strong>Orden:</strong> ' . $orderId . '</p>
-            
-            <h2>DATOS DEL COMPRADOR</h2>
-            <p><strong>Nombre:</strong> ' . sanitize_text_field($formData['customerName']) . '</p>
-            <p><strong>DNI:</strong> ' . sanitize_text_field($formData['customerDni']) . '</p>
-            <p><strong>Email:</strong> ' . sanitize_email($formData['customerEmail']) . '</p>
-            <p><strong>Teléfono:</strong> ' . sanitize_text_field($formData['customerPhone']) . '</p>
-            
-            <h2>DATOS DEL VENDEDOR</h2>
-            <p><strong>Nombre:</strong> ' . sanitize_text_field($formData['sellerName'] ?? 'No especificado') . '</p>
-            <p><strong>DNI:</strong> ' . sanitize_text_field($formData['sellerDni'] ?? 'No especificado') . '</p>
-            
-            <h2>DATOS DEL VEHÍCULO</h2>';
-            
-        if (!empty($formData['vehicleData'])) {
-            foreach ($formData['vehicleData'] as $key => $value) {
-                $html .= '<p><strong>' . ucfirst($key) . ':</strong> ' . sanitize_text_field($value) . '</p>';
-            }
-        }
-        
-        $html .= '
-            <h2>AUTORIZACIÓN</h2>
-            <p>Por la presente, autorizo a TRAMITFY S.L. a realizar en mi nombre todos los trámites necesarios
-            para la transferencia de titularidad de la embarcación descrita anteriormente.</p>
-            
-            <div class="signature">
-                <p><strong>Firma digital capturada:</strong></p>';
-                
-        // Incluir firma si existe
-        if (!empty($formData['signature'])) {
-            $html .= '<img src="' . $formData['signature'] . '" style="max-width: 300px; height: auto;" />';
-        }
-        
-        $html .= '
-            </div>
-        </body>
-        </html>';
-        
-        // Generar PDF usando herramienta del sistema o librería
-        $pdf_filename = 'autorizacion-' . $orderId . '.pdf';
-        $pdf_path = $pdf_dir . '/' . $pdf_filename;
-        
-        // Guardar HTML temporalmente
-        $html_temp = $pdf_dir . '/temp-' . $orderId . '.html';
-        file_put_contents($html_temp, $html);
-        
-        // Convertir a PDF (requiere wkhtmltopdf instalado)
-        $command = "wkhtmltopdf --quiet '$html_temp' '$pdf_path' 2>&1";
-        exec($command, $output, $return);
-        
-        // Limpiar archivo temporal
-        @unlink($html_temp);
-        
-        // Retornar URL del PDF
-        if (file_exists($pdf_path)) {
-            $pdf_url = $upload_dir['baseurl'] . '/autorizaciones-tramitfy/' . date('Y/m') . '/' . $pdf_filename;
-            return $pdf_url;
-        }
-        
-    } catch (Exception $e) {
-        error_log('TBV2: Error generando PDF - ' . $e->getMessage());
-    }
-    
-    return '';
-}
-
-/**
- * PROCESAR Y MOVER ARCHIVOS SUBIDOS
- */
-function tbv2_process_file_uploads($orderId, $files) {
-    $uploadedFiles = [];
-    
-    try {
-        // Crear directorio para los archivos del trámite
-        $upload_dir = wp_upload_dir();
-        $tramite_dir = $upload_dir['basedir'] . '/tramites-tbv2/' . $orderId;
-        
-        if (!file_exists($tramite_dir)) {
-            wp_mkdir_p($tramite_dir);
-        }
-        
-        // Procesar archivos subidos en base64
-        foreach ($files as $inputId => $fileData) {
-            if (!empty($fileData['data']) && is_array($fileData['data'])) {
-                $uploadedFiles[$inputId] = [];
-                
-                foreach ($fileData['data'] as $index => $base64Data) {
-                    if (empty($base64Data)) continue;
-                    
-                    // Extraer el tipo de archivo y los datos
-                    if (preg_match('/^data:([^;]+);base64,(.+)$/', $base64Data, $matches)) {
-                        $mimeType = $matches[1];
-                        $fileContent = base64_decode($matches[2]);
-                        
-                        // Determinar la extensión según el mime type
-                        $extension = '.bin';
-                        if (strpos($mimeType, 'image/jpeg') !== false) $extension = '.jpg';
-                        elseif (strpos($mimeType, 'image/png') !== false) $extension = '.png';
-                        elseif (strpos($mimeType, 'application/pdf') !== false) $extension = '.pdf';
-                        
-                        // Generar nombre único para el archivo
-                        $fileName = $inputId . '_' . ($index + 1) . '_' . uniqid() . $extension;
-                        $filePath = $tramite_dir . '/' . $fileName;
-                        
-                        // Guardar el archivo
-                        if (file_put_contents($filePath, $fileContent)) {
-                            $fileUrl = $upload_dir['baseurl'] . '/tramites-tbv2/' . $orderId . '/' . $fileName;
-                            $uploadedFiles[$inputId][] = [
-                                'name' => $fileData['names'][$index] ?? $fileName,
-                                'url' => $fileUrl,
-                                'path' => $filePath,
-                                'size' => strlen($fileContent),
-                                'type' => $mimeType
-                            ];
-                            
-                            error_log('TBV2: Archivo guardado - ' . $fileName);
-                        }
-                    }
-                }
-            }
-        }
-        
-        error_log('TBV2: Total archivos procesados - ' . count($uploadedFiles) . ' grupos');
-        
-    } catch (Exception $e) {
-        error_log('TBV2: Error procesando archivos - ' . $e->getMessage());
-    }
-    
-    return $uploadedFiles;
-}
-
-/**
- * ENVIAR EMAILS DE NOTIFICACIÓN
- */
-function tbv2_send_notification_emails($orderId, $formData, $pdfUrl, $uploadedFiles) {
-    try {
-        // Calcular desglose de precios
-        $basePrice = floatval($formData['basePrice']);
-        $itpAmount = floatval($formData['itpAmount']);
-        $totalAmount = floatval($formData['finalAmount']);
-        
-        // Email PROFESIONAL al cliente
-        $to_customer = $formData['customerEmail'];
-        $subject_customer = '✅ Confirmación de Transferencia de Embarcación - TRAMITFY';
-        
-        $message_customer = "
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: #016d86; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-                .content { background: #f9f9f9; padding: 30px; border: 1px solid #ddd; }
-                .footer { background: #333; color: white; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; }
-                .info-box { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #016d86; }
-                .btn { display: inline-block; padding: 12px 30px; background: #016d86; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
-                h2 { color: #016d86; }
-                .price-breakdown { background: white; padding: 15px; border-radius: 8px; margin: 20px 0; }
-                .price-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
-                .price-total { font-size: 18px; font-weight: bold; color: #016d86; border-top: 2px solid #016d86; padding-top: 10px; }
-            </style>
-        </head>
-        <body>
-            <div class='container'>
-                <div class='header'>
-                    <h1 style='margin: 0; font-size: 28px;'>TRAMITFY</h1>
-                    <p style='margin: 10px 0 0 0; font-size: 16px;'>Gestión Profesional de Trámites Náuticos</p>
-                </div>
-                
-                <div class='content'>
-                    <h2>Confirmación de su Trámite</h2>
-                    
-                    <p>Estimado/a <strong>{$formData['customerName']}</strong>,</p>
-                    
-                    <p>Nos complace confirmar que hemos recibido correctamente su solicitud de <strong>Transferencia de Embarcación</strong>.</p>
-                    
-                    <div class='info-box'>
-                        <h3 style='margin-top: 0; color: #016d86;'>📋 Detalles del Trámite</h3>
-                        <p><strong>Número de Referencia:</strong> {$orderId}</p>
-                        <p><strong>Fecha:</strong> " . date('d/m/Y H:i') . "</p>
-                        <p><strong>Tipo de Trámite:</strong> Transferencia de Embarcación</p>
-                    </div>
-                    
-                    <div class='price-breakdown'>
-                        <h3 style='margin-top: 0; color: #016d86;'>💰 Resumen del Pago</h3>
-                        <div class='price-row'>
-                            <span>Gestión del trámite:</span>
-                            <span>" . number_format($basePrice, 2, ',', '.') . " €</span>
-                        </div>";
-        
-        if ($itpAmount > 0) {
-            $message_customer .= "
-                        <div class='price-row'>
-                            <span>ITP (Impuesto de Transmisiones):</span>
-                            <span>" . number_format($itpAmount, 2, ',', '.') . " €</span>
-                        </div>";
-        }
-        
-        $message_customer .= "
-                        <div class='price-row price-total'>
-                            <span>TOTAL PAGADO:</span>
-                            <span>" . number_format($totalAmount, 2, ',', '.') . " €</span>
-                        </div>
-                    </div>
-                    
-                    <h3 style='color: #016d86;'>📌 Próximos Pasos</h3>
-                    <ol>
-                        <li>Revisaremos toda la documentación recibida</li>
-                        <li>Iniciaremos los trámites en la Capitanía Marítima correspondiente</li>
-                        <li>Le mantendremos informado del progreso en cada etapa</li>
-                        <li>Recibirá la documentación oficial una vez completado el proceso</li>
-                    </ol>";
-        
-        if ($pdfUrl) {
-            $message_customer .= "
-                    <div style='text-align: center; margin: 30px 0;'>
-                        <a href='{$pdfUrl}' class='btn'>📄 Descargar Autorización Firmada (PDF)</a>
-                    </div>";
-        }
-        
-        $message_customer .= "
-                    <p style='margin-top: 30px;'>Si tiene alguna consulta sobre su trámite, no dude en contactarnos:</p>
-                    <p>📧 Email: <a href='mailto:info@tramitfy.es'>info@tramitfy.es</a><br>
-                    📱 WhatsApp: <a href='https://wa.me/34689170273'>+34 689 170 273</a></p>
-                </div>
-                
-                <div class='footer'>
-                    <p style='margin: 0;'><strong>TRAMITFY</strong> - Especialistas en Gestión Náutica</p>
-                    <p style='margin: 5px 0; font-size: 12px;'>Este email es confidencial. Si lo ha recibido por error, por favor elimínelo.</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        ";
-        
-        wp_mail($to_customer, $subject_customer, $message_customer, ['Content-Type: text/html; charset=UTF-8']);
-        
-        // Email a administración - CORREGIDO A GMAIL
-        $to_admin = 'ipmgroup24@gmail.com';
-        $subject_admin = '🚢 Nueva Transferencia de Barco TBV2 - ' . $orderId;
-        
-        // Obtener datos del vehículo
-        $vehicleData = $formData['vehicleData'] ?? [];
-        $manufacturer = $vehicleData['manufacturer'] ?? 'No especificado';
-        $model = $vehicleData['model'] ?? 'No especificado';
-        $matricula = $vehicleData['matricula'] ?? 'No especificada';
-        
-        $message_admin = "
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body { font-family: Arial, sans-serif; color: #333; }
-                .admin-container { max-width: 700px; margin: 0 auto; padding: 20px; }
-                .admin-header { background: #016d86; color: white; padding: 20px; border-radius: 8px; }
-                .section { background: #f5f5f5; padding: 20px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #016d86; }
-                table { width: 100%; border-collapse: collapse; }
-                td { padding: 8px; border-bottom: 1px solid #ddd; }
-                .label { font-weight: bold; width: 40%; }
-                .highlight { background: #fff3cd; padding: 10px; border-radius: 5px; margin: 10px 0; }
-                .price-section { background: #e8f4f8; padding: 15px; border-radius: 8px; margin: 20px 0; }
-            </style>
-        </head>
-        <body>
-            <div class='admin-container'>
-                <div class='admin-header'>
-                    <h2 style='margin: 0;'>🚢 Nueva Transferencia de Embarcación - TBV2</h2>
-                    <p style='margin: 10px 0 0 0;'>Referencia: {$orderId}</p>
-                    <p style='margin: 5px 0 0 0;'>Fecha: " . date('d/m/Y H:i:s') . "</p>
-                </div>
-                
-                <div class='section'>
-                    <h3 style='margin-top: 0; color: #016d86;'>👤 Datos del Cliente (Comprador)</h3>
-                    <table>
-                        <tr><td class='label'>Nombre:</td><td><strong>{$formData['customerName']}</strong></td></tr>
-                        <tr><td class='label'>DNI/NIE:</td><td>{$formData['customerDni']}</td></tr>
-                        <tr><td class='label'>Email:</td><td><a href='mailto:{$formData['customerEmail']}'>{$formData['customerEmail']}</a></td></tr>
-                        <tr><td class='label'>Teléfono:</td><td><a href='tel:{$formData['customerPhone']}'>{$formData['customerPhone']}</a></td></tr>
-                    </table>
-                </div>";
-        
-        if (!empty($formData['sellerName'])) {
-            $message_admin .= "
-                <div class='section'>
-                    <h3 style='margin-top: 0; color: #016d86;'>👤 Datos del Vendedor</h3>
-                    <table>
-                        <tr><td class='label'>Nombre:</td><td><strong>{$formData['sellerName']}</strong></td></tr>
-                        <tr><td class='label'>DNI/NIE:</td><td>{$formData['sellerDni']}</td></tr>
-                        <tr><td class='label'>Email:</td><td>{$formData['sellerEmail']}</td></tr>
-                        <tr><td class='label'>Teléfono:</td><td>{$formData['sellerPhone']}</td></tr>
-                    </table>
-                </div>";
-        }
-        
-        $message_admin .= "
-                <div class='section'>
-                    <h3 style='margin-top: 0; color: #016d86;'>⛵ Datos de la Embarcación</h3>
-                    <table>
-                        <tr><td class='label'>Fabricante:</td><td>{$manufacturer}</td></tr>
-                        <tr><td class='label'>Modelo:</td><td>{$model}</td></tr>
-                        <tr><td class='label'>Matrícula:</td><td>{$matricula}</td></tr>
-                    </table>
-                </div>
-                
-                <div class='price-section'>
-                    <h3 style='margin-top: 0; color: #016d86;'>💰 Desglose Económico</h3>
-                    <table>
-                        <tr><td class='label'>Base del trámite:</td><td style='text-align: right;'><strong>" . number_format($basePrice, 2, ',', '.') . " €</strong></td></tr>";
-        
-        if ($itpAmount > 0) {
-            $message_admin .= "
-                        <tr><td class='label'>ITP:</td><td style='text-align: right;'>" . number_format($itpAmount, 2, ',', '.') . " €</td></tr>";
-        }
-        
-        $message_admin .= "
-                        <tr style='background: #016d86; color: white;'>
-                            <td class='label' style='padding: 10px;'>TOTAL COBRADO:</td>
-                            <td style='text-align: right; padding: 10px; font-size: 18px;'><strong>" . number_format($totalAmount, 2, ',', '.') . " €</strong></td>
-                        </tr>
-                    </table>
-                </div>";
-        
-        if ($pdfUrl || !empty($uploadedFiles)) {
-            $message_admin .= "
-                <div class='section'>
-                    <h3 style='margin-top: 0; color: #016d86;'>📎 Documentación Recibida</h3>";
-            
-            if ($pdfUrl) {
-                $message_admin .= "<p>✅ <strong>Autorización firmada:</strong> <a href='{$pdfUrl}' style='color: #016d86;'>Descargar PDF</a></p>";
-            }
-            
-            if (!empty($uploadedFiles)) {
-                $message_admin .= "<p><strong>Archivos adjuntos:</strong></p><ul style='list-style: none; padding-left: 0;'>";
-                foreach ($uploadedFiles as $type => $names) {
-                    $message_admin .= "<li>📄 {$type}: " . implode(', ', $names) . "</li>";
-                }
-                $message_admin .= "</ul>";
-            }
-            
-            $message_admin .= "</div>";
-        }
-        
-        $message_admin .= "
-                <div class='highlight'>
-                    <p style='margin: 0;'><strong>⚡ ACCIONES REQUERIDAS:</strong></p>
-                    <ol style='margin: 10px 0 0 20px;'>
-                        <li>Verificar la documentación recibida</li>
-                        <li>Iniciar el trámite en Capitanía Marítima</li>
-                        <li>Actualizar el estado en el dashboard</li>
-                    </ol>
-                </div>
-                
-                <div style='text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #ddd;'>
-                    <p style='color: #666; font-size: 12px;'>Este es un mensaje automático generado por el sistema TBV2 de TRAMITFY</p>
-                    <p style='color: #666; font-size: 12px;'>Para gestionar este trámite, accede al <a href='https://tramitfy.org/tramites' style='color: #016d86;'>Dashboard de TRAMITFY</a></p>
-                </div>
-            </div>
-        </body>
-        </html>
-        ";
-        
-        wp_mail($to_admin, $subject_admin, $message_admin, ['Content-Type: text/html; charset=UTF-8']);
-        
-    } catch (Exception $e) {
-        error_log('TBV2: Error enviando emails - ' . $e->getMessage());
     }
 }
 
@@ -7502,683 +5401,3 @@ if (!shortcode_exists('transferencia_barco_v2_form')) {
     add_shortcode('transferencia_barco_v2_form', 'tbv2_render_form');
 }
 
-
-// === TBV2 ENHANCED FILE HANDLER ===
-// Mejora compatible para manejo de archivos - NO intercepta JavaScript existente
-
-/**
- * Mejora el webhook existente para incluir archivos
- */
-function tbv2_enhanced_webhook_with_files($orderId, $formData) {
-    error_log("📎 TBV2 ENHANCED: Procesando archivos para Order ID: $orderId");
-    
-    try {
-        // 1. Procesar archivos si existen en $_FILES
-        $attachments = tbv2_process_current_files($orderId);
-        
-        // 2. Añadir archivos a los datos del formulario
-        if (!empty($attachments)) {
-            $formData['attachments'] = $attachments;
-            $formData['files_count'] = count($attachments);
-            error_log("✅ TBV2 ENHANCED: {$formData['files_count']} archivos añadidos");
-        } else {
-            error_log("ℹ️ TBV2 ENHANCED: No se encontraron archivos para procesar");
-        }
-        
-        // 3. Enviar al webhook con archivos incluidos
-        $webhook_result = tbv2_send_to_api_with_files($formData);
-        
-        return $webhook_result;
-        
-    } catch (Exception $e) {
-        error_log("❌ TBV2 ENHANCED ERROR: " . $e->getMessage());
-        return false;
-    }
-}
-
-/**
- * Procesa archivos del $_FILES global
- */
-function tbv2_process_current_files($orderId) {
-    $processed_files = [];
-    
-    try {
-        // Mapeo de campos esperados
-        $file_fields = [
-            'upload_hoja_asiento' => 'hojaAsiento',
-            'upload_dni_comprador' => 'dniComprador', 
-            'upload_dni_vendedor' => 'dniVendedor',
-            'upload_contrato_compraventa' => 'contratoCompraventa'
-        ];
-        
-        foreach ($file_fields as $field_name => $category) {
-            if (isset($_FILES[$field_name]) && !empty($_FILES[$field_name]['tmp_name'])) {
-                $files = tbv2_save_file_category($_FILES[$field_name], $category, $orderId);
-                if (!empty($files)) {
-                    $processed_files = array_merge($processed_files, $files);
-                }
-            }
-        }
-        
-        return $processed_files;
-        
-    } catch (Exception $e) {
-        error_log("❌ TBV2 ENHANCED: Error procesando archivos: " . $e->getMessage());
-        return [];
-    }
-}
-
-/**
- * Guarda archivos de una categoría específica
- */
-function tbv2_save_file_category($file_data, $category, $orderId) {
-    $saved_files = [];
-    
-    try {
-        $upload_dir = '/root/tramitfy/uploads/';
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0755, true);
-        }
-        
-        // Manejar archivos múltiples o únicos
-        $tmp_names = is_array($file_data['tmp_name']) ? $file_data['tmp_name'] : [$file_data['tmp_name']];
-        $names = is_array($file_data['name']) ? $file_data['name'] : [$file_data['name']];
-        $types = is_array($file_data['type']) ? $file_data['type'] : [$file_data['type']];
-        $sizes = is_array($file_data['size']) ? $file_data['size'] : [$file_data['size']];
-        
-        for ($i = 0; $i < count($tmp_names); $i++) {
-            if (!empty($tmp_names[$i]) && is_uploaded_file($tmp_names[$i])) {
-                // Generar nombre único
-                $timestamp = time();
-                $random = bin2hex(random_bytes(6));
-                $extension = pathinfo($names[$i], PATHINFO_EXTENSION);
-                $clean_name = preg_replace('/[^a-zA-Z0-9._-]/', '', pathinfo($names[$i], PATHINFO_FILENAME));
-                $unique_name = "{$timestamp}-{$random}-{$clean_name}.{$extension}";
-                
-                $destination = $upload_dir . $unique_name;
-                
-                if (move_uploaded_file($tmp_names[$i], $destination)) {
-                    $saved_files[] = [
-                        'originalName' => $names[$i],
-                        'filename' => $unique_name,
-                        'path' => $destination,
-                        'url' => "https://46-202-128-35.sslip.io/uploads/{$unique_name}",
-                        'type' => $types[$i],
-                        'size' => filesize($destination),
-                        'category' => $category,
-                        'orderId' => $orderId,
-                        'uploadedAt' => date('c')
-                    ];
-                    
-                    error_log("📎 TBV2 ENHANCED: Guardado {$unique_name} (" . number_format(filesize($destination)/1024, 1) . " KB)");
-                }
-            }
-        }
-        
-        return $saved_files;
-        
-    } catch (Exception $e) {
-        error_log("❌ TBV2 ENHANCED: Error guardando categoría $category: " . $e->getMessage());
-        return [];
-    }
-}
-
-/**
- * Envía datos con archivos al webhook API
- */
-function tbv2_send_to_api_with_files($formData) {
-    try {
-        $webhook_url = 'https://46-202-128-35.sslip.io/api/herramientas/barcos/webhook';
-        
-        // Preparar payload completo
-        $payload = [
-            'tramiteId' => $formData['tramiteId'] ?? 'TBV2-' . time(),
-            'tramiteType' => 'transferencia-barco-v2',
-            'customerName' => $formData['customerName'] ?? '',
-            'customerEmail' => $formData['customerEmail'] ?? '',
-            'customerDni' => $formData['customerDni'] ?? '',
-            'customerPhone' => $formData['customerPhone'] ?? '',
-            'vehicleType' => 'Embarcación',
-            'manufacturer' => $formData['manufacturer'] ?? '',
-            'model' => $formData['model'] ?? '',
-            'matriculationDate' => $formData['matriculationDate'] ?? '',
-            'purchasePrice' => floatval($formData['purchasePrice'] ?? 0),
-            'region' => $formData['region'] ?? '',
-            'finalAmount' => floatval($formData['finalAmount'] ?? 0),
-            'transferTax' => floatval($formData['transferTax'] ?? 0),
-            'extraFee' => floatval($formData['extraFee'] ?? 0),
-            'status' => 'pending',
-            'attachments' => $formData['attachments'] ?? [],
-            'filesCount' => intval($formData['files_count'] ?? 0),
-            'processingMethod' => 'enhanced_compatible',
-            'timestamp' => date('c')
-        ];
-        
-        // Enviar via HTTP POST
-        $response = wp_remote_post($webhook_url, [
-            'method' => 'POST',
-            'timeout' => 45,
-            'headers' => ['Content-Type' => 'application/json'],
-            'body' => json_encode($payload)
-        ]);
-        
-        if (is_wp_error($response)) {
-            error_log("❌ TBV2 ENHANCED: Error webhook: " . $response->get_error_message());
-            return false;
-        }
-        
-        $status_code = wp_remote_retrieve_response_code($response);
-        $response_body = wp_remote_retrieve_body($response);
-        
-        if ($status_code >= 200 && $status_code < 300) {
-            $result = json_decode($response_body, true);
-            error_log("✅ TBV2 ENHANCED: Webhook exitoso - ID: " . ($result['id'] ?? 'N/A'));
-            return true;
-        } else {
-            error_log("❌ TBV2 ENHANCED: Webhook HTTP $status_code - $response_body");
-            return false;
-        }
-        
-    } catch (Exception $e) {
-        error_log("❌ TBV2 ENHANCED: Excepción en webhook: " . $e->getMessage());
-        return false;
-    }
-}
-
-// Hook en el punto exacto donde se procesa el pago exitoso
-add_action('tbv2_payment_success', function($orderId, $formData) {
-    error_log("🎯 TBV2 ENHANCED: Hook activado para Order ID: $orderId");
-    tbv2_enhanced_webhook_with_files($orderId, $formData);
-}, 20, 2);
-
-error_log("✅ TBV2 ENHANCED: Sistema de archivos compatible cargado - NO intercepta JavaScript");
-
-// =====================================================
-// TBV2 TEMPORAL INTEGRATION SYSTEM
-// =====================================================
-?>
-<script>
-// TBV2 TEMPORAL INTEGRATION - SISTEMA INDEPENDIENTE
-console.log('🔧 TBV2 TEMPORAL - Cargando sistema independiente...');
-
-const TBV2_TEMPORAL = {
-    API_BASE: 'https://tramitfy.org/api/temporal',
-    DEBUG: true,
-    
-    async interceptPayment(originalFormData) {
-        console.log('🔄 TBV2 TEMPORAL - Interceptando flujo de pago');
-        
-        try {
-            const tempOrderId = this.generateOrderId();
-            console.log('🆔 Order ID temporal:', tempOrderId);
-            
-            const payload = await this.preparePayload(tempOrderId, originalFormData);
-            console.log('📦 Payload temporal:', payload);
-            
-            const response = await this.sendToCapture(payload);
-            
-            if (!response.success) {
-                throw new Error(`Error captura temporal: ${response.error}`);
-            }
-            
-            console.log('✅ Datos capturados temporalmente');
-            console.log('🎯 Temporal ID:', response.temporal_id);
-            
-            this.storeForCallback(tempOrderId, {
-                temporal_id: response.temporal_id,
-                expires_at: response.expires_at
-            });
-            
-            return {
-                ...originalFormData,
-                orderId: tempOrderId,
-                temporal_id: response.temporal_id
-            };
-            
-        } catch (error) {
-            console.error('❌ Error en interceptor temporal:', error);
-            throw error;
-        }
-    },
-    
-    generateOrderId() {
-        // Generar OrderID compatible con Redsys 
-        // Formato: timestamp en segundos (10 dígitos) + 2 dígitos aleatorios = 12 total
-        const timestamp = Math.floor(Date.now() / 1000); // Segundos desde epoch
-        const random = Math.floor(Math.random() * 100).toString().padStart(2, '0');
-        const orderId = timestamp.toString() + random;
-        
-        console.log('🆔 OrderID generado para Redsys:', orderId, '(', orderId.length, 'caracteres)');
-        return orderId;
-    },
-    
-    async preparePayload(orderId, formData) {
-        console.log('📦 Preparando payload con extracción de archivos...');
-        
-        const customerData = {
-            name: this.extractValue('customer_name') || formData.personal?.customerName,
-            dni: this.extractValue('customer_dni') || formData.personal?.customerDni,
-            email: this.extractValue('customer_email') || formData.personal?.customerEmail,
-            phone: this.extractValue('customer_phone') || formData.personal?.customerPhone
-        };
-        
-        const boatData = {
-            manufacturer: this.extractValue('manufacturer') || formData.vehicle?.manufacturer,
-            model: this.extractValue('model') || formData.vehicle?.model,
-            purchasePrice: parseFloat(this.extractValue('purchase_price') || formData.vehicle?.purchasePrice || 0),
-            matriculationDate: this.extractValue('matriculation_date') || formData.vehicle?.matriculationDate,
-            region: this.extractValue('region') || formData.pricing?.region
-        };
-        
-        const pricing = {
-            basePrice: 134.99,
-            finalAmount: parseFloat(this.extractValue('final_price') || formData.pricing?.finalAmount || 134.99),
-            transferTax: parseFloat(formData.pricing?.transferTax || 0),
-            extraFee: parseFloat(formData.pricing?.extraFee || 0)
-        };
-        
-        // Extraer archivos del formulario
-        console.log('📎 Extrayendo archivos del formulario...');
-        const extractedFiles = await this.extractFiles();
-        const files = await this.processFiles(extractedFiles);
-        
-        console.log(`📊 Payload preparado: ${files.length} archivo(s) procesado(s)`);
-        
-        return {
-            orderId,
-            customerData,
-            boatData,
-            files,
-            pricing
-        };
-    },
-    
-    async processFiles(filesData) {
-        if (!filesData) return [];
-        
-        const processed = [];
-        for (const [category, fileList] of Object.entries(filesData)) {
-            if (Array.isArray(fileList)) {
-                for (const file of fileList) {
-                    if (file && file.base64) {
-                        processed.push({
-                            name: file.name || `${category}_file.${this.getExtension(file.base64)}`,
-                            base64: file.base64,
-                            type: category
-                        });
-                    }
-                }
-            }
-        }
-        return processed;
-    },
-    
-    async sendToCapture(payload) {
-        const response = await fetch(this.API_BASE + '/capture', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        
-        const result = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(result.error || 'Error en captura temporal');
-        }
-        
-        return result;
-    },
-    
-    storeForCallback(orderId, data) {
-        localStorage.setItem(`tbv2_temporal_${orderId}`, JSON.stringify({
-            ...data,
-            stored_at: new Date().toISOString()
-        }));
-    },
-    
-    async handleCallback(orderId, redsysData) {
-        console.log('🔄 TBV2 TEMPORAL - Procesando callback:', orderId);
-        
-        try {
-            const storedData = JSON.parse(localStorage.getItem(`tbv2_temporal_${orderId}`) || '{}');
-            
-            if (!storedData.temporal_id) {
-                throw new Error('Temporal ID no encontrado');
-            }
-            
-            const confirmPayload = {
-                temporal_id: storedData.temporal_id,
-                orderId: orderId,
-                payment_confirmed: true,
-                redsys_data: redsysData
-            };
-            
-            const response = await fetch(this.API_BASE + '/confirm', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(confirmPayload)
-            });
-            
-            const result = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(result.error || 'Error confirmando pago');
-            }
-            
-            console.log('✅ Pago confirmado temporalmente');
-            console.log('🎯 Trámite final:', result.tramite_id);
-            
-            localStorage.removeItem(`tbv2_temporal_${orderId}`);
-            
-            return result;
-            
-        } catch (error) {
-            console.error('❌ Error en callback temporal:', error);
-            throw error;
-        }
-    },
-    
-    extractValue(fieldId) {
-        const field = document.getElementById(fieldId);
-        return field ? field.value.trim() : '';
-    },
-    
-    // Extraer archivos del formulario y convertirlos a base64
-    async extractFiles() {
-        const fileMapping = {
-            'upload-hoja-asiento': 'hojaAsiento',
-            'upload-dni-comprador': 'dniComprador', 
-            'upload-dni-vendedor': 'dniVendedor',
-            'upload-contrato-compraventa': 'contratoCompraventa',
-            'upload-modelo-620': 'itpComprobante'
-        };
-        
-        const extractedFiles = {};
-        
-        for (const [inputId, category] of Object.entries(fileMapping)) {
-            const input = document.getElementById(inputId);
-            if (input && input.files && input.files.length > 0) {
-                console.log(`📎 Procesando ${input.files.length} archivo(s) de ${category}`);
-                extractedFiles[category] = [];
-                
-                for (let i = 0; i < input.files.length; i++) {
-                    const file = input.files[i];
-                    try {
-                        const base64 = await this.fileToBase64(file);
-                        extractedFiles[category].push({
-                            name: file.name,
-                            base64: base64,
-                            size: file.size,
-                            type: file.type
-                        });
-                        console.log(`✅ Archivo convertido: ${file.name} (${file.size} bytes)`);
-                    } catch (error) {
-                        console.error(`❌ Error procesando archivo ${file.name}:`, error);
-                    }
-                }
-            }
-        }
-        
-        // Buscar firma digital - PRIORIDAD A DATOS PERSISTENTES
-        let signatureData = null;
-        
-        // 1. Buscar en variable global persistente (desde acceptSignature)
-        if (window.tbv2SignatureData && window.tbv2SignatureData !== 'data:image/png;base64,') {
-            signatureData = window.tbv2SignatureData;
-            console.log('✅ Firma obtenida desde variable persistente');
-        } 
-        // 2. Fallback: Buscar en canvas activo
-        else {
-            const signatureCanvas = document.querySelector('#signature-pad canvas');
-            if (signatureCanvas) {
-                try {
-                    const canvasData = signatureCanvas.toDataURL('image/png');
-                    if (canvasData && canvasData !== 'data:image/png;base64,') {
-                        signatureData = canvasData;
-                        console.log('✅ Firma obtenida desde canvas activo');
-                    }
-                } catch (error) {
-                    console.error('❌ Error leyendo canvas de firma:', error);
-                }
-            }
-        }
-        
-        // Añadir firma si se encontró
-        if (signatureData) {
-            extractedFiles['firmaAutorizacion'] = [{
-                name: 'firma_autorizacion.png',
-                base64: signatureData,
-                size: signatureData.length,
-                type: 'image/png'
-            }];
-            console.log('✅ Firma digital incluida en extractedFiles');
-            console.log('📏 Tamaño de firma:', signatureData.length, 'caracteres');
-        } else {
-            console.log('⚠️ No se encontró firma digital');
-        }
-        
-        return extractedFiles;
-    },
-    
-    // Convertir archivo a base64
-    fileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-            reader.readAsDataURL(file);
-        });
-    },
-    
-    getExtension(base64) {
-        if (base64.includes('data:image/png')) return 'png';
-        if (base64.includes('data:image/jpeg')) return 'jpg';
-        if (base64.includes('data:application/pdf')) return 'pdf';
-        return 'bin';
-    },
-    
-    // Continúa con el flujo de pago Redsys
-    async continueWithRedsys(formData) {
-        console.log('🏦 Iniciando flujo Redsys con datos temporales');
-        console.log('📋 Order ID temporal:', formData.orderId);
-        
-        try {
-            // Crear formulario de pago Redsys usando AJAX al backend PHP
-            const redsysData = {
-                action: 'create_redsys_payment',
-                nonce: '<?php echo wp_create_nonce("tbv2_nonce"); ?>',
-                orderId: formData.orderId,
-                customerName: formData.personal?.customerName || this.extractValue('customer_name'),
-                customerEmail: formData.personal?.customerEmail || this.extractValue('customer_email'),
-                finalAmount: formData.pricing?.total_amount || 134.99,
-                personal: formData.personal,
-                vehicle: formData.vehicle,
-                pricing: formData.pricing
-            };
-            
-            console.log('📤 Enviando datos para crear formulario Redsys...');
-            
-            const response = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: new URLSearchParams(redsysData)
-            });
-            
-            const result = await response.text();
-            console.log('📋 Respuesta Redsys backend:', result);
-            
-            if (response.ok) {
-                // Si recibimos HTML del formulario, insertarlo y enviarlo
-                if (result.includes('<form')) {
-                    console.log('🎯 Formulario Redsys recibido, enviando...');
-                    
-                    // Crear contenedor temporal para el formulario
-                    const container = document.createElement('div');
-                    container.innerHTML = result;
-                    container.style.display = 'none';
-                    document.body.appendChild(container);
-                    
-                    // Buscar y enviar el formulario
-                    const redsysForm = container.querySelector('form');
-                    if (redsysForm) {
-                        console.log('✅ Enviando formulario Redsys automáticamente');
-                        redsysForm.submit();
-                    } else {
-                        throw new Error('Formulario Redsys no encontrado en respuesta');
-                    }
-                } else {
-                    throw new Error('Respuesta inválida del servidor Redsys');
-                }
-            } else {
-                throw new Error(`Error HTTP ${response.status}: ${result}`);
-            }
-            
-        } catch (error) {
-            console.error('❌ Error en flujo Redsys:', error);
-            throw error;
-        }
-    }
-};
-
-// PATCH DEL SISTEMA EXISTENTE
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔧 TBV2 TEMPORAL - Aplicando patch al sistema existente');
-    
-    setTimeout(function() {
-        const submitBtn = document.getElementById('submit-payment');
-        
-        if (submitBtn) {
-            console.log('🎯 Botón de pago encontrado, aplicando interceptor');
-            
-            const newBtn = submitBtn.cloneNode(true);
-            submitBtn.parentNode.replaceChild(newBtn, submitBtn);
-            
-            newBtn.addEventListener('click', async function(e) {
-                e.preventDefault();
-                console.log('💳 TBV2 TEMPORAL - Pago interceptado');
-                
-                newBtn.disabled = true;
-                newBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparando datos...';
-                
-                try {
-                    const originalData = await captureAllFormData();
-                    console.log('📋 Datos originales capturados:', originalData);
-                    
-                    const modifiedData = await TBV2_TEMPORAL.interceptPayment(originalData);
-                    console.log('✅ Datos enviados al sistema temporal');
-                    
-                    // Continuar con el flujo de pago Redsys usando el OrderID temporal
-                    console.log('🏦 Continuando con pago Redsys...');
-                    newBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Redirigiendo al TPV...';
-                    
-                    // Crear formulario de pago Redsys con el OrderID temporal
-                    await TBV2_TEMPORAL.continueWithRedsys(modifiedData);
-                    
-                } catch (error) {
-                    console.error('❌ Error en pago temporal:', error);
-                    alert('Error procesando el pago: ' + error.message);
-                    
-                    newBtn.disabled = false;
-                    newBtn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Proceder al Pago';
-                }
-            });
-            
-            console.log('✅ Interceptor temporal instalado');
-        } else {
-            console.warn('⚠️ Botón de pago no encontrado');
-        }
-    }, 1000);
-});
-
-window.TBV2_TEMPORAL_SYSTEM = TBV2_TEMPORAL;
-
-console.log('✅ TBV2 TEMPORAL - Sistema de interceptor cargado');
-</script>
-<?php
-
-// =====================================================
-// AJAX HANDLER PARA CREAR FORMULARIO REDSYS TEMPORAL
-// =====================================================
-
-add_action('wp_ajax_create_redsys_payment', 'tbv2_create_redsys_payment_handler');
-add_action('wp_ajax_nopriv_create_redsys_payment', 'tbv2_create_redsys_payment_handler');
-
-function tbv2_create_redsys_payment_handler() {
-    try {
-        // Verificar nonce
-        if (!wp_verify_nonce($_POST['nonce'], 'tbv2_nonce')) {
-            throw new Exception('Nonce inválido');
-        }
-        
-        $orderId = sanitize_text_field($_POST['orderId']);
-        $customerName = sanitize_text_field($_POST['customerName']);
-        $customerEmail = sanitize_email($_POST['customerEmail']);
-        $finalAmount = floatval($_POST['finalAmount']);
-        
-        error_log("🏦 TBV2 REDSYS - Creando formulario temporal para OrderID: $orderId");
-        error_log("👤 Cliente: $customerName ($customerEmail)");
-        error_log("💰 Importe original: $finalAmount €");
-        
-        // Validación específica OrderID para Redsys
-        if (strlen($orderId) > 12) {
-            error_log("❌ OrderID demasiado largo: " . strlen($orderId) . " caracteres");
-            throw new Exception("OrderID inválido: máximo 12 caracteres");
-        }
-        
-        if (!ctype_alnum($orderId)) {
-            error_log("❌ OrderID contiene caracteres inválidos: $orderId");
-            throw new Exception("OrderID inválido: solo letras y números");
-        }
-        
-        // Validar datos básicos
-        if (empty($orderId) || empty($customerName) || empty($customerEmail) || $finalAmount <= 0) {
-            throw new Exception('Datos requeridos faltantes para Redsys');
-        }
-        
-        // Preparar datos para Redsys
-        $orderData = [
-            'order_id' => $orderId,
-            'amount_cents' => intval($finalAmount * 100), // Convertir a centimos
-            'customer_name' => $customerName,
-            'customer_email' => $customerEmail,
-            'description' => 'Transferencia Embarcacion TBV2 - ' . $customerName
-        ];
-        
-        error_log("📊 Datos Redsys: " . print_r($orderData, true));
-        
-        // Crear formulario de pago Redsys
-        $redsysForm = tbv2_redsys_create_payment_form($orderData);
-        
-        if (empty($redsysForm['url']) || empty($redsysForm['Ds_MerchantParameters'])) {
-            throw new Exception('Error generando formulario Redsys');
-        }
-        
-        error_log("✅ Formulario Redsys generado exitosamente");
-        error_log("🌐 URL: " . $redsysForm['url']);
-        error_log("📋 Parameters: " . substr($redsysForm['Ds_MerchantParameters'], 0, 100) . '...');
-        
-        // Generar HTML del formulario
-        $formHtml = '
-        <form id="redsysForm" action="' . esc_url($redsysForm['url']) . '" method="post">
-            <input type="hidden" name="Ds_SignatureVersion" value="' . esc_attr($redsysForm['Ds_SignatureVersion']) . '">
-            <input type="hidden" name="Ds_MerchantParameters" value="' . esc_attr($redsysForm['Ds_MerchantParameters']) . '">
-            <input type="hidden" name="Ds_Signature" value="' . esc_attr($redsysForm['Ds_Signature']) . '">
-            <input type="submit" value="Procesar Pago" style="display:none;">
-        </form>';
-        
-        // Retornar formulario HTML
-        header('Content-Type: text/html; charset=utf-8');
-        echo $formHtml;
-        
-    } catch (Exception $e) {
-        error_log("❌ Error creando formulario Redsys: " . $e->getMessage());
-        http_response_code(500);
-        echo 'Error: ' . $e->getMessage();
-    }
-    
-    wp_die();
-}
-
-// ========================================
