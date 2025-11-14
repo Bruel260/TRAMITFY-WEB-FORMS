@@ -1,0 +1,5403 @@
+<?php
+/**
+ * TRAMITFY - TRANSFERENCIA EMBARCACIONES V2 CON REDSYS
+ * 
+ * Versión refactorizada con integración Redsys (CaixaBank TPV)
+ * Estructura exacta: layout wrapper → two-column → sidebar + main-form
+ * 
+ * @version 2.2.0 - REDSYS EDITION
+ * @author Claude Code  
+ * @created 2025-11-08
+ * @updated 2025-11-08 - Integración Redsys TPV
+ * @reference Formulario producción /transferencia-barco.php
+ */
+
+if (!defined('ABSPATH')) {
+    exit('Acceso directo no permitido.');
+}
+
+// =====================================================
+// CONSTANTES DE CONFIGURACIÓN REDSYS V2
+// =====================================================
+
+if (!defined('TBV2_REDSYS_MODE')) define('TBV2_REDSYS_MODE', 'test'); // test o live
+
+// Datos del comercio Redsys
+if (!defined('TBV2_REDSYS_MERCHANT_CODE')) define('TBV2_REDSYS_MERCHANT_CODE', '363391103');
+if (!defined('TBV2_REDSYS_TERMINAL')) define('TBV2_REDSYS_TERMINAL', '1');
+if (!defined('TBV2_REDSYS_CURRENCY')) define('TBV2_REDSYS_CURRENCY', '978'); // EUR
+
+// Claves de cifrado
+if (!defined('TBV2_REDSYS_SECRET_KEY')) define('TBV2_REDSYS_SECRET_KEY', 'sq7HjrUOBfKmC576ILgskD5srU870gJ7');
+if (!defined('TBV2_REDSYS_SIGNATURE_VERSION')) define('TBV2_REDSYS_SIGNATURE_VERSION', 'HMAC_SHA256_V1');
+
+// URLs según entorno
+if (!defined('TBV2_REDSYS_URL_TEST')) define('TBV2_REDSYS_URL_TEST', 'https://sis-t.redsys.es:25443/sis/realizarPago');
+if (!defined('TBV2_REDSYS_URL_LIVE')) define('TBV2_REDSYS_URL_LIVE', 'https://sis.redsys.es/sis/realizarPago');
+
+// Webhook URL V2 (sin cambios)
+if (!defined('TBV2_WEBHOOK_URL')) define('TBV2_WEBHOOK_URL', 'https://tramitfy.org/api/herramientas/barcos/webhook');
+
+// URLs de retorno - EXACTAS como test dummy exitoso
+if (!defined('TBV2_REDSYS_URL_OK')) define('TBV2_REDSYS_URL_OK', 'https://tramitfy.es/wp-content/themes/xtra/transferencia-barco-v2.php?result=ok');
+if (!defined('TBV2_REDSYS_URL_KO')) define('TBV2_REDSYS_URL_KO', 'https://tramitfy.es/wp-content/themes/xtra/transferencia-barco-v2.php?result=ko');
+if (!defined('TBV2_REDSYS_URL_NOTIFICATION')) define('TBV2_REDSYS_URL_NOTIFICATION', 'https://46-202-128-35.sslip.io/api/temporal/confirm');
+
+// Asignar URL según modo
+$tbv2_redsys_url = (TBV2_REDSYS_MODE === 'test') ? TBV2_REDSYS_URL_TEST : TBV2_REDSYS_URL_LIVE;
+
+/**
+ * Carga datos desde archivo CSV (función simplificada)
+ */
+function tbv2_cargar_datos_csv() {
+    $ruta_csv = get_template_directory() . '/BARCO.csv';
+    $data = [];
+
+    if (($handle = fopen($ruta_csv, 'r')) !== false) {
+        while (($row = fgetcsv($handle, 1000, ',')) !== false) {
+            if (count($row) >= 3) {
+                list($fabricante, $modelo, $precio) = $row;
+                $data[$fabricante][] = [
+                    'modelo' => $modelo,
+                    'precio' => $precio
+                ];
+            }
+        }
+        fclose($handle);
+    }
+
+    return $data;
+}
+
+// =====================================================
+// FUNCIONES CORE REDSYS V2
+// =====================================================
+
+/**
+ * Genera firma HMAC SHA256 para Redsys - ALGORITMO OFICIAL
+ * Basado en código oficial proporcionado por soporte técnico Redsys
+ */
+function tbv2_redsys_generate_signature($data) {
+    // Decodificacion en Base64 de la contraseña del comercio
+    $password_decoded = base64_decode(TBV2_REDSYS_SECRET_KEY);
+    $order_id = $data['Ds_Merchant_Order'];
+    
+    // Deteccion de la version de PHP del servidor
+    $php_version = substr(phpversion(), 0, 1);
+    
+    // Generacion de la clave de cifrado según versión PHP
+    switch ($php_version) {
+        case "5":
+            // Código para PHP5 (mcrypt - deprecated)
+            $bytes = array(0,0,0,0,0,0,0,0);
+            $iv = implode(array_map("chr", $bytes));
+            $encryption_key = mcrypt_encrypt(MCRYPT_3DES, $password_decoded, $order_id, MCRYPT_MODE_CBC, $iv);
+            break;
+            
+        case "7":
+        case "8": // Añadido soporte para PHP 8
+        default:
+            // Código para PHP7+ (OpenSSL)
+            $l = ceil(strlen($order_id) / 8) * 8;
+            $padded_order_id = $order_id . str_repeat("\0", $l - strlen($order_id));
+            $encryption_key = substr(
+                openssl_encrypt(
+                    $padded_order_id, 
+                    'des-ede3-cbc', 
+                    $password_decoded, 
+                    OPENSSL_RAW_DATA, 
+                    "\0\0\0\0\0\0\0\0"
+                ), 
+                0, 
+                $l
+            );
+            break;
+    }
+    
+    // Generar la cadena a firmar (MerchantParameters en base64)
+    $string_to_sign = base64_encode(json_encode($data));
+    
+    // Generación de la firma HMAC SHA256
+    $signature = hash_hmac('sha256', $string_to_sign, $encryption_key, true);
+    
+    // Codificación en Base64 de la firma
+    $signature_encoded = base64_encode($signature);
+    
+    // DEBUG CRÍTICO: Log del proceso de firma
+    error_log("=== TBV2 SIGNATURE DEBUG OFICIAL ===");
+    error_log("PHP Version: " . phpversion());
+    error_log("Order ID: " . $order_id);
+    error_log("Password decoded length: " . strlen($password_decoded));
+    error_log("Encryption key length: " . strlen($encryption_key));
+    error_log("String to sign: " . $string_to_sign);
+    error_log("Signature (base64): " . $signature_encoded);
+    error_log("====================================");
+    
+    return $signature_encoded;
+}
+
+/**
+ * Crea formulario de pago Redsys
+ */
+function tbv2_redsys_create_payment_form($order_data) {
+    global $tbv2_redsys_url;
+    
+    // CRITICAL FIX V2: Usar valores exactos sin modificación
+    // Basado en documentación oficial y formato que funciona
+    
+    $params = [
+        'Ds_Merchant_MerchantCode' => TBV2_REDSYS_MERCHANT_CODE, // '363391103'
+        'Ds_Merchant_Terminal' => TBV2_REDSYS_TERMINAL, // '1'
+        'Ds_Merchant_Order' => $order_data['order_id'], // Sin limpiar - usar tal cual
+        'Ds_Merchant_Amount' => $order_data['amount_cents'], // Sin limpiar - usar tal cual
+        'Ds_Merchant_Currency' => TBV2_REDSYS_CURRENCY, // '978'
+        'Ds_Merchant_TransactionType' => '0', // Autorización
+        'Ds_Merchant_MerchantURL' => TBV2_REDSYS_URL_NOTIFICATION,
+        'Ds_Merchant_UrlOK' => TBV2_REDSYS_URL_OK,
+        'Ds_Merchant_UrlKO' => TBV2_REDSYS_URL_KO,
+        'Ds_Merchant_MerchantName' => 'Tramitfy Test',
+        'Ds_Merchant_ProductDescription' => 'Test TPV', // EXACTO como test dummy
+        'Ds_Merchant_ConsumerLanguage' => '001' // Español
+    ];
+    
+    // CRITICAL DEBUG: Log parámetros exactos que se envían
+    error_log("=== TBV2 PARAMS V2 DEBUG ===");
+    error_log("Order ID: " . $order_data['order_id']);
+    error_log("Amount: " . $order_data['amount_cents']);
+    error_log("Description: " . $order_data['description']);
+    error_log("Params completo: " . print_r($params, true));
+    error_log("============================");
+    
+    $signature = tbv2_redsys_generate_signature($params);
+    
+    // CRITICAL FIX: JSON encoding EXACTO como test dummy
+    $merchant_parameters = base64_encode(json_encode($params));
+    
+    // DEBUG CRÍTICO: Verificar encoding EXACTO como test dummy
+    error_log("=== TBV2 JSON ENCODING DEBUG ===");
+    error_log("JSON params: " . json_encode($params));
+    error_log("Base64 params: " . $merchant_parameters);
+    error_log("Decoded test: " . base64_decode($merchant_parameters));
+    error_log("================================");
+    
+    return [
+        'url' => $tbv2_redsys_url,
+        'Ds_MerchantParameters' => $merchant_parameters,
+        'Ds_SignatureVersion' => TBV2_REDSYS_SIGNATURE_VERSION,
+        'Ds_Signature' => $signature
+    ];
+}
+
+/**
+ * Valida respuesta de Redsys usando algoritmo oficial
+ */
+function tbv2_redsys_validate_response($merchant_params, $signature_received) {
+    $params = json_decode(base64_decode($merchant_params), true);
+    
+    // Usar la misma función de firma oficial para validar
+    $signature_calculated = tbv2_redsys_generate_signature($params);
+    
+    error_log("=== TBV2 VALIDATION DEBUG ===");
+    error_log("Signature received: " . $signature_received);
+    error_log("Signature calculated: " . $signature_calculated);
+    error_log("Signatures match: " . (hash_equals($signature_calculated, $signature_received) ? 'YES' : 'NO'));
+    error_log("=============================");
+    
+    return hash_equals($signature_calculated, $signature_received) && 
+           isset($params['Ds_Response']) && 
+           $params['Ds_Response'] >= 0 && 
+           $params['Ds_Response'] <= 99;
+}
+
+/**
+ * Procesa callback de Redsys
+ */
+function tbv2_redsys_process_callback() {
+    if (!isset($_POST['Ds_MerchantParameters'], $_POST['Ds_Signature'])) {
+        return false;
+    }
+    
+    $merchant_params = $_POST['Ds_MerchantParameters'];
+    $signature = $_POST['Ds_Signature'];
+    
+    if (!tbv2_redsys_validate_response($merchant_params, $signature)) {
+        error_log('TBV2 Redsys: Firma inválida o respuesta no autorizada');
+        return false;
+    }
+    
+    $params = json_decode(base64_decode($merchant_params), true);
+    
+    // Si pago exitoso, activar webhook a Tramitfy
+    if ($params['Ds_Response'] <= 99) {
+        tbv2_trigger_webhook($params);
+        return true;
+    }
+    
+    return false;
+}
+
+/**
+ * Activa webhook hacia Tramitfy (mantiene estructura original)
+ */
+function tbv2_trigger_webhook($redsys_params) {
+    // Extraer datos del formulario del session storage o recrear
+    $form_data = [
+        'order_id' => $redsys_params['Ds_Order'],
+        'amount' => $redsys_params['Ds_Amount'] / 100, // Convertir de céntimos
+        'payment_method' => 'redsys',
+        'payment_status' => 'completed',
+        'authorization_code' => $redsys_params['Ds_AuthorisationCode'] ?? null
+    ];
+    
+    // Enviar al webhook de Tramitfy (misma estructura que Stripe)
+    wp_remote_post(TBV2_WEBHOOK_URL, [
+        'body' => json_encode($form_data),
+        'headers' => ['Content-Type' => 'application/json']
+    ]);
+}
+
+/**
+ * Renderiza el formulario principal CON ESTRUCTURA IDÉNTICA
+ */
+function tbv2_render_form() {
+    global $tbv2_stripe_public_key;
+    $datos_csv = tbv2_cargar_datos_csv();
+    
+    ob_start();
+    ?>
+    
+    <!-- Estilos CSS (IDÉNTICOS al original) -->
+    <?php tbv2_render_styles(); ?>
+    
+
+    <!-- FORMULARIO CON ESTRUCTURA IDÉNTICA AL ORIGINAL -->
+    <form id="tbv2-transferencia-form" class="form-container">
+        
+        <!-- LAYOUT WRAPPER IDÉNTICO -->
+        <div class="tramitfy-layout-wrapper">
+            <div class="tramitfy-two-column">
+
+                <!-- SIDEBAR IZQUIERDO (IDÉNTICO) -->
+                <aside class="tramitfy-sidebar">
+                    <!-- Contenido dinámico por página -->
+                    <div id="sidebar-dynamic-content" style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                        <!-- Se actualizará dinámicamente con JavaScript -->
+                    </div>
+
+                    <!-- Contenido universal del sidebar -->
+                    <div class="sidebar-content active" data-step="all">
+                        <div class="sidebar-body">
+                            <!-- Widget de Trustpilot directo en sidebar -->
+                            <script defer async src='https://cdn.trustindex.io/loader.js?f4fbfd341d12439e0c86fae7fc2'></script>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- PANEL DERECHO - FORMULARIO -->
+                <div class="tramitfy-main-form">
+
+                    <!-- Navegación en borde superior del formulario -->
+                    <div id="form-navigation-top">
+                        <div class="nav-tabs-container">
+                            <div class="nav-tab active" data-page-id="page-vehiculo" data-step="1">
+                                <div class="tab-content-centered">
+                                    <div class="tab-title">Embarcación</div>
+                                </div>
+                            </div>
+
+                            <div class="nav-tab" data-page-id="page-datos" data-step="2">
+                                <div class="tab-content-centered">
+                                    <div class="tab-title">Datos</div>
+                                </div>
+                            </div>
+
+                            <div class="nav-tab" data-page-id="page-precio" data-step="3">
+                                <div class="tab-content-centered">
+                                    <div class="tab-title">Precio</div>
+                                </div>
+                            </div>
+
+                            <div class="nav-tab" data-page-id="page-documentos" data-step="4">
+                                <div class="tab-content-centered">
+                                    <div class="tab-title">Documentos</div>
+                                </div>
+                            </div>
+
+                            <div class="nav-tab" data-page-id="page-pago" data-step="5">
+                                <div class="tab-content-centered">
+                                    <div class="tab-title">Pago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PÁGINAS DEL FORMULARIO -->
+                    
+                    <!-- PÁGINA 1: VEHÍCULO (IDÉNTICA AL ORIGINAL) -->
+                    <div id="page-vehiculo" class="form-page form-section-compact" style="padding-top: 0;">
+                        <!-- Título del formulario idéntico al original -->
+                        <h2 style="margin-bottom: 12px; color: #016d86; font-size: 24px; font-weight: 600;">Cambio Titularidad Embarcación</h2>
+                        <p style="margin-bottom: 20px; font-size: 15px; color: #666; line-height: 1.6;">Realiza el cambio de titularidad de tu embarcación online, sin desplazamientos ni esperas en Capitanía.</p>
+                        
+                        <!-- Tipo de vehículo fijo: Barco (igual que original) -->
+                        <input type="hidden" name="vehicle_type" value="Embarcación">
+
+                        <!-- Fabricante y Modelo en fila (estructura exacta) -->
+                        <div id="vehicle-csv-section">
+                            <div class="form-compact-row">
+                                <div class="form-group">
+                                    <label for="manufacturer">Fabricante <small style="color: #6b7280;">(<?php echo count($datos_csv); ?> marcas disponibles)</small></label>
+                                    <select id="manufacturer" name="manufacturer">
+                                        <option value="">Seleccione fabricante...</option>
+                                        <?php foreach ($datos_csv as $fabricante => $modelos): ?>
+                                            <option value="<?php echo esc_attr($fabricante); ?>"><?php echo esc_html($fabricante); ?> (<?php echo count($modelos); ?> modelos)</option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <div class="manufacturer-search" style="margin-top: 8px;">
+                                        <input type="text" 
+                                               id="manufacturer-search" 
+                                               placeholder="Escribe para buscar fabricante..." 
+                                               style="
+                                                   width: 100%;
+                                                   padding: 8px 12px;
+                                                   border: 1px solid #d1d5db;
+                                                   border-radius: 4px;
+                                                   font-size: 14px;
+                                                   display: none;
+                                               ">
+                                        <div class="search-toggle" style="text-align: center; margin-top: 6px;">
+                                            <small style="color: #6b7280; cursor: pointer;" onclick="TBV2_Form.toggleManufacturerSearch()">
+                                                <span id="search-toggle-text">Activar búsqueda rápida</span>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="model">Modelo <small style="color: #6b7280;" id="model-count">(selecciona fabricante primero)</small></label>
+                                    <select id="model" name="model" disabled>
+                                        <option value="">Primero seleccione fabricante...</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- "No encuentro mi modelo" - compacto (idéntico al original) -->
+                        <div id="no-encuentro-wrapper" style="margin: 12px 0;">
+                            <label class="checkbox-container" style="font-size: 14px; color: #016d86; cursor: pointer; display: flex; align-items: center; gap: 8px; margin-bottom: 0; font-weight: 500;">
+                                <input type="checkbox" id="no_encuentro_modelo" style="margin-right: 6px; transform: scale(1.1);">
+                                <span>No encuentro mi modelo</span>
+                            </label>
+
+                            <!-- Campos de marca/modelo manual en 2 columnas -->
+                            <div id="manual-fields" style="display: none; margin-top: 10px;">
+                                <div class="form-compact-row">
+                                    <div class="form-group">
+                                        <label for="manual_manufacturer">Marca (manual)</label>
+                                        <input type="text" id="manual_manufacturer" name="manual_manufacturer" placeholder="Escriba la marca" />
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="manual_model">Modelo (manual)</label>
+                                        <input type="text" id="manual_model" name="manual_model" placeholder="Escriba el modelo" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fecha Matriculación, Precio y Comunidad Autónoma en una línea -->
+                        <div class="form-compact-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label for="matriculation_date" id="matriculation_date_label">Fecha Matriculación</label>
+                                <input type="date" id="matriculation_date" name="matriculation_date" max="<?php echo date('Y-m-d'); ?>" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="purchase_price">Precio de Compra (€)</label>
+                                <input type="number" id="purchase_price" name="purchase_price" placeholder="Ej: 12000" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="region">Comunidad Autónoma</label>
+                                <select id="region" name="region" required>
+                                    <option value="">Seleccione comunidad</option>
+                                    <option value="Andalucía">Andalucía</option>
+                                    <option value="Aragón">Aragón</option>
+                                    <option value="Asturias">Asturias</option>
+                                    <option value="Islas Baleares">Islas Baleares</option>
+                                    <option value="Canarias">Canarias</option>
+                                    <option value="Cantabria">Cantabria</option>
+                                    <option value="Castilla-La Mancha">Castilla-La Mancha</option>
+                                    <option value="Castilla y León">Castilla y León</option>
+                                    <option value="Cataluña">Cataluña</option>
+                                    <option value="Comunidad Valenciana">Comunidad Valenciana</option>
+                                    <option value="Extremadura">Extremadura</option>
+                                    <option value="Galicia">Galicia</option>
+                                    <option value="La Rioja">La Rioja</option>
+                                    <option value="Comunidad de Madrid">Comunidad de Madrid</option>
+                                    <option value="Región de Murcia">Región de Murcia</option>
+                                    <option value="Comunidad Foral de Navarra">Comunidad Foral de Navarra</option>
+                                    <option value="País Vasco">País Vasco</option>
+                                    <option value="Ceuta">Ceuta</option>
+                                    <option value="Melilla">Melilla</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Botones de navegación integrados -->
+                        <div class="form-navigation" style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                            <button type="button" class="button button-secondary" id="tbv2-prevButton" style="display: none;">
+                                <i class="fas fa-arrow-left"></i> Anterior
+                            </button>
+                            <button type="button" class="button button-primary" id="tbv2-nextButton">
+                                <i class="fas fa-arrow-right"></i> Datos Personales
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- PÁGINA 2: DATOS -->
+                    <div id="page-datos" class="form-page form-section-compact hidden" style="padding-top: 0;">
+                        <h2 style="margin-bottom: 12px; color: #016d86; font-size: 24px; font-weight: 600;">Tus Datos Personales</h2>
+                        <p class="section-intro">Introduce tus datos personales para la gestión del trámite. Estos datos aparecerán en el documento de autorización.</p>
+
+                        <!-- Fila 1: Nombre y DNI -->
+                        <div class="form-compact-row">
+                            <div class="form-group">
+                                <label for="customer_name">Nombre y Apellidos</label>
+                                <input type="text" id="customer_name" name="customer_name" required />
+                                <span class="input-hint">Tal como aparece en su DNI</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="customer_dni">DNI</label>
+                                <input type="text" id="customer_dni" name="customer_dni" required />
+                                <span class="input-hint">Formato: 12345678X</span>
+                            </div>
+                        </div>
+
+                        <!-- Fila 2: Email y Teléfono -->
+                        <div class="form-compact-row">
+                            <div class="form-group">
+                                <label for="customer_email">Correo Electrónico</label>
+                                <input type="email" id="customer_email" name="customer_email" required />
+                                <span class="input-hint">Recibirás notificaciones del trámite</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="customer_phone">Teléfono</label>
+                                <input type="tel" id="customer_phone" name="customer_phone" required />
+                                <span class="input-hint">Para contactarte si es necesario</span>
+                            </div>
+                        </div>
+
+                        <!-- Botones de navegación integrados -->
+                        <div class="form-navigation">
+                            <button type="button" class="button button-secondary" id="tbv2-datos-prevButton">
+                                <i class="fas fa-arrow-left"></i> Vehículo
+                            </button>
+                            <button type="button" class="button button-primary" id="tbv2-datos-nextButton">
+                                <i class="fas fa-arrow-right"></i> ITP y Precios
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- PÁGINA 3: PRECIO/ITP -->
+                    <div id="page-precio" class="form-page form-section-compact hidden" style="padding-top: 0;">
+                        
+                        <!-- PASO 1: Pregunta sobre ITP -->
+                        <div id="precio-step-1" class="precio-step">
+                            <h2 style="margin-bottom: 12px; color: #016d86; font-size: 24px; font-weight: 600;">Gestión del ITP</h2>
+                            <p style="margin-bottom: 20px; color: #6b7280; font-size: 15px; line-height: 1.6;">El Impuesto de Transmisiones Patrimoniales es obligatorio. ¿Cómo quieres gestionarlo?</p>
+
+                            <!-- Calculo ITP automático -->
+                            <div style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; padding: 28px; margin-bottom: 20px;">
+                                <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 700; color: #1f2937;">Cálculo automático del ITP</h3>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                    <div style="color: #6b7280;">
+                                        <div>Para su embarcación:</div>
+                                        <div style="font-size: 13px; margin-top: 4px;" id="tbv2-vehicle-summary">Complete los datos del vehículo para calcular</div>
+                                    </div>
+                                    <div style="font-size: 32px; font-weight: 700; color: #016d86;" id="tbv2-itp-display">---</div>
+                                </div>
+                                
+                                <button type="button" id="ver-calculo-itp" style="background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; width: 100%;">
+                                    Ver cálculo detallado
+                                </button>
+                                
+                                <!-- Detalle del cálculo -->
+                                <div id="calculo-itp-detail" style="display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+                                    <div style="font-size: 14px; line-height: 1.6; color: #374151;" id="tbv2-calculation-breakdown">
+                                        <!-- Contenido dinámico del cálculo -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pregunta ITP Pagado - Versión Compacta -->
+                            <div id="itp-question-container" style="background: rgba(1, 109, 134, 0.04); border: 1px solid rgba(1, 109, 134, 0.2); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+                                    <div style="text-align: left;">
+                                        <h4 style="margin: 0 0 4px 0; font-size: 16px; color: #1f2937; font-weight: 600;">¿Ya has pagado el ITP?</h4>
+                                        <p style="margin: 0; font-size: 13px; color: #6b7280;">Selecciona tu situación</p>
+                                    </div>
+                                    <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                                        <button type="button" id="itp-si" class="itp-choice-btn" style="padding: 10px 16px; border: 1px solid #016d86; background: white; color: #016d86; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap;">
+                                            Sí, ya lo pagué
+                                        </button>
+                                        <button type="button" id="itp-no" class="itp-choice-btn" style="padding: 10px 16px; border: 1px solid #016d86; background: white; color: #016d86; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap;">
+                                            No, necesito pagarlo
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PASO 2: Resumen final -->
+                        <div id="precio-step-2" class="precio-step" style="display: none;">
+                            <h2 style="margin-bottom: 12px; color: #016d86; font-size: 24px; font-weight: 600;">Resumen del Trámite</h2>
+                            <p style="margin-bottom: 20px; color: #6b7280; font-size: 15px; line-height: 1.6;">Revisa los servicios incluidos. Si necesitas modificar algo, usa el botón al final de esta página.</p>
+
+                            <!-- Desglose de Precio -->
+                            <div style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; padding: 28px; margin-bottom: 20px;">
+                                <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 700; color: #1f2937;">Desglose de Servicios</h3>
+
+                                <!-- Tramitación completa -->
+                                <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
+                                    <div>
+                                        <div style="font-size: 15px; font-weight: 600; color: #1f2937;">Tramitación Completa</div>
+                                        <div style="font-size: 13px; color: #6b7280; margin-top: 2px;">Gestión, tasas DGMM e IVA incluidos</div>
+                                    </div>
+                                    <div style="font-size: 16px; font-weight: 700; color: #1f2937;" id="desglose-tramitacion">134.99 €</div>
+                                </div>
+
+                                <!-- ITP - Caso 1: ITP ya pagado -->
+                                <div id="incluye-itp-si" style="display: none;">
+                                    <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
+                                        <div>
+                                            <div style="font-size: 15px; font-weight: 600; color: #10b981;">
+                                                <i class="fa-solid fa-circle-check" style="margin-right: 6px;"></i>
+                                                Impuesto (ITP)
+                                            </div>
+                                            <div style="font-size: 13px; color: #6b7280; margin-top: 2px;">Ya has pagado el ITP por tu cuenta</div>
+                                        </div>
+                                        <div style="font-size: 16px; font-weight: 700; color: #10b981;">Ya pagado</div>
+                                    </div>
+                                </div>
+
+                                <!-- ITP - Caso 2: ITP incluido en el precio -->
+                                <div id="incluye-itp-no" style="display: none;">
+                                    <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
+                                        <div>
+                                            <div style="font-size: 15px; font-weight: 600; color: #016d86;">Impuesto (ITP)</div>
+                                            <div style="font-size: 13px; color: #6b7280; margin-top: 2px;" id="itp-desglose-descripcion">Gestionamos el pago por ti</div>
+                                        </div>
+                                        <div style="font-size: 16px; font-weight: 700; color: #016d86;" id="desglose-itp">0 €</div>
+                                    </div>
+                                </div>
+
+                                <!-- Precio total -->
+                                <div style="display: flex; justify-content: space-between; padding: 20px 0 0 0; font-size: 20px; font-weight: 700; color: #1f2937; border-top: 2px solid #016d86; margin-top: 16px;">
+                                    <div>Total a pagar</div>
+                                    <div style="color: #016d86;" id="precio-final">134.99 €</div>
+                                </div>
+                            </div>
+
+                            <!-- Botón para modificar -->
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <button type="button" id="modificar-itp" style="background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 12px 24px; border-radius: 8px; font-size: 14px; cursor: pointer;">
+                                    Modificar selección de ITP
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Campo oculto para comunidad autónoma -->
+                        <select id="autonomous_community" name="autonomous_community" style="display: none;">
+                            <option value="Madrid (Comunidad de)" selected>Madrid (Comunidad de)</option>
+                        </select>
+
+                        <!-- Botones de navegación integrados -->
+                        <div class="form-navigation">
+                            <button type="button" class="button button-secondary" id="tbv2-precio-prevButton">
+                                <i class="fas fa-arrow-left"></i> Datos Personales
+                            </button>
+                            <button type="button" class="button button-primary" id="tbv2-precio-nextButton">
+                                <i class="fas fa-arrow-right"></i> Documentos
+                            </button>
+                        </div>
+                    </div>                    <!-- PÁGINA 4: DOCUMENTOS -->
+                    <div id="page-documentos" class="form-page form-section-compact hidden" style="padding-top: 0;">
+                        <h2 style="margin-bottom: 12px; color: #016d86; font-size: 24px; font-weight: 600;">Documentación Requerida</h2>
+                        <p style="margin-bottom: 20px; color: #6b7280; font-size: 15px; line-height: 1.6;">Adjunta los documentos necesarios para completar el trámite de transferencia.</p>
+                        
+                        <!-- Upload grid 3x2 -->
+                        <div class="upload-grid">
+                            <!-- Primera fila: 3 documentos principales -->
+                            <div class="upload-row">
+                                <!-- Registro marítimo -->
+                                <div class="upload-item">
+                                    <label for="upload-hoja-asiento">
+                                        <strong>📄 Registro Marítimo</strong>
+                                        <small>Documento que acredita la propiedad de la embarcación</small>
+                                    </label>
+                                    <div class="upload-wrapper">
+                                        <input type="file" id="upload-hoja-asiento" name="upload_hoja_asiento[]" multiple required accept="image/*,.pdf">
+                                        <div class="upload-button upload-button-responsive">
+                                            <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivo</span>
+                                            <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
+                                        </div>
+                                        <div class="file-count" data-input="upload-hoja-asiento">Sin archivos</div>
+                                    </div>
+                                </div>
+
+                                <!-- DNI Comprador -->
+                                <div class="upload-item">
+                                    <label for="upload-dni-comprador">
+                                        <strong>🪪 DNI Comprador</strong>
+                                        <small>Documento Nacional de Identidad (ambas caras)</small>
+                                    </label>
+                                    <div class="upload-wrapper">
+                                        <input type="file" id="upload-dni-comprador" name="upload_dni_comprador[]" multiple required accept="image/*,.pdf">
+                                        <div class="upload-button upload-button-responsive">
+                                            <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivo</span>
+                                            <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
+                                        </div>
+                                        <div class="file-count" data-input="upload-dni-comprador">Sin archivos</div>
+                                    </div>
+                                </div>
+
+                                <!-- DNI Vendedor -->
+                                <div class="upload-item">
+                                    <label for="upload-dni-vendedor">
+                                        <strong>🪪 DNI Vendedor</strong>
+                                        <small>Documento Nacional de Identidad (ambas caras)</small>
+                                    </label>
+                                    <div class="upload-wrapper">
+                                        <input type="file" id="upload-dni-vendedor" name="upload_dni_vendedor[]" multiple required accept="image/*,.pdf">
+                                        <div class="upload-button upload-button-responsive">
+                                            <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivo</span>
+                                            <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
+                                        </div>
+                                        <div class="file-count" data-input="upload-dni-vendedor">Sin archivos</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Segunda fila: Contrato, Modelo 620 y Firma -->
+                            <div class="upload-row">
+                                <!-- Contrato compraventa -->
+                                <div class="upload-item">
+                                    <label for="upload-contrato-compraventa">
+                                        <strong>📝 Contrato Compraventa</strong>
+                                        <small>Contrato firmado entre comprador y vendedor</small>
+                                    </label>
+                                    <div class="upload-wrapper">
+                                        <input type="file" id="upload-contrato-compraventa" name="upload_contrato_compraventa[]" multiple required accept="image/*,.pdf">
+                                        <div class="upload-button upload-button-responsive">
+                                            <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivo</span>
+                                            <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
+                                        </div>
+                                        <div class="file-count" data-input="upload-contrato-compraventa">Sin archivos</div>
+                                    </div>
+                                </div>
+
+                                <!-- Modelo 620 (condicional) -->
+                                <div class="upload-item" id="modelo-620-container" style="display: none; flex-direction: column; justify-content: center;">
+                                    <div style="background: #f0f9ff; border: 2px solid #3b82f6; border-radius: 8px; padding: 16px;">
+                                        <label for="upload-modelo-620">
+                                            <strong style="display: block; font-size: 14px; color: #1e40af; margin-bottom: 4px;">📄 Modelo 620 - Comprobante ITP</strong>
+                                            <small style="color: #1e40af;">El ITP ya está pagado, adjunta el comprobante</small>
+                                        </label>
+                                        <div class="upload-wrapper">
+                                            <input type="file" id="upload-modelo-620" name="upload_modelo_620[]" multiple accept="image/*,.pdf">
+                                            <div class="upload-button upload-button-responsive">
+                                                <span class="desktop-text"><i class="fa-solid fa-upload"></i> Adjuntar Modelo 620</span>
+                                                <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
+                                            </div>
+                                            <div class="file-count" data-input="upload-modelo-620">Sin archivos</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Firma Digital -->
+                                <div class="upload-item" style="display: flex; flex-direction: column; justify-content: center;">
+                                    <label for="document-signature">
+                                        <strong>✍️ Firma Digital</strong>
+                                        <small>Firma la autorización para tramitar</small>
+                                    </label>
+                                    <div class="upload-wrapper">
+                                        <div id="signature-field" class="upload-button upload-button-responsive" style="text-align: center; cursor: pointer;">
+                                            <span class="desktop-text"><i class="fa-solid fa-signature"></i> Firmar documentos</span>
+                                            <span class="mobile-text"><i class="fa-solid fa-signature"></i></span>
+                                        </div>
+                                        <div class="file-count" id="signature-status">Pendiente de firma</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Navegación -->
+                        <div class="form-navigation">
+                            <button type="button" class="button button-secondary" id="tbv2-documentos-prevButton">
+                                <i class="fas fa-arrow-left"></i> ITP y Precios
+                            </button>
+                            <button type="button" class="button button-primary" id="tbv2-documentos-nextButton">
+                                <i class="fas fa-arrow-right"></i> Pagar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- PÁGINA 5: PAGO -->
+                    <div id="page-pago" class="form-page form-section-compact hidden" style="padding-top: 0;">
+                        <h2 style="margin-bottom: 12px; color: #016d86; font-size: 24px; font-weight: 600;">Método de Pago</h2>
+                        <p style="color: #666; margin-bottom: 25px; font-size: 15px; line-height: 1.6;">Pago seguro con TPV CaixaBank. Será redirigido a la pasarela segura para completar el pago.</p>
+
+                        <!-- Redsys Container -->
+                        <div id="redsys-container" style="max-width: 100%; margin: 0 auto;">
+                            <!-- Redsys Payment Info -->
+                            <div class="redsys-payment-info" style="background: #f8f9ff; border: 1px solid #e0e7ff; border-radius: 12px; padding: 24px; margin-bottom: 25px;">
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                                    <div style="background: #016d86; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fa-solid fa-credit-card"></i>
+                                    </div>
+                                    <div>
+                                        <h4 style="margin: 0 0 4px 0; color: #1f2937; font-size: 18px; font-weight: 600;">Pago Seguro CaixaBank</h4>
+                                        <p style="margin: 0; color: #6b7280; font-size: 14px;">TPV certificado con máxima seguridad</p>
+                                    </div>
+                                </div>
+                                
+                                
+                                <div style="background: rgba(59, 130, 246, 0.1); padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                                    <p style="margin: 0; font-size: 14px; color: #1e40af; line-height: 1.5;">
+                                        <i class="fa-solid fa-info-circle"></i> 
+                                        Al hacer clic en "Proceder al Pago", será redirigido a la pasarela segura de CaixaBank para completar el pago con tarjeta.
+                                    </p>
+                                </div>
+                            </div>
+
+
+                            <!-- Terms and Conditions Checkbox - Estilo discreto y profesional -->
+                            <div class="terms-container payment-terms" style="margin: 20px 0; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px; background-color: #f9fafb;">
+                                <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.5; cursor: pointer; color: #374151;">
+                                    <input type="checkbox" id="terms_accept_pago" name="terms_accept_pago" required style="margin-top: 2px; width: 16px; height: 16px; accent-color: #016d86; cursor: pointer;">
+                                    <span style="font-size: 14px;">Acepto los <a href="https://tramitfy.es/terminos-y-condiciones-de-uso/" target="_blank" style="color: #016d86; text-decoration: none; font-weight: 500;">términos y condiciones de pago</a></span>
+                                </label>
+                            </div>
+
+
+                            <!-- Payment Message -->
+                            <div id="payment-message" class="hidden" style="margin: 20px 0; padding: 15px; border-radius: 8px; text-align: center; font-weight: 500; display: none;"></div>
+
+                            <!-- Payment Button -->
+                            <button type="button" id="submit-payment" class="btn-primary" style="width: 100%; padding: 16px; font-size: 18px; font-weight: 600; background: linear-gradient(135deg, #016d86 0%, #015266 100%); color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px; transition: all 0.3s ease; box-shadow: 0 4px 6px -1px rgba(1, 109, 134, 0.3), 0 2px 4px -1px rgba(1, 109, 134, 0.2);" disabled>
+                                <i class="fa-solid fa-credit-card"></i> Proceder al Pago
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div> <!-- Fin tramitfy-main-form -->
+
+            </div> <!-- Fin tramitfy-two-column -->
+        </div> <!-- Fin tramitfy-layout-wrapper -->
+
+    </form>
+
+    <!-- Modal de Vista Previa del Documento -->
+    <div id="document-preview-modal" class="tbv2-preview-modal">
+        <div class="tbv2-preview-content">
+            <div class="tbv2-preview-header">
+                <h3><i class="fa-solid fa-file-contract"></i> Documento de Autorización</h3>
+                <button class="tbv2-modal-close" id="close-preview-modal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+
+            <div class="tbv2-preview-body">
+                <div id="document-content-preview">
+                    <!-- El contenido se generará dinámicamente -->
+                </div>
+            </div>
+
+            <div class="tbv2-preview-footer">
+                <p class="tbv2-preview-instructions">
+                    <i class="fa-solid fa-info-circle"></i> Lea cuidadosamente el documento antes de proceder a firmarlo
+                </p>
+                <div class="tbv2-preview-button-container">
+                    <button class="tbv2-modal-cancel-btn" id="cancel-document-preview">
+                        <i class="fa-solid fa-times"></i> Cancelar
+                    </button>
+                    <button class="tbv2-modal-proceed-btn" id="proceed-to-signature">
+                        <i class="fa-solid fa-pen-fancy"></i> Proceder a Firmar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Firma Digital -->
+    <div id="signature-modal-advanced" class="tbv2-signature-modal">
+        <div class="tbv2-modal-content">
+            <div class="tbv2-modal-header">
+                <h3><i class="fa-solid fa-pen-fancy"></i> Firma Digital</h3>
+                <button class="tbv2-modal-close" id="close-signature-modal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+
+            <div class="tbv2-enhanced-signature-container">
+                <div class="tbv2-signature-guide">
+                    <div class="tbv2-signature-line"></div>
+                    <div class="tbv2-signature-instruction">FIRME AQUÍ</div>
+                </div>
+                <canvas id="enhanced-signature-canvas"></canvas>
+            </div>
+
+            <div class="tbv2-modal-footer">
+                <p class="tbv2-modal-instructions">
+                    <i class="fa-solid fa-hand-pointer"></i> Use el dedo para firmar en el área indicada
+                </p>
+                <div class="tbv2-modal-button-container">
+                    <button class="tbv2-modal-clear-btn" id="modal-clear-signature">
+                        <i class="fa-solid fa-eraser"></i> Borrar
+                    </button>
+                    <button class="tbv2-modal-accept-btn" id="modal-accept-signature" disabled>
+                        <i class="fa-solid fa-check"></i> Confirmar firma
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+    // Datos CSV para JavaScript
+    const tbv2DatosCsv = <?php echo json_encode($datos_csv); ?>;
+    const tbv2StripePublicKey = '<?php echo esc_js($tbv2_stripe_public_key); ?>';
+    </script>
+    <?php tbv2_render_scripts(); ?>
+    
+    <?php
+    return ob_get_clean();
+}
+
+/**
+ * Estilos CSS IDÉNTICOS al original
+ */
+function tbv2_render_styles() {
+    ?>
+    <style>
+    /* ============================================
+       TBV2 - ESTILOS IDÉNTICOS AL ORIGINAL
+       ============================================ */
+    
+    :root {
+        --primary: 1, 109, 134; /* #016d86 */
+        --primary-dark: 1, 82, 106; /* #01546a */
+        --spacing-xs: 4px;
+        --spacing-sm: 8px;
+        --spacing-md: 16px;
+        --spacing-lg: 24px;
+        --spacing-xl: 32px;
+        --spacing-2xl: 48px;
+        --radius-sm: 6px;
+        --radius: 8px;
+        --radius-lg: 12px;
+        --radius-xl: 16px;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Marketing Container */
+
+    /* LAYOUT PRINCIPAL (IDÉNTICO AL ORIGINAL) */
+    .tramitfy-layout-wrapper {
+        max-width: 1400px;
+        width: 95%;
+        margin: 40px auto 0 auto;
+        padding: 0;
+    }
+
+    .tramitfy-two-column {
+        display: grid !important;
+        grid-template-columns: 384px 1fr !important; /* Sidebar fijo 384px (20% más ancho) + formulario resto */
+        grid-template-areas: "sidebar content" !important;
+        gap: 0;
+        align-items: stretch; /* Sidebar se ajusta a altura del form */
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    /* SIDEBAR IZQUIERDO (IDÉNTICO) */
+    .tramitfy-sidebar {
+        grid-area: sidebar;
+        position: relative;
+        background: #016d86; /* Color corporativo sólido */
+        border-radius: 12px 0 0 12px;
+        padding: 18px 16px;
+        box-shadow: none;
+        border: none;
+        backdrop-filter: none;
+        overflow-y: auto;
+        overflow-x: hidden;
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        width: 384px; /* Ancho aumentado 20% (antes 320px) */
+        min-height: 100%; /* Se extiende con el contenido */
+        height: auto; /* Altura automática */
+        transition: width 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .sidebar-content {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sidebar-body {
+        flex: 1;
+    }
+
+    /* FORMULARIO PRINCIPAL (IDÉNTICO) */
+    .tramitfy-main-form {
+        grid-area: content;
+        background: white;
+        border-radius: 0 12px 12px 0;
+        padding: 32px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    /* NAVEGACIÓN PROFESIONAL AJUSTADA AL MARGEN */
+    #form-navigation-professional {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 4px;
+        margin: 0 0 20px 0;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        position: relative;
+        top: 0;
+    }
+
+    .nav-progress-bar {
+        position: relative;
+        height: 3px;
+        background: rgba(14, 116, 144, 0.2);
+        z-index: 1;
+    }
+
+    .nav-progress-indicator {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 20%; /* 1/5 páginas */
+        background: linear-gradient(90deg, #016d86 0%, #0891b2 100%);
+        transition: width 0.4s ease;
+        box-shadow: 0 0 10px rgba(1, 109, 134, 0.3);
+    }
+
+    .nav-items-container {
+        display: flex;
+        position: relative;
+        z-index: 2;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0;
+    }
+
+    .nav-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: #0891b2;
+        font-weight: 500;
+        font-size: 14px;
+        position: relative;
+        transition: all 0.3s ease;
+        flex: 1;
+        padding: 16px 20px;
+        border-bottom: 3px solid transparent;
+        background: white;
+    }
+
+    .nav-item:hover {
+        color: #016d86;
+        background: rgba(1, 109, 134, 0.05);
+        transform: translateY(-2px);
+    }
+
+    .nav-item.active {
+        color: #016d86;
+        border-bottom-color: #016d86;
+        background: linear-gradient(135deg, rgba(1, 109, 134, 0.05) 0%, rgba(8, 145, 178, 0.02) 100%);
+        font-weight: 600;
+    }
+
+    .nav-item-circle {
+        display: none;
+    }
+
+    .nav-item-icon {
+        margin-right: 8px;
+        font-size: 16px;
+        transition: transform 0.3s ease;
+    }
+
+    .nav-item:hover .nav-item-icon,
+    .nav-item.active .nav-item-icon {
+        transform: scale(1.1);
+    }
+
+    .nav-item-number {
+        display: none;
+    }
+
+    .nav-item-text {
+        font-size: 14px;
+        font-weight: inherit;
+        text-align: center;
+    }
+
+    /* Estados de progreso */
+    .nav-item.completed {
+        color: #10b981;
+    }
+
+    .nav-item.completed .nav-item-icon {
+        color: #10b981;
+    }
+
+    /* Efectos hover mejorados */
+    .nav-item::before {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #016d86 0%, #0891b2 100%);
+        transition: all 0.3s ease;
+        transform: translateX(-50%);
+    }
+
+    .nav-item:hover::before {
+        width: 80%;
+    }
+
+    .nav-item.active::before {
+        width: 100%;
+    }
+
+    .nav-item.completed {
+        background: rgba(16, 185, 129, 0.08);
+        color: #10b981;
+        border-color: rgba(16, 185, 129, 0.3);
+        position: relative;
+    }
+
+    .nav-item.completed::after {
+        content: '✓';
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #10b981;
+        font-weight: bold;
+        font-size: 12px;
+        background: rgba(16, 185, 129, 0.1);
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+
+    /* NAVEGACIÓN EN DESKTOP */
+    #form-navigation-top {
+        position: relative;
+        top: -32px;
+        left: -32px;
+        right: -32px;
+        width: calc(100% + 64px);
+        z-index: 10;
+        background: white;
+        border-bottom: 2px solid #f1f5f9;
+        border-radius: 16px 16px 0 0;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* NAVEGACIÓN TABS PROFESIONAL */
+    .nav-tabs-container {
+        display: flex;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        width: 100%;
+    }
+
+    .nav-tab {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        padding: 14px 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-right: 1px solid #f3f4f6;
+        position: relative;
+        background: #fafbfc;
+        min-height: 60px;
+    }
+
+    .nav-tab:last-child {
+        border-right: none;
+    }
+
+    .nav-tab:hover {
+        background: #f8f9fa;
+    }
+
+    .nav-tab.active {
+        background: #ffffff;
+        border-bottom: 2px solid #016d86;
+        box-shadow: 0 -1px 0 0 #016d86;
+    }
+
+    .nav-tab.completed {
+        background: #f9fdfb;
+        border-bottom: 2px solid #10b981;
+    }
+
+
+    .tab-content-centered {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        width: 100%;
+    }
+
+
+
+    .tab-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #374151;
+        line-height: 1;
+        text-align: center;
+    }
+
+    .nav-tab.active .tab-title {
+        color: #016d86;
+    }
+
+    .nav-tab.completed .tab-title {
+        color: #10b981;
+    }
+
+
+
+    /* PÁGINAS DEL FORMULARIO */
+    .form-page {
+        transition: opacity var(--transition);
+    }
+
+    .form-page.hidden {
+        display: none;
+    }
+
+
+    .form-page h2 {
+        color: #016d86;
+        font-size: 26px;
+        font-weight: 600;
+        margin-bottom: var(--spacing-md);
+        border-bottom: 2px solid rgba(1, 109, 134, 0.1);
+        padding-bottom: var(--spacing-sm);
+    }
+
+    /* LAYOUTS COMPACTOS PARA FORMULARIO (IDÉNTICOS AL ORIGINAL) */
+    .form-compact-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 18px;
+    }
+
+    .form-compact-row .form-group {
+        margin-bottom: 0;
+    }
+
+    .form-compact-triple {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .form-compact-triple .form-group {
+        margin-bottom: 0;
+    }
+
+    /* GRID DE FORMULARIO */
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        font-weight: 500;
+        margin-bottom: 6px;
+        color: #111827;
+        font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group select {
+        padding: 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: var(--radius);
+        font-size: 16px;
+        transition: all var(--transition-fast);
+        background: white;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #016d86;
+        box-shadow: 0 0 0 3px rgba(1, 109, 134, 0.1);
+    }
+
+    /* Select styling */
+    .form-group select {
+        -webkit-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23016d86' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+        padding-right: 40px;
+    }
+
+    /* Input hints */
+    .input-hint {
+        font-size: 13px;
+        color: #64748b;
+        margin-top: 6px;
+        display: block;
+        line-height: 1.4;
+    }
+
+    /* Checkbox container styling */
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: #016d86;
+        cursor: pointer;
+        margin-bottom: 0;
+        font-weight: 500;
+    }
+
+    .checkbox-container input[type="checkbox"] {
+        margin: 0;
+        transform: scale(1.1);
+        accent-color: #016d86;
+    }
+
+    /* BOTONES */
+    .btn {
+        padding: 12px 24px;
+        border-radius: var(--radius);
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        transition: all var(--transition-fast);
+        border: none;
+        text-decoration: none;
+    }
+
+    .btn:hover {
+        transform: translateY(-1px);
+    }
+
+    .btn-primary {
+        background: #016d86;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #01546a;
+    }
+
+    /* ESTILOS PARA BOTONES INTEGRADOS */
+    .form-navigation .button {
+        padding: 12px 24px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        border: 2px solid transparent;
+        min-width: 140px;
+        justify-content: center;
+    }
+
+    .button-primary {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #0891b2 100%);
+        color: white;
+        border: none;
+        font-weight: 600;
+    }
+
+    .button-primary:hover {
+        background: linear-gradient(135deg, #014d5f 0%, #0e7490 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(1, 109, 134, 0.4);
+    }
+
+    .button-secondary {
+        background: #f8fafc;
+        color: #374151;
+        border: 2px solid #e5e7eb;
+        font-weight: 600;
+    }
+
+    .button-secondary:hover {
+        background: #f1f5f9;
+        border-color: #d1d5db;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .button-final {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        color: white;
+        border: none;
+        font-weight: 600;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .button-final::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .button-final:hover {
+        background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(5, 150, 105, 0.4);
+    }
+
+    .button-final:hover::before {
+        left: 100%;
+    }
+
+    /* NAVEGACIÓN INTEGRADA DENTRO DEL FORMULARIO */
+    .form-navigation {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-top: 32px;
+        padding: 20px 0;
+        border-top: 2px solid #f1f5f9;
+        background: linear-gradient(135deg, #fafbfc 0%, #f8fafc 100%);
+        border-radius: 0 0 12px 12px;
+        margin: 32px -24px -24px -24px; /* Extend to form edges */
+        padding: 20px 24px;
+    }
+
+    /* PLACEHOLDER TEMPORAL */
+    .placeholder-section {
+        background: #f8fafc;
+        border: 2px dashed #e5e7eb;
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-2xl);
+        text-align: center;
+        color: #6b7280;
+        font-size: 16px;
+    }
+
+    /* SIDEBAR DINÁMICO - Usa estilos inline del original */
+
+    /* RESPONSIVE (IDÉNTICO AL ORIGINAL) */
+    @media (max-width: 1200px) {
+        .tramitfy-two-column {
+            grid-template-columns: 336px 1fr !important; /* Sidebar más estrecho pero 20% más ancho que antes (280px × 1.2) */
+        }
+
+        .tramitfy-sidebar {
+            padding: 24px 16px;
+            width: 336px; /* Ancho para tablets */
+        }
+
+        .form-page {
+            padding: 28px 32px;
+        }
+    }
+
+    /* ============================================
+       MOBILE RESPONSIVE - PROFESIONAL CORREGIDO
+       ============================================ */
+    @media (max-width: 768px) {
+        /* Layout principal móvil */
+        .tramitfy-two-column {
+            grid-template-columns: 1fr !important;
+            grid-template-areas: "sidebar" "content" !important;
+            gap: 0;
+            box-shadow: 0 0 20px rgba(0,0,0,0.08);
+        }
+        
+        /* Sidebar móvil */
+        .tramitfy-sidebar {
+            position: relative;
+            top: auto;
+            min-height: auto;
+            height: auto;
+            width: 100%;
+            border-radius: 12px 12px 0 0;
+            padding: 20px 16px;
+        }
+        
+        .tramitfy-sidebar h3 {
+            font-size: 22px !important;
+            margin-bottom: 12px !important;
+        }
+        
+        /* Formulario principal móvil */
+        .tramitfy-main-form {
+            padding: 20px 16px; /* Sin padding extra ya que botones dentro del form */
+            border-radius: 0 0 12px 12px;
+        }
+        
+        /* MENÚ MÓVIL - JUSTO DEBAJO DEL SIDEBAR */
+        #form-navigation-top {
+            position: relative !important;
+            width: calc(100% + 32px) !important; /* Compensar padding del contenedor */
+            margin-left: -16px !important; /* Centrar horizontalmente */
+            margin-right: -16px !important;
+            margin-top: 20px !important; /* Espacio después del sidebar */
+            margin-bottom: 20px !important; /* Espacio antes del form */
+            background: #f8f9fa;
+            padding: 12px 8px;
+            border-radius: 8px;
+            order: -1; /* Asegurar que esté antes del form */
+            top: 0 !important; /* Reset position */
+            left: 0 !important;
+            right: 0 !important;
+        }
+        
+        .nav-tabs-container {
+            display: grid !important;
+            grid-template-columns: repeat(5, 1fr) !important;
+            gap: 6px !important;
+            padding: 0 4px !important; /* Pequeño padding para centrar */
+            overflow: visible !important;
+            max-width: 100% !important;
+            margin: 0 auto !important; /* Centrar el contenedor */
+        }
+        
+        /* Cuadrados tamaño intermedio con iconos */
+        .nav-tab {
+            aspect-ratio: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: white !important;
+            border: 1.5px solid #e5e7eb !important;
+            border-radius: 10px !important;
+            transition: all 0.2s ease !important;
+            cursor: pointer !important;
+            padding: 6px !important;
+            position: relative !important;
+            min-height: 48px !important;
+            max-height: 48px !important;
+        }
+        
+        /* Iconos tamaño intermedio y discretos */
+        .nav-tab::before {
+            content: '';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            font-size: 16px;
+            color: #9ca3af;
+            margin-bottom: 3px;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-tab[data-step="1"]::before { content: '\f21a'; } /* ship */
+        .nav-tab[data-step="2"]::before { content: '\f007'; } /* user */
+        .nav-tab[data-step="3"]::before { content: '\f153'; } /* euro */
+        .nav-tab[data-step="4"]::before { content: '\f15c'; } /* file */
+        .nav-tab[data-step="5"]::before { content: '\f09d'; } /* card */
+        
+        /* Texto pequeño pero legible debajo */
+        .nav-tab .tab-title {
+            font-size: 8px !important;
+            font-weight: 600 !important;
+            color: #9ca3af !important;
+            text-align: center !important;
+            line-height: 1.1 !important;
+            transition: all 0.2s ease !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        
+        /* Estado activo */
+        .nav-tab.active {
+            background: #016d86 !important;
+            border-color: #016d86 !important;
+            box-shadow: 0 4px 6px rgba(1, 109, 134, 0.15) !important;
+        }
+        
+        .nav-tab.active::before {
+            color: white !important;
+        }
+        
+        .nav-tab.active .tab-title {
+            color: white !important;
+        }
+        
+        /* Estado completado (sombreado) */
+        .nav-tab.completed {
+            background: #e8f5f8 !important; /* Fondo azul muy claro */
+            border-color: #016d86 !important;
+            opacity: 1 !important; /* Mantener opacidad normal */
+        }
+        
+        .nav-tab.completed::before {
+            color: #016d86 !important; /* Color azul para indicar completado */
+            /* NO cambiar el icono - mantener el original de cada paso */
+        }
+        
+        .nav-tab.completed .tab-title {
+            color: #016d86 !important; /* Texto azul */
+            display: block !important; /* Mantener texto visible */
+            font-size: 8px !important; /* Mismo tamaño que los demás */
+        }
+        
+        /* Páginas del formulario móvil */
+        .form-page {
+            padding: 0;
+            margin-bottom: 20px;
+        }
+        
+        /* PÁGINA DE PRECIO - ESTILOS MÓVIL */
+        #page-precio #itp-question-container {
+            padding: 16px 12px !important;
+        }
+        
+        #page-precio #itp-question-container > div {
+            flex-direction: column !important;
+            gap: 16px !important;
+        }
+        
+        #page-precio #itp-question-container h4 {
+            text-align: center !important;
+            font-size: 18px !important;
+        }
+        
+        #page-precio #itp-question-container p {
+            text-align: center !important;
+            font-size: 14px !important;
+            margin-bottom: 8px !important;
+        }
+        
+        /* Botones ITP en móvil */
+        #page-precio .itp-choice-btn {
+            width: 100% !important;
+            padding: 14px 20px !important;
+            font-size: 15px !important;
+            border-radius: 8px !important;
+            border-width: 2px !important;
+            transition: all 0.2s ease !important;
+        }
+        
+        #page-precio .itp-choice-btn:active {
+            transform: scale(0.98) !important;
+        }
+        
+        /* Estado seleccionado de botón ITP */
+        #page-precio .itp-choice-btn.selected {
+            background: #016d86 !important;
+            color: white !important;
+            box-shadow: 0 4px 6px rgba(1, 109, 134, 0.2) !important;
+        }
+        
+        #page-precio #itp-question-container > div > div:last-child {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 12px !important;
+            width: 100% !important;
+        }
+        
+        /* Cálculo ITP móvil */
+        #page-precio #tbv2-itp-display {
+            font-size: 24px !important;
+        }
+        
+        #page-precio #ver-calculo-itp {
+            padding: 12px 16px !important;
+            font-size: 14px !important;
+        }
+        
+        /* Desglose móvil */
+        #precio-step-2 > div > div {
+            padding: 20px 16px !important;
+        }
+        
+        #precio-step-2 .precio-desglose-item {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 8px !important;
+        }
+        
+        /* Botón modificar ITP móvil */
+        #modificar-itp {
+            width: 100% !important;
+            padding: 14px !important;
+            font-size: 15px !important;
+        }
+        
+        .form-page h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #016d86;
+        }
+        
+        .form-page p {
+            font-size: 13px;
+            line-height: 1.5;
+            color: #666;
+            margin-bottom: 16px;
+        }
+        
+        /* Campos de formulario móvil - IMPORTANTE */
+        .form-compact-row {
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+        }
+        
+        /* Forzar grid de 3 columnas a 1 en móvil */
+        div[style*="grid-template-columns: 1fr 1fr 1fr"] {
+            grid-template-columns: 1fr !important;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+            display: block;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px; /* Evita zoom en iOS */
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            -webkit-appearance: none;
+        }
+        
+        /* Checkbox móvil */
+        .checkbox-container {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .checkbox-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+        
+        /* NAVEGACIÓN BOTONES - DENTRO DEL FORMULARIO */
+        .form-navigation {
+            position: relative !important;
+            margin-top: 24px !important;
+            background: #f8f9fa !important;
+            border-radius: 8px !important;
+            padding: 16px !important;
+            display: flex !important;
+            flex-direction: row !important;
+            justify-content: space-between !important;
+            gap: 12px !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+        }
+        
+        .form-navigation button {
+            flex: 1 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 14px 12px !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            border-radius: 8px !important;
+            border: none !important;
+            cursor: pointer !important;
+            transition: all 0.2s !important;
+            white-space: nowrap !important;
+        }
+        
+        .form-navigation .button-secondary {
+            background: #f3f4f6 !important;
+            color: #374151 !important;
+        }
+        
+        .form-navigation .button-primary {
+            background: #016d86 !important;
+            color: white !important;
+        }
+        
+        /* Asegurar que los botones sean visibles */
+        #tbv2-prevButton,
+        #tbv2-nextButton,
+        #tbv2-datos-prevButton,
+        #tbv2-datos-nextButton,
+        #tbv2-precio-prevButton,
+        #tbv2-precio-nextButton,
+        #tbv2-documentos-prevButton,
+        #tbv2-documentos-nextButton,
+        #tbv2-pago-prevButton,
+        #tbv2-pago-nextButton {
+            display: inline-flex !important;
+        }
+        
+        /* Ocultar el botón anterior en la primera página */
+        #page-vehiculo #tbv2-prevButton {
+            display: none !important;
+        }
+        
+        /* Upload grid móvil */
+        .upload-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        
+        .upload-box {
+            padding: 16px;
+        }
+        
+        .upload-button {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+        }
+    }
+
+    /* ============================================
+       MOBILE PEQUEÑO - CORREGIDO Y OPTIMIZADO
+       ============================================ */
+    @media (max-width: 480px) {
+        .tramitfy-layout-wrapper {
+            padding: 0;
+            margin: 8px;
+        }
+        
+        .tramitfy-two-column {
+            border-radius: 8px;
+        }
+        
+        /* Sidebar móvil pequeño */
+        .tramitfy-sidebar {
+            padding: 16px 12px;
+            min-height: auto;
+        }
+        
+        .tramitfy-sidebar h3 {
+            font-size: 20px !important;
+            margin-bottom: 12px !important;
+        }
+        
+        /* Formulario móvil pequeño */
+        .tramitfy-main-form {
+            padding: 16px 12px !important; /* Sin espacio extra */
+            max-width: 100%;
+        }
+        
+        /* Navegación móvil pequeña - Mantener centrado */
+        #form-navigation-top {
+            margin-top: -8px !important;
+            margin-bottom: 16px !important;
+            padding: 10px 6px !important;
+        }
+        
+        .nav-tabs-container {
+            gap: 4px !important;
+        }
+        
+        .nav-tab {
+            min-height: 42px !important;
+            max-height: 42px !important;
+            padding: 4px !important;
+        }
+        
+        .nav-tab::before {
+            font-size: 14px !important;
+            margin-bottom: 2px !important;
+        }
+        
+        .nav-tab .tab-title {
+            font-size: 7px !important;
+        }
+        
+        /* Formulario compacto */
+        .form-page {
+            padding: 0;
+        }
+        
+        .form-page h2 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        
+        .form-page p {
+            font-size: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .form-group {
+            margin-bottom: 14px;
+        }
+        
+        .form-group label {
+            font-size: 12px;
+        }
+        
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            font-size: 16px; /* Mantener 16px para evitar zoom */
+        }
+        
+        /* Navegación inferior compacta pero dentro del form */
+        .form-navigation {
+            padding: 12px !important;
+            margin-top: 20px !important;
+        }
+        
+        .form-navigation button {
+            padding: 12px 8px !important;
+            font-size: 13px !important;
+        }
+        
+        .form-navigation button i {
+            margin: 0 2px !important;
+        }
+        
+        /* Upload boxes compactos */
+        .upload-box {
+            padding: 14px;
+        }
+        
+        .upload-box h4 {
+            font-size: 12px;
+        }
+        
+        .upload-button {
+            padding: 10px;
+            font-size: 13px;
+        }
+        
+        /* Modales fullscreen */
+        .tbv2-preview-content,
+        .tbv2-modal-content {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+        }
+    }
+    
+    /* ============================================
+       MOBILE MUY PEQUEÑO - SOLO ICONOS
+       ============================================ */
+    @media (max-width: 360px) {
+        /* Menú compacto pero visible */
+        #form-navigation-top {
+            padding: 8px 4px !important;
+        }
+        
+        .nav-tabs-container {
+            gap: 3px !important;
+        }
+        
+        .nav-tab {
+            min-height: 38px !important;
+            max-height: 38px !important;
+            padding: 3px !important;
+            border-radius: 8px !important;
+        }
+        
+        /* Solo iconos, sin texto */
+        .nav-tab .tab-title {
+            display: none !important;
+        }
+        
+        .nav-tab::before {
+            font-size: 14px !important;
+            margin-bottom: 0 !important;
+        }
+        
+        /* Ajustes adicionales para pantallas muy pequeñas */
+        .tramitfy-sidebar h3 {
+            font-size: 18px !important;
+        }
+        
+        .form-navigation button i {
+            display: none;
+        }
+        
+        .form-navigation button {
+            font-size: 12px;
+            padding: 10px 8px;
+        }
+    }
+
+    /* ===== ITP CALCULATION STYLES ===== */
+    
+    .calculation-result {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        border: 1px solid #cbd5e1;
+        border-radius: var(--radius);
+        padding: var(--spacing-md);
+        text-align: center;
+        margin: var(--spacing-md) 0;
+    }
+    
+    .calculation-result strong {
+        display: block;
+        font-size: 1.5rem;
+        color: rgb(var(--primary));
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .calculation-detail {
+        color: #64748b;
+        font-size: 0.875rem;
+    }
+    
+    .calculation-placeholder {
+        background: #f8fafc;
+        border: 2px dashed #cbd5e1;
+        border-radius: var(--radius);
+        padding: var(--spacing-lg);
+        text-align: center;
+        color: #64748b;
+        font-style: italic;
+    }
+    
+    .breakdown-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .breakdown-row:last-child {
+        border-bottom: none;
+    }
+    
+    .breakdown-row.calculation-total {
+        background: #f1f5f9;
+        padding: var(--spacing-md);
+        margin: var(--spacing-sm) -var(--spacing-md) 0;
+        border-radius: var(--radius-sm);
+        font-weight: 600;
+    }
+    
+    .breakdown-row.total-row {
+        background: linear-gradient(135deg, rgb(var(--primary), 0.1) 0%, rgb(var(--primary), 0.05) 100%);
+        padding: var(--spacing-md);
+        margin: var(--spacing-md) -var(--spacing-md) 0;
+        border-radius: var(--radius);
+        font-weight: 700;
+        font-size: 1.125rem;
+        color: rgb(var(--primary));
+        border: 2px solid rgb(var(--primary), 0.2);
+    }
+    
+    .info-message {
+        padding: var(--spacing-md);
+        border-radius: var(--radius);
+        margin: var(--spacing-md) 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .info-message.success {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        color: #15803d;
+    }
+    
+    .info-message.info {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        color: #1d4ed8;
+    }
+    
+    .btn-toggle {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--radius-sm);
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+    
+    .btn-toggle:hover {
+        background: #e2e8f0;
+        border-color: #cbd5e1;
+    }
+    
+    .btn-toggle.active {
+        background: rgb(var(--primary));
+        border-color: rgb(var(--primary));
+        color: white;
+    }
+    
+    .btn-toggle i {
+        font-size: 0.75rem;
+    }
+    
+    .itp-breakdown-container {
+        margin-top: var(--spacing-md);
+    }
+    
+    #itp-calculation-details {
+        display: none;
+    }
+
+    /* ============================================
+       DOCUMENTOS: UPLOAD GRID STYLES
+       ============================================ */
+
+    .upload-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin: 12px 0;
+    }
+
+    .upload-row {
+        display: flex;
+        gap: 12px;
+        width: 100%;
+    }
+
+    .upload-item {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 16px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
+    }
+
+    .upload-item:hover {
+        border-color: #d1d5db;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .upload-item label {
+        display: block;
+        margin-bottom: 12px;
+        cursor: pointer;
+    }
+
+    .upload-item label strong {
+        display: block;
+        font-size: 16px;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 4px;
+    }
+
+    .upload-item label small {
+        display: block;
+        font-size: 13px;
+        color: #6b7280;
+        font-weight: 400;
+        line-height: 1.3;
+    }
+
+    .upload-wrapper {
+        position: relative;
+    }
+
+    .upload-wrapper input[type="file"] {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+
+    .upload-button {
+        display: block;
+        padding: 12px 16px;
+        background: #f8fafc;
+        border: 2px dashed #d1d5db;
+        border-radius: 6px;
+        text-align: center;
+        color: #6b7280;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-bottom: 8px;
+    }
+
+    .upload-button:hover {
+        border-color: #016d86;
+        background: rgba(1, 109, 134, 0.05);
+        color: #016d86;
+    }
+
+    .upload-button-responsive .mobile-text {
+        display: none;
+    }
+
+    .file-count {
+        font-size: 13px;
+        color: #6b7280;
+        text-align: center;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .upload-row {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .upload-button-responsive .desktop-text {
+            display: none;
+        }
+
+        .upload-button-responsive .mobile-text {
+            display: inline;
+        }
+    }
+
+    /* ============================================
+       DOCUMENT PREVIEW MODAL STYLES
+       ============================================ */
+
+    .tbv2-preview-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+        z-index: 999998;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .tbv2-preview-modal.active {
+        display: flex;
+    }
+
+    .tbv2-preview-content {
+        position: relative;
+        background: white;
+        border-radius: 12px;
+        width: 90vw;
+        max-width: 700px;
+        max-height: 85vh;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .tbv2-preview-header {
+        padding: 20px 24px;
+        background: linear-gradient(135deg, #016d86 0%, #0a5469 100%);
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .tbv2-preview-header h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .tbv2-preview-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0;
+        max-height: 400px;
+    }
+
+    #document-content-preview {
+        padding: 24px;
+        color: #1f2937;
+        line-height: 1.6;
+    }
+
+    .tbv2-preview-footer {
+        padding: 20px 24px;
+        background: #f8f9fa;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .tbv2-preview-instructions {
+        margin: 0 0 16px 0;
+        color: #6b7280;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .tbv2-preview-button-container {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+    }
+
+    .tbv2-modal-cancel-btn,
+    .tbv2-modal-proceed-btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .tbv2-modal-cancel-btn {
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+    }
+
+    .tbv2-modal-cancel-btn:hover {
+        background: #e2e8f0;
+        color: #475569;
+    }
+
+    .tbv2-modal-proceed-btn {
+        background: #016d86;
+        color: white;
+    }
+
+    .tbv2-modal-proceed-btn:hover {
+        background: #0a5469;
+        transform: translateY(-1px);
+    }
+
+    .document-section {
+        margin-bottom: 24px;
+        padding: 16px;
+        border-left: 4px solid #016d86;
+        background: #f8fafc;
+        border-radius: 0 8px 8px 0;
+    }
+
+    .document-section h4 {
+        margin: 0 0 12px 0;
+        color: #016d86;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .document-section p {
+        margin: 8px 0;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .document-highlight {
+        background: #fef3cd;
+        border: 1px solid #d97706;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 20px 0;
+    }
+
+    .document-highlight p {
+        margin: 0;
+        color: #92400e;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    @media (max-width: 768px) {
+        .tbv2-preview-content {
+            width: 95vw;
+            max-height: 90vh;
+        }
+
+        .tbv2-preview-button-container {
+            flex-direction: column;
+        }
+
+        .tbv2-modal-cancel-btn,
+        .tbv2-modal-proceed-btn {
+            width: 100%;
+        }
+    }
+
+    /* ============================================
+       SIGNATURE MODAL STYLES
+       ============================================ */
+
+    .tbv2-signature-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.95);
+        z-index: 999999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .tbv2-signature-modal.active {
+        display: flex;
+    }
+
+
+    .tbv2-modal-content {
+        position: relative;
+        background: white;
+        border-radius: 12px;
+        width: 90vw;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .tbv2-modal-header {
+        padding: 20px 24px;
+        background: linear-gradient(135deg, #016d86 0%, #0a5469 100%);
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .tbv2-modal-header h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .tbv2-modal-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        transition: background 0.2s ease;
+    }
+
+    .tbv2-modal-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .tbv2-enhanced-signature-container {
+        position: relative;
+        height: 300px;
+        background: #f8f9fa;
+        margin: 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .tbv2-signature-guide {
+        position: absolute;
+        top: 50%;
+        left: 20px;
+        right: 20px;
+        z-index: 1;
+        pointer-events: none;
+        transform: translateY(-50%);
+    }
+
+    .tbv2-signature-line {
+        height: 2px;
+        background: #d1d5db;
+        margin: 8px 0;
+    }
+
+    .tbv2-signature-instruction {
+        text-align: center;
+        color: #6b7280;
+        font-size: 14px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    #enhanced-signature-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+        cursor: crosshair;
+    }
+
+    .tbv2-modal-footer {
+        padding: 20px 24px;
+        background: #f8f9fa;
+    }
+
+    .tbv2-modal-instructions {
+        margin: 0 0 16px 0;
+        color: #6b7280;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .tbv2-modal-button-container {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+    }
+
+    .tbv2-modal-clear-btn,
+    .tbv2-modal-accept-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .tbv2-modal-clear-btn {
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+    }
+
+    .tbv2-modal-clear-btn:hover {
+        background: #e2e8f0;
+        color: #475569;
+    }
+
+    .tbv2-modal-accept-btn {
+        background: #016d86;
+        color: white;
+    }
+
+    .tbv2-modal-accept-btn:hover:not(:disabled) {
+        background: #0a5469;
+        transform: translateY(-1px);
+    }
+
+    .tbv2-modal-accept-btn:disabled {
+        background: #d1d5db;
+        color: #9ca3af;
+        cursor: not-allowed;
+    }
+
+    /* ============================
+       PAYMENT PAGE STYLES
+    ============================ */
+    .stripe-spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #016d86;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: inline-block;
+    }
+
+
+    #submit-payment {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #submit-payment::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    #submit-payment:hover::before {
+        left: 100%;
+    }
+
+    #submit-payment:hover {
+        background: linear-gradient(135deg, #015266 0%, #013d4d 100%);
+        box-shadow: 0 6px 8px -1px rgba(1, 109, 134, 0.4), 0 4px 6px -1px rgba(1, 109, 134, 0.3);
+        transform: translateY(-1px);
+    }
+
+    #submit-payment:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px -1px rgba(1, 109, 134, 0.3);
+    }
+
+    #submit-payment:disabled {
+        background: #9ca3af !important;
+        cursor: not-allowed !important;
+        box-shadow: none !important;
+        opacity: 0.6;
+        transform: none !important;
+    }
+
+    #submit-payment:disabled::before {
+        display: none;
+    }
+
+    /* Terms Checkbox Styling */
+    .payment-terms .checkmark-box {
+        transition: all 0.2s ease;
+    }
+
+    .payment-terms .checkmark-box:hover {
+        background-color: #f8f9fa;
+        border-color: #015266;
+        transform: scale(1.05);
+    }
+
+    .payment-terms input[type="checkbox"]:checked + .checkmark-box {
+        background-color: #016d86 !important;
+        border-color: #016d86 !important;
+    }
+
+    .payment-terms input[type="checkbox"]:checked + .checkmark-box + .checkmark {
+        display: block !important;
+    }
+
+    /* Security Badges */
+    .payment-security {
+        background: linear-gradient(135deg, #f8f9fa 0%, #f3f4f6 100%);
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s ease;
+    }
+
+    .payment-security:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .security-badge {
+        transition: all 0.2s ease;
+    }
+
+    .security-badge:hover {
+        transform: scale(1.05);
+    }
+
+    /* Payment Message States */
+    #payment-message {
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    #payment-message.error {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.1);
+    }
+
+    #payment-message.success {
+        background-color: rgba(34, 197, 94, 0.1);
+        color: #059669;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1);
+    }
+
+    #payment-message.processing {
+        background-color: rgba(1, 109, 134, 0.1);
+        color: #016d86;
+        border: 1px solid rgba(1, 109, 134, 0.3);
+        box-shadow: 0 2px 4px rgba(1, 109, 134, 0.1);
+    }
+
+    /* Stripe Elements Styling */
+    #payment-element {
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+        transition: all 0.3s ease;
+    }
+
+    #payment-element:focus-within {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.12), 0 0 0 3px rgba(1, 109, 134, 0.3);
+        transform: translateY(-1px);
+    }
+
+    /* Loading States */
+    .payment-loading {
+        opacity: 0.6;
+        pointer-events: none;
+        position: relative;
+    }
+
+    .payment-loading::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: inherit;
+        z-index: 1000;
+    }
+    </style>
+    <?php
+}
+
+/**
+ * JavaScript IDÉNTICO al original
+ */
+function tbv2_render_scripts() {
+    ?>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 TBV2 - Inicializando formulario idéntico...');
+        TBV2_Form.init();
+        TBV2_Form.initRealTimeValidation();
+    });
+
+    // Namespace principal del formulario
+    const TBV2_Form = {
+        currentPage: 'page-vehiculo',
+        pages: ['page-vehiculo', 'page-datos', 'page-precio', 'page-documentos', 'page-pago'],
+        
+        init() {
+            this.setupNavigation();
+            this.setupManufacturerSelector();
+            this.setupSidebarContent();
+            this.updateNavigationState();
+            this.updateProgressBar();
+            console.log('✅ TBV2 inicializado correctamente');
+        },
+        
+        initRealTimeValidation() {
+            // Validación en tiempo real para campos clave
+            const fields = {
+                matricula: {
+                    element: document.getElementById('matricula'),
+                    validator: this.validateMatricula,
+                    message: 'Formato: ABC-123-456 (letras-números-números)'
+                },
+                length: {
+                    element: document.getElementById('length'),
+                    validator: this.validateLength,
+                    message: 'Eslora entre 1 y 50 metros'
+                },
+                purchase_price: {
+                    element: document.getElementById('purchase_price'),
+                    validator: this.validatePrice,
+                    message: 'Precio válido mayor que 0€'
+                },
+                matriculation_date: {
+                    element: document.getElementById('matriculation_date'),
+                    validator: this.validateMatriculationDate,
+                    message: 'La fecha no puede ser posterior a hoy'
+                },
+                region: {
+                    element: document.getElementById('region'),
+                    validator: (value) => value && value.trim().length > 0,
+                    message: 'Selecciona tu comunidad autónoma'
+                },
+                customer_name: {
+                    element: document.getElementById('customer_name'),
+                    validator: (value) => value.trim().length >= 3,
+                    message: 'Mínimo 3 caracteres'
+                },
+                customer_dni: {
+                    element: document.getElementById('customer_dni'),
+                    validator: this.validateDNI,
+                    message: 'Formato: 12345678X (con letra correcta)'
+                },
+                customer_email: {
+                    element: document.getElementById('customer_email'),
+                    validator: this.validateEmail,
+                    message: 'Formato de email válido'
+                },
+                customer_phone: {
+                    element: document.getElementById('customer_phone'),
+                    validator: this.validatePhone,
+                    message: 'Teléfono de 9 dígitos'
+                }
+            };
+
+            // Aplicar validación en tiempo real a cada campo
+            Object.keys(fields).forEach(fieldName => {
+                const fieldConfig = fields[fieldName];
+                if (fieldConfig.element) {
+                    this.setupFieldValidation(fieldConfig.element, fieldConfig.validator, fieldConfig.message);
+                }
+            });
+
+            // Validación especial para dropdowns
+            const manufacturer = document.getElementById('manufacturer');
+            const model = document.getElementById('model');
+            const region = document.getElementById('region');
+
+            if (manufacturer) {
+                this.setupDropdownValidation(manufacturer, 'Selecciona un fabricante');
+            }
+            if (model) {
+                this.setupDropdownValidation(model, 'Selecciona un modelo');
+            }
+            if (region) {
+                this.setupDropdownValidation(region, 'Selecciona tu comunidad autónoma');
+            }
+
+            console.log('✅ Validación en tiempo real activada');
+        },
+
+        setupFieldValidation(element, validator, message) {
+            // Crear contenedor de validación si no existe
+            let validationContainer = element.parentElement.querySelector('.validation-feedback');
+            if (!validationContainer) {
+                validationContainer = document.createElement('div');
+                validationContainer.className = 'validation-feedback';
+                validationContainer.style.cssText = `
+                    margin-top: 6px;
+                    font-size: 12px;
+                    line-height: 1.3;
+                    transition: all 0.3s ease;
+                    opacity: 0;
+                    height: 0;
+                    overflow: hidden;
+                `;
+                element.parentElement.appendChild(validationContainer);
+            }
+
+            // Eventos de validación
+            element.addEventListener('input', () => {
+                this.validateFieldRealTime(element, validator, validationContainer, message);
+            });
+
+            element.addEventListener('blur', () => {
+                this.validateFieldRealTime(element, validator, validationContainer, message);
+            });
+        },
+
+        setupDropdownValidation(element, message) {
+            let validationContainer = element.parentElement.querySelector('.validation-feedback');
+            if (!validationContainer) {
+                validationContainer = document.createElement('div');
+                validationContainer.className = 'validation-feedback';
+                validationContainer.style.cssText = `
+                    margin-top: 6px;
+                    font-size: 12px;
+                    line-height: 1.3;
+                    transition: all 0.3s ease;
+                    opacity: 0;
+                    height: 0;
+                    overflow: hidden;
+                `;
+                element.parentElement.appendChild(validationContainer);
+            }
+
+            element.addEventListener('change', () => {
+                if (element.value) {
+                    this.showFieldSuccess(element, validationContainer);
+                } else {
+                    this.showFieldError(element, validationContainer, message);
+                }
+            });
+        },
+
+        validateFieldRealTime(element, validator, container, message) {
+            const isValid = validator.call(this, element.value);
+            
+            if (element.value === '') {
+                // Campo vacío - no mostrar error aún
+                this.hideValidation(element, container);
+            } else if (isValid) {
+                this.showFieldSuccess(element, container);
+            } else {
+                this.showFieldError(element, container, message);
+            }
+        },
+
+        showFieldSuccess(element, container) {
+            element.style.borderColor = '#10b981';
+            element.style.backgroundColor = '#f0fdf4';
+            
+            container.style.color = '#059669';
+            container.innerHTML = '<i class="fas fa-check-circle" style="margin-right: 4px;"></i>Correcto';
+            container.style.opacity = '1';
+            container.style.height = 'auto';
+        },
+
+        showFieldError(element, container, message) {
+            element.style.borderColor = '#ef4444';
+            element.style.backgroundColor = '#fef2f2';
+            
+            container.style.color = '#dc2626';
+            container.innerHTML = '<i class="fas fa-exclamation-circle" style="margin-right: 4px;"></i>' + message;
+            container.style.opacity = '1';
+            container.style.height = 'auto';
+        },
+
+        hideValidation(element, container) {
+            element.style.borderColor = '';
+            element.style.backgroundColor = '';
+            container.style.opacity = '0';
+            container.style.height = '0';
+        },
+
+        // Validadores específicos
+        validateMatricula(value) {
+            // Formato español embarcaciones: ABC-123-456 o ABC-1234-AB
+            const patterns = [
+                /^[A-Za-z]{2,3}-\d{3,4}-\d{2,3}$/,  // ABC-123-456
+                /^[A-Za-z]{2,3}-\d{3,4}-[A-Za-z]{2}$/  // ABC-1234-AB
+            ];
+            return patterns.some(pattern => pattern.test(value));
+        },
+
+
+        validateLength(value) {
+            const length = parseFloat(value);
+            return length >= 1 && length <= 50;
+        },
+
+        validatePrice(value) {
+            const price = parseFloat(value.replace(/[^0-9.,]/g, '').replace(',', '.'));
+            return price > 0;
+        },
+
+        validateMatriculationDate(value) {
+            if (!value) return false;
+            const inputDate = new Date(value);
+            const today = new Date();
+            // Resetear horas para comparar solo fechas
+            today.setHours(23, 59, 59, 999);
+            return inputDate <= today;
+        },
+        
+        setupNavigation() {
+            // Botones de navegación
+            const btnSiguiente = document.getElementById('tbv2-nextButton');
+            const btnAnterior = document.getElementById('tbv2-prevButton');
+            
+            btnSiguiente?.addEventListener('click', () => {
+                console.log('🔄 Botón siguiente presionado');
+                this.nextPage();
+            });
+            
+            btnAnterior?.addEventListener('click', () => {
+                console.log('🔄 Botón anterior presionado');
+                this.previousPage();
+            });
+            
+            // Nuevos botones navegación página DATOS
+            const btnDatosPrev = document.getElementById('tbv2-datos-prevButton');
+            const btnDatosNext = document.getElementById('tbv2-datos-nextButton');
+            
+            btnDatosPrev?.addEventListener('click', () => {
+                console.log('🔄 DATOS: Botón anterior presionado');
+                this.goToPage('page-vehiculo');
+            });
+            
+            btnDatosNext?.addEventListener('click', () => {
+                console.log('🔄 DATOS: Botón siguiente presionado');
+                this.goToPage('page-precio');
+            });
+            
+            // Nuevos botones navegación página ITP/PRECIO
+            const btnPrecioPrev = document.getElementById('tbv2-precio-prevButton');
+            const btnPrecioNext = document.getElementById('tbv2-precio-nextButton');
+            
+            btnPrecioPrev?.addEventListener('click', () => {
+                console.log('🔄 ITP: Botón anterior presionado');
+                this.goToPage('page-datos');
+            });
+            
+            btnPrecioNext?.addEventListener('click', () => {
+                console.log('🔄 ITP: Botón siguiente presionado');
+                this.goToPage('page-documentos');
+            });
+            
+            // Nuevos botones navegación página DOCUMENTOS  
+            const btnDocumentosPrev = document.getElementById('tbv2-documentos-prevButton');
+            const btnDocumentosNext = document.getElementById('tbv2-documentos-nextButton');
+            
+            btnDocumentosPrev?.addEventListener('click', () => {
+                console.log('🔄 DOCUMENTOS: Botón anterior presionado');
+                this.goToPage('page-precio');
+            });
+            
+            btnDocumentosNext?.addEventListener('click', () => {
+                console.log('🔄 DOCUMENTOS: Botón siguiente presionado');
+                this.goToPage('page-pago');
+            });
+            
+            // Nuevos botones navegación página PAGO
+            const btnPagoPrev = document.getElementById('tbv2-pago-prevButton');
+            const btnPagoNext = document.getElementById('tbv2-pago-nextButton');
+            
+            btnPagoPrev?.addEventListener('click', () => {
+                console.log('🔄 PAGO: Botón anterior presionado');
+                this.goToPage('page-documentos');
+            });
+            
+            btnPagoNext?.addEventListener('click', () => {
+                console.log('🔄 PAGO: Botón completar presionado');
+                // TODO: Implement form submission
+                this.submitForm();
+            });
+            
+            // Navegación por tabs profesionales
+            document.querySelectorAll('.nav-tab').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageId = item.dataset.pageId;
+                    if (pageId) {
+                        this.goToPage(pageId);
+                    }
+                });
+            });
+        },
+        
+        setupManufacturerSelector() {
+            const manufacturerSelect = document.getElementById('manufacturer');
+            const modelSelect = document.getElementById('model');
+            const noEncuentroCheckbox = document.getElementById('no_encuentro_modelo');
+            const manualFields = document.getElementById('manual-fields');
+            const vehicleCsvSection = document.getElementById('vehicle-csv-section');
+            const matriculationDateInput = document.getElementById('matriculation_date');
+            
+            // Enhanced manufacturer selection with search
+            manufacturerSelect?.addEventListener('change', (e) => {
+                const selectedFabricante = e.target.value;
+                this.loadModelsForManufacturer(selectedFabricante);
+                this.updateSidebarContent();
+            });
+
+            // Setup search functionality
+            const searchInput = document.getElementById('manufacturer-search');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    this.filterManufacturers(e.target.value);
+                });
+                
+                searchInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.selectFirstFilteredManufacturer();
+                    }
+                });
+            }
+            
+            // Event listeners para actualizar sidebar dinámicamente
+            const fieldsToWatch = ['matricula', 'length', 'manual_manufacturer', 'manual_model', 'customer_name', 'customer_dni', 'customer_email', 'customer_phone'];
+            fieldsToWatch.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('input', () => {
+                        this.updateSidebarContent();
+                    });
+                }
+            });
+
+            // ITP functionality will be set up when navigating to that page
+
+            // Event listeners para actualizar display ITP cuando cambien datos del vehículo
+            const itpUpdateFields = ['manufacturer', 'model', 'purchase_price', 'matriculation_date', 'region'];
+            itpUpdateFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('change', () => {
+                        console.log(`🔄 Campo ${fieldId} cambió, recalculando ITP...`);
+                        this.updateITPDisplay();
+                    });
+                    field.addEventListener('input', () => {
+                        this.updateITPDisplay();
+                    });
+                }
+            });
+
+            // Checkbox "No encuentro mi modelo"
+            noEncuentroCheckbox?.addEventListener('change', (e) => {
+                const isChecked = e.target.checked;
+                
+                if (isChecked) {
+                    // Mostrar campos manuales
+                    vehicleCsvSection.style.display = 'none';
+                    manualFields.style.display = 'block';
+                    
+                    // Ocultar fecha matriculación para manual
+                    const matriculationContainer = matriculationDateInput?.closest('.form-group');
+                    if (matriculationContainer) {
+                        matriculationContainer.style.display = 'none';
+                    }
+                    matriculationDateInput?.removeAttribute('required');
+                    
+                    // Limpiar selecciones anteriores
+                    manufacturerSelect.value = '';
+                    modelSelect.value = '';
+                    modelSelect.innerHTML = '<option value="">Seleccione modelo</option>';
+                } else {
+                    // Mostrar campos CSV
+                    vehicleCsvSection.style.display = 'block';
+                    manualFields.style.display = 'none';
+                    
+                    // Mostrar fecha matriculación
+                    const matriculationContainer = matriculationDateInput?.closest('.form-group');
+                    if (matriculationContainer) {
+                        matriculationContainer.style.display = 'block';
+                    }
+                    matriculationDateInput?.setAttribute('required', 'required');
+                    
+                    // Limpiar campos manuales
+                    document.getElementById('manual_manufacturer').value = '';
+                    document.getElementById('manual_model').value = '';
+                }
+                
+                this.updateSidebarContent();
+            });
+        },
+        
+        setupSidebarContent() {
+            // Inicializar contenido dinámico del sidebar
+            this.updateSidebarContent();
+        },
+        
+        updateSidebarContent() {
+            const sidebarDynamic = document.getElementById('sidebar-dynamic-content');
+            if (!sidebarDynamic) return;
+            
+            let content = '';
+            
+            switch (this.currentPage) {
+                case 'page-vehiculo':
+                    content = this.getVehicleSidebarContent();
+                    break;
+                case 'page-datos':
+                    content = this.getDatosSidebarContent();
+                    break;
+                case 'page-precio':
+                    content = `
+                        <div style="text-align: center;">
+                            <h3 style="color: white; font-size: 18px; font-weight: 600; margin-bottom: 15px;">
+                                Información del ITP
+                            </h3>
+                            <p style="color: rgba(255,255,255,0.95); font-size: 14px; line-height: 1.5; margin-bottom: 20px;">
+                                Todo lo que necesitas saber sobre el Impuesto de Transmisiones Patrimoniales.
+                            </p>
+                            
+                            <!-- ¿Quién lo impone? -->
+                            <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                                <div style="color: white; font-weight: 500; font-size: 13px; margin-bottom: 6px;">
+                                    ¿Quién lo impone?
+                                </div>
+                                <p style="color: rgba(255,255,255,0.85); font-size: 13px; line-height: 1.4; margin: 0;">
+                                    Hacienda de cada comunidad autónoma
+                                </p>
+                            </div>
+                            
+                            <!-- ¿Cómo se gestiona? -->
+                            <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                                <div style="color: white; font-weight: 500; font-size: 13px; margin-bottom: 6px;">
+                                    ¿Cómo se gestiona?
+                                </div>
+                                <div style="color: rgba(255,255,255,0.85); font-size: 13px; line-height: 1.4;">
+                                    <div style="margin-bottom: 4px;">• Tú puedes pagarlo directamente</div>
+                                    <div>• Nosotros podemos gestionarlo por ti</div>
+                                </div>
+                            </div>
+                            
+                            <!-- ¿Qué incluimos? -->
+                            <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                                <div style="color: white; font-weight: 500; font-size: 13px; margin-bottom: 6px;">
+                                    ¿Qué incluimos?
+                                </div>
+                                <p style="color: rgba(255,255,255,0.85); font-size: 13px; line-height: 1.4; margin: 0;">
+                                    Gestión completa en DGMM, tasas oficiales e IVA
+                                </p>
+                            </div>
+                            
+                            <!-- Cálculo automático -->
+                            <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 12px;">
+                                <div style="color: white; font-weight: 500; font-size: 13px; margin-bottom: 6px;">
+                                    Cálculo Automático
+                                </div>
+                                <p style="color: rgba(255,255,255,0.85); font-size: 13px; line-height: 1.4; margin: 0;">
+                                    ITP calculado automáticamente según precio y región
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'page-documentos':
+                    content = this.getDocumentosSidebarContent();
+                    break;
+                case 'page-pago':
+                    content = this.getPagoSidebarContent();
+                    break;
+            }
+            
+            sidebarDynamic.innerHTML = content;
+        },
+        
+        getVehicleSidebarContent() {
+            const manufacturerSelect = document.getElementById('manufacturer');
+            const modelSelect = document.getElementById('model');
+            const matriculaInput = document.getElementById('matricula');
+            const lengthInput = document.getElementById('length');
+            const manualManufacturer = document.getElementById('manual_manufacturer');
+            const manualModel = document.getElementById('manual_model');
+            const noEncuentroCheckbox = document.getElementById('no_encuentro_modelo');
+            
+            let selectedManufacturer = manufacturerSelect?.value || '';
+            let selectedModel = modelSelect?.value || '';
+            let matricula = matriculaInput?.value || '';
+            let length = lengthInput?.value || '';
+            
+            // Si está en modo manual
+            if (noEncuentroCheckbox?.checked) {
+                selectedManufacturer = manualManufacturer?.value || '';
+                selectedModel = manualModel?.value || '';
+            }
+            
+            // Calcular precio estimado
+            let estimatedPrice = 134.99; // Precio base
+            let selectedOption = modelSelect?.querySelector(`option[value="${selectedModel}"]`);
+            if (selectedOption?.dataset.price) {
+                estimatedPrice = parseFloat(selectedOption.dataset.price);
+            }
+            
+            let vehicleInfo = '';
+            
+            if (selectedManufacturer || selectedModel || matricula) {
+                vehicleInfo = `
+                    <div class="sidebar-vehicle-info">
+                        <h4 style="color: #ffffff; font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-ship" style="color: #4ade80;"></i>
+                            Tu Embarcación
+                        </h4>
+                        <div class="vehicle-details">
+                            ${selectedManufacturer ? `
+                                <div class="detail-item">
+                                    <span class="detail-label">Fabricante:</span>
+                                    <span class="detail-value">${selectedManufacturer}</span>
+                                </div>
+                            ` : ''}
+                            ${selectedModel ? `
+                                <div class="detail-item">
+                                    <span class="detail-label">Modelo:</span>
+                                    <span class="detail-value">${selectedModel}</span>
+                                </div>
+                            ` : ''}
+                            ${matricula ? `
+                                <div class="detail-item">
+                                    <span class="detail-label">Matrícula:</span>
+                                    <span class="detail-value">${matricula}</span>
+                                </div>
+                            ` : ''}
+                            ${year ? `
+                                <div class="detail-item">
+                                    <span class="detail-label">Año:</span>
+                                    <span class="detail-value">${year}</span>
+                                </div>
+                            ` : ''}
+                            ${length ? `
+                                <div class="detail-item">
+                                    <span class="detail-label">Eslora:</span>
+                                    <span class="detail-value">${length}m</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            return `
+                <div style="padding: 0;">
+                    <h3 style="color: white; font-size: 32px; margin: 0 0 16px 0; font-weight: 700; line-height: 1.2;">
+                        Transferencia de Embarcación
+                    </h3>
+                    
+                    <!-- Subtítulo -->
+                    <p style="color: rgba(255,255,255,0.95); font-size: 14px; line-height: 1.5; margin: 0 0 20px 0;">
+                        Gestión completa del cambio de titularidad de tu embarcación. Tramitación online sin desplazamientos.
+                    </p>
+                    
+                    <!-- Cuadro de precio más discreto -->
+                    <div style="background: rgba(255,255,255,0.08); border-radius: 12px; padding: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.15); margin-bottom: 20px;">
+                        <div style="font-size: 11px; opacity: 0.8; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px; color: rgba(255,255,255,0.85); font-weight: 500;">PRECIO TOTAL</div>
+                        <div style="font-size: 32px; font-weight: 600; margin: 4px 0; color: rgba(255,255,255,0.95);">134.99€</div>
+                        <div style="font-size: 12px; opacity: 0.85; color: rgba(255,255,255,0.85); line-height: 1.3; margin-top: 6px;">IVA y tasas DGMM incluidas</div>
+                    </div>
+                    
+                    <!-- 3 beneficios principales con checkmarks verdes - Más discretos -->
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px;">
+                            <i class="fas fa-check" style="background: rgba(255,255,255,0.9); color: #10b981; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; font-size: 11px;"></i>
+                            <span style="color: rgba(255,255,255,0.85); font-size: 12px; line-height: 1.4;">Presentamos tu solicitud en menos de 24h desde que la recibimos</span>
+                        </div>
+                        <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px;">
+                            <i class="fas fa-check" style="background: rgba(255,255,255,0.9); color: #10b981; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; font-size: 11px;"></i>
+                            <span style="color: rgba(255,255,255,0.85); font-size: 12px; line-height: 1.4;">Tramitación completa ante la DGMM</span>
+                        </div>
+                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                            <i class="fas fa-check" style="background: rgba(255,255,255,0.9); color: #10b981; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; font-size: 11px;"></i>
+                            <span style="color: rgba(255,255,255,0.85); font-size: 12px; line-height: 1.4;">Consulta el estado del trámite vía whatsapp</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        },
+
+        getDatosSidebarContent() {
+            // Obtener datos ingresados dinámicamente
+            const customerName = document.getElementById('customer_name')?.value || '';
+            const customerDni = document.getElementById('customer_dni')?.value || '';
+            const customerEmail = document.getElementById('customer_email')?.value || '';
+            const customerPhone = document.getElementById('customer_phone')?.value || '';
+
+            let personalInfo = '';
+            if (customerName || customerDni || customerEmail || customerPhone) {
+                personalInfo = `
+                    <div class="sidebar-personal-info">
+                        <h4 style="color: #ffffff; font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-user" style="color: #4ade80;"></i>
+                            Tus Datos
+                        </h4>
+                        <div class="personal-details">
+                            ${customerName ? `
+                                <div class="detail-item">
+                                    <span class="detail-label">Nombre:</span>
+                                    <span class="detail-value">${customerName}</span>
+                                </div>
+                            ` : ''}
+                            ${customerDni ? `
+                                <div class="detail-item">
+                                    <span class="detail-label">DNI:</span>
+                                    <span class="detail-value">${customerDni}</span>
+                                </div>
+                            ` : ''}
+                            ${customerEmail ? `
+                                <div class="detail-item">
+                                    <span class="detail-label">Email:</span>
+                                    <span class="detail-value">${customerEmail}</span>
+                                </div>
+                            ` : ''}
+                            ${customerPhone ? `
+                                <div class="detail-item">
+                                    <span class="detail-label">Teléfono:</span>
+                                    <span class="detail-value">${customerPhone}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            return `
+                <div style="background: rgba(255,255,255,0.1); padding: 18px; border-radius: 8px;">
+                    <h3 style="color: white; font-size: 16px; margin: 0 0 16px 0; font-weight: 600; line-height: 1.3;">
+                        Información Personal<br>y de Contacto
+                    </h3>
+                    
+                    <!-- 3 puntos destacados -->
+                    <div style="margin-bottom: 16px;">
+                        <div style="display: flex; align-items: center; margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; border-left: 3px solid rgba(255,255,255,0.6);">
+                            <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Datos protegidos según RGPD</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; border-left: 3px solid rgba(255,255,255,0.6);">
+                            <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Uso exclusivo para el trámite</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; border-left: 3px solid rgba(255,255,255,0.6);">
+                            <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Comunicación vía email/teléfono</span>
+                        </div>
+                    </div>
+                    
+                </div>
+            `;
+        },
+
+        getDocumentosSidebarContent() {
+            
+            return `
+                <div style="padding: 0;">
+                    <h3 style="color: white; font-size: 24px; margin: 0 0 16px 0; font-weight: 600; line-height: 1.2;">
+                        Documentación Necesaria
+                    </h3>
+                    
+                    <p style="color: rgba(255,255,255,0.9); font-size: 13px; line-height: 1.5; margin: 0 0 20px 0;">
+                        Sube los documentos requeridos para completar la transferencia de tu embarcación.
+                    </p>
+                    
+                    <!-- Lista de documentos requeridos -->
+                    <div style="background: rgba(255,255,255,0.08); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+                        <div style="color: rgba(255,255,255,0.95); font-size: 12px; font-weight: 600; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            Documentos Obligatorios
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <i class="fas fa-file-alt" style="color: #10b981; font-size: 14px;"></i>
+                            <span style="color: rgba(255,255,255,0.85); font-size: 12px;">DNI del comprador (ambas caras)</span>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <i class="fas fa-file-alt" style="color: #10b981; font-size: 14px;"></i>
+                            <span style="color: rgba(255,255,255,0.85); font-size: 12px;">DNI del vendedor (ambas caras)</span>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <i class="fas fa-file-alt" style="color: #10b981; font-size: 14px;"></i>
+                            <span style="color: rgba(255,255,255,0.85); font-size: 12px;">Permiso de circulación</span>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-file-alt" style="color: #10b981; font-size: 14px;"></i>
+                            <span style="color: rgba(255,255,255,0.85); font-size: 12px;">Hoja de asiento o tarjeta náutica</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Información de formato -->
+                    <div style="background: rgba(255,255,255,0.05); border-left: 3px solid rgba(255,255,255,0.3); padding: 12px; margin-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <i class="fas fa-info-circle" style="color: rgba(255,255,255,0.7); font-size: 12px;"></i>
+                            <span style="color: rgba(255,255,255,0.8); font-size: 11px; font-weight: 600;">Formatos aceptados</span>
+                        </div>
+                        <p style="color: rgba(255,255,255,0.7); font-size: 11px; line-height: 1.4; margin: 0;">
+                            PDF, JPG, PNG, JPEG (máx. 10MB por archivo)
+                        </p>
+                    </div>
+                    
+                    <!-- Tiempo de procesamiento -->
+                    <div style="background: rgba(255,255,255,0.05); border-left: 3px solid rgba(255,255,255,0.3); padding: 12px; margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <i class="fas fa-clock" style="color: rgba(255,255,255,0.7); font-size: 12px;"></i>
+                            <span style="color: rgba(255,255,255,0.8); font-size: 11px; font-weight: 600;">Tiempo estimado</span>
+                        </div>
+                        <p style="color: rgba(255,255,255,0.7); font-size: 11px; line-height: 1.4; margin: 0;">
+                            Revisión de documentos en menos de 24h
+                        </p>
+                    </div>
+                </div>
+            `;
+        },
+
+        getPagoSidebarContent() {
+            // Calculate total amount RESPETANDO selección ITP
+            const basePrice = 134.99;
+            let itpAmount = 0;
+            let totalAmount = basePrice;
+            
+            // DEBUG CRÍTICO
+            console.log('🔍 DEBUG SIDEBAR PAGO:');
+            console.log('   🎛️ this.itpPagado:', this.itpPagado);
+            console.log('   📊 basePrice:', basePrice);
+            
+            // Solo incluir ITP si el usuario NO lo ha pagado
+            if (this.itpPagado === false) {
+                // Usar método de cálculo directamente
+                itpAmount = this.calculateCurrentITP();
+                totalAmount = basePrice + itpAmount;
+                console.log('   💰 ITP calculado:', itpAmount);
+                console.log('   💯 Total con ITP:', totalAmount);
+            } else {
+                // ITP ya pagado - solo precio base
+                itpAmount = 0;
+                totalAmount = basePrice;
+                console.log('   ✅ ITP ya pagado - solo precio base');
+            }
+            
+            // Get customer data
+            const customerName = document.getElementById('customer_name')?.value || '';
+            const vehicleBrand = document.getElementById('manufacturer')?.value || document.getElementById('manual_manufacturer')?.value || '';
+            const vehicleModel = document.getElementById('model')?.value || document.getElementById('manual_model')?.value || '';
+            
+            console.log('   🚗 Vehículo:', vehicleBrand, vehicleModel);
+            console.log('   👤 Cliente:', customerName);
+            
+            return `
+                <div style="text-align: center;">
+                    <h3 style="color: white; font-size: 18px; font-weight: 600; margin-bottom: 15px;">
+                        Tramitación para: Tramitfy S.L.
+                    </h3>
+                    
+                    <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 16px; margin-bottom: 20px; text-align: left;">
+                        <div style="color: rgba(255,255,255,0.8); font-size: 12px; margin-bottom: 12px; text-transform: uppercase; font-weight: 600;">Desglose de Servicios</div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 8px 0;">
+                            <div style="color: rgba(255,255,255,0.9); font-size: 13px;">
+                                <div style="font-weight: 600;">Tramitación Completa</div>
+                                <div style="font-size: 11px; opacity: 0.7;">Gestión, tasas DGMM + IVA</div>
+                            </div>
+                            <span style="color: white; font-weight: 600; font-size: 14px;">134.99 €</span>
+                        </div>
+                        
+                        ${itpAmount > 0 ? `
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.1);">
+                            <div style="color: rgba(255,255,255,0.9); font-size: 13px;">
+                                <div style="font-weight: 600;">Impuesto (ITP)</div>
+                                <div style="font-size: 11px; opacity: 0.7;">Gestionamos el pago</div>
+                            </div>
+                            <span style="color: white; font-weight: 600; font-size: 14px;">${itpAmount.toFixed(2)} €</span>
+                        </div>
+                        ` : ''}
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-top: 2px solid rgba(255,255,255,0.3); margin-top: 8px;">
+                            <span style="color: white; font-weight: 700; font-size: 15px;">TOTAL</span>
+                            <span style="color: #22c55e; font-weight: 700; font-size: 18px;">${totalAmount.toFixed(2)} €</span>
+                        </div>
+                    </div>
+                    
+                    ${vehicleBrand && vehicleModel ? `
+                    <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 12px; margin-bottom: 16px; text-align: left;">
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 4px; text-transform: uppercase;">Vehículo</div>
+                        <div style="color: white; font-size: 13px; font-weight: 600;">${vehicleBrand} ${vehicleModel}</div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        },
+        
+        updateProgressBar() {
+            const currentIndex = this.pages.indexOf(this.currentPage);
+            const progressIndicator = document.querySelector('.nav-progress-indicator');
+            
+            if (progressIndicator) {
+                const progressPercentage = ((currentIndex + 1) / this.pages.length) * 100;
+                progressIndicator.style.width = progressPercentage + '%';
+            }
+        },
+        
+        goToPage(pageId) {
+            // Prevenir navegación a la misma página
+            if (this.currentPage === pageId) {
+                console.log('⚠️ Ya estás en la página:', pageId);
+                return; // No hacer nada si ya estamos en esa página
+            }
+            
+            // Ocultar página actual sin animación
+            const currentPageElement = document.getElementById(this.currentPage);
+            if (currentPageElement) {
+                currentPageElement.classList.add('hidden');
+            }
+            
+            // Mostrar nueva página sin animación
+            const newPageElement = document.getElementById(pageId);
+            if (newPageElement) {
+                newPageElement.classList.remove('hidden');
+                
+                // Actualizar estado interno
+                this.currentPage = pageId;
+                this.updateNavigationState();
+                this.updateProgressBar();
+                this.updateSidebarContent();
+                
+                // Setup específico por página
+                if (pageId === 'page-precio') {
+                    this.setupITPFunctionality();
+                } else if (pageId === 'page-pago') {
+                    this.setupPaymentPage();
+                }
+                
+                console.log('✅ Navegado a página:', pageId);
+                
+                // Scroll automático eliminado para mejor UX
+            }
+        },
+        
+        nextPage() {
+            if (this.validateCurrentPage()) {
+                const currentIndex = this.pages.indexOf(this.currentPage);
+                if (currentIndex < this.pages.length - 1) {
+                    this.goToPage(this.pages[currentIndex + 1]);
+                }
+            }
+        },
+        
+        previousPage() {
+            const currentIndex = this.pages.indexOf(this.currentPage);
+            if (currentIndex > 0) {
+                this.goToPage(this.pages[currentIndex - 1]);
+            }
+        },
+        
+        updateNavigationState() {
+            const currentIndex = this.pages.indexOf(this.currentPage);
+            
+            // Actualizar tabs profesionales
+            document.querySelectorAll('.nav-tab').forEach((item, index) => {
+                const shouldBeActive = index === currentIndex;
+                const shouldBeCompleted = index < currentIndex;
+                
+                item.classList.toggle('active', shouldBeActive);
+                item.classList.toggle('completed', shouldBeCompleted);
+            });
+
+            
+            // Actualizar botones con mejor UX
+            const btnAnterior = document.getElementById('tbv2-prevButton');
+            const btnSiguiente = document.getElementById('tbv2-nextButton');
+            
+            if (btnAnterior) {
+                if (currentIndex > 0) {
+                    btnAnterior.style.display = 'inline-flex';
+                    btnAnterior.style.opacity = '1';
+                    btnAnterior.innerHTML = '<i class="fas fa-arrow-left"></i> Anterior';
+                    btnAnterior.className = 'button button-secondary';
+                    btnAnterior.disabled = false;
+                } else {
+                    btnAnterior.style.display = 'none';
+                }
+            }
+            
+            if (btnSiguiente) {
+                const isLastPage = currentIndex === this.pages.length - 1;
+                const pageNames = ['Datos Personales', 'Precio e ITP', 'Documentos', 'Completar Pago'];
+                
+                if (isLastPage) {
+                    btnSiguiente.innerHTML = '<i class="fas fa-credit-card"></i> Procesar Pago';
+                    btnSiguiente.className = 'button button-final';
+                } else {
+                    const nextPageName = pageNames[currentIndex] || 'Siguiente';
+                    btnSiguiente.innerHTML = `<i class="fas fa-arrow-right"></i> ${nextPageName}`;
+                    btnSiguiente.className = 'button button-primary';
+                }
+            }
+        },
+
+        
+        validateCurrentPage() {
+            switch (this.currentPage) {
+                case 'page-vehiculo':
+                    return this.validateVehiclePage();
+                case 'page-datos':
+                    return this.validateDatosPage();
+                case 'page-precio':
+                    return true; // TODO: Implementar validación
+                case 'page-documentos':
+                    return true; // TODO: Implementar validación
+                default:
+                    return true;
+            }
+        },
+        
+        validateVehiclePage() {
+            const errors = [];
+            const noEncuentroCheckbox = document.getElementById('no_encuentro_modelo')?.checked;
+            const purchasePrice = document.getElementById('purchase_price')?.value;
+            const region = document.getElementById('region')?.value;
+            
+            if (noEncuentroCheckbox) {
+                // Validar campos manuales
+                const manualManufacturer = document.getElementById('manual_manufacturer')?.value;
+                const manualModel = document.getElementById('manual_model')?.value;
+                
+                if (!manualManufacturer) {
+                    errors.push('Introduce el fabricante manualmente');
+                    this.highlightRequiredField('manual_manufacturer');
+                }
+                
+                if (!manualModel) {
+                    errors.push('Introduce el modelo manualmente');
+                    this.highlightRequiredField('manual_model');
+                }
+            } else {
+                // Validar campos CSV
+                const manufacturer = document.getElementById('manufacturer')?.value;
+                const model = document.getElementById('model')?.value;
+                const matriculationDate = document.getElementById('matriculation_date')?.value;
+                
+                if (!manufacturer) {
+                    errors.push('Selecciona un fabricante');
+                    this.highlightRequiredField('manufacturer');
+                }
+                
+                if (!model) {
+                    errors.push('Selecciona un modelo');
+                    this.highlightRequiredField('model');
+                }
+                
+                if (!matriculationDate) {
+                    errors.push('Introduce la fecha de matriculación');
+                    this.highlightRequiredField('matriculation_date');
+                }
+            }
+            
+            // Validar precio de compra
+            if (!purchasePrice) {
+                errors.push('Introduce el precio de compra');
+                this.highlightRequiredField('purchase_price');
+            } else if (!this.validatePrice(purchasePrice)) {
+                errors.push('El precio debe ser un número válido mayor que 0€');
+                this.highlightErrorField('purchase_price');
+            }
+            
+            // Validar fecha de matriculación
+            const matriculationDate = document.getElementById('matriculation_date')?.value;
+            if (!matriculationDate) {
+                errors.push('Introduce la fecha de matriculación');
+                this.highlightRequiredField('matriculation_date');
+            } else if (!this.validateMatriculationDate(matriculationDate)) {
+                errors.push('La fecha de matriculación no puede ser posterior a hoy');
+                this.highlightErrorField('matriculation_date');
+            }
+            
+            // Validar comunidad autónoma
+            if (!region) {
+                errors.push('Selecciona tu comunidad autónoma');
+                this.highlightRequiredField('region');
+            }
+            
+            // Mostrar errores si los hay
+            if (errors.length > 0) {
+                this.showValidationSummary(errors);
+                return false;
+            }
+            
+            return true;
+        },
+
+        validateDatosPage() {
+            const errors = [];
+            const customerName = document.getElementById('customer_name')?.value?.trim();
+            const customerDni = document.getElementById('customer_dni')?.value?.trim();
+            const customerEmail = document.getElementById('customer_email')?.value?.trim();
+            const customerPhone = document.getElementById('customer_phone')?.value?.trim();
+
+            // Validar nombre
+            if (!customerName) {
+                errors.push('Introduce tu nombre y apellidos');
+                this.highlightRequiredField('customer_name');
+            } else if (customerName.length < 3) {
+                errors.push('El nombre debe tener al menos 3 caracteres');
+                this.highlightErrorField('customer_name');
+            }
+
+            // Validar DNI
+            if (!customerDni) {
+                errors.push('Introduce tu DNI');
+                this.highlightRequiredField('customer_dni');
+            } else if (!this.validateDNI(customerDni)) {
+                errors.push('Formato de DNI incorrecto (ej: 12345678X)');
+                this.highlightErrorField('customer_dni');
+            }
+
+            // Validar email
+            if (!customerEmail) {
+                errors.push('Introduce tu correo electrónico');
+                this.highlightRequiredField('customer_email');
+            } else if (!this.validateEmail(customerEmail)) {
+                errors.push('Formato de email incorrecto');
+                this.highlightErrorField('customer_email');
+            }
+
+            // Validar teléfono
+            if (!customerPhone) {
+                errors.push('Introduce tu teléfono');
+                this.highlightRequiredField('customer_phone');
+            } else if (!this.validatePhone(customerPhone)) {
+                errors.push('Formato de teléfono incorrecto (9 dígitos)');
+                this.highlightErrorField('customer_phone');
+            }
+
+            // Mostrar errores si los hay
+            if (errors.length > 0) {
+                this.showValidationSummary(errors);
+                return false;
+            }
+
+            return true;
+        },
+
+        // Validadores específicos para datos personales
+        validateDNI(dni) {
+            // Formato español: 8 números + 1 letra
+            const dniRegex = /^\d{8}[A-Za-z]$/;
+            if (!dniRegex.test(dni)) return false;
+
+            // Verificar letra del DNI
+            const letters = 'TRWAGMYFPDXBNJZSQVHLCKE';
+            const numbers = parseInt(dni.substring(0, 8));
+            const letter = dni.substring(8, 9).toUpperCase();
+            return letters[numbers % 23] === letter;
+        },
+
+        validateEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        },
+
+        validatePhone(phone) {
+            // Formato español: 9 dígitos (móvil o fijo)
+            const phoneRegex = /^[0-9]{9}$/;
+            return phoneRegex.test(phone.replace(/\s/g, ''));
+        },
+
+        // Helper methods for enhanced validation UI
+        highlightRequiredField(fieldId) {
+            const field = document.getElementById(fieldId);
+            const container = field?.parentElement.querySelector('.validation-feedback');
+            if (field && container) {
+                this.showFieldError(field, container, 'Este campo es obligatorio');
+            }
+        },
+
+        highlightErrorField(fieldId) {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.style.borderColor = '#ef4444';
+                field.style.backgroundColor = '#fef2f2';
+            }
+        },
+
+        showValidationSummary(errors) {
+            // Remover resumen anterior si existe
+            const existingSummary = document.getElementById('tbv2-validation-summary');
+            if (existingSummary) {
+                existingSummary.remove();
+            }
+
+            // Crear nuevo resumen de errores
+            const summaryDiv = document.createElement('div');
+            summaryDiv.id = 'tbv2-validation-summary';
+            summaryDiv.style.cssText = `
+                background: #fef2f2;
+                border: 1px solid #fecaca;
+                border-radius: 8px;
+                padding: 16px;
+                margin-bottom: 20px;
+                box-shadow: 0 4px 6px rgba(239, 68, 68, 0.1);
+            `;
+            
+            summaryDiv.innerHTML = `
+                <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                    <i class="fas fa-exclamation-triangle" style="color: #dc2626; margin-right: 8px; font-size: 18px;"></i>
+                    <strong style="color: #dc2626; font-size: 16px;">Por favor, corrige los siguientes errores:</strong>
+                </div>
+                <ul style="margin: 0; padding-left: 20px; color: #7f1d1d; line-height: 1.5;">
+                    ${errors.map(error => `<li style="margin-bottom: 6px;">${error}</li>`).join('')}
+                </ul>
+            `;
+            
+            // Insertar al inicio del formulario actual
+            const currentPage = document.getElementById(this.currentPage);
+            if (currentPage) {
+                currentPage.insertBefore(summaryDiv, currentPage.firstChild);
+            }
+
+            // Scroll suave al resumen
+            summaryDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Auto-ocultar después de 10 segundos
+            setTimeout(() => {
+                if (summaryDiv && summaryDiv.parentElement) {
+                    summaryDiv.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    summaryDiv.style.opacity = '0';
+                    setTimeout(() => {
+                        if (summaryDiv.parentElement) {
+                            summaryDiv.remove();
+                        }
+                    }, 500);
+                }
+            }, 10000);
+        },
+
+        // Enhanced manufacturer/model selection methods
+        loadModelsForManufacturer(selectedFabricante) {
+            const modelSelect = document.getElementById('model');
+            const modelCount = document.getElementById('model-count');
+            
+            // Reset model selector
+            modelSelect.innerHTML = '<option value="">Seleccione modelo...</option>';
+            modelSelect.disabled = true;
+            modelCount.textContent = '';
+            
+            if (selectedFabricante && tbv2DatosCsv[selectedFabricante]) {
+                const models = tbv2DatosCsv[selectedFabricante];
+                
+                // Sort models alphabetically
+                models.sort((a, b) => a.modelo.localeCompare(b.modelo));
+                
+                // Add models to select
+                models.forEach(modeloData => {
+                    const option = document.createElement('option');
+                    option.value = modeloData.modelo;
+                    option.textContent = `${modeloData.modelo} (${parseInt(modeloData.precio).toLocaleString()}€)`;
+                    option.dataset.price = modeloData.precio;
+                    modelSelect.appendChild(option);
+                });
+                
+                modelSelect.disabled = false;
+                modelCount.textContent = `(${models.length} modelos disponibles)`;
+                
+                // Auto-select if only one model
+                if (models.length === 1) {
+                    modelSelect.value = models[0].modelo;
+                    this.updateSidebarContent();
+                }
+            }
+        },
+
+        toggleManufacturerSearch() {
+            const searchInput = document.getElementById('manufacturer-search');
+            const toggleText = document.getElementById('search-toggle-text');
+            
+            if (searchInput.style.display === 'none' || !searchInput.style.display) {
+                searchInput.style.display = 'block';
+                searchInput.focus();
+                toggleText.textContent = 'Ocultar búsqueda';
+            } else {
+                searchInput.style.display = 'none';
+                searchInput.value = '';
+                this.filterManufacturers(''); // Reset filter
+                toggleText.textContent = 'Activar búsqueda rápida';
+            }
+        },
+
+        filterManufacturers(searchTerm) {
+            const manufacturerSelect = document.getElementById('manufacturer');
+            const options = Array.from(manufacturerSelect.options);
+            let visibleCount = 0;
+            
+            options.forEach((option, index) => {
+                if (index === 0) return; // Skip placeholder
+                
+                const manufacturer = option.value.toLowerCase();
+                const visible = manufacturer.includes(searchTerm.toLowerCase());
+                option.style.display = visible ? '' : 'none';
+                if (visible) visibleCount++;
+            });
+
+            // Show results count
+            const searchInput = document.getElementById('manufacturer-search');
+            if (searchTerm && searchInput) {
+                searchInput.style.borderColor = visibleCount > 0 ? '#10b981' : '#ef4444';
+                searchInput.title = `${visibleCount} fabricantes encontrados`;
+            } else if (searchInput) {
+                searchInput.style.borderColor = '#d1d5db';
+                searchInput.title = '';
+            }
+        },
+
+        selectFirstFilteredManufacturer() {
+            const manufacturerSelect = document.getElementById('manufacturer');
+            const searchInput = document.getElementById('manufacturer-search');
+            const options = Array.from(manufacturerSelect.options);
+            
+            for (let i = 1; i < options.length; i++) { // Skip placeholder
+                if (options[i].style.display !== 'none') {
+                    manufacturerSelect.value = options[i].value;
+                    this.loadModelsForManufacturer(options[i].value);
+                    searchInput.value = '';
+                    this.filterManufacturers('');
+                    break;
+                }
+            }
+            
+            this.updateSidebarContent();
+        },
+
+        // ===== ITP FUNCTIONALITY (BASED ON ORIGINAL) =====
+        
+        setupITPFunctionality() {
+            console.log('🚀 INICIANDO Sistema ITP TBV2...');
+            
+            // Variables para el flujo ITP
+            this.itpPagado = null;
+            this.precioStep = 1;
+            
+            // Elementos DOM
+            this.precioStep1 = document.getElementById('precio-step-1');
+            this.precioStep2 = document.getElementById('precio-step-2');
+            this.verCalculoBtn = document.getElementById('ver-calculo-itp');
+            this.calculoDetail = document.getElementById('calculo-itp-detail');
+            this.itpSiBtn = document.getElementById('itp-si');
+            this.itpNoBtn = document.getElementById('itp-no');
+            this.modificarItpBtn = document.getElementById('modificar-itp');
+            
+            console.log('🔧 Elementos ITP encontrados:', {
+                precioStep1: !!this.precioStep1,
+                precioStep2: !!this.precioStep2,
+                verCalculoBtn: !!this.verCalculoBtn,
+                calculoDetail: !!this.calculoDetail,
+                itpSiBtn: !!this.itpSiBtn,
+                itpNoBtn: !!this.itpNoBtn,
+                modificarItpBtn: !!this.modificarItpBtn
+            });
+
+            if (!this.precioStep1 || !this.precioStep2) {
+                console.error('❌ ERROR: No se encontraron elementos precio-step-1 o precio-step-2');
+                return;
+            }
+
+            if (!this.itpSiBtn || !this.itpNoBtn) {
+                console.error('❌ ERROR: No se encontraron botones ITP (itp-si o itp-no)');
+                return;
+            }
+
+            this.setupITPEventListeners();
+            this.updateITPDisplay();
+            
+            console.log('✅ Sistema ITP TBV2 inicializado correctamente');
+        },
+
+        setupITPEventListeners() {
+            // Botón ver cálculo ITP
+            if (this.verCalculoBtn) {
+                this.verCalculoBtn.addEventListener('click', () => {
+                    if (this.calculoDetail.style.display === 'none') {
+                        this.calculoDetail.style.display = 'block';
+                        this.verCalculoBtn.textContent = 'Ocultar cálculo detallado';
+                    } else {
+                        this.calculoDetail.style.display = 'none';
+                        this.verCalculoBtn.textContent = 'Ver cálculo detallado';
+                    }
+                });
+            }
+
+            // Botones ITP pagado/no pagado
+            if (this.itpSiBtn && this.itpNoBtn) {
+                this.itpSiBtn.addEventListener('click', () => {
+                    this.itpPagado = true;
+                    this.selectITPOption('si');
+                    this.updateITPDisplay(); // Actualizar cálculo
+                    this.showStep2();
+                });
+
+                this.itpNoBtn.addEventListener('click', () => {
+                    this.itpPagado = false;
+                    this.selectITPOption('no');
+                    this.updateITPDisplay(); // Actualizar cálculo
+                    this.showStep2();
+                });
+            }
+
+            // Botón modificar ITP
+            if (this.modificarItpBtn) {
+                this.modificarItpBtn.addEventListener('click', () => {
+                    this.showStep1();
+                });
+            }
+        },
+
+        selectITPOption(option) {
+            // Resetear estado de botones
+            document.querySelectorAll('.itp-choice-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                btn.style.background = '';
+                btn.style.color = '';
+            });
+            
+            // Marcar botón seleccionado
+            const selectedBtn = option === 'si' ? this.itpSiBtn : this.itpNoBtn;
+            if (selectedBtn) {
+                selectedBtn.classList.add('selected');
+            }
+            
+            console.log(`🏛️ ITP seleccionado: ${option === 'si' ? 'YA PAGADO' : 'NO PAGADO'}`);
+        },
+
+        showStep1() {
+            if (this.precioStep1 && this.precioStep2) {
+                this.precioStep1.style.display = 'block';
+                this.precioStep2.style.display = 'none';
+                this.precioStep = 1;
+                
+                // Limpiar selección
+                this.itpPagado = null;
+                document.querySelectorAll('.itp-choice-btn').forEach(btn => {
+                    btn.style.background = 'white';
+                    btn.style.color = '#016d86';
+                });
+                
+                console.log('📄 Mostrado paso 1 - Pregunta ITP');
+            }
+        },
+
+        showStep2() {
+            if (this.precioStep1 && this.precioStep2) {
+                // Animación de transición
+                setTimeout(() => {
+                    this.precioStep1.style.display = 'none';
+                    this.precioStep2.style.display = 'block';
+                    this.precioStep = 2;
+                    
+                    this.updateStep2Content();
+                    console.log('📄 Mostrado paso 2 - Resumen');
+                }, 300);
+            }
+        },
+
+        updateStep2Content() {
+            const incluyeItpSi = document.getElementById('incluye-itp-si');
+            const incluyeItpNo = document.getElementById('incluye-itp-no');
+            const precioFinal = document.getElementById('precio-final');
+            const desgloseItp = document.getElementById('desglose-itp');
+            
+            // Asegurar que el cálculo esté actualizado
+            this.updateITPDisplay();
+            
+            if (this.itpPagado === true) {
+                // ITP ya pagado
+                if (incluyeItpSi) incluyeItpSi.style.display = 'block';
+                if (incluyeItpNo) incluyeItpNo.style.display = 'none';
+                if (precioFinal) precioFinal.textContent = '134.99 €';
+            } else if (this.itpPagado === false) {
+                // ITP no pagado - lo gestionamos nosotros
+                if (incluyeItpSi) incluyeItpSi.style.display = 'none';
+                if (incluyeItpNo) incluyeItpNo.style.display = 'block';
+                
+                // Calcular ITP dinámicamente
+                const itpAmount = this.calculateCurrentITP();
+                if (desgloseItp) desgloseItp.textContent = itpAmount.toFixed(2) + ' €';
+                if (precioFinal) precioFinal.textContent = (134.99 + itpAmount).toFixed(2) + ' €';
+            }
+        },
+
+        calculateCurrentITP() {
+            console.log('🧮 Calculando ITP usando lógica ORIGINAL EXACTA...');
+            
+            const purchasePriceInput = document.getElementById('purchase_price');
+            const matriculationDateInput = document.getElementById('matriculation_date');
+            const regionSelect = document.getElementById('region');
+            
+            // Validaciones básicas
+            if (!purchasePriceInput || !purchasePriceInput.value) {
+                console.log('⚠️ No hay precio de compra, retornando 0');
+                return 0;
+            }
+            
+            const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
+            if (purchasePrice === 0) {
+                console.log('⚠️ Precio de compra es 0, retornando 0');
+                return 0;
+            }
+            
+            // PASO 1: Obtener basePrice del modelo (como formulario original)
+            const modelSelect = document.getElementById('model');
+            let basePrice = 0;
+            if (modelSelect && modelSelect.value) {
+                const selectedOption = modelSelect.options[modelSelect.selectedIndex];
+                basePrice = parseFloat(selectedOption.dataset.price || 0);
+                console.log('📋 basePrice del modelo CSV:', basePrice.toFixed(2), '€');
+            }
+            
+            // PASO 2: Aplicar depreciación sobre basePrice (ORDEN ORIGINAL)
+            let fiscalValue = basePrice; // Valor por defecto
+            let depreciationPercentage = 100; // Por defecto 100%
+            
+            if (matriculationDateInput && matriculationDateInput.value) {
+                const depreciationFactor = this.getDepreciationFactor(matriculationDateInput.value);
+                depreciationPercentage = Math.round(depreciationFactor * 100);
+                // *** CRÍTICO: Aplicar depreciación sobre basePrice, NO sobre baseImponible ***
+                fiscalValue = basePrice * depreciationFactor;
+                
+                console.log(`📅 Aplicando depreciación BOE 2024: ${depreciationPercentage}%`);
+                console.log(`💰 Valor fiscal: ${basePrice.toFixed(2)}€ * ${depreciationPercentage}% = ${fiscalValue.toFixed(2)}€`);
+            } else {
+                console.log('⚠️ Sin fecha de matriculación, usando basePrice completo');
+            }
+            
+            // PASO 3: BASE IMPONIBLE = Math.max(precio_compra, valor_fiscal_depreciado) 
+            const baseValue = Math.max(purchasePrice, fiscalValue);
+            console.log('💰 BASE IMPONIBLE FINAL:');
+            console.log('   💵 Precio de compra:', purchasePrice.toFixed(2), '€');
+            console.log('   📋 Valor fiscal (con depreciación):', fiscalValue.toFixed(2), '€');
+            console.log('   🎯 BASE IMPONIBLE:', baseValue.toFixed(2), '€', '(Math.max)');
+            
+            // PASO 4: Aplicar tipo ITP por comunidad autónoma
+            const region = regionSelect?.value || 'Madrid';
+            const itpRate = this.getITPRate(region);
+            const itpAmount = baseValue * itpRate;
+            
+            console.log(`🏛️ ITP ${region}: ${(itpRate * 100).toFixed(1)}% sobre ${baseValue.toFixed(2)}€ = ${itpAmount.toFixed(2)}€`);
+            
+            // DEBUG FINAL
+            console.log('🔍 RESUMEN CÁLCULO ITP EXACTO ORIGINAL:');
+            console.log('   📋 basePrice modelo:', basePrice.toFixed(2), '€');
+            console.log('   📅 Depreciación BOE:', depreciationPercentage + '%');
+            console.log('   💰 Valor fiscal (basePrice * depreciación):', fiscalValue.toFixed(2), '€');
+            console.log('   💵 Precio de compra:', purchasePrice.toFixed(2), '€');
+            console.log('   🎯 BASE IMPONIBLE (Math.max):', baseValue.toFixed(2), '€');
+            console.log('   📊 Tipo ITP', region + ':', (itpRate * 100).toFixed(1) + '%');
+            console.log('   🎆 ITP TOTAL:', itpAmount.toFixed(2), '€');
+            
+            return itpAmount;
+        },
+        
+        getDepreciationFactor(matriculationDate) {
+            console.log('🔍 getDepreciationFactor llamado con:', matriculationDate);
+            
+            if (!matriculationDate || matriculationDate === '') {
+                console.log('⚠️ No hay fecha de matriculación válida, usando 100%');
+                return 1.0; // 100%
+            }
+            
+            const today = new Date();
+            const matriculationDateObj = new Date(matriculationDate);
+            
+            // Validar fecha
+            if (isNaN(matriculationDateObj.getTime())) {
+                console.log('⚠️ Fecha inválida, usando 100%');
+                return 1.0;
+            }
+            
+            // Calcular años de diferencia (lógica EXACTA del original)
+            let yearsDifference = today.getFullYear() - matriculationDateObj.getFullYear();
+            const monthsDifference = today.getMonth() - matriculationDateObj.getMonth();
+            
+            if (monthsDifference < 0 || (monthsDifference === 0 && today.getDate() < matriculationDateObj.getDate())) {
+                yearsDifference--;
+            }
+            
+            yearsDifference = (yearsDifference < 0) ? 0 : yearsDifference;
+            
+            console.log('📅 Años diferencia calculados:', yearsDifference);
+            
+            // TABLA OFICIAL BOE 2024 - EXACTA DEL ORIGINAL
+            const depreciationRates = [
+                { years: 1, rate: 100 },  // Hasta 1 año: 100%
+                { years: 2, rate: 85 },   // Más de 1, hasta 2: 85%
+                { years: 3, rate: 72 },   // Más de 2, hasta 3: 72%
+                { years: 4, rate: 61 },   // Más de 3, hasta 4: 61%
+                { years: 5, rate: 52 },   // Más de 4, hasta 5: 52%
+                { years: 6, rate: 44 },   // Más de 5, hasta 6: 44%
+                { years: 7, rate: 37 },   // Más de 6, hasta 7: 37%
+                { years: 8, rate: 32 },   // Más de 7, hasta 8: 32%
+                { years: 9, rate: 27 },   // Más de 8, hasta 9: 27%
+                { years: 10, rate: 23 },  // Más de 9, hasta 10: 23%
+                { years: 11, rate: 19 },  // Más de 10, hasta 11: 19%
+                { years: 12, rate: 16 },  // Más de 11, hasta 12: 16%
+                { years: 13, rate: 14 },  // Más de 12, hasta 13: 14%
+                { years: 14, rate: 12 },  // Más de 13, hasta 14: 12%
+                { years: 15, rate: 10 }   // Más de 14 años: 10%
+            ];
+            
+            // Encontrar el rate correspondiente (lógica EXACTA del original)
+            let depreciationPercentage = 10; // Por defecto 10% si es muy antiguo
+            for (let i = 0; i < depreciationRates.length; i++) {
+                if (yearsDifference <= depreciationRates[i].years) {
+                    depreciationPercentage = depreciationRates[i].rate;
+                    break;
+                }
+            }
+            
+            const factor = depreciationPercentage / 100;
+            console.log(`💰 BOE 2024: ${yearsDifference} años = ${depreciationPercentage}% (factor ${factor})`);
+            
+            return factor;
+        },
+        
+        getITPRate(region) {
+            // TIPOS ITP OFICIALES - EXACTOS DEL ORIGINAL PRODUCTION
+            const itpRates = {
+                "Andalucía": 0.04,        // 4%
+                "Aragón": 0.04,           // 4%
+                "Asturias": 0.04,         // 4%
+                "Islas Baleares": 0.04,   // 4%
+                "Canarias": 0.055,        // 5.5%
+                "Cantabria": 0.06,        // 6%
+                "Castilla-La Mancha": 0.06, // 6%
+                "Castilla y León": 0.05,  // 5%
+                "Cataluña": 0.05,         // 5%
+                "Comunidad Valenciana": 0.08, // 8%
+                "Galicia": 0.03,          // 3%
+                "Madrid": 0.04,           // 4%
+                "Murcia": 0.04,           // 4%
+                "Navarra": 0.04,          // 4%
+                "País Vasco": 0.04,       // 4%
+                "La Rioja": 0.04,         // 4%
+                "Ceuta": 0.02,            // 2%
+                "Melilla": 0.04           // 4%
+            };
+            
+            return itpRates[region] || 0.04; // Por defecto 4%
+        },
+
+        updateITPDisplay() {
+            const tbv2ItpDisplay = document.getElementById('tbv2-itp-display');
+            const tbv2VehicleSummary = document.getElementById('tbv2-vehicle-summary');
+            const tbv2CalculationBreakdown = document.getElementById('tbv2-calculation-breakdown');
+            
+            const modelSelect = document.getElementById('model');
+            const manufacturerSelect = document.getElementById('manufacturer');
+            const purchasePriceInput = document.getElementById('purchase_price');
+            
+            // Verificar si tenemos datos suficientes
+            if (modelSelect && modelSelect.value && manufacturerSelect && manufacturerSelect.value) {
+                const itpAmount = this.calculateCurrentITP();
+                
+                // Actualizar display del ITP
+                if (tbv2ItpDisplay) {
+                    tbv2ItpDisplay.textContent = itpAmount > 0 ? itpAmount.toFixed(2) + ' €' : '---';
+                }
+                
+                // Actualizar resumen del vehículo
+                if (tbv2VehicleSummary) {
+                    tbv2VehicleSummary.textContent = `${manufacturerSelect.value} ${modelSelect.value}`;
+                }
+                
+                // Actualizar breakdown del cálculo con depreciación
+                if (tbv2CalculationBreakdown && itpAmount > 0) {
+                    const selectedOption = modelSelect.options[modelSelect.selectedIndex];
+                    const modelPrice = parseFloat(selectedOption.dataset.price || 0);
+                    const purchasePrice = parseFloat(purchasePriceInput?.value || 0);
+                    const baseValue = Math.max(modelPrice, purchasePrice);
+                    
+                    const matriculationDateInput = document.getElementById('matriculation_date');
+                    const regionSelect = document.getElementById('region');
+                    
+                    // Cálculo de depreciación
+                    let depreciationFactor = 1.0;
+                    let finalValue = baseValue;
+                    let depreciationText = '';
+                    
+                    if (matriculationDateInput && matriculationDateInput.value) {
+                        depreciationFactor = this.getDepreciationFactor(matriculationDateInput.value);
+                        finalValue = baseValue * depreciationFactor;
+                        const depreciationPercentage = (depreciationFactor * 100).toFixed(1);
+                        const ageInYears = Math.floor((new Date() - new Date(matriculationDateInput.value)) / (1000 * 60 * 60 * 24 * 365.25));
+                        depreciationText = `
+                            <div style="margin-bottom: 8px;"><strong>Antigüedad:</strong> ${ageInYears} años</div>
+                            <div style="margin-bottom: 8px;"><strong>Factor depreciación:</strong> ${depreciationPercentage}%</div>
+                            <div style="margin-bottom: 8px;"><strong>Valor fiscal:</strong> ${finalValue.toFixed(2)}€</div>
+                        `;
+                    }
+                    
+                    const region = regionSelect?.value || 'Madrid';
+                    const itpRate = this.getITPRate(region);
+                    const itpPercentage = (itpRate * 100).toFixed(1);
+                    
+                    tbv2CalculationBreakdown.innerHTML = `
+                        <div style="margin-bottom: 8px;"><strong>Precio modelo:</strong> ${modelPrice.toFixed(2)}€</div>
+                        <div style="margin-bottom: 8px;"><strong>Precio compra:</strong> ${purchasePrice.toFixed(2)}€</div>
+                        <div style="margin-bottom: 8px;"><strong>Valor inicial:</strong> ${baseValue.toFixed(2)}€ (el mayor)</div>
+                        ${depreciationText}
+                        <div style="margin-bottom: 8px;"><strong>Comunidad:</strong> ${region}</div>
+                        <div style="margin-bottom: 8px;"><strong>Tipo ITP:</strong> ${itpPercentage}%</div>
+                        <div style="font-weight: bold; color: #016d86; border-top: 1px solid #e5e7eb; padding-top: 8px; margin-top: 8px;">
+                            <strong>Importe ITP Total:</strong> ${itpAmount.toFixed(2)}€
+                        </div>
+                    `;
+                }
+            } else {
+                // Estado inicial sin datos
+                if (tbv2ItpDisplay) {
+                    tbv2ItpDisplay.textContent = '---';
+                }
+                if (tbv2VehicleSummary) {
+                    tbv2VehicleSummary.textContent = 'Complete los datos del vehículo para calcular';
+                }
+                if (tbv2CalculationBreakdown) {
+                    tbv2CalculationBreakdown.innerHTML = '<div style="color: #6b7280; font-style: italic;">Complete la información del vehículo para ver el cálculo detallado</div>';
+                }
+            }
+            
+            console.log('🔄 ITP Display actualizado');
+        },
+
+        // Función auxiliar para debug
+        debugFormState() {
+            const modelSelect = document.getElementById('model');
+            const manufacturerSelect = document.getElementById('manufacturer');
+            const purchasePriceInput = document.getElementById('purchase_price');
+            
+            console.log('🔍 Estado del formulario:', {
+                manufacturer: manufacturerSelect?.value || 'No seleccionado',
+                model: modelSelect?.value || 'No seleccionado',
+                purchasePrice: purchasePriceInput?.value || 'No definido',
+                itpCalculated: this.calculateCurrentITP()
+            });
+        },
+
+        setupPaymentPage() {
+            console.log('💳 Configurando página de pago...');
+            
+            // Initialize terms checkbox behavior
+            const termsCheckbox = document.getElementById('terms_accept_pago');
+            if (termsCheckbox) {
+                termsCheckbox.addEventListener('change', (e) => {
+                    const checkmarkBox = e.target.parentElement.querySelector('.checkmark-box');
+                    const checkmark = e.target.parentElement.querySelector('.checkmark');
+                    const submitButton = document.getElementById('submit-payment');
+                    
+                    if (e.target.checked) {
+                        if (submitButton) submitButton.disabled = false;
+                    } else {
+                        if (submitButton) submitButton.disabled = true;
+                    }
+                });
+            }
+            
+            // Initialize Redsys payment page
+            console.log('🏦 Inicializando página de pago Redsys...');
+            this.showPaymentElements();
+        },
+
+        initializeStripe() {
+            const stripe = Stripe(tbv2StripePublicKey);
+            
+            // Show loading state
+            const stripeLoading = document.getElementById('stripe-loading');
+            const paymentElement = document.getElementById('payment-element');
+            const termsContainer = document.querySelector('.payment-terms');
+            const securityBadges = document.querySelector('.payment-security');
+            const submitButton = document.getElementById('submit-payment');
+            
+            // Simulate loading for better UX
+            setTimeout(() => {
+                if (stripeLoading) stripeLoading.style.display = 'none';
+                this.showPaymentElements();
+            }, 1500);
+        },
+
+        showPaymentElements() {
+            // Show payment form elements
+            const elements = [
+                'payment-element',
+                'submit-payment'
+            ];
+            
+            const containers = [
+                '.payment-terms',
+                '.payment-security'
+            ];
+            
+            elements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.style.display = 'block';
+                }
+            });
+            
+            containers.forEach(selector => {
+                const container = document.querySelector(selector);
+                if (container) {
+                    container.style.display = 'block';
+                }
+            });
+            
+            // Show a placeholder for Stripe Elements
+            const paymentElement = document.getElementById('payment-element');
+            if (paymentElement) {
+                paymentElement.innerHTML = `
+                    <div style="padding: 20px; border: 2px dashed #e5e7eb; border-radius: 8px; text-align: center; background: #f9fafb;">
+                        <i class="fa-brands fa-stripe" style="font-size: 24px; color: #635bff; margin-bottom: 8px;"></i>
+                        <div style="color: #6b7280; font-size: 14px;">Elementos de pago Stripe</div>
+                        <div style="color: #9ca3af; font-size: 12px; margin-top: 4px;">
+                            En producción: Formulario de tarjeta de crédito
+                        </div>
+                    </div>
+                `;
+            }
+        },
+
+        submitForm() {
+            console.log('💳 Procesando pago con Redsys...');
+            
+            // Validate terms acceptance
+            const termsCheckbox = document.getElementById('terms_accept_pago');
+            if (!termsCheckbox || !termsCheckbox.checked) {
+                alert('Debe aceptar los términos y condiciones para continuar.');
+                return;
+            }
+            
+            // Show processing state
+            const submitButton = document.getElementById('submit-payment');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Redirigiendo...';
+            }
+            
+            // Collect form data
+            const formData = this.collectFormData();
+            console.log('📋 Datos del formulario:', formData);
+            
+            // Order ID se genera en PHP backend - como test dummy exitoso
+            // NO generar Order ID en JavaScript para evitar conflictos
+            const orderId = 'PENDING'; // Placeholder temporal
+            
+            // Calculate final amount with fallback - CRITICAL FIX
+            const calculatedAmount = parseFloat(formData.pricing?.total_amount) || 134.99;
+            console.log('💰 Importe calculado:', calculatedAmount, '€');
+            
+            // Flatten data structure for PHP compatibility
+            const flatFormData = {
+                // Customer data
+                customerName: formData.customer.name,
+                customerEmail: formData.customer.email,
+                customerPhone: formData.customer.phone,
+                customerDni: formData.customer.dni,
+                // Vehicle data
+                matricula: formData.vehicle.matricula,
+                manufacturer: formData.vehicle.manufacturer,
+                model: formData.vehicle.model,
+                length: formData.vehicle.length,
+                region: formData.vehicle.region,
+                purchase_price: formData.vehicle.purchase_price,
+                matriculation_date: formData.vehicle.matriculation_date,
+                // Pricing data - CRITICAL FIX: usar calculatedAmount
+                finalAmount: calculatedAmount,
+                tasas: 0, // No taxes handled by client for now
+                iva: 0,   // No VAT handled by client for now
+                honorarios: calculatedAmount,
+                honorariosNetos: calculatedAmount / 1.21,
+                attachments: [] // No file handling for now
+            };
+            
+            console.log('📋 Datos aplanados para envío:', flatFormData);
+            const amountCents = Math.round(calculatedAmount * 100);
+            console.log('💰 Cantidad en centavos para Redsys:', amountCents);
+            
+            // Create Redsys payment form and submit
+            this.createRedsysPaymentForm({
+                order_id: orderId,
+                amount_cents: amountCents,
+                description: `Transferencia Embarcación ${flatFormData.matricula || 'TBV2'}`,
+                customer_name: flatFormData.customerName,
+                form_data: flatFormData
+            });
+        },
+        
+        createRedsysPaymentForm(orderData) {
+            console.log('🏦 Creando formulario Redsys...', orderData);
+            
+            // Store form data in sessionStorage for retrieval after payment
+            sessionStorage.setItem('tbv2_form_data', JSON.stringify(orderData.form_data));
+            sessionStorage.setItem('tbv2_order_id', orderData.order_id);
+            
+            // Create invisible form for Redsys
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '<?php echo (TBV2_REDSYS_MODE === "test") ? TBV2_REDSYS_URL_TEST : TBV2_REDSYS_URL_LIVE; ?>';
+            form.acceptCharset = 'UTF-8';
+            form.enctype = 'application/x-www-form-urlencoded';
+            form.style.display = 'none';
+            
+            // Prepare data for AJAX
+            const ajaxData = new FormData();
+            ajaxData.append('action', 'tbv2_create_redsys_payment');
+            ajaxData.append('nonce', '<?php echo wp_create_nonce("tbv2_nonce"); ?>');
+            ajaxData.append('formData', JSON.stringify(orderData.form_data));
+            ajaxData.append('orderId', orderData.order_id);
+            
+            // DEBUG: Log AJAX call details
+            console.log('🌐 URL AJAX:', '<?php echo admin_url("admin-ajax.php"); ?>');
+            console.log('📤 Datos enviados AJAX:', {
+                action: 'tbv2_create_redsys_payment',
+                nonce: '<?php echo wp_create_nonce("tbv2_nonce"); ?>',
+                orderId: orderData.order_id,
+                formData: orderData.form_data
+            });
+            
+            // Send order data to server to get signed parameters
+            fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
+                method: 'POST',
+                body: ajaxData
+            })
+            .then(response => {
+                console.log('📡 Response status:', response.status);
+                console.log('📡 Response headers:', response.headers);
+                return response.json();
+            })
+            .then(data => {
+                console.log('📡 Respuesta AJAX completa:', data);
+                
+                if (data.success) {
+                    console.log('✅ AJAX exitoso, datos Redsys:', data.data);
+                    
+                    // Add Redsys parameters to form
+                    const redsysData = data.data.redsysData;
+                    console.log('🔧 Parámetros Redsys a enviar:', redsysData);
+                    console.log('🌐 URL destino TPV:', form.action);
+                    
+                    Object.keys(redsysData).forEach(key => {
+                        if (key !== 'url') {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = key;
+                            
+                            // NO codificar signature - usar tal como viene del servidor
+                            input.value = redsysData[key];
+                            if (key === 'Ds_Signature') {
+                                console.log('🔧 SIGNATURE SIN CODIFICAR:', input.value);
+                            }
+                            
+                            form.appendChild(input);
+                            console.log(`📋 Agregado campo: ${key} = ${input.value.substring(0, 50)}...`);
+                            
+                            // DEBUG CRÍTICO: Log específico para Ds_MerchantParameters
+                            if (key === 'Ds_MerchantParameters') {
+                                console.log('🔍 DEBUG Ds_MerchantParameters completo:', redsysData[key]);
+                                try {
+                                    const decoded = JSON.parse(atob(redsysData[key]));
+                                    console.log('🔍 Parámetros decodificados:', decoded);
+                                    console.log('🔍 Order ID en parámetros:', decoded.Ds_Merchant_Order);
+                                    console.log('🔍 Amount en parámetros:', decoded.Ds_Merchant_Amount);
+                                } catch (e) {
+                                    console.error('❌ Error decodificando parámetros:', e);
+                                }
+                            }
+                        }
+                    });
+                    
+                    // DEBUG SYSTEM - Mostrar todos los datos y preguntar si continuar
+                    const debugMessage = `🔍 DEBUG AJAX EXITOSO:\n\n` +
+                        `✅ AJAX Response: SUCCESS\n` +
+                        `✅ Parámetros Redsys generados: ${Object.keys(redsysData).length}\n` +
+                        `✅ URL destino: ${form.action}\n` +
+                        `✅ Campos formulario: ${form.children.length}\n\n` +
+                        `DATOS CRÍTICOS:\n` +
+                        `- ${JSON.stringify(data.data, null, 2)}\n\n` +
+                        `¿Continuar a Redsys TPV?`;
+                    
+                    const continueToRedsys = confirm(debugMessage);
+                    
+                    if (continueToRedsys) {
+                        // Submit form to Redsys
+                        document.body.appendChild(form);
+                        console.log('🚀 Formulario completo, enviando a:', form.action);
+                        console.log('📝 Campos del formulario:', form.children.length);
+                        form.submit();
+                    } else {
+                        console.log('🛑 Redirección cancelada por el usuario');
+                        this.resetPaymentButton();
+                    }
+                } else {
+                    console.error('❌ Error creando pago Redsys:', data);
+                    alert(`Error PHP: ${JSON.stringify(data, null, 2)}`);
+                    this.resetPaymentButton();
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error AJAX completo:', error);
+                console.error('❌ Stack trace:', error.stack);
+                alert(`Error AJAX: ${error.message}\nStack: ${error.stack}`);
+                this.resetPaymentButton();
+            });
+        },
+        
+        resetPaymentButton() {
+            const submitButton = document.getElementById('submit-payment');
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fa-solid fa-credit-card"></i> Proceder al Pago';
+            }
+        },
+
+        collectFormData() {
+            const data = {};
+            
+            // Vehicle data
+            data.vehicle = {
+                type: document.getElementById('vehicle_type')?.value,
+                manufacturer: document.getElementById('manufacturer')?.value || document.getElementById('manual_manufacturer')?.value,
+                model: document.getElementById('model')?.value || document.getElementById('manual_model')?.value,
+                matricula: document.getElementById('matricula')?.value,
+                length: document.getElementById('length')?.value,
+                purchase_price: document.getElementById('purchase_price')?.value,
+                region: document.getElementById('region')?.value,
+                matriculation_date: document.getElementById('matriculation_date')?.value
+            };
+            
+            // Customer data
+            data.customer = {
+                name: document.getElementById('customer_name')?.value,
+                dni: document.getElementById('customer_dni')?.value,
+                email: document.getElementById('customer_email')?.value,
+                phone: document.getElementById('customer_phone')?.value
+            };
+            
+            // Calculate ITP and total RESPETANDO selección del usuario
+            const itpAmount = this.calculateCurrentITP();
+            const shouldIncludeITP = this.itpPagado === false; // Solo incluir ITP si NO está pagado
+            
+            // DEBUG CRÍTICO: Verificar estado del ITP
+            console.log('🔍 DEBUG PRECIO CRÍTICO:');
+            console.log('   🎛️ this.itpPagado:', this.itpPagado);
+            console.log('   💰 itpAmount calculado:', itpAmount.toFixed(2), '€');
+            console.log('   ✅ shouldIncludeITP:', shouldIncludeITP);
+            console.log('   💯 Total calculado:', shouldIncludeITP ? (134.99 + itpAmount) : 134.99);
+            
+            data.pricing = {
+                base_price: 134.99,
+                itp_amount: shouldIncludeITP ? itpAmount : 0,
+                itp_user_selection: this.itpPagado, // true = ya pagado, false = lo gestionamos
+                total_amount: shouldIncludeITP ? (134.99 + itpAmount) : 134.99
+            };
+            
+            return data;
+        }
+    };
+
+
+    // ============================================
+    // SIGNATURE PAD SYSTEM & FILE UPLOADS
+    // ============================================
+    
+    // Load Signature Pad library
+    if (!window.SignaturePad) {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js';
+        script.onload = initSignatureSystem;
+        document.head.appendChild(script);
+    } else {
+        initSignatureSystem();
+    }
+
+    function initSignatureSystem() {
+        console.log('🖊️ Inicializando sistema de firma digital...');
+        
+        let signaturePad = null;
+        let isSignatureCaptured = false;
+        const signatureModal = document.getElementById('signature-modal-advanced');
+        const enhancedCanvas = document.getElementById('enhanced-signature-canvas');
+
+        // Event listeners para modal de vista previa
+        const signatureField = document.getElementById('signature-field');
+        const previewModal = document.getElementById('document-preview-modal');
+        const closePreviewBtn = document.getElementById('close-preview-modal');
+        const cancelPreviewBtn = document.getElementById('cancel-document-preview');
+        const proceedBtn = document.getElementById('proceed-to-signature');
+
+        if (signatureField) {
+            signatureField.addEventListener('click', showDocumentPreview);
+        }
+        if (closePreviewBtn) closePreviewBtn.addEventListener('click', closeDocumentPreview);
+        if (cancelPreviewBtn) cancelPreviewBtn.addEventListener('click', closeDocumentPreview);
+        if (proceedBtn) proceedBtn.addEventListener('click', proceedToSignature);
+
+        // Event listeners para modal de firma
+        const closeModalBtn = document.getElementById('close-signature-modal');
+        const clearBtn = document.getElementById('modal-clear-signature');
+        const acceptBtn = document.getElementById('modal-accept-signature');
+
+        if (closeModalBtn) closeModalBtn.addEventListener('click', closeSignatureModal);
+        if (clearBtn) clearBtn.addEventListener('click', clearSignature);
+        if (acceptBtn) acceptBtn.addEventListener('click', acceptSignature);
+
+        function showDocumentPreview() {
+            console.log('📋 Mostrando vista previa del documento de autorización');
+            
+            // Generar el contenido del documento
+            generateDocumentContent();
+            
+            // Mostrar modal de vista previa
+            previewModal.classList.add('active');
+        }
+
+        function generateDocumentContent() {
+            // Obtener datos del formulario
+            const buyerName = document.getElementById('customer_name')?.value || '[Nombre del comprador]';
+            const buyerDni = document.getElementById('customer_dni')?.value || '[DNI del comprador]';
+            const buyerEmail = document.getElementById('customer_email')?.value || '[Email del comprador]';
+            const sellerName = document.getElementById('seller_name')?.value || '[Nombre del vendedor]';
+            const sellerDni = document.getElementById('seller_dni')?.value || '[DNI del vendedor]';
+            
+            // Datos del vehículo
+            const manufacturerSelect = document.getElementById('manufacturer');
+            const modelSelect = document.getElementById('model');
+            const matriculaInput = document.getElementById('matricula');
+            const manualManufacturer = document.getElementById('manual_manufacturer');
+            const manualModel = document.getElementById('manual_model');
+            const noEncuentroCheckbox = document.getElementById('no_encuentro_modelo');
+            
+            let manufacturer = '';
+            let model = '';
+            let matricula = matriculaInput?.value || '[Matrícula]';
+            
+            // Determinar fabricante y modelo
+            if (noEncuentroCheckbox?.checked) {
+                manufacturer = manualManufacturer?.value || '[Fabricante]';
+                model = manualModel?.value || '[Modelo]';
+            } else {
+                manufacturer = manufacturerSelect?.selectedOptions[0]?.text || '[Fabricante]';
+                model = modelSelect?.selectedOptions[0]?.text || '[Modelo]';
+            }
+
+            // Construir el documento HTML
+            const documentContent = `
+                <div class="document-section">
+                    <h4>AUTORIZACIÓN</h4>
+                    <p style="text-align: justify; margin-bottom: 16px;">
+                        Yo, <strong>${buyerName}</strong>, con DNI <strong>${buyerDni}</strong> y correo electrónico <strong>${buyerEmail}</strong>, 
+                        en mi calidad de comprador, <strong>autorizo expresamente a TRAMITFY S.L.</strong> para que actúe en mi nombre y 
+                        representación en todos los trámites necesarios ante <strong>Capitanía Marítima</strong> para la transferencia de titularidad 
+                        de la embarcación con matrícula <strong>${matricula}</strong>, marca <strong>${manufacturer}</strong>, 
+                        modelo <strong>${model}</strong>.
+                    </p>
+                    
+                    <p style="text-align: justify; margin-bottom: 16px;">
+                        Esta autorización incluye expresamente la facultad para presentar toda la documentación requerida, realizar 
+                        el pago de tasas administrativas en mi nombre, firmar los documentos oficiales necesarios, y retirar los 
+                        certificados y documentación oficial resultante de la tramitación.
+                    </p>
+                    
+                    <p style="text-align: justify; margin-bottom: 16px;">
+                        Autorizo también el cobro del importe correspondiente a honorarios profesionales y tasas administrativas 
+                        según el presupuesto aceptado, así como el uso de mis datos personales exclusivamente para la gestión de este trámite.
+                    </p>
+                </div>
+
+                <div class="document-highlight">
+                    <p><i class="fa-solid fa-exclamation-triangle"></i> Al firmar este documento, acepta todos los términos de la autorización</p>
+                </div>
+            `;
+
+            // Insertar contenido en el modal
+            const contentDiv = document.getElementById('document-content-preview');
+            if (contentDiv) {
+                contentDiv.innerHTML = documentContent;
+            }
+        }
+
+        function closeDocumentPreview() {
+            console.log('❌ Cerrando vista previa del documento');
+            previewModal.classList.remove('active');
+        }
+
+        function proceedToSignature() {
+            console.log('✍️ Procediendo a la firma del documento');
+            // Cerrar modal de vista previa
+            closeDocumentPreview();
+            // Abrir modal de firma
+            setTimeout(() => {
+                openSignatureModal();
+            }, 300);
+        }
+
+        function openSignatureModal() {
+            console.log('📝 Abriendo modal de firma');
+            signatureModal.classList.add('active');
+            setTimeout(() => {
+                initializeSignaturePad();
+            }, 100);
+        }
+
+        function closeSignatureModal() {
+            console.log('❌ Cerrando modal de firma');
+            signatureModal.classList.remove('active');
+            if (signaturePad) {
+                signaturePad.off();
+            }
+        }
+
+        function initializeSignaturePad() {
+            if (signaturePad) {
+                signaturePad.off();
+            }
+
+            // Ajustar canvas al contenedor
+            const container = enhancedCanvas.parentElement;
+            const rect = container.getBoundingClientRect();
+            const ratio = window.devicePixelRatio || 1;
+
+            enhancedCanvas.width = rect.width * ratio;
+            enhancedCanvas.height = rect.height * ratio;
+            enhancedCanvas.style.width = rect.width + 'px';
+            enhancedCanvas.style.height = rect.height + 'px';
+            enhancedCanvas.getContext('2d').scale(ratio, ratio);
+
+            // Crear SignaturePad
+            signaturePad = new SignaturePad(enhancedCanvas, {
+                minWidth: 1,
+                maxWidth: 3,
+                throttle: 0,
+                velocityFilterWeight: 0.7,
+                penColor: '#000000'
+            });
+
+            // Event listener para activar botón cuando se firma
+            signaturePad.addEventListener('afterUpdateStroke', () => {
+                acceptBtn.disabled = false;
+            });
+
+            console.log('✅ SignaturePad inicializado');
+        }
+
+        function clearSignature() {
+            if (signaturePad) {
+                signaturePad.clear();
+                acceptBtn.disabled = true;
+            }
+        }
+
+        function acceptSignature() {
+            if (!signaturePad || signaturePad.isEmpty()) {
+                alert('Por favor, firme antes de confirmar.');
+                return;
+            }
+
+            // Capturar firma
+            isSignatureCaptured = true;
+            
+            // Actualizar estado visual
+            const signatureStatus = document.getElementById('signature-status');
+            if (signatureStatus) {
+                signatureStatus.textContent = 'Firmado ✓';
+                signatureStatus.style.color = '#10b981';
+            }
+
+            // Actualizar botón
+            if (signatureField) {
+                signatureField.innerHTML = '<span class="desktop-text"><i class="fa-solid fa-check"></i> Documento firmado</span><span class="mobile-text"><i class="fa-solid fa-check"></i></span>';
+                signatureField.style.background = '#ecfdf5';
+                signatureField.style.borderColor = '#10b981';
+                signatureField.style.color = '#10b981';
+            }
+
+            closeSignatureModal();
+            console.log('✅ Firma capturada correctamente');
+        }
+
+        // Verificar si hay firma al validar página documentos
+        window.TBV2DocumentsValidation = {
+            validatePage: function() {
+                return isSignatureCaptured;
+            },
+            getSignatureData: function() {
+                return signaturePad && !signaturePad.isEmpty() ? signaturePad.toDataURL() : null;
+            },
+            proceedToSignature: function() {
+                console.log('✍️ Usuario acepta proceder a firmar');
+                openSignatureModal();
+            }
+        };
+    }
+
+    // ============================================
+    // FILE UPLOAD HANDLERS
+    // ============================================
+    
+    function initFileUploadSystem() {
+        console.log('📁 Inicializando sistema de uploads...');
+        
+        // File inputs
+        const fileInputs = [
+            'upload-hoja-asiento',
+            'upload-dni-comprador', 
+            'upload-dni-vendedor',
+            'upload-contrato-compraventa',
+            'upload-modelo-620'
+        ];
+
+        fileInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.addEventListener('change', handleFileChange);
+            }
+        });
+
+        function handleFileChange(event) {
+            const input = event.target;
+            const files = input.files;
+            const inputId = input.id;
+            const countElement = document.querySelector(`[data-input="${inputId}"]`);
+            
+            if (countElement) {
+                if (files.length === 0) {
+                    countElement.textContent = 'Sin archivos';
+                    countElement.style.color = '#6b7280';
+                } else {
+                    countElement.textContent = `${files.length} archivo${files.length > 1 ? 's' : ''} seleccionado${files.length > 1 ? 's' : ''}`;
+                    countElement.style.color = '#10b981';
+                }
+            }
+
+            console.log(`📁 ${inputId}: ${files.length} archivo(s) seleccionado(s)`);
+        }
+    }
+
+    // ============================================
+    // NAVIGATION EVENT LISTENERS FOR DOCUMENTS PAGE
+    // ============================================
+    
+    function initDocumentsNavigation() {
+        console.log('🧭 Configurando navegación página documentos...');
+        
+        // Botón anterior - ir a precio
+        const prevBtn = document.getElementById('tbv2-documentos-prevButton');
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                console.log('⬅️ Navegando a página precio...');
+                TBV2_Form.goToPage('page-precio');
+            });
+        }
+
+        // Botón siguiente - ir a pago 
+        const nextBtn = document.getElementById('tbv2-documentos-nextButton');
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                console.log('➡️ Navegando a página pago...');
+                TBV2_Form.goToPage('page-pago');
+            });
+        }
+    }
+
+    // Payment button event listener
+    document.addEventListener('DOMContentLoaded', () => {
+        const submitPaymentBtn = document.getElementById('submit-payment');
+        if (submitPaymentBtn) {
+            submitPaymentBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                TBV2_Form.submitForm();
+            });
+        }
+    });
+
+    // Inicializar sistemas cuando DOM esté listo
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            initFileUploadSystem();
+            initDocumentsNavigation();
+        }, 500);
+    });
+    </script>
+    <?php
+}
+
+// =====================================================
+// REGISTRO DE SHORTCODE Y SCRIPTS
+// =====================================================
+
+/**
+ * Shortcode registration
+ */
+function tbv2_register_shortcode() {
+    add_shortcode('transferencia_barco_v2', 'tbv2_render_form');
+}
+add_action('init', 'tbv2_register_shortcode');
+
+/**
+ * Enqueue scripts if needed
+ */
+function tbv2_enqueue_scripts() {
+    if (has_shortcode(get_post()->post_content ?? '', 'transferencia_barco_v2')) {
+        // Font Awesome para iconos
+        wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
+        
+        wp_localize_script('jquery', 'tbv2_ajax', [
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('tbv2_nonce')
+        ]);
+    }
+}
+add_action('wp_enqueue_scripts', 'tbv2_enqueue_scripts');
+
+// =====================================================
+// AJAX HANDLERS PARA REDSYS
+// =====================================================
+
+/**
+ * AJAX handler para crear el formulario de pago Redsys
+ */
+function tbv2_handle_create_redsys_payment() {
+    // Verificar nonce de seguridad
+    if (!wp_verify_nonce($_POST['nonce'], 'tbv2_nonce')) {
+        wp_die('Error de seguridad');
+    }
+    
+    try {
+        // Obtener datos del formulario
+        $formData = json_decode(stripslashes($_POST['formData']), true);
+        $orderId = sanitize_text_field($_POST['orderId']); // Solo para transient
+        
+        if (!$formData) {
+            throw new Exception('Datos del formulario inválidos');
+        }
+        
+        // Validar datos requeridos
+        if (empty($formData['customerName']) || empty($formData['customerEmail'])) {
+            throw new Exception('Faltan datos requeridos del cliente');
+        }
+        
+        // Almacenar datos del formulario temporalmente para el callback
+        $transientData = [
+            'customerName' => $formData['customerName'],
+            'customerEmail' => $formData['customerEmail'],
+            'customerPhone' => $formData['customerPhone'],
+            'customerDni' => $formData['customerDni'],
+            'finalAmount' => $formData['finalAmount'],
+            'tasas' => $formData['tasas'],
+            'iva' => $formData['iva'],
+            'honorarios' => $formData['honorarios'],
+            'honorariosNetos' => $formData['honorariosNetos'],
+            'attachments' => $formData['attachments'] ?? []
+        ];
+        
+        // GENERAR Order ID como test dummy exitoso - MÚLTIPLES ESTRATEGIAS
+        // EXACTA LÓGICA DEL TEST DUMMY FUNCIONAL
+        
+        // ESTRATEGIA 1: Microtime único
+        $microtime = microtime(true);
+        $orderId1 = substr(str_replace('.', '', $microtime), -8);
+        
+        // ESTRATEGIA 2: Random con prefijo
+        $orderId2 = 'T' . str_pad(rand(1000000, 9999999), 7, '0', STR_PAD_LEFT);
+        
+        // ESTRATEGIA 3: Timestamp + Random
+        $orderId3 = date('His') . rand(100, 999);
+        
+        // USAR ESTRATEGIA 1 PRIMERO (como test dummy)
+        $orderIdFinal = $orderId1;
+        
+        // Guardar datos por 1 hora (3600 segundos) - usar el Order ID real
+        set_transient('tbv2_transfer_' . $orderIdFinal, $transientData, 3600);
+        
+        // USAR AMOUNT REAL DEL FORMULARIO (ya no test)
+        $amountCents = (string) round(floatval($formData['finalAmount']) * 100);
+        
+        // Preparar datos para Redsys - FORMATO EXITOSO DEL TEST
+        $orderData = [
+            'order_id' => $orderIdFinal, // Microtime único (COMPROBADO)
+            'amount_cents' => $amountCents, // Amount real del formulario
+            'description' => 'Transferencia Embarcacion', // Sin acentos
+            'customer_name' => preg_replace('/[^A-Za-z0-9\s]/', '', $formData['customerName']) // Limpiar nombre
+        ];
+        
+        // DEBUG ULTRA CRÍTICO: Log de datos finales
+        error_log("=== TBV2 PRODUCTION FINAL DEBUG ===");
+        error_log("Order ID final: " . $orderIdFinal);
+        error_log("Amount cents: " . $amountCents);
+        error_log("Final amount: " . $formData['finalAmount']);
+        error_log("Order data: " . print_r($orderData, true));
+        error_log("===================================");
+        
+        // DEBUG CRÍTICO: Log de datos antes de Redsys
+        error_log("=== TBV2 DEBUG PHP CRÍTICO ===");
+        error_log("formData['finalAmount']: " . $formData['finalAmount']);
+        error_log("orderData completo: " . print_r($orderData, true));
+        error_log("===========================");
+        
+        // Generar parámetros de Redsys
+        $paymentData = tbv2_redsys_create_payment_form($orderData);
+        
+        // DEBUG CRÍTICO: Log de parámetros generados
+        error_log("=== TBV2 PARÁMETROS REDSYS ===");
+        error_log("paymentData generado: " . print_r($paymentData, true));
+        error_log("paymentData es array?: " . (is_array($paymentData) ? 'SI' : 'NO'));
+        error_log("paymentData count: " . (is_array($paymentData) ? count($paymentData) : 'N/A'));
+        
+        if (isset($paymentData['Ds_MerchantParameters'])) {
+            error_log("Ds_MerchantParameters PRESENTE: " . substr($paymentData['Ds_MerchantParameters'], 0, 100) . '...');
+            $decoded = json_decode(base64_decode($paymentData['Ds_MerchantParameters']), true);
+            error_log("Parámetros decodificados: " . print_r($decoded, true));
+        } else {
+            error_log("❌ Ds_MerchantParameters FALTANTE!");
+            error_log("Claves disponibles: " . print_r(array_keys($paymentData), true));
+        }
+        error_log("==============================");
+        
+        if (!$paymentData) {
+            throw new Exception('Error al generar parámetros de pago');
+        }
+        
+        // Respuesta exitosa
+        wp_send_json_success([
+            'message' => 'Parámetros de pago generados exitosamente',
+            'redsysData' => $paymentData
+        ]);
+        
+    } catch (Exception $e) {
+        error_log('TBV2 Redsys Error: ' . $e->getMessage());
+        wp_send_json_error([
+            'message' => 'Error al procesar el pago: ' . $e->getMessage()
+        ]);
+    }
+}
+add_action('wp_ajax_tbv2_create_redsys_payment', 'tbv2_handle_create_redsys_payment');
+add_action('wp_ajax_nopriv_tbv2_create_redsys_payment', 'tbv2_handle_create_redsys_payment');
+
+/**
+ * Handler para procesar el callback de Redsys (URL de retorno)
+ */
+function tbv2_handle_redsys_callback() {
+    try {
+        // Verificar que vengan datos de Redsys
+        if (empty($_POST['Ds_MerchantParameters']) || empty($_POST['Ds_Signature'])) {
+            throw new Exception('Callback de Redsys incompleto');
+        }
+        
+        // Decodificar parámetros
+        $merchantData = json_decode(base64_decode($_POST['Ds_MerchantParameters']), true);
+        $receivedSignature = $_POST['Ds_Signature'];
+        
+        // Verificar firma de seguridad
+        $calculatedSignature = tbv2_redsys_generate_signature($merchantData);
+        
+        if ($receivedSignature !== $calculatedSignature) {
+            throw new Exception('Firma de seguridad inválida');
+        }
+        
+        // Procesar respuesta según el código de resultado
+        $responseCode = $merchantData['Ds_Response'];
+        $orderId = $merchantData['Ds_Order'];
+        
+        if ($responseCode <= '0099') {
+            // Pago exitoso
+            tbv2_process_successful_payment($orderId, $merchantData);
+            
+            // Redirigir a página de éxito
+            wp_redirect(home_url('/confirmacion-pago/?success=true&order=' . $orderId));
+        } else {
+            // Pago fallido
+            tbv2_process_failed_payment($orderId, $merchantData);
+            
+            // Redirigir a página de error
+            wp_redirect(home_url('/error-pago/?error=payment_failed&order=' . $orderId));
+        }
+        
+    } catch (Exception $e) {
+        error_log('TBV2 Callback Error: ' . $e->getMessage());
+        wp_redirect(home_url('/error-pago/?error=callback_error'));
+    }
+    
+    exit;
+}
+add_action('init', 'tbv2_handle_redsys_callback_init');
+
+function tbv2_handle_redsys_callback_init() {
+    // Handle notification callback (server-to-server from Redsys) - COMO TEST DUMMY
+    if (isset($_GET['notification']) && $_GET['notification'] === '1') {
+        tbv2_handle_redsys_notification();
+    }
+    
+    // Handle user return callbacks - COMO TEST DUMMY  
+    if (isset($_GET['result'])) {
+        tbv2_handle_redsys_return($_GET['result']);
+    }
+}
+
+/**
+ * Handler para notificaciones server-to-server de Redsys
+ */
+function tbv2_handle_redsys_notification() {
+    try {
+        // Log de la notificación para debug
+        error_log('TBV2: Recibiendo notificación Redsys: ' . print_r($_POST, true));
+        
+        // Verificar que vengan datos de Redsys
+        if (empty($_POST['Ds_MerchantParameters']) || empty($_POST['Ds_Signature'])) {
+            throw new Exception('Notificación de Redsys incompleta');
+        }
+        
+        // Decodificar parámetros
+        $merchantData = json_decode(base64_decode($_POST['Ds_MerchantParameters']), true);
+        $receivedSignature = $_POST['Ds_Signature'];
+        
+        // Verificar firma de seguridad
+        $calculatedSignature = tbv2_redsys_generate_signature($merchantData);
+        
+        if ($receivedSignature !== $calculatedSignature) {
+            throw new Exception('Firma de seguridad inválida');
+        }
+        
+        // Procesar según el código de respuesta
+        $responseCode = $merchantData['Ds_Response'];
+        $orderId = $merchantData['Ds_Order'];
+        
+        if ($responseCode <= '0099') {
+            // Pago exitoso - enviar al webhook
+            tbv2_process_successful_payment($orderId, $merchantData);
+            echo '[OK]'; // Respuesta requerida por Redsys
+        } else {
+            // Pago fallido
+            tbv2_process_failed_payment($orderId, $merchantData);
+            echo '[OK]'; // Respuesta requerida por Redsys
+        }
+        
+    } catch (Exception $e) {
+        error_log('TBV2 Notification Error: ' . $e->getMessage());
+        echo '[KO]'; // Respuesta de error para Redsys
+    }
+    
+    exit;
+}
+
+/**
+ * Handler para URLs de retorno (usuario redirigido desde Redsys)
+ */
+function tbv2_handle_redsys_return($result) {
+    if ($result === 'ok') {
+        // Redirigir a página de confirmación
+        wp_redirect(home_url('/transferencia-barco-confirmacion/?success=true'));
+    } else {
+        // Redirigir a página de error  
+        wp_redirect(home_url('/transferencia-barco-error/?error=payment_failed'));
+    }
+    
+    exit;
+}
+
+/**
+ * Procesar pago exitoso y enviar a la API webhook
+ */
+function tbv2_process_successful_payment($orderId, $paymentData) {
+    try {
+        // Recuperar datos del formulario desde sessionStorage via POST o GET
+        $transferData = get_transient('tbv2_transfer_' . $orderId);
+        
+        if (!$transferData) {
+            throw new Exception('Datos de transferencia no encontrados');
+        }
+        
+        // Preparar datos para el webhook
+        $webhookData = [
+            'tramiteId' => $orderId,
+            'tramiteType' => 'transferencia-barco',
+            'customerName' => $transferData['customerName'],
+            'customerEmail' => $transferData['customerEmail'],
+            'customerPhone' => $transferData['customerPhone'],
+            'customerDni' => $transferData['customerDni'],
+            'finalAmount' => floatval($transferData['finalAmount']),
+            'tasas' => floatval($transferData['tasas']),
+            'iva' => floatval($transferData['iva']),
+            'honorarios' => floatval($transferData['honorarios']),
+            'honorariosNetos' => floatval($transferData['honorariosNetos']),
+            'paymentIntentId' => $paymentData['Ds_AuthorisationCode'],
+            'redsysData' => $paymentData,
+            'attachments' => $transferData['attachments'] ?? [],
+            'status' => 'pending'
+        ];
+        
+        // Enviar al webhook de la API
+        $webhookUrl = 'https://46-202-128-35.sslip.io/api/herramientas/barcos/webhook';
+        
+        $response = wp_remote_post($webhookUrl, [
+            'method' => 'POST',
+            'timeout' => 45,
+            'headers' => [
+                'Content-Type' => 'application/json',
+            ],
+            'body' => json_encode($webhookData)
+        ]);
+        
+        if (is_wp_error($response)) {
+            throw new Exception('Error al conectar con el webhook: ' . $response->get_error_message());
+        }
+        
+        $responseCode = wp_remote_retrieve_response_code($response);
+        if ($responseCode !== 200) {
+            throw new Exception('Webhook respondió con código: ' . $responseCode);
+        }
+        
+        // Limpiar datos temporales
+        delete_transient('tbv2_transfer_' . $orderId);
+        
+        error_log('TBV2: Pago exitoso procesado para orden ' . $orderId);
+        
+    } catch (Exception $e) {
+        error_log('TBV2 Webhook Error: ' . $e->getMessage());
+        // No lanzar excepción para no afectar la experiencia del usuario
+    }
+}
+
+/**
+ * Procesar pago fallido
+ */
+function tbv2_process_failed_payment($orderId, $paymentData) {
+    error_log('TBV2: Pago fallido para orden ' . $orderId . ' - Código: ' . $paymentData['Ds_Response']);
+    
+    // Mantener datos para reintento
+    // No eliminar transient para permitir reintento del usuario
+}
+
+// Registro del shortcode
+if (!shortcode_exists('transferencia_barco_v2')) {
+    add_shortcode('transferencia_barco_v2', 'tbv2_render_form');
+}
+
+// Registro alternativo del shortcode con _form
+if (!shortcode_exists('transferencia_barco_v2_form')) {
+    add_shortcode('transferencia_barco_v2_form', 'tbv2_render_form');
+}
+
