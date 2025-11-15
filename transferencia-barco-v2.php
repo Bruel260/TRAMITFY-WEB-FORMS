@@ -8905,16 +8905,8 @@ error_log(" TBV2 ENHANCED: Sistema de archivos compatible cargado - NO intercept
 // =====================================================
 ?>
 <?php 
-// Solo cargar en páginas que contengan el formulario TBV2
-$current_page = $_SERVER['REQUEST_URI'] ?? '';
-$is_tbv2_page = (
-    strpos($current_page, 'transferencia-barco-v2') !== false ||
-    strpos($current_page, 'transferencia-propiedad-v2') !== false ||
-    (isset($_GET['page_id']) && get_post_field('post_content', $_GET['page_id']) && 
-     strpos(get_post_field('post_content', $_GET['page_id']), 'transferencia_barco_v2') !== false)
-);
-
-if ($is_tbv2_page && !is_admin()): ?>
+// Cargar sistema temporal cuando se ejecute el shortcode TBV2 (NO en wp-admin)
+if (!is_admin()): ?>
 <script>
 // TBV2 TEMPORAL CAPTURE - SOLO EN PÁGINAS TBV2
 console.log('🔄 TBV2 Temporal System - Iniciando captura automática...');
@@ -8922,48 +8914,73 @@ console.log('🔄 TBV2 Temporal System - Iniciando captura automática...');
 // Sistema de intercepción para captura automática antes de Redsys
 window.TBV2_TEMPORAL_CAPTURE = {
     
-    // Interceptar envío del formulario para captura temporal
+    // Interceptar envío del formulario TBV2 para captura temporal
     interceptFormSubmission: function() {
-        const originalSubmit = window.submitForm || function() {};
-        
-        window.submitForm = async function(event) {
-            try {
-                console.log('📡 TBV2 - Interceptando envío para captura temporal');
+        // Esperar a que TBV2_Form esté disponible
+        const checkAndIntercept = () => {
+            if (window.TBV2_Form && window.TBV2_Form.submitForm) {
+                console.log('🎯 TBV2 - Interceptando TBV2_Form.submitForm');
                 
-                // Capturar todos los datos del formulario
-                const formData = window.tbv2FormManager ? window.tbv2FormManager.getAllFormData() : {};
+                const originalSubmit = window.TBV2_Form.submitForm.bind(window.TBV2_Form);
                 
-                // Añadir archivos si existen
-                if (window.tbv2SignatureData) {
-                    formData.signature = window.tbv2SignatureData;
-                }
+                window.TBV2_Form.submitForm = async function() {
+                    try {
+                        console.log('📡 TBV2 - Interceptando envío para captura temporal');
+                        
+                        // Capturar datos del formulario
+                        const formData = this.getAllFormData ? this.getAllFormData() : {};
+                        
+                        // Generar OrderID único
+                        const orderId = Date.now().toString().slice(-12);
+                        formData.orderId = orderId;
+                        
+                        // Añadir archivos de firma si existen
+                        if (window.tbv2SignatureData) {
+                            formData.files = formData.files || {};
+                            formData.files.firmaAutorizacion = [{
+                                name: 'firma_autorizacion.png',
+                                data: window.tbv2SignatureData,
+                                type: 'image/png'
+                            }];
+                        }
+                        
+                        console.log('📦 TBV2 - Datos a capturar:', formData);
+                        
+                        // Enviar a sistema temporal ANTES del pago
+                        const temporalResponse = await fetch('https://tramitfy.org/api/temporal/capture', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                orderId: orderId,
+                                formData: formData,
+                                timestamp: new Date().toISOString()
+                            })
+                        });
+                        
+                        if (temporalResponse.ok) {
+                            console.log('✅ TBV2 - Datos capturados en sistema temporal');
+                        } else {
+                            console.warn('⚠️ TBV2 - Error en captura temporal, continuando...');
+                        }
+                        
+                        // Continuar con el flujo normal
+                        return originalSubmit.call(this);
+                        
+                    } catch (error) {
+                        console.warn('⚠️ TBV2 - Error en intercepción:', error);
+                        // Continuar con flujo normal en caso de error
+                        return originalSubmit.call(this);
+                    }
+                };
                 
-                // Enviar a sistema temporal ANTES del pago
-                const temporalResponse = await fetch('https://tramitfy.org/api/temporal/capture', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        orderId: formData.orderId || 'TBV2_' + Date.now(),
-                        formData: formData,
-                        timestamp: new Date().toISOString()
-                    })
-                });
-                
-                if (temporalResponse.ok) {
-                    console.log('✅ TBV2 - Datos capturados en sistema temporal');
-                    // Continuar con el flujo normal
-                    return originalSubmit.call(this, event);
-                } else {
-                    console.warn('⚠️ TBV2 - Error en captura temporal, continuando...');
-                    return originalSubmit.call(this, event);
-                }
-                
-            } catch (error) {
-                console.warn('⚠️ TBV2 - Error en intercepción:', error);
-                // Continuar con flujo normal en caso de error
-                return originalSubmit.call(this, event);
+                console.log('✅ TBV2 - Intercepción configurada exitosamente');
+            } else {
+                console.log('⏳ TBV2 - Esperando que TBV2_Form esté disponible...');
+                setTimeout(checkAndIntercept, 500);
             }
         };
+        
+        checkAndIntercept();
     },
     
     // Inicializar sistema
