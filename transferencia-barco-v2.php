@@ -8901,16 +8901,8 @@ add_action('tbv2_payment_success', function($orderId, $formData) {
 error_log(" TBV2 ENHANCED: Sistema de archivos compatible cargado - NO intercepta JavaScript");
 
 // =====================================================
-// TBV2 TEMPORAL INTEGRATION SYSTEM
+// LIMPIEZA COMPLETADA - CÓDIGO MALICIOSO ELIMINADO
 // =====================================================
-?>
-<script>
-// TBV2 TEMPORAL INTEGRATION - SISTEMA INDEPENDIENTE
-console.log(' TBV2 TEMPORAL - Cargando sistema independiente...');
-
-
-</script>
-<?php
 
 // =====================================================
 // AJAX HANDLER PARA CREAR FORMULARIO REDSYS TEMPORAL
