@@ -41,7 +41,7 @@ if (!defined('TBV2_WEBHOOK_URL')) define('TBV2_WEBHOOK_URL', 'https://tramitfy.o
 // URLs de retorno - EXACTAS como test dummy exitoso
 if (!defined('TBV2_REDSYS_URL_OK')) define('TBV2_REDSYS_URL_OK', 'https://tramitfy.es/wp-content/themes/xtra/transferencia-barco-v2.php?result=ok');
 if (!defined('TBV2_REDSYS_URL_KO')) define('TBV2_REDSYS_URL_KO', 'https://tramitfy.es/wp-content/themes/xtra/transferencia-barco-v2.php?result=ko');
-if (!defined('TBV2_REDSYS_URL_NOTIFICATION')) define('TBV2_REDSYS_URL_NOTIFICATION', 'https://46-202-128-35.sslip.io/api/temporal/confirm');
+if (!defined('TBV2_REDSYS_URL_NOTIFICATION')) define('TBV2_REDSYS_URL_NOTIFICATION', 'https://tramitfy.es/wp-content/themes/xtra/transferencia-barco-v2.php?notification=1');
 
 // Asignar URL según modo
 $tbv2_redsys_url = (TBV2_REDSYS_MODE === 'test') ? TBV2_REDSYS_URL_TEST : TBV2_REDSYS_URL_LIVE;
