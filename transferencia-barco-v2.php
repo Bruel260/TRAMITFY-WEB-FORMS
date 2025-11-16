@@ -42,19 +42,16 @@ function tbv2_is_correct_page() {
     return false;
 }
 
-// Marcar si estamos en página autorizada para condicional posterior  
-$tbv2_page_authorized = tbv2_is_correct_page();
-
-// Si no estamos en página autorizada, desactivar JavaScript TBV2
-if (!$tbv2_page_authorized) {
-    add_action('wp_head', function() {
+// Protección que se ejecuta en wp_head cuando $post ya está disponible
+add_action('wp_head', function() {
+    if (!tbv2_is_correct_page()) {
         echo '<script>
         // Prevenir carga de variables globales TBV2 en otras páginas
         window.TBV2_DISABLED = true;
         console.log("TBV2: Deshabilitado en página no autorizada");
         </script>';
-    });
-}
+    }
+});
 
 // =====================================================
 // CONSTANTES DE CONFIGURACIÓN REDSYS V2
@@ -3396,10 +3393,8 @@ function tbv2_render_styles() {
  * JavaScript IDÉNTICO al original
  */
 function tbv2_render_scripts() {
- global $tbv2_page_authorized;
- 
- // Solo cargar scripts en páginas autorizadas
- if (!$tbv2_page_authorized) {
+ // Solo cargar scripts en páginas autorizadas (evaluación en tiempo real)
+ if (!tbv2_is_correct_page()) {
      echo '<script>console.log("🚫 TBV2 Scripts: No cargados en página no autorizada");</script>';
      return;
  }
@@ -8963,8 +8958,8 @@ error_log(" TBV2 ENHANCED: Sistema de archivos compatible cargado - NO intercept
 // TBV2 TEMPORAL INTEGRATION SYSTEM
 // =====================================================
 
-// Solo cargar sistema temporal en páginas autorizadas
-if ($tbv2_page_authorized) {
+// Solo cargar sistema temporal en páginas autorizadas (evaluación en tiempo real)
+if (tbv2_is_correct_page()) {
 ?>
 <script>
 // TBV2 TEMPORAL INTEGRATION - SISTEMA INDEPENDIENTE
@@ -9397,7 +9392,7 @@ console.log(' TBV2 TEMPORAL - Sistema de interceptor cargado');
 } // Fin if TBV2_DISABLED !== true
 </script>
 <?php
-} // Fin if $tbv2_page_authorized
+} // Fin if tbv2_is_correct_page()
 
 // =====================================================
 // AJAX HANDLER PARA CREAR FORMULARIO REDSYS TEMPORAL
