@@ -1,6 +1,6 @@
 <?php
 /**
- * TRAMITFY - TRANSFERENCIA EMBARCACIONES V2 CON REDSYS
+ * TRAMITFY - TRANSFERENCIA MOTOS DE AGUA V2 CON REDSYS
  * 
  * Versión refactorizada con integración Redsys (CaixaBank TPV)
  * Estructura exacta: layout wrapper → two-column → sidebar + main-form
@@ -17,68 +17,40 @@ if (!defined('ABSPATH')) {
 }
 
 // =====================================================
-// PROTECCIÓN TBV2 - DETECCIÓN DE PÁGINA AUTORIZADA
+// PROTECCIÓN TMV2 - DETECCIÓN DE PÁGINA AUTORIZADA
 // =====================================================
 
 /**
- * Detecta si estamos en una página autorizada para cargar TBV2
+ * Detecta si estamos en una página autorizada para cargar TMV2
  */
-function tbv2_is_authorized_page() {
-    global $post;
+function tmv2_is_authorized_page() {
+    // ✅ OPCIÓN 2: DETECCIÓN ULTRA-ESPECÍFICA
+    // Solo activar en URLs EXACTAS - nunca interferir con admin/WordPress
     
-    // 🚨 PROTECCIÓN AJAX: Nunca cargar en requests AJAX de otros formularios
-    if (defined('DOING_AJAX') && DOING_AJAX) {
-        $action = $_POST['action'] ?? $_GET['action'] ?? '';
-        error_log("🔍 TBV2 DEBUG: AJAX action = '$action'");
-        
-        // 🔒 BYPASS COMPLETO PARA ADMIN
-        if (is_admin()) {
-            error_log("🔍 TBV2 DEBUG: Admin bypass - returning true");
-            return true; // Admin siempre autorizado
-        }
-        
-        // Solo permitir AJAX para acciones específicas TBV2
-        $tbv2_ajax_actions = [
-            'tbv2_create_redsys_payment',
-            'tbv2_create_redsys_payment_generic', 
-            'tbv2_store_files',
-            'tbv2_send_confirmation_emails'
-        ];
-        
-        if (!in_array($action, $tbv2_ajax_actions)) {
-            error_log("🔍 TBV2 DEBUG: Action '$action' NOT in whitelist - returning FALSE");
-            return false; // Bloquear TBV2 en AJAX de otros formularios
-        } else {
-            error_log("🔍 TBV2 DEBUG: Action '$action' in whitelist - continuing...");
-        }
-    }
-    
-    // Admin siempre autorizado (solo para non-AJAX)
-    if (!defined('DOING_AJAX') && is_admin()) return true;
-    
-    // Verificar por URL
     $request_uri = $_SERVER['REQUEST_URI'] ?? '';
-    $authorized_pages = [
-        'testingfy',
-        'transferencia-propiedad-v2', 
-        'transferencia-barco-v2'
+    
+    // 🎯 URLs EXACTAS AUTORIZADAS (solo estas, sin excepciones)
+    $exact_authorized_paths = [
+        '/testingfy-moto/',
+        '/transferencia-moto-v2/',
+        '/transferencia-moto-redsys/'
     ];
     
-    foreach ($authorized_pages as $page) {
-        if (strpos($request_uri, $page) !== false) {
+    // Verificar coincidencia exacta de URL
+    foreach ($exact_authorized_paths as $path) {
+        if (strpos($request_uri, $path) !== false) {
             return true;
         }
     }
     
-    // Verificar por post object
-    if (is_object($post)) {
-        if (in_array($post->post_name, $authorized_pages) || 
-            strpos($post->post_content, '[transferencia_barco_v2]') !== false ||
-            strpos($post->post_content, '[transferencia_barco_v2_form]') !== false) {
-            return true;
-        }
+    // Verificar shortcode específico (sin tocar global WordPress)
+    global $post;
+    if (is_object($post) && 
+        strpos($post->post_content, '[transferencia_moto_v2_form]') !== false) {
+        return true;
     }
     
+    // Por defecto: NO activar TBV2 (máxima seguridad)
     return false;
 }
 
@@ -86,37 +58,37 @@ function tbv2_is_authorized_page() {
 // CONSTANTES DE CONFIGURACIÓN REDSYS V2
 // =====================================================
 
-if (!defined('TBV2_REDSYS_MODE')) define('TBV2_REDSYS_MODE', 'test'); // test o live
+if (!defined('TMV2_REDSYS_MODE')) define('TMV2_REDSYS_MODE', 'test'); // test o live
 
 // Datos del comercio Redsys
-if (!defined('TBV2_REDSYS_MERCHANT_CODE')) define('TBV2_REDSYS_MERCHANT_CODE', '363391103');
-if (!defined('TBV2_REDSYS_TERMINAL')) define('TBV2_REDSYS_TERMINAL', '1');
-if (!defined('TBV2_REDSYS_CURRENCY')) define('TBV2_REDSYS_CURRENCY', '978'); // EUR
+if (!defined('TMV2_REDSYS_MERCHANT_CODE')) define('TMV2_REDSYS_MERCHANT_CODE', '363391103');
+if (!defined('TMV2_REDSYS_TERMINAL')) define('TMV2_REDSYS_TERMINAL', '1');
+if (!defined('TMV2_REDSYS_CURRENCY')) define('TMV2_REDSYS_CURRENCY', '978'); // EUR
 
 // Claves de cifrado
-if (!defined('TBV2_REDSYS_SECRET_KEY')) define('TBV2_REDSYS_SECRET_KEY', 'sq7HjrUOBfKmC576ILgskD5srU870gJ7');
-if (!defined('TBV2_REDSYS_SIGNATURE_VERSION')) define('TBV2_REDSYS_SIGNATURE_VERSION', 'HMAC_SHA256_V1');
+if (!defined('TMV2_REDSYS_SECRET_KEY')) define('TMV2_REDSYS_SECRET_KEY', 'sq7HjrUOBfKmC576ILgskD5srU870gJ7');
+if (!defined('TMV2_REDSYS_SIGNATURE_VERSION')) define('TMV2_REDSYS_SIGNATURE_VERSION', 'HMAC_SHA256_V1');
 
 // URLs según entorno
-if (!defined('TBV2_REDSYS_URL_TEST')) define('TBV2_REDSYS_URL_TEST', 'https://sis-t.redsys.es:25443/sis/realizarPago');
-if (!defined('TBV2_REDSYS_URL_LIVE')) define('TBV2_REDSYS_URL_LIVE', 'https://sis.redsys.es/sis/realizarPago');
+if (!defined('TMV2_REDSYS_URL_TEST')) define('TMV2_REDSYS_URL_TEST', 'https://sis-t.redsys.es:25443/sis/realizarPago');
+if (!defined('TMV2_REDSYS_URL_LIVE')) define('TMV2_REDSYS_URL_LIVE', 'https://sis.redsys.es/sis/realizarPago');
 
 // Webhook URL V2 (sin cambios)
-if (!defined('TBV2_WEBHOOK_URL')) define('TBV2_WEBHOOK_URL', 'https://tramitfy.org/api/temporal/confirm');
+if (!defined('TMV2_WEBHOOK_URL')) define('TMV2_WEBHOOK_URL', 'https://tramitfy.org/api/temporal/confirm');
 
 // URLs de retorno - OK a página éxito, KO a formulario
-if (!defined('TBV2_REDSYS_URL_OK')) define('TBV2_REDSYS_URL_OK', 'https://tramitfy.es/pago-realizado-con-exito/');
-if (!defined('TBV2_REDSYS_URL_KO')) define('TBV2_REDSYS_URL_KO', 'https://tramitfy.es/transferencia-propiedad-v2/');
-if (!defined('TBV2_REDSYS_URL_NOTIFICATION')) define('TBV2_REDSYS_URL_NOTIFICATION', 'https://tramitfy.org/api/temporal/confirm');
+if (!defined('TMV2_REDSYS_URL_OK')) define('TMV2_REDSYS_URL_OK', 'https://tramitfy.es/pago-realizado-con-exito/');
+if (!defined('TMV2_REDSYS_URL_KO')) define('TMV2_REDSYS_URL_KO', 'https://tramitfy.es/transferencia-propiedad-v2/');
+if (!defined('TMV2_REDSYS_URL_NOTIFICATION')) define('TMV2_REDSYS_URL_NOTIFICATION', 'https://tramitfy.org/api/temporal/confirm');
 
 // Asignar URL según modo
-$tbv2_redsys_url = (TBV2_REDSYS_MODE === 'test') ? TBV2_REDSYS_URL_TEST : TBV2_REDSYS_URL_LIVE;
+$tmv2_redsys_url = (TMV2_REDSYS_MODE === 'test') ? TMV2_REDSYS_URL_TEST : TMV2_REDSYS_URL_LIVE;
 
 /**
  * Carga datos desde archivo CSV (función simplificada)
  */
-function tbv2_cargar_datos_csv() {
- $ruta_csv = get_template_directory() . '/BARCO.csv';
+function tmv2_cargar_datos_csv() {
+ $ruta_csv = get_template_directory() . '/MOTO-DATA.csv';
  $data = [];
 
  if (($handle = fopen($ruta_csv, 'r')) !== false) {
@@ -143,9 +115,9 @@ function tbv2_cargar_datos_csv() {
  * Genera firma HMAC SHA256 para Redsys - ALGORITMO OFICIAL
  * Basado en código oficial proporcionado por soporte técnico Redsys
  */
-function tbv2_redsys_generate_signature($data) {
+function tmv2_redsys_generate_signature($data) {
  // Decodificacion en Base64 de la contraseña del comercio
- $password_decoded = base64_decode(TBV2_REDSYS_SECRET_KEY);
+ $password_decoded = base64_decode(TMV2_REDSYS_SECRET_KEY);
  // En las notificaciones viene como Ds_Order, en las peticiones como Ds_Merchant_Order
  $order_id = $data['Ds_Order'] ?? $data['Ds_Merchant_Order'] ?? '';
  
@@ -206,22 +178,22 @@ function tbv2_redsys_generate_signature($data) {
 /**
  * Crea formulario de pago Redsys
  */
-function tbv2_redsys_create_payment_form($order_data) {
- global $tbv2_redsys_url;
+function tmv2_redsys_create_payment_form($order_data) {
+ global $tmv2_redsys_url;
  
  // CRITICAL FIX V2: Usar valores exactos sin modificación
  // Basado en documentación oficial y formato que funciona
  
  $params = [
- 'Ds_Merchant_MerchantCode' => TBV2_REDSYS_MERCHANT_CODE, // '363391103'
- 'Ds_Merchant_Terminal' => TBV2_REDSYS_TERMINAL, // '1'
+ 'Ds_Merchant_MerchantCode' => TMV2_REDSYS_MERCHANT_CODE, // '363391103'
+ 'Ds_Merchant_Terminal' => TMV2_REDSYS_TERMINAL, // '1'
  'Ds_Merchant_Order' => $order_data['order_id'], // Sin limpiar - usar tal cual
  'Ds_Merchant_Amount' => $order_data['amount_cents'], // Sin limpiar - usar tal cual
- 'Ds_Merchant_Currency' => TBV2_REDSYS_CURRENCY, // '978'
+ 'Ds_Merchant_Currency' => TMV2_REDSYS_CURRENCY, // '978'
  'Ds_Merchant_TransactionType' => '0', // Autorización
- 'Ds_Merchant_MerchantURL' => TBV2_REDSYS_URL_NOTIFICATION,
- 'Ds_Merchant_UrlOK' => TBV2_REDSYS_URL_OK,
- 'Ds_Merchant_UrlKO' => TBV2_REDSYS_URL_KO,
+ 'Ds_Merchant_MerchantURL' => TMV2_REDSYS_URL_NOTIFICATION,
+ 'Ds_Merchant_UrlOK' => TMV2_REDSYS_URL_OK,
+ 'Ds_Merchant_UrlKO' => TMV2_REDSYS_URL_KO,
  'Ds_Merchant_MerchantName' => 'Tramitfy Test',
  'Ds_Merchant_ProductDescription' => 'Test TPV', // EXACTO como test dummy
  'Ds_Merchant_ConsumerLanguage' => '001' // Español
@@ -235,7 +207,7 @@ function tbv2_redsys_create_payment_form($order_data) {
  error_log("Params completo: " . print_r($params, true));
  error_log("============================");
  
- $signature = tbv2_redsys_generate_signature($params);
+ $signature = tmv2_redsys_generate_signature($params);
  
  // CRITICAL FIX: JSON encoding EXACTO como test dummy
  $merchant_parameters = base64_encode(json_encode($params));
@@ -248,9 +220,9 @@ function tbv2_redsys_create_payment_form($order_data) {
  error_log("================================");
  
  return [
- 'url' => $tbv2_redsys_url,
+ 'url' => $tmv2_redsys_url,
  'Ds_MerchantParameters' => $merchant_parameters,
- 'Ds_SignatureVersion' => TBV2_REDSYS_SIGNATURE_VERSION,
+ 'Ds_SignatureVersion' => TMV2_REDSYS_SIGNATURE_VERSION,
  'Ds_Signature' => $signature
  ];
 }
@@ -258,11 +230,11 @@ function tbv2_redsys_create_payment_form($order_data) {
 /**
  * Valida respuesta de Redsys usando algoritmo oficial
  */
-function tbv2_redsys_validate_response($merchant_params, $signature_received) {
+function tmv2_redsys_validate_response($merchant_params, $signature_received) {
  $params = json_decode(base64_decode($merchant_params), true);
  
  // Usar la misma función de firma oficial para validar
- $signature_calculated = tbv2_redsys_generate_signature($params);
+ $signature_calculated = tmv2_redsys_generate_signature($params);
  
  error_log("=== TBV2 VALIDATION DEBUG ===");
  error_log("Signature received: " . $signature_received);
@@ -279,7 +251,7 @@ function tbv2_redsys_validate_response($merchant_params, $signature_received) {
 /**
  * Procesa callback de Redsys
  */
-function tbv2_redsys_process_callback() {
+function tmv2_redsys_process_callback() {
  if (!isset($_POST['Ds_MerchantParameters'], $_POST['Ds_Signature'])) {
  return false;
  }
@@ -287,7 +259,7 @@ function tbv2_redsys_process_callback() {
  $merchant_params = $_POST['Ds_MerchantParameters'];
  $signature = $_POST['Ds_Signature'];
  
- if (!tbv2_redsys_validate_response($merchant_params, $signature)) {
+ if (!tmv2_redsys_validate_response($merchant_params, $signature)) {
  error_log('TBV2 Redsys: Firma inválida o respuesta no autorizada');
  return false;
  }
@@ -296,7 +268,7 @@ function tbv2_redsys_process_callback() {
  
  // Si pago exitoso, activar webhook a Tramitfy
  if ($params['Ds_Response'] <= 99) {
- tbv2_trigger_webhook($params);
+ tmv2_trigger_webhook($params);
  return true;
  }
  
@@ -306,7 +278,7 @@ function tbv2_redsys_process_callback() {
 /**
  * Envía emails de confirmación usando wp_mail (como formularios funcionando)
  */
-function tbv2_send_confirmation_emails($orderId, $paymentData, $formData) {
+function tmv2_send_confirmation_emails($orderId, $paymentData, $formData) {
  error_log(" TBV2 EMAILS - Iniciando para OrderID: $orderId");
  
  // Extraer datos del pago y formulario
@@ -436,7 +408,7 @@ function tbv2_send_confirmation_emails($orderId, $paymentData, $formData) {
 /**
  * Activa webhook hacia Tramitfy (mantiene estructura original)
  */
-function tbv2_trigger_webhook($redsys_params) {
+function tmv2_trigger_webhook($redsys_params) {
  $orderId = $redsys_params['Ds_Order'];
  
  error_log(' TBV2 CALLBACK INICIADO - OrderID: ' . $orderId);
@@ -628,7 +600,7 @@ function tbv2_trigger_webhook($redsys_params) {
  // ===================================================================
  
  // Enviar a temporal confirm endpoint
- $response = wp_remote_post(TBV2_WEBHOOK_URL, [
+ $response = wp_remote_post(TMV2_WEBHOOK_URL, [
  'body' => json_encode($confirm_data),
  'headers' => [
  'Content-Type' => 'application/json',
@@ -650,24 +622,24 @@ function tbv2_trigger_webhook($redsys_params) {
 /**
  * Renderiza el formulario principal CON ESTRUCTURA IDÉNTICA
  */
-function tbv2_render_form() {
+function tmv2_render_form() {
  // 🛡️ PROTECCIÓN CRÍTICA: Solo renderizar en páginas autorizadas
- if (!tbv2_is_authorized_page()) {
+ if (!tmv2_is_authorized_page()) {
   return '<!-- TBV2 Form: No autorizado en esta página -->'; // Return silencioso sin scripts
  }
  
- global $tbv2_stripe_public_key;
- $datos_csv = tbv2_cargar_datos_csv();
+ global $tmv2_stripe_public_key;
+ $datos_csv = tmv2_cargar_datos_csv();
  
  ob_start();
  ?>
  
  <!-- Estilos CSS (IDÉNTICOS al original) -->
- <?php tbv2_render_styles(); ?>
+ <?php tmv2_render_styles(); ?>
  
 
  <!-- FORMULARIO CON ESTRUCTURA IDÉNTICA AL ORIGINAL -->
- <form id="tbv2-transferencia-form" class="form-container">
+ <form id="tmv2-transferencia-form" class="form-container">
  
  <!-- LAYOUT WRAPPER IDÉNTICO -->
  <div class="tramitfy-layout-wrapper">
@@ -697,7 +669,7 @@ function tbv2_render_form() {
  <div class="nav-tabs-container">
  <div class="nav-tab active" data-page-id="page-vehiculo" data-step="1">
  <div class="tab-content-centered">
- <div class="tab-title">Embarcación</div>
+ <div class="tab-title">Moto de Agua</div>
  </div>
  </div>
 
@@ -732,10 +704,10 @@ function tbv2_render_form() {
  <!-- PÁGINA 1: VEHÍCULO (IDÉNTICA AL ORIGINAL) -->
  <div id="page-vehiculo" class="form-page form-section-compact" style="padding-top: 0;">
  <!-- Título del formulario idéntico al original -->
- <h2 style="margin-bottom: 12px; color: #016d86; font-size: 24px; font-weight: 600;">Cambio de Titularidad Embarcación</h2>
+ <h2 style="margin-bottom: 12px; color: #016d86; font-size: 24px; font-weight: 600;">Cambio de Titularidad Moto de Agua</h2>
  
  <!-- Tipo de vehículo fijo: Barco (igual que original) -->
- <input type="hidden" name="vehicle_type" value="Embarcación">
+ <input type="hidden" name="vehicle_type" value="Moto de Agua">
 
  <!-- Fabricante y Modelo en fila (estructura exacta) -->
  <div id="vehicle-csv-section">
@@ -761,7 +733,7 @@ function tbv2_render_form() {
  display: none;
  ">
  <div class="search-toggle" style="text-align: center; margin-top: 6px;">
- <small style="color: #6b7280; cursor: pointer;" onclick="TBV2_Form.toggleManufacturerSearch()">
+ <small style="color: #6b7280; cursor: pointer;" onclick="TMV2_Form.toggleManufacturerSearch()">
  <span id="search-toggle-text">Activar búsqueda rápida</span>
  </small>
  </div>
@@ -840,10 +812,10 @@ function tbv2_render_form() {
 
  <!-- Botones de navegación integrados -->
  <div class="form-navigation" style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
- <button type="button" class="button button-secondary" id="tbv2-prevButton" style="display: none;">
+ <button type="button" class="button button-secondary" id="tmv2-prevButton" style="display: none;">
  <i class="fas fa-arrow-left"></i> Anterior
  </button>
- <button type="button" class="button button-primary" id="tbv2-nextButton">
+ <button type="button" class="button button-primary" id="tmv2-nextButton">
  <i class="fas fa-arrow-right"></i> Datos Personales
  </button>
  </div>
@@ -886,10 +858,10 @@ function tbv2_render_form() {
 
  <!-- Botones de navegación integrados -->
  <div class="form-navigation">
- <button type="button" class="button button-secondary" id="tbv2-datos-prevButton">
+ <button type="button" class="button button-secondary" id="tmv2-datos-prevButton">
  <i class="fas fa-arrow-left"></i> Vehículo
  </button>
- <button type="button" class="button button-primary" id="tbv2-datos-nextButton">
+ <button type="button" class="button button-primary" id="tmv2-datos-nextButton">
  <i class="fas fa-arrow-right"></i> ITP y Precios
  </button>
  </div>
@@ -908,10 +880,10 @@ function tbv2_render_form() {
  <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 700; color: #1f2937;">Cálculo automático del ITP</h3>
  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
  <div style="color: #6b7280;">
- <div>Para su embarcación:</div>
- <div style="font-size: 13px; margin-top: 4px;" id="tbv2-vehicle-summary">Complete los datos del vehículo para calcular</div>
+ <div>Para su moto de agua:</div>
+ <div style="font-size: 13px; margin-top: 4px;" id="tmv2-vehicle-summary">Complete los datos del vehículo para calcular</div>
  </div>
- <div style="font-size: 32px; font-weight: 700; color: #016d86;" id="tbv2-itp-display">---</div>
+ <div style="font-size: 32px; font-weight: 700; color: #016d86;" id="tmv2-itp-display">---</div>
  </div>
  
  <button type="button" id="ver-calculo-itp" style="background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; width: 100%;">
@@ -920,7 +892,7 @@ function tbv2_render_form() {
  
  <!-- Detalle del cálculo -->
  <div id="calculo-itp-detail" style="display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
- <div style="font-size: 14px; line-height: 1.6; color: #374151;" id="tbv2-calculation-breakdown">
+ <div style="font-size: 14px; line-height: 1.6; color: #374151;" id="tmv2-calculation-breakdown">
  <!-- Contenido dinámico del cálculo -->
  </div>
  </div>
@@ -1010,10 +982,10 @@ function tbv2_render_form() {
 
  <!-- Botones de navegación integrados -->
  <div class="form-navigation">
- <button type="button" class="button button-secondary" id="tbv2-precio-prevButton">
+ <button type="button" class="button button-secondary" id="tmv2-precio-prevButton">
  <i class="fas fa-arrow-left"></i> Datos Personales
  </button>
- <button type="button" class="button button-primary" id="tbv2-precio-nextButton">
+ <button type="button" class="button button-primary" id="tmv2-precio-nextButton">
  <i class="fas fa-arrow-right"></i> Documentos
  </button>
  </div>
@@ -1031,7 +1003,7 @@ function tbv2_render_form() {
  <label for="upload-hoja-asiento" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
  <div>
  <strong> Registro Marítimo</strong>
- <small style="display: block;">Documento que acredita la propiedad de la embarcación</small>
+ <small style="display: block;">Documento que acredita la propiedad de la moto de agua</small>
  </div>
  <span class="view-example" data-doc="registro-maritimo" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
  </label>
@@ -1150,10 +1122,10 @@ function tbv2_render_form() {
 
  <!-- Navegación -->
  <div class="form-navigation">
- <button type="button" class="button button-secondary" id="tbv2-documentos-prevButton">
+ <button type="button" class="button button-secondary" id="tmv2-documentos-prevButton">
  <i class="fas fa-arrow-left"></i> ITP y Precios
  </button>
- <button type="button" class="button button-primary" id="tbv2-documentos-nextButton">
+ <button type="button" class="button button-primary" id="tmv2-documentos-nextButton">
  <i class="fas fa-arrow-right"></i> Pagar
  </button>
  </div>
@@ -1216,30 +1188,30 @@ function tbv2_render_form() {
  </form>
 
  <!-- Modal de Vista Previa del Documento -->
- <div id="document-preview-modal" class="tbv2-preview-modal">
- <div class="tbv2-preview-content">
- <div class="tbv2-preview-header">
+ <div id="document-preview-modal" class="tmv2-preview-modal">
+ <div class="tmv2-preview-content">
+ <div class="tmv2-preview-header">
  <h3><i class="fa-solid fa-file-contract"></i> Documento de Autorización</h3>
- <button class="tbv2-modal-close" id="close-preview-modal">
+ <button class="tmv2-modal-close" id="close-preview-modal">
  <i class="fa-solid fa-times"></i>
  </button>
  </div>
 
- <div class="tbv2-preview-body">
+ <div class="tmv2-preview-body">
  <div id="document-content-preview">
  <!-- El contenido se generará dinámicamente -->
  </div>
  </div>
 
- <div class="tbv2-preview-footer">
- <p class="tbv2-preview-instructions">
+ <div class="tmv2-preview-footer">
+ <p class="tmv2-preview-instructions">
  <i class="fa-solid fa-info-circle"></i> Lea cuidadosamente el documento antes de proceder a firmarlo
  </p>
- <div class="tbv2-preview-button-container">
- <button class="tbv2-modal-cancel-btn" id="cancel-document-preview">
+ <div class="tmv2-preview-button-container">
+ <button class="tmv2-modal-cancel-btn" id="cancel-document-preview">
  <i class="fa-solid fa-times"></i> Cancelar
  </button>
- <button class="tbv2-modal-proceed-btn" id="proceed-to-signature">
+ <button class="tmv2-modal-proceed-btn" id="proceed-to-signature">
  <i class="fa-solid fa-pen-fancy"></i> Proceder a Firmar
  </button>
  </div>
@@ -1248,32 +1220,32 @@ function tbv2_render_form() {
  </div>
 
  <!-- Modal de Firma Digital -->
- <div id="signature-modal-advanced" class="tbv2-signature-modal">
- <div class="tbv2-modal-content">
- <div class="tbv2-modal-header">
+ <div id="signature-modal-advanced" class="tmv2-signature-modal">
+ <div class="tmv2-modal-content">
+ <div class="tmv2-modal-header">
  <h3><i class="fa-solid fa-pen-fancy"></i> Firma Digital</h3>
- <button class="tbv2-modal-close" id="close-signature-modal">
+ <button class="tmv2-modal-close" id="close-signature-modal">
  <i class="fa-solid fa-times"></i>
  </button>
  </div>
 
- <div class="tbv2-enhanced-signature-container">
- <div class="tbv2-signature-guide">
- <div class="tbv2-signature-line"></div>
- <div class="tbv2-signature-instruction">FIRME AQUÍ</div>
+ <div class="tmv2-enhanced-signature-container">
+ <div class="tmv2-signature-guide">
+ <div class="tmv2-signature-line"></div>
+ <div class="tmv2-signature-instruction">FIRME AQUÍ</div>
  </div>
  <canvas id="enhanced-signature-canvas"></canvas>
  </div>
 
- <div class="tbv2-modal-footer">
- <p class="tbv2-modal-instructions">
+ <div class="tmv2-modal-footer">
+ <p class="tmv2-modal-instructions">
  <i class="fa-solid fa-hand-pointer"></i> Use el dedo para firmar en el área indicada
  </p>
- <div class="tbv2-modal-button-container">
- <button class="tbv2-modal-clear-btn" id="modal-clear-signature">
+ <div class="tmv2-modal-button-container">
+ <button class="tmv2-modal-clear-btn" id="modal-clear-signature">
  <i class="fa-solid fa-eraser"></i> Borrar
  </button>
- <button class="tbv2-modal-accept-btn" id="modal-accept-signature" disabled>
+ <button class="tmv2-modal-accept-btn" id="modal-accept-signature" disabled>
  <i class="fa-solid fa-check"></i> Confirmar firma
  </button>
  </div>
@@ -1286,9 +1258,9 @@ function tbv2_render_form() {
  <script>
  // Datos CSV para JavaScript
  const tbv2DatosCsv = <?php echo json_encode($datos_csv); ?>;
- const tbv2StripePublicKey = '<?php echo esc_js($tbv2_stripe_public_key); ?>';
+ const tbv2StripePublicKey = '<?php echo esc_js($tmv2_stripe_public_key); ?>';
  </script>
- <?php tbv2_render_scripts(); ?>
+ <?php tmv2_render_scripts(); ?>
  
  <?php
  return ob_get_clean();
@@ -1297,9 +1269,9 @@ function tbv2_render_form() {
 /**
  * Estilos CSS IDÉNTICOS al original
  */
-function tbv2_render_styles() {
+function tmv2_render_styles() {
  // 🛡️ PROTECCIÓN CRÍTICA: Solo estilos en páginas autorizadas
- if (!tbv2_is_authorized_page()) {
+ if (!tmv2_is_authorized_page()) {
   return; // Sin output CSS
  }
  ?>
@@ -2085,7 +2057,7 @@ function tbv2_render_styles() {
  }
  
  /* Cálculo ITP móvil */
- #page-precio #tbv2-itp-display {
+ #page-precio #tmv2-itp-display {
  font-size: 24px !important;
  }
  
@@ -2216,21 +2188,21 @@ function tbv2_render_styles() {
  }
  
  /* Asegurar que los botones sean visibles */
- #tbv2-prevButton,
- #tbv2-nextButton,
- #tbv2-datos-prevButton,
- #tbv2-datos-nextButton,
- #tbv2-precio-prevButton,
- #tbv2-precio-nextButton,
- #tbv2-documentos-prevButton,
- #tbv2-documentos-nextButton,
- #tbv2-pago-prevButton,
- #tbv2-pago-nextButton {
+ #tmv2-prevButton,
+ #tmv2-nextButton,
+ #tmv2-datos-prevButton,
+ #tmv2-datos-nextButton,
+ #tmv2-precio-prevButton,
+ #tmv2-precio-nextButton,
+ #tmv2-documentos-prevButton,
+ #tmv2-documentos-nextButton,
+ #tmv2-pago-prevButton,
+ #tmv2-pago-nextButton {
  display: inline-flex !important;
  }
  
  /* Ocultar el botón anterior en la primera página */
- #page-vehiculo #tbv2-prevButton {
+ #page-vehiculo #tmv2-prevButton {
  display: none !important;
  }
  
@@ -2367,8 +2339,8 @@ function tbv2_render_styles() {
  }
  
  /* Modales fullscreen */
- .tbv2-preview-content,
- .tbv2-modal-content {
+ .tmv2-preview-content,
+ .tmv2-modal-content {
  width: 100vw !important;
  height: 100vh !important;
  max-width: 100vw !important;
@@ -2612,13 +2584,13 @@ function tbv2_render_styles() {
 
  /* Ajustes específicos para modal de ejemplos en móvil */
  @media (max-width: 768px) {
- #tbv2-example-modal-bypass .modal-content-mobile {
+ #tmv2-example-modal-bypass .modal-content-mobile {
  max-width: 90% !important;
  width: 95% !important;
  max-height: 80vh !important;
  }
  
- #tbv2-example-modal-bypass .modal-image-mobile {
+ #tmv2-example-modal-bypass .modal-image-mobile {
  max-width: 500px !important;
  max-height: 60vh !important;
  }
@@ -2783,7 +2755,7 @@ function tbv2_render_styles() {
  }
 
  /* ===== MODAL DE EJEMPLOS ===== */
- .tbv2-example-modal {
+ .tmv2-example-modal {
  display: none !important;
  position: fixed !important;
  z-index: 99999 !important;
@@ -2800,7 +2772,7 @@ function tbv2_render_styles() {
  box-sizing: border-box;
  }
 
- .tbv2-example-modal .tbv2-modal-content {
+ .tmv2-example-modal .tmv2-modal-content {
  position: relative;
  background-color: #ffffff;
  padding: 0;
@@ -2813,7 +2785,7 @@ function tbv2_render_styles() {
  animation: modalSlideIn 0.3s ease;
  }
 
- .tbv2-modal-body {
+ .tmv2-modal-body {
  padding: 0;
  max-height: 70vh;
  overflow-y: auto;
@@ -2886,7 +2858,7 @@ function tbv2_render_styles() {
 
  /* Mobile responsive para modal de ejemplos */
  @media (max-width: 768px) {
- .tbv2-example-modal .tbv2-modal-content {
+ .tmv2-example-modal .tmv2-modal-content {
  width: 95%;
  margin: 5% auto;
  max-height: 85vh;
@@ -2933,7 +2905,7 @@ function tbv2_render_styles() {
  DOCUMENT PREVIEW MODAL STYLES
  ============================================ */
 
- .tbv2-preview-modal {
+ .tmv2-preview-modal {
  position: fixed;
  top: 0;
  left: 0;
@@ -2947,11 +2919,11 @@ function tbv2_render_styles() {
  overflow: hidden;
  }
 
- .tbv2-preview-modal.active {
+ .tmv2-preview-modal.active {
  display: flex;
  }
 
- .tbv2-preview-content {
+ .tmv2-preview-content {
  position: relative;
  background: white;
  border-radius: 12px;
@@ -2964,7 +2936,7 @@ function tbv2_render_styles() {
  flex-direction: column;
  }
 
- .tbv2-preview-header {
+ .tmv2-preview-header {
  padding: 20px 24px;
  background: linear-gradient(135deg, #016d86 0%, #0a5469 100%);
  color: white;
@@ -2974,13 +2946,13 @@ function tbv2_render_styles() {
  border-bottom: 1px solid #e5e7eb;
  }
 
- .tbv2-preview-header h3 {
+ .tmv2-preview-header h3 {
  margin: 0;
  font-size: 18px;
  font-weight: 600;
  }
 
- .tbv2-preview-body {
+ .tmv2-preview-body {
  flex: 1;
  overflow-y: auto;
  padding: 0;
@@ -2993,27 +2965,27 @@ function tbv2_render_styles() {
  line-height: 1.6;
  }
 
- .tbv2-preview-footer {
+ .tmv2-preview-footer {
  padding: 20px 24px;
  background: #f8f9fa;
  border-top: 1px solid #e5e7eb;
  }
 
- .tbv2-preview-instructions {
+ .tmv2-preview-instructions {
  margin: 0 0 16px 0;
  color: #6b7280;
  font-size: 14px;
  text-align: center;
  }
 
- .tbv2-preview-button-container {
+ .tmv2-preview-button-container {
  display: flex;
  gap: 12px;
  justify-content: center;
  }
 
- .tbv2-modal-cancel-btn,
- .tbv2-modal-proceed-btn {
+ .tmv2-modal-cancel-btn,
+ .tmv2-modal-proceed-btn {
  padding: 12px 24px;
  border: none;
  border-radius: 8px;
@@ -3026,23 +2998,23 @@ function tbv2_render_styles() {
  gap: 8px;
  }
 
- .tbv2-modal-cancel-btn {
+ .tmv2-modal-cancel-btn {
  background: #f1f5f9;
  color: #64748b;
  border: 1px solid #e2e8f0;
  }
 
- .tbv2-modal-cancel-btn:hover {
+ .tmv2-modal-cancel-btn:hover {
  background: #e2e8f0;
  color: #475569;
  }
 
- .tbv2-modal-proceed-btn {
+ .tmv2-modal-proceed-btn {
  background: #016d86;
  color: white;
  }
 
- .tbv2-modal-proceed-btn:hover {
+ .tmv2-modal-proceed-btn:hover {
  background: #0a5469;
  transform: translateY(-1px);
  }
@@ -3084,17 +3056,17 @@ function tbv2_render_styles() {
  }
 
  @media (max-width: 768px) {
- .tbv2-preview-content {
+ .tmv2-preview-content {
  width: 95vw;
  max-height: 90vh;
  }
 
- .tbv2-preview-button-container {
+ .tmv2-preview-button-container {
  flex-direction: column;
  }
 
- .tbv2-modal-cancel-btn,
- .tbv2-modal-proceed-btn {
+ .tmv2-modal-cancel-btn,
+ .tmv2-modal-proceed-btn {
  width: 100%;
  }
  }
@@ -3103,7 +3075,7 @@ function tbv2_render_styles() {
  SIGNATURE MODAL STYLES
  ============================================ */
 
- .tbv2-signature-modal {
+ .tmv2-signature-modal {
  position: fixed;
  top: 0;
  left: 0;
@@ -3117,12 +3089,12 @@ function tbv2_render_styles() {
  overflow: hidden;
  }
 
- .tbv2-signature-modal.active {
+ .tmv2-signature-modal.active {
  display: flex;
  }
 
 
- .tbv2-modal-content {
+ .tmv2-modal-content {
  position: relative;
  background: white;
  border-radius: 12px;
@@ -3133,7 +3105,7 @@ function tbv2_render_styles() {
  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
  }
 
- .tbv2-modal-header {
+ .tmv2-modal-header {
  padding: 20px 24px;
  background: linear-gradient(135deg, #016d86 0%, #0a5469 100%);
  color: white;
@@ -3142,13 +3114,13 @@ function tbv2_render_styles() {
  align-items: center;
  }
 
- .tbv2-modal-header h3 {
+ .tmv2-modal-header h3 {
  margin: 0;
  font-size: 18px;
  font-weight: 600;
  }
 
- .tbv2-modal-close {
+ .tmv2-modal-close {
  background: none;
  border: none;
  color: white;
@@ -3159,11 +3131,11 @@ function tbv2_render_styles() {
  transition: background 0.2s ease;
  }
 
- .tbv2-modal-close:hover {
+ .tmv2-modal-close:hover {
  background: rgba(255, 255, 255, 0.2);
  }
 
- .tbv2-enhanced-signature-container {
+ .tmv2-enhanced-signature-container {
  position: relative;
  height: 300px;
  background: #f8f9fa;
@@ -3171,7 +3143,7 @@ function tbv2_render_styles() {
  border-bottom: 1px solid #e5e7eb;
  }
 
- .tbv2-signature-guide {
+ .tmv2-signature-guide {
  position: absolute;
  top: 50%;
  left: 20px;
@@ -3181,13 +3153,13 @@ function tbv2_render_styles() {
  transform: translateY(-50%);
  }
 
- .tbv2-signature-line {
+ .tmv2-signature-line {
  height: 2px;
  background: #d1d5db;
  margin: 8px 0;
  }
 
- .tbv2-signature-instruction {
+ .tmv2-signature-instruction {
  text-align: center;
  color: #6b7280;
  font-size: 14px;
@@ -3206,26 +3178,26 @@ function tbv2_render_styles() {
  cursor: crosshair;
  }
 
- .tbv2-modal-footer {
+ .tmv2-modal-footer {
  padding: 20px 24px;
  background: #f8f9fa;
  }
 
- .tbv2-modal-instructions {
+ .tmv2-modal-instructions {
  margin: 0 0 16px 0;
  color: #6b7280;
  font-size: 14px;
  text-align: center;
  }
 
- .tbv2-modal-button-container {
+ .tmv2-modal-button-container {
  display: flex;
  gap: 12px;
  justify-content: center;
  }
 
- .tbv2-modal-clear-btn,
- .tbv2-modal-accept-btn {
+ .tmv2-modal-clear-btn,
+ .tmv2-modal-accept-btn {
  padding: 10px 20px;
  border: none;
  border-radius: 6px;
@@ -3238,28 +3210,28 @@ function tbv2_render_styles() {
  gap: 8px;
  }
 
- .tbv2-modal-clear-btn {
+ .tmv2-modal-clear-btn {
  background: #f1f5f9;
  color: #64748b;
  border: 1px solid #e2e8f0;
  }
 
- .tbv2-modal-clear-btn:hover {
+ .tmv2-modal-clear-btn:hover {
  background: #e2e8f0;
  color: #475569;
  }
 
- .tbv2-modal-accept-btn {
+ .tmv2-modal-accept-btn {
  background: #016d86;
  color: white;
  }
 
- .tbv2-modal-accept-btn:hover:not(:disabled) {
+ .tmv2-modal-accept-btn:hover:not(:disabled) {
  background: #0a5469;
  transform: translateY(-1px);
  }
 
- .tbv2-modal-accept-btn:disabled {
+ .tmv2-modal-accept-btn:disabled {
  background: #d1d5db;
  color: #9ca3af;
  cursor: not-allowed;
@@ -3430,17 +3402,17 @@ function tbv2_render_styles() {
 /**
  * JavaScript IDÉNTICO al original
  */
-function tbv2_render_scripts() {
+function tmv2_render_scripts() {
  // 🛡️ PROTECCIÓN CRÍTICA: Solo scripts en páginas autorizadas
- if (!tbv2_is_authorized_page()) {
+ if (!tmv2_is_authorized_page()) {
   return; // Sin output JavaScript
  }
  ?>
  <script>
  document.addEventListener('DOMContentLoaded', function() {
  console.log(' TBV2 - Inicializando formulario idéntico...');
- TBV2_Form.init();
- TBV2_Form.initRealTimeValidation();
+ TMV2_Form.init();
+ TMV2_Form.initRealTimeValidation();
  initializePaymentSystem();
  
  // Verificar si venimos de un pago exitoso
@@ -3450,7 +3422,7 @@ function tbv2_render_scripts() {
  });
 
  // Namespace principal del formulario
- const TBV2_Form = {
+ const TMV2_Form = {
  currentPage: 'page-vehiculo',
  pages: ['page-vehiculo', 'page-datos', 'page-precio', 'page-documentos', 'page-pago'],
  
@@ -3665,8 +3637,8 @@ function tbv2_render_scripts() {
  
  setupNavigation() {
  // Botones de navegación
- const btnSiguiente = document.getElementById('tbv2-nextButton');
- const btnAnterior = document.getElementById('tbv2-prevButton');
+ const btnSiguiente = document.getElementById('tmv2-nextButton');
+ const btnAnterior = document.getElementById('tmv2-prevButton');
  
  btnSiguiente?.addEventListener('click', () => {
  console.log(' Botón siguiente presionado');
@@ -3679,8 +3651,8 @@ function tbv2_render_scripts() {
  });
  
  // Nuevos botones navegación página DATOS
- const btnDatosPrev = document.getElementById('tbv2-datos-prevButton');
- const btnDatosNext = document.getElementById('tbv2-datos-nextButton');
+ const btnDatosPrev = document.getElementById('tmv2-datos-prevButton');
+ const btnDatosNext = document.getElementById('tmv2-datos-nextButton');
  
  btnDatosPrev?.addEventListener('click', () => {
  console.log(' DATOS: Botón anterior presionado');
@@ -3693,8 +3665,8 @@ function tbv2_render_scripts() {
  });
  
  // Nuevos botones navegación página ITP/PRECIO
- const btnPrecioPrev = document.getElementById('tbv2-precio-prevButton');
- const btnPrecioNext = document.getElementById('tbv2-precio-nextButton');
+ const btnPrecioPrev = document.getElementById('tmv2-precio-prevButton');
+ const btnPrecioNext = document.getElementById('tmv2-precio-nextButton');
  
  btnPrecioPrev?.addEventListener('click', () => {
  console.log(' ITP: Botón anterior presionado');
@@ -3707,8 +3679,8 @@ function tbv2_render_scripts() {
  });
  
  // Nuevos botones navegación página DOCUMENTOS 
- const btnDocumentosPrev = document.getElementById('tbv2-documentos-prevButton');
- const btnDocumentosNext = document.getElementById('tbv2-documentos-nextButton');
+ const btnDocumentosPrev = document.getElementById('tmv2-documentos-prevButton');
+ const btnDocumentosNext = document.getElementById('tmv2-documentos-nextButton');
  
  btnDocumentosPrev?.addEventListener('click', () => {
  console.log(' DOCUMENTOS: Botón anterior presionado');
@@ -3721,8 +3693,8 @@ function tbv2_render_scripts() {
  });
  
  // Nuevos botones navegación página PAGO
- const btnPagoPrev = document.getElementById('tbv2-pago-prevButton');
- const btnPagoNext = document.getElementById('tbv2-pago-nextButton');
+ const btnPagoPrev = document.getElementById('tmv2-pago-prevButton');
+ const btnPagoNext = document.getElementById('tmv2-pago-nextButton');
  
  btnPagoPrev?.addEventListener('click', () => {
  console.log(' PAGO: Botón anterior presionado');
@@ -3964,8 +3936,8 @@ function tbv2_render_scripts() {
  vehicleInfo = `
  <div class="sidebar-vehicle-info">
  <h4 style="color: #ffffff; font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
- <i class="fas fa-ship" style="color: #4ade80;"></i>
- Tu Embarcación
+ <i class="fas fa-motorcycle" style="color: #4ade80;"></i>
+ Tu Moto de Agua
  </h4>
  <div class="vehicle-details">
  ${selectedManufacturer ? `
@@ -4006,7 +3978,7 @@ function tbv2_render_scripts() {
  return `
  <div style="padding: 0;">
  <h3 style="color: white; font-size: 32px; margin: 0 0 16px 0; font-weight: 700; line-height: 1.2;">
- Cambio de Nombre Embarcación de Recreo
+ Cambio de Nombre Moto de Agua de Recreo
  </h3>
  
  <!-- Subtítulo -->
@@ -4118,7 +4090,7 @@ function tbv2_render_scripts() {
  </h3>
  
  <p style="color: rgba(255,255,255,0.9); font-size: 13px; line-height: 1.5; margin: 0 0 20px 0;">
- Sube los documentos requeridos para completar la transferencia de tu embarcación.
+ Sube los documentos requeridos para completar la transferencia de tu moto de agua.
  </p>
  
  <!-- Lista de documentos requeridos -->
@@ -4326,8 +4298,8 @@ function tbv2_render_scripts() {
 
  
  // Actualizar botones con mejor UX
- const btnAnterior = document.getElementById('tbv2-prevButton');
- const btnSiguiente = document.getElementById('tbv2-nextButton');
+ const btnAnterior = document.getElementById('tmv2-prevButton');
+ const btnSiguiente = document.getElementById('tmv2-nextButton');
  
  if (btnAnterior) {
  if (currentIndex > 0) {
@@ -4533,14 +4505,14 @@ function tbv2_render_scripts() {
 
  showValidationSummary(errors) {
  // Remover resumen anterior si existe
- const existingSummary = document.getElementById('tbv2-validation-summary');
+ const existingSummary = document.getElementById('tmv2-validation-summary');
  if (existingSummary) {
  existingSummary.remove();
  }
 
  // Crear nuevo resumen de errores
  const summaryDiv = document.createElement('div');
- summaryDiv.id = 'tbv2-validation-summary';
+ summaryDiv.id = 'tmv2-validation-summary';
  summaryDiv.style.cssText = `
  background: #fef2f2;
  border: 1px solid #fecaca;
@@ -5007,9 +4979,9 @@ function tbv2_render_scripts() {
  },
 
  updateITPDisplay() {
- const tbv2ItpDisplay = document.getElementById('tbv2-itp-display');
- const tbv2VehicleSummary = document.getElementById('tbv2-vehicle-summary');
- const tbv2CalculationBreakdown = document.getElementById('tbv2-calculation-breakdown');
+ const tbv2ItpDisplay = document.getElementById('tmv2-itp-display');
+ const tbv2VehicleSummary = document.getElementById('tmv2-vehicle-summary');
+ const tbv2CalculationBreakdown = document.getElementById('tmv2-calculation-breakdown');
  
  const modelSelect = document.getElementById('model');
  const manufacturerSelect = document.getElementById('manufacturer');
@@ -5304,7 +5276,7 @@ function tbv2_render_scripts() {
  this.createRedsysPaymentForm({
  order_id: orderId,
  amount_cents: amountCents,
- description: `Transferencia Embarcación ${flatFormData.matricula || 'TBV2'}`,
+ description: `Transferencia Moto de Agua ${flatFormData.matricula || 'TBV2'}`,
  customer_name: flatFormData.personal.customerName,
  form_data: flatFormData
  });
@@ -5317,7 +5289,7 @@ function tbv2_render_scripts() {
  try {
  console.log(' Almacenando', Object.keys(filesData).length, 'categorías de archivos en sessionStorage...');
  
- const filesKey = `tbv2_files_${orderId}`;
+ const filesKey = `tmv2_files_${orderId}`;
  sessionStorage.setItem(filesKey, JSON.stringify(filesData));
  
  console.log(` Archivos almacenados en sessionStorage con clave: ${filesKey}`);
@@ -5355,8 +5327,8 @@ function tbv2_render_scripts() {
  };
  
  // Store unified data for retrieval after payment
- sessionStorage.setItem('tbv2_form_data', JSON.stringify(unifiedFormData));
- sessionStorage.setItem('tbv2_order_id', orderData.order_id);
+ sessionStorage.setItem('tmv2_form_data', JSON.stringify(unifiedFormData));
+ sessionStorage.setItem('tmv2_order_id', orderData.order_id);
  
  // NUEVA ESTRATEGIA: Almacenar archivos en sessionStorage
  if (completeFormData.files && Object.keys(completeFormData.files).length > 0) {
@@ -5367,7 +5339,7 @@ function tbv2_render_scripts() {
  // Create invisible form for Redsys
  const form = document.createElement('form');
  form.method = 'POST';
- form.action = '<?php echo (TBV2_REDSYS_MODE === "test") ? TBV2_REDSYS_URL_TEST : TBV2_REDSYS_URL_LIVE; ?>';
+ form.action = '<?php echo (TMV2_REDSYS_MODE === "test") ? TMV2_REDSYS_URL_TEST : TMV2_REDSYS_URL_LIVE; ?>';
  form.acceptCharset = 'UTF-8';
  form.enctype = 'application/x-www-form-urlencoded';
  form.style.display = 'none';
@@ -5376,8 +5348,8 @@ function tbv2_render_scripts() {
  const formDataCopy = { ...orderData.form_data };
  
  const ajaxData = new FormData();
- ajaxData.append('action', 'tbv2_create_redsys_payment');
- ajaxData.append('nonce', '<?php echo wp_create_nonce("tbv2_nonce"); ?>');
+ ajaxData.append('action', 'tmv2_create_redsys_payment');
+ ajaxData.append('nonce', '<?php echo wp_create_nonce("tmv2_nonce"); ?>');
  ajaxData.append('formData', JSON.stringify(formDataCopy));
  ajaxData.append('orderId', orderData.order_id);
  
@@ -5389,8 +5361,8 @@ function tbv2_render_scripts() {
  // DEBUG: Log AJAX call details
  console.log(' URL AJAX:', '<?php echo admin_url("admin-ajax.php"); ?>');
  console.log(' Datos enviados AJAX:', {
- action: 'tbv2_create_redsys_payment',
- nonce: '<?php echo wp_create_nonce("tbv2_nonce"); ?>',
+ action: 'tmv2_create_redsys_payment',
+ nonce: '<?php echo wp_create_nonce("tmv2_nonce"); ?>',
  orderId: orderData.order_id,
  formData: formDataCopy // Sin archivos
  });
@@ -5952,7 +5924,7 @@ function tbv2_render_scripts() {
  console.log(' Capturando datos completos del formulario...');
  
  // Obtener TODOS los datos del formulario usando la función existente
- const allFormData = await TBV2_Form.collectFormData();
+ const allFormData = await TMV2_Form.collectFormData();
  
  // Datos del vehículo (ya están en allFormData.vehicle)
  const vehicleData = allFormData.vehicle;
@@ -6066,8 +6038,8 @@ function tbv2_render_scripts() {
  console.log(' Datos completos a enviar:', JSON.stringify(filesData, null, 2));
  
  const formData = new FormData();
- formData.append('action', 'tbv2_store_files');
- formData.append('nonce', '<?php echo wp_create_nonce("tbv2_nonce"); ?>');
+ formData.append('action', 'tmv2_store_files');
+ formData.append('nonce', '<?php echo wp_create_nonce("tmv2_nonce"); ?>');
  formData.append('orderId', tempOrderId);
  formData.append('filesData', JSON.stringify(filesData));
  
@@ -6138,8 +6110,8 @@ function tbv2_render_scripts() {
  'Content-Type': 'application/x-www-form-urlencoded',
  },
  body: new URLSearchParams({
- action: 'tbv2_create_redsys_payment',
- nonce: '<?php echo wp_create_nonce('tbv2_nonce'); ?>',
+ action: 'tmv2_create_redsys_payment',
+ nonce: '<?php echo wp_create_nonce('tmv2_nonce'); ?>',
  formData: JSON.stringify(formData),
  orderId: 'TBV2-' + Date.now()
  })
@@ -6155,7 +6127,7 @@ function tbv2_render_scripts() {
  // Crear formulario dinámico
  const form = document.createElement('form');
  form.method = 'POST';
- form.action = '<?php echo (TBV2_REDSYS_MODE === 'test') ? TBV2_REDSYS_URL_TEST : TBV2_REDSYS_URL_LIVE; ?>';
+ form.action = '<?php echo (TMV2_REDSYS_MODE === 'test') ? TMV2_REDSYS_URL_TEST : TMV2_REDSYS_URL_LIVE; ?>';
  
  // Agregar parámetros de Redsys
  for (const [key, value] of Object.entries(redsysData)) {
@@ -6273,7 +6245,7 @@ function tbv2_render_scripts() {
  Yo, <strong>${buyerName}</strong>, con DNI <strong>${buyerDni}</strong> y correo electrónico <strong>${buyerEmail}</strong>, 
  en mi calidad de comprador, <strong>autorizo expresamente a TRAMITFY S.L.</strong> para que actúe en mi nombre y 
  representación en todos los trámites necesarios ante <strong>Capitanía Marítima</strong> para la transferencia de titularidad 
-de la embarcación <strong>${cleanManufacturer} ${model}</strong>.
+de la moto de agua <strong>${cleanManufacturer} ${model}</strong>.
  </p>
  
  <p style="text-align: justify; margin-bottom: 16px;">
@@ -6613,8 +6585,8 @@ de la embarcación <strong>${cleanManufacturer} ${model}</strong>.
  // Solo eliminar si contiene el texto problemático Y no es nuestro modal
  if (el.textContent && 
  el.textContent.includes('Este es un ejemplo de cómo debe ser el documento') &&
- el.id !== 'tbv2-example-modal-bypass' &&
- !el.closest('#tbv2-example-modal-bypass')) {
+ el.id !== 'tmv2-example-modal-bypass' &&
+ !el.closest('#tmv2-example-modal-bypass')) {
  console.log(` ELIMINANDO modal problemático específico: ${el.tagName} ${el.id || el.className}`);
  el.remove();
  }
@@ -6643,7 +6615,7 @@ de la embarcación <strong>${cleanManufacturer} ${model}</strong>.
  // Cerrar con ESC
  document.addEventListener('keydown', (e) => {
  if (e.key === 'Escape') {
- const bypassModal = document.getElementById('tbv2-example-modal-bypass');
+ const bypassModal = document.getElementById('tmv2-example-modal-bypass');
  if (bypassModal) closeExampleModal();
  }
  });
@@ -6673,7 +6645,7 @@ de la embarcación <strong>${cleanManufacturer} ${model}</strong>.
  
  // Crear modal completamente nuevo DIRECTAMENTE (sin eliminar nada más)
  const newModal = document.createElement('div');
- newModal.id = 'tbv2-example-modal-bypass';
+ newModal.id = 'tmv2-example-modal-bypass';
  newModal.innerHTML = `
  <div style="
  position: fixed !important;
@@ -6709,7 +6681,7 @@ de la embarcación <strong>${cleanManufacturer} ${model}</strong>.
  right: 10px !important;
  z-index: 1000 !important;
  ">
- <button onclick="document.getElementById('tbv2-example-modal-bypass').remove(); document.body.style.overflow = '';" style="
+ <button onclick="document.getElementById('tmv2-example-modal-bypass').remove(); document.body.style.overflow = '';" style="
  background: rgba(0, 0, 0, 0.5) !important;
  border: none !important;
  font-size: 20px !important;
@@ -6776,8 +6748,8 @@ de la embarcación <strong>${cleanManufacturer} ${model}</strong>.
  elements.forEach(el => {
  if (el.textContent && 
  el.textContent.includes('Este es un ejemplo de cómo debe ser el documento') &&
- el.id !== 'tbv2-example-modal-bypass' &&
- !el.closest('#tbv2-example-modal-bypass')) {
+ el.id !== 'tmv2-example-modal-bypass' &&
+ !el.closest('#tmv2-example-modal-bypass')) {
  problemElements.push(el);
  }
  });
@@ -6802,7 +6774,7 @@ de la embarcación <strong>${cleanManufacturer} ${model}</strong>.
  }
  
  function closeExampleModal() {
- const modal = document.getElementById('tbv2-example-modal-bypass');
+ const modal = document.getElementById('tmv2-example-modal-bypass');
  if (modal) {
  modal.remove();
  document.body.style.overflow = '';
@@ -6814,11 +6786,11 @@ de la embarcación <strong>${cleanManufacturer} ${model}</strong>.
  'registro-maritimo': {
  icon: 'fa-solid fa-file-text',
  title: 'Registro Marítimo',
- description: 'Documento oficial que acredita la propiedad de la embarcación. Equivale a la "hoja de asiento" o "permiso de circulación" de los vehículos terrestres.',
+ description: 'Documento oficial que acredita la propiedad de la moto de agua. Equivale a la "hoja de asiento" o "permiso de circulación" de los vehículos terrestres.',
  image: 'https://tramitfy.es/wp-content/uploads/exampledocs/permiso-caducado.jpg',
  tips: [
  'Debe estar vigente y sin tachaduras',
- 'Incluye datos del propietario actual y de la embarcación',
+ 'Incluye datos del propietario actual y de la moto de agua',
  'Si es copia, debe estar compulsada o ser oficial',
  'Formato PDF o imagen de alta calidad'
  ]
@@ -6838,7 +6810,7 @@ de la embarcación <strong>${cleanManufacturer} ${model}</strong>.
  'dni-vendedor': {
  icon: 'fa-solid fa-file-text',
  title: 'DNI del Vendedor',
- description: 'Documento Nacional de Identidad del propietario actual que vende la embarcación. También requiere ambas caras.',
+ description: 'Documento Nacional de Identidad del propietario actual que vende la moto de agua. También requiere ambas caras.',
  image: 'https://tramitfy.es/wp-content/uploads/exampledocs/dni-comprador.jpg',
  tips: [
  'Subir AMBAS caras del DNI (anverso y reverso)',
@@ -6854,7 +6826,7 @@ de la embarcación <strong>${cleanManufacturer} ${model}</strong>.
  image: 'https://tramitfy.es/wp-content/uploads/exampledocs/contrato-compraventa.jpg',
  tips: [
  'Debe estar firmado por ambas partes',
- 'Incluir precio de venta, datos de la embarcación y fechas',
+ 'Incluir precio de venta, datos de la moto de agua y fechas',
  'DNI de ambas partes debe coincidir con los documentos',
  'Puede ser documento privado o notarial'
  ]
@@ -6866,7 +6838,7 @@ de la embarcación <strong>${cleanManufacturer} ${model}</strong>.
  image: 'https://tramitfy.es/wp-content/uploads/exampledocs/modelo-620.jpg',
  tips: [
  'Solo si YA pagaste el ITP por tu cuenta',
- 'Debe coincidir con la embarcación y el precio',
+ 'Debe coincidir con la moto de agua y el precio',
  'Comprobante original o copia oficial',
  'Si no lo tienes, nosotros nos encargamos del pago'
  ]
@@ -6882,20 +6854,20 @@ de la embarcación <strong>${cleanManufacturer} ${model}</strong>.
  console.log('🧭 Configurando navegación página documentos...');
  
  // Botón anterior - ir a precio
- const prevBtn = document.getElementById('tbv2-documentos-prevButton');
+ const prevBtn = document.getElementById('tmv2-documentos-prevButton');
  if (prevBtn) {
  prevBtn.addEventListener('click', () => {
  console.log(' Navegando a página precio...');
- TBV2_Form.goToPage('page-precio');
+ TMV2_Form.goToPage('page-precio');
  });
  }
 
  // Botón siguiente - ir a pago 
- const nextBtn = document.getElementById('tbv2-documentos-nextButton');
+ const nextBtn = document.getElementById('tmv2-documentos-nextButton');
  if (nextBtn) {
  nextBtn.addEventListener('click', () => {
  console.log(' Navegando a página pago...');
- TBV2_Form.goToPage('page-pago');
+ TMV2_Form.goToPage('page-pago');
  });
  }
  }
@@ -6906,7 +6878,7 @@ de la embarcación <strong>${cleanManufacturer} ${model}</strong>.
  if (submitPaymentBtn) {
  submitPaymentBtn.addEventListener('click', (e) => {
  e.preventDefault();
- TBV2_Form.submitForm();
+ TMV2_Form.submitForm();
  });
  }
  });
@@ -6937,7 +6909,7 @@ de la embarcación <strong>${cleanManufacturer} ${model}</strong>.
  
  try {
  // Recuperar archivos del sessionStorage
- const filesKey = `tbv2_files_${orderId}`;
+ const filesKey = `tmv2_files_${orderId}`;
  const storedFiles = sessionStorage.getItem(filesKey);
  
  if (storedFiles) {
@@ -6945,7 +6917,7 @@ de la embarcación <strong>${cleanManufacturer} ${model}</strong>.
  console.log(' Archivos recuperados:', Object.keys(filesData));
  
  // Recuperar datos del formulario
- const formDataKey = 'tbv2_form_data';
+ const formDataKey = 'tmv2_form_data';
  const storedFormData = sessionStorage.getItem(formDataKey);
  
  if (storedFormData) {
@@ -6972,7 +6944,7 @@ de la embarcación <strong>${cleanManufacturer} ${model}</strong>.
  // Limpiar sessionStorage
  sessionStorage.removeItem(filesKey);
  sessionStorage.removeItem(formDataKey);
- sessionStorage.removeItem('tbv2_order_id');
+ sessionStorage.removeItem('tmv2_order_id');
  
  // Mostrar mensaje de éxito
  alert(' Pago procesado correctamente. Su trámite ha sido creado en el sistema.');
@@ -7012,7 +6984,7 @@ de la embarcación <strong>${cleanManufacturer} ${model}</strong>.
 /**
  * Configurar WordPress para permitir uploads de PDF, JPG, PNG
  */
-function tbv2_configure_file_uploads() {
+function tmv2_configure_file_uploads() {
  // CONFIGURACIÓN EQUILIBRADA PARA PDFs
  @ini_set('upload_max_filesize', '100M');
  @ini_set('post_max_size', '100M');
@@ -7034,7 +7006,7 @@ function tbv2_configure_file_uploads() {
 /**
  * Permitir tipos de archivo específicos en WordPress
  */
-function tbv2_allow_file_types($mimes) {
+function tmv2_allow_file_types($mimes) {
  // Asegurar que estos tipos están permitidos
  $mimes['pdf'] = 'application/pdf';
  $mimes['jpg'] = 'image/jpeg';
@@ -7045,25 +7017,25 @@ function tbv2_allow_file_types($mimes) {
  error_log("TBV2: MIME types permitidos actualizados");
  return $mimes;
 }
-add_filter('upload_mimes', 'tbv2_allow_file_types');
+add_filter('upload_mimes', 'tmv2_allow_file_types');
 
 /**
  * Aumentar límite de tamaño de archivo para WordPress
  */
-function tbv2_increase_upload_size($size) {
+function tmv2_increase_upload_size($size) {
  return 100 * 1024 * 1024; // 100MB para PDFs móviles
 }
-add_filter('wp_max_upload_size', 'tbv2_increase_upload_size');
+add_filter('wp_max_upload_size', 'tmv2_increase_upload_size');
 
 /**
  * Desactivar verificación de tipo de archivo restrictiva
  */
-function tbv2_allow_unfiltered_uploads() {
+function tmv2_allow_unfiltered_uploads() {
  return true;
 }
-add_filter('wp_check_filetype_and_ext', 'tbv2_custom_file_type_check', 10, 4);
+add_filter('wp_check_filetype_and_ext', 'tmv2_custom_file_type_check', 10, 4);
 
-function tbv2_custom_file_type_check($data, $file, $filename, $mimes) {
+function tmv2_custom_file_type_check($data, $file, $filename, $mimes) {
  $wp_filetype = wp_check_filetype($filename, $mimes);
  $ext = $wp_filetype['ext'];
  $type = $wp_filetype['type'];
@@ -7083,7 +7055,7 @@ function tbv2_custom_file_type_check($data, $file, $filename, $mimes) {
 /**
  * Desactivar filtros restrictivos de WordPress para nuestros formularios
  */
-function tbv2_bypass_wp_security_filters() {
+function tmv2_bypass_wp_security_filters() {
  // Desactivar filtro de contenido peligroso para base64
  remove_filter('content_save_pre', 'wp_filter_post_kses');
  remove_filter('excerpt_save_pre', 'wp_filter_post_kses');
@@ -7107,25 +7079,30 @@ function tbv2_bypass_wp_security_filters() {
  error_log("TBV2: Filtros de seguridad y límites desactivados para uploads");
 }
 
-// ✅ PATRÓN CORREGIDO: Configuración directa sin init hook
-// Eliminar add_action('init') para evitar carga global
-if (tbv2_is_authorized_page()) {
- tbv2_configure_file_uploads();
- tbv2_bypass_wp_security_filters();
-}
+// Configurar al cargar el plugin - PROTEGIDO
+add_action('init', function() {
+ // 🛡️ PROTECCIÓN NUCLEAR: Solo en páginas autorizadas
+ if (!tmv2_is_authorized_page()) {
+  return; // Bloquear configuración en páginas no autorizadas
+ }
+ tmv2_configure_file_uploads();
+ tmv2_bypass_wp_security_filters();
+});
 
 /**
- * ✅ SHORTCODE REGISTRATION DIRECTO (patrón hoja-asiento.php)
- * Sin init hook para evitar carga global
+ * Shortcode registration
  */
-add_shortcode('transferencia_barco_v2', 'tbv2_render_form');
+function tmv2_register_shortcode() {
+ add_shortcode('transferencia_barco_v2', 'tmv2_render_form');
+}
+add_action('init', 'tmv2_register_shortcode');
 
 /**
  * Enqueue scripts if needed
  */
-function tbv2_enqueue_scripts() {
+function tmv2_enqueue_scripts() {
  // 🛡️ PROTECCIÓN NUCLEAR: Solo enqueue en páginas autorizadas
- if (!tbv2_is_authorized_page()) {
+ if (!tmv2_is_authorized_page()) {
   return; // Bloquear enqueue en páginas no autorizadas
  }
  
@@ -7133,13 +7110,13 @@ function tbv2_enqueue_scripts() {
  // Font Awesome para iconos
  wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
  
- wp_localize_script('jquery', 'tbv2_ajax', [
+ wp_localize_script('jquery', 'tmv2_ajax', [
  'ajax_url' => admin_url('admin-ajax.php'),
- 'nonce' => wp_create_nonce('tbv2_nonce')
+ 'nonce' => wp_create_nonce('tmv2_nonce')
  ]);
  }
 }
-add_action('wp_enqueue_scripts', 'tbv2_enqueue_scripts');
+add_action('wp_enqueue_scripts', 'tmv2_enqueue_scripts');
 
 // =====================================================
 // AJAX HANDLERS PARA REDSYS
@@ -7148,7 +7125,7 @@ add_action('wp_enqueue_scripts', 'tbv2_enqueue_scripts');
 /**
  * AJAX handler para crear el formulario de pago Redsys
  */
-function tbv2_handle_create_redsys_payment() {
+function tmv2_handle_create_redsys_payment() {
  // LIMPIAR CUALQUIER OUTPUT PREVIO ANTES DE JSON
  if (ob_get_level()) {
  ob_end_clean();
@@ -7165,7 +7142,7 @@ function tbv2_handle_create_redsys_payment() {
  
  // Verificar nonce de seguridad con debug
  $nonce_provided = $_POST['nonce'] ?? 'NO_NONCE';
- $nonce_valid = wp_verify_nonce($nonce_provided, 'tbv2_nonce');
+ $nonce_valid = wp_verify_nonce($nonce_provided, 'tmv2_nonce');
  
  error_log("=== TBV2 NONCE DEBUG ===");
  error_log("Nonce provided: " . $nonce_provided);
@@ -7182,7 +7159,7 @@ function tbv2_handle_create_redsys_payment() {
  'message' => 'Error de seguridad - nonce inválido',
  'debug' => [
  'nonce_provided' => $nonce_provided,
- 'expected_action' => 'tbv2_nonce',
+ 'expected_action' => 'tmv2_nonce',
  'wp_doing_ajax' => wp_doing_ajax(),
  'is_user_logged_in' => is_user_logged_in()
  ]
@@ -7317,7 +7294,7 @@ function tbv2_handle_create_redsys_payment() {
  // Asegurarse de que es único verificando si ya existe el transient
  $maxAttempts = 10;
  $attempts = 0;
- while (get_transient('tbv2_transfer_' . $orderIdFinal) !== false && $attempts < $maxAttempts) {
+ while (get_transient('tmv2_transfer_' . $orderIdFinal) !== false && $attempts < $maxAttempts) {
  $random = rand(100, 999);
  $orderIdFinal = substr($timestamp . $random, -12);
  $attempts++;
@@ -7326,7 +7303,7 @@ function tbv2_handle_create_redsys_payment() {
  error_log('TBV2: Order ID generado: ' . $orderIdFinal);
  
  // Guardar datos por 1 hora (86400 segundos) - usar el Order ID real
- set_transient('tbv2_transfer_' . $orderIdFinal, $transientData, 86400);
+ set_transient('tmv2_transfer_' . $orderIdFinal, $transientData, 86400);
  
  // USAR AMOUNT REAL DEL FORMULARIO (ya no test)
  $finalAmount = $formData['pricing']['total_amount'] ?? $formData['finalAmount'] ?? 0;
@@ -7355,7 +7332,7 @@ function tbv2_handle_create_redsys_payment() {
  error_log("===========================");
  
  // Generar parámetros de Redsys
- $paymentData = tbv2_redsys_create_payment_form($orderData);
+ $paymentData = tmv2_redsys_create_payment_form($orderData);
  
  // DEBUG CRÍTICO: Log de parámetros generados
  error_log("=== TBV2 PARÁMETROS REDSYS ===");
@@ -7401,18 +7378,15 @@ function tbv2_handle_create_redsys_payment() {
  ]);
  }
 }
-// ✅ AJAX HANDLERS PROTEGIDOS - Solo registrar si está autorizado
-if (tbv2_is_authorized_page()) {
-    add_action('wp_ajax_tbv2_create_redsys_payment', 'tbv2_handle_create_redsys_payment');
-    add_action('wp_ajax_nopriv_tbv2_create_redsys_payment', 'tbv2_handle_create_redsys_payment');
-}
+add_action('wp_ajax_tmv2_create_redsys_payment', 'tmv2_handle_create_redsys_payment');
+add_action('wp_ajax_nopriv_tmv2_create_redsys_payment', 'tmv2_handle_create_redsys_payment');
 
 /**
  * Handler para guardar archivos por separado (evitar 403)
  */
-function tbv2_handle_store_files() {
+function tmv2_handle_store_files() {
  // LOGGING A ARCHIVO ESPECÍFICO PARA DEBUG
- $logFile = '/tmp/tbv2-debug.log';
+ $logFile = '/tmp/tmv2-debug.log';
  $timestamp = date('Y-m-d H:i:s');
  
  file_put_contents($logFile, "\n=== TBV2 STORE FILES HANDLER === $timestamp\n", FILE_APPEND);
@@ -7426,7 +7400,7 @@ function tbv2_handle_store_files() {
  $nonceProvided = $_POST['nonce'] ?? '';
  file_put_contents($logFile, "NONCE DEBUG: Provided='$nonceProvided'\n", FILE_APPEND);
  
- if (!wp_verify_nonce($nonceProvided, 'tbv2_nonce')) {
+ if (!wp_verify_nonce($nonceProvided, 'tmv2_nonce')) {
  file_put_contents($logFile, "ERROR: Nonce verification failed for nonce: '$nonceProvided'\n", FILE_APPEND);
  throw new Exception('Nonce verification failed');
  }
@@ -7453,7 +7427,7 @@ function tbv2_handle_store_files() {
  }
  
  // Guardar archivos en transient separado
- $transientKey = 'tbv2_files_' . $orderId;
+ $transientKey = 'tmv2_files_' . $orderId;
  $saved = set_transient($transientKey, $filesData, 86400);
  
  error_log("TBV2: Transient saved with key: '" . $transientKey . "' - Result: " . ($saved ? 'SUCCESS' : 'FAILED'));
@@ -7474,16 +7448,13 @@ function tbv2_handle_store_files() {
  wp_send_json_error(['message' => $e->getMessage()]);
  }
 }
-// ✅ AJAX HANDLERS PROTEGIDOS - Solo registrar si está autorizado
-if (tbv2_is_authorized_page()) {
-    add_action('wp_ajax_tbv2_store_files', 'tbv2_handle_store_files');
-    add_action('wp_ajax_nopriv_tbv2_store_files', 'tbv2_handle_store_files');
-}
+add_action('wp_ajax_tmv2_store_files', 'tmv2_handle_store_files');
+add_action('wp_ajax_nopriv_tmv2_store_files', 'tmv2_handle_store_files');
 
 /**
  * Handler para procesar el callback de Redsys (URL de retorno)
  */
-function tbv2_handle_redsys_callback() {
+function tmv2_handle_redsys_callback() {
  try {
  // Verificar que vengan datos de Redsys
  if (empty($_POST['Ds_MerchantParameters']) || empty($_POST['Ds_Signature'])) {
@@ -7495,7 +7466,7 @@ function tbv2_handle_redsys_callback() {
  $receivedSignature = $_POST['Ds_Signature'];
  
  // Verificar firma de seguridad
- $calculatedSignature = tbv2_redsys_generate_signature($merchantData);
+ $calculatedSignature = tmv2_redsys_generate_signature($merchantData);
  
  if ($receivedSignature !== $calculatedSignature) {
  throw new Exception('Firma de seguridad inválida');
@@ -7507,13 +7478,13 @@ function tbv2_handle_redsys_callback() {
  
  if ($responseCode <= '0099') {
  // Pago exitoso
- tbv2_process_successful_payment($orderId, $merchantData);
+ tmv2_process_successful_payment($orderId, $merchantData);
  
  // Redirigir a página de éxito con orden
  wp_redirect('https://tramitfy.es/pago-realizado-con-exito/?order=' . $orderId);
  } else {
  // Pago fallido
- tbv2_process_failed_payment($orderId, $merchantData);
+ tmv2_process_failed_payment($orderId, $merchantData);
  
  // Redirigir de vuelta al formulario en caso de pago fallido
  wp_redirect('https://tramitfy.es/transferencia-propiedad-v2/');
@@ -7526,44 +7497,42 @@ function tbv2_handle_redsys_callback() {
  
  exit;
 }
-// ✅ CALLBACK DIRECTO: Ejecutar inmediatamente si es necesario
-// Sin init hook para evitar carga global
-tbv2_handle_redsys_callback_init();
+add_action('init', 'tmv2_handle_redsys_callback_init');
 
-function tbv2_handle_redsys_callback_init() {
+function tmv2_handle_redsys_callback_init() {
  // Debug logging
  error_log('TBV2 Callback Init - GET params: ' . print_r($_GET, true));
  error_log('TBV2 Callback Init - POST params: ' . print_r($_POST, true));
  
  // Handle notification callback (server-to-server from Redsys)
  if (isset($_GET['redsys_notification']) && $_GET['redsys_notification'] === '1') {
- tbv2_handle_redsys_notification();
+ tmv2_handle_redsys_notification();
  }
  
  // Handle user return callbacks con nuevos parámetros
  if (isset($_GET['redsys_result'])) {
- tbv2_handle_redsys_return($_GET['redsys_result']);
+ tmv2_handle_redsys_return($_GET['redsys_result']);
  }
  
  // También procesar si viene algún dato de Redsys en POST sin parámetro GET
  if (isset($_POST['Ds_SignatureVersion']) && isset($_POST['Ds_MerchantParameters']) && isset($_POST['Ds_Signature'])) {
  error_log('TBV2: Procesando callback Redsys directo desde POST');
- tbv2_handle_redsys_return('ok');
+ tmv2_handle_redsys_return('ok');
  }
  
  // También mantener compatibilidad con parámetros antiguos
  if (isset($_GET['result'])) {
- tbv2_handle_redsys_return($_GET['result']);
+ tmv2_handle_redsys_return($_GET['result']);
  }
  if (isset($_GET['notification']) && $_GET['notification'] === '1') {
- tbv2_handle_redsys_notification();
+ tmv2_handle_redsys_notification();
  }
 }
 
 /**
  * Handler para notificaciones server-to-server de Redsys
  */
-function tbv2_handle_redsys_notification() {
+function tmv2_handle_redsys_notification() {
  try {
  // Log de la notificación para debug
  error_log('TBV2: Recibiendo notificación Redsys: ' . print_r($_POST, true));
@@ -7579,7 +7548,7 @@ function tbv2_handle_redsys_notification() {
  
  // Para verificar la firma de notificación, necesitamos usar el algoritmo correcto
  // La firma de notificación se calcula sobre el string Ds_MerchantParameters (no sobre el JSON decodificado)
- $password_decoded = base64_decode(TBV2_REDSYS_SECRET_KEY);
+ $password_decoded = base64_decode(TMV2_REDSYS_SECRET_KEY);
  $order_id = $merchantData['Ds_Order'];
  
  // Generar clave de cifrado para PHP 7+/8+
@@ -7616,11 +7585,11 @@ function tbv2_handle_redsys_notification() {
  
  if ($responseCode <= '0099') {
  // Pago exitoso - enviar al webhook
- tbv2_process_successful_payment($orderId, $merchantData);
+ tmv2_process_successful_payment($orderId, $merchantData);
  echo '[OK]'; // Respuesta requerida por Redsys
  } else {
  // Pago fallido
- tbv2_process_failed_payment($orderId, $merchantData);
+ tmv2_process_failed_payment($orderId, $merchantData);
  echo '[OK]'; // Respuesta requerida por Redsys
  }
  
@@ -7635,7 +7604,7 @@ function tbv2_handle_redsys_notification() {
 /**
  * Handler para URLs de retorno (usuario redirigido desde Redsys)
  */
-function tbv2_handle_redsys_return($result) {
+function tmv2_handle_redsys_return($result) {
  global $wpdb; // Para debugging de transients
  
  if ($result === 'ok') {
@@ -7643,10 +7612,10 @@ function tbv2_handle_redsys_return($result) {
  if (isset($_POST['Ds_SignatureVersion']) && isset($_POST['Ds_MerchantParameters']) && isset($_POST['Ds_Signature'])) {
  try {
  $redsys = new RedsysAPI;
- $redsys->setParameter("DS_MERCHANT_MERCHANTCODE", TBV2_REDSYS_FUC);
- $redsys->setParameter("DS_MERCHANT_TERMINAL", TBV2_REDSYS_TERMINAL);
+ $redsys->setParameter("DS_MERCHANT_MERCHANTCODE", TMV2_REDSYS_FUC);
+ $redsys->setParameter("DS_MERCHANT_TERMINAL", TMV2_REDSYS_TERMINAL);
  $redsys->setParameter("DS_MERCHANT_TRANSACTIONTYPE", "0");
- $redsys->setParameter("DS_MERCHANT_CURRENCY", TBV2_REDSYS_CURRENCY);
+ $redsys->setParameter("DS_MERCHANT_CURRENCY", TMV2_REDSYS_CURRENCY);
  
  // Decodificar parámetros
  $params = $redsys->decodeMerchantParameters($_POST['Ds_MerchantParameters']);
@@ -7659,15 +7628,15 @@ function tbv2_handle_redsys_return($result) {
  error_log('TBV2: Código de respuesta: ' . $response);
  
  // Recuperar datos del formulario usando el transient
- $formData = get_transient('tbv2_transfer_' . $orderId);
+ $formData = get_transient('tmv2_transfer_' . $orderId);
  
  if ($formData) {
  error_log('TBV2: Datos del formulario recuperados correctamente');
  // Procesar el pago exitoso
- tbv2_process_successful_payment($orderId, $formData);
+ tmv2_process_successful_payment($orderId, $formData);
  } else {
  error_log('TBV2 ERROR: No se encontraron datos para Order ID: ' . $orderId);
- error_log('TBV2: Transients activos: ' . print_r($wpdb->get_results("SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE '_transient_tbv2_transfer_%'"), true));
+ error_log('TBV2: Transients activos: ' . print_r($wpdb->get_results("SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE '_transient_tmv2_transfer_%'"), true));
  }
  } else {
  error_log('TBV2: Pago NO exitoso. Código: ' . $response);
@@ -7702,7 +7671,7 @@ function tbv2_handle_redsys_return($result) {
 /**
  * Generar página de confirmación profesional
  */
-function tbv2_generate_confirmation_page($orderId = '') {
+function tmv2_generate_confirmation_page($orderId = '') {
  ob_start();
  ?>
  <!DOCTYPE html>
@@ -7919,7 +7888,7 @@ function tbv2_generate_confirmation_page($orderId = '') {
 /**
  * Generar página de error
  */
-function tbv2_generate_error_page() {
+function tmv2_generate_error_page() {
  ob_start();
  ?>
  <!DOCTYPE html>
@@ -8041,7 +8010,7 @@ function tbv2_generate_error_page() {
 /**
  * FUNCIÓN DEBUG: Forzar envío admin con logs ultra-detallados
  */
-function tbv2_force_send_admin_email_debug($orderId, $paymentData, $formData) {
+function tmv2_force_send_admin_email_debug($orderId, $paymentData, $formData) {
  error_log(" TBV2 FORCE DEBUG: === INICIANDO ENVÍO ADMIN FORZADO ===");
  error_log(" TBV2 FORCE DEBUG: OrderID recibido: " . $orderId);
  error_log(" TBV2 FORCE DEBUG: PaymentData: " . print_r($paymentData, true));
@@ -8110,7 +8079,7 @@ function tbv2_force_send_admin_email_debug($orderId, $paymentData, $formData) {
 /**
  * FUNCIÓN DE EMERGENCIA: Enviar email admin cuando falla el sistema principal
  */
-function tbv2_emergency_send_admin_email($orderId, $paymentData, $formData) {
+function tmv2_emergency_send_admin_email($orderId, $paymentData, $formData) {
  error_log(" TBV2 EMERGENCY: Iniciando envío directo email admin para $orderId");
  
  $finalAmount = floatval($paymentData['Ds_Amount']) / 100; // Redsys en centimos
@@ -8158,21 +8127,21 @@ function tbv2_emergency_send_admin_email($orderId, $paymentData, $formData) {
 /**
  * Procesar pago exitoso - FLUJO COMPLETO
  */
-function tbv2_process_successful_payment($orderId, $paymentData) {
+function tmv2_process_successful_payment($orderId, $paymentData) {
  try {
  error_log('TBV2: PROCESANDO PAGO EXITOSO - Orden: ' . $orderId);
  
  // 1. Recuperar datos completos del formulario
- $formData = get_transient('tbv2_transfer_' . $orderId);
+ $formData = get_transient('tmv2_transfer_' . $orderId);
  
  if (!$formData) {
  throw new Exception('Datos de transferencia no encontrados');
  }
 
  // EJECUTAR HOOK PARA SISTEMA ENHANCED
- error_log(" TBV2: Ejecutando hook tbv2_payment_success para Order ID: " . $orderId);
- do_action("tbv2_payment_success", $orderId, $formData);
- error_log(" TBV2: Hook tbv2_payment_success ejecutado");
+ error_log(" TBV2: Ejecutando hook tmv2_payment_success para Order ID: " . $orderId);
+ do_action("tmv2_payment_success", $orderId, $formData);
+ error_log(" TBV2: Hook tmv2_payment_success ejecutado");
  
  // ENVIAR EMAILS CON wp_mail (como formularios funcionando) 
  error_log(" TBV2: Iniciando envío de emails para pago exitoso - Order ID: " . $orderId);
@@ -8180,44 +8149,44 @@ function tbv2_process_successful_payment($orderId, $paymentData) {
  error_log(" TBV2: FormData recuperada: " . print_r($formData, true));
  
  // ENVIAR EMAILS CON DATOS VERIFICADOS
- $emailResult = tbv2_send_confirmation_emails($orderId, $paymentData, $formData);
+ $emailResult = tmv2_send_confirmation_emails($orderId, $paymentData, $formData);
  error_log(" TBV2: Resultado emails: " . print_r($emailResult, true));
  
  // DEBUG ULTRA-DETALLADO: Forzar envío admin independiente
  error_log(" TBV2 DEBUG: Ejecutando envío admin FORZADO independiente...");
- tbv2_force_send_admin_email_debug($orderId, $paymentData, $formData);
+ tmv2_force_send_admin_email_debug($orderId, $paymentData, $formData);
  
  // FALLBACK: Si fallan los emails, enviar directamente con datos básicos
  if (!$emailResult || !$emailResult['admin']) {
  error_log(" TBV2: Email admin falló, ejecutando FALLBACK");
- tbv2_emergency_send_admin_email($orderId, $paymentData, $formData);
+ tmv2_emergency_send_admin_email($orderId, $paymentData, $formData);
  }
  
  error_log(" TBV2: Emails enviados completados");
  
  // 2. NUEVA ESTRATEGIA: Recuperar archivos usando orderId directamente
- $transientKey = 'tbv2_files_' . $orderId;
- file_put_contents('/tmp/tbv2-debug.log', date('Y-m-d H:i:s') . " TBV2: Buscando archivos en transient key: $transientKey\n", FILE_APPEND);
+ $transientKey = 'tmv2_files_' . $orderId;
+ file_put_contents('/tmp/tmv2-debug.log', date('Y-m-d H:i:s') . " TBV2: Buscando archivos en transient key: $transientKey\n", FILE_APPEND);
  
  $storedFiles = get_transient($transientKey);
  if ($storedFiles) {
- file_put_contents('/tmp/tbv2-debug.log', date('Y-m-d H:i:s') . " TBV2: ARCHIVOS RECUPERADOS del almacenamiento unificado: " . count($storedFiles) . " categorías\n", FILE_APPEND);
- file_put_contents('/tmp/tbv2-debug.log', date('Y-m-d H:i:s') . " TBV2: Archivos encontrados: " . print_r($storedFiles, true) . "\n", FILE_APPEND);
+ file_put_contents('/tmp/tmv2-debug.log', date('Y-m-d H:i:s') . " TBV2: ARCHIVOS RECUPERADOS del almacenamiento unificado: " . count($storedFiles) . " categorías\n", FILE_APPEND);
+ file_put_contents('/tmp/tmv2-debug.log', date('Y-m-d H:i:s') . " TBV2: Archivos encontrados: " . print_r($storedFiles, true) . "\n", FILE_APPEND);
  
  $formData['files'] = $storedFiles; // Merge files back
- file_put_contents('/tmp/tbv2-debug.log', date('Y-m-d H:i:s') . " TBV2: FormData files field updated with stored files\n", FILE_APPEND);
+ file_put_contents('/tmp/tmv2-debug.log', date('Y-m-d H:i:s') . " TBV2: FormData files field updated with stored files\n", FILE_APPEND);
  
  // Limpiar transient temporal
  delete_transient($transientKey);
- file_put_contents('/tmp/tbv2-debug.log', date('Y-m-d H:i:s') . " TBV2: Transient temporal limpiado\n", FILE_APPEND);
+ file_put_contents('/tmp/tmv2-debug.log', date('Y-m-d H:i:s') . " TBV2: Transient temporal limpiado\n", FILE_APPEND);
  } else {
- file_put_contents('/tmp/tbv2-debug.log', date('Y-m-d H:i:s') . " TBV2: WARNING - No se encontraron archivos para orderId: $orderId\n", FILE_APPEND);
- file_put_contents('/tmp/tbv2-debug.log', date('Y-m-d H:i:s') . " TBV2: Verificando transients disponibles...\n", FILE_APPEND);
+ file_put_contents('/tmp/tmv2-debug.log', date('Y-m-d H:i:s') . " TBV2: WARNING - No se encontraron archivos para orderId: $orderId\n", FILE_APPEND);
+ file_put_contents('/tmp/tmv2-debug.log', date('Y-m-d H:i:s') . " TBV2: Verificando transients disponibles...\n", FILE_APPEND);
  
  // Buscar todos los transients para debug
  global $wpdb;
- $transients = $wpdb->get_results("SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE '_transient_tbv2_files_%'");
- file_put_contents('/tmp/tbv2-debug.log', date('Y-m-d H:i:s') . " TBV2: Transients disponibles: " . print_r($transients, true) . "\n", FILE_APPEND);
+ $transients = $wpdb->get_results("SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE '_transient_tmv2_files_%'");
+ file_put_contents('/tmp/tmv2-debug.log', date('Y-m-d H:i:s') . " TBV2: Transients disponibles: " . print_r($transients, true) . "\n", FILE_APPEND);
  
  // Continuar sin archivos (los datos básicos sí se procesarán)
  $formData['files'] = [];
@@ -8226,14 +8195,14 @@ function tbv2_process_successful_payment($orderId, $paymentData) {
  // 2. GENERAR PDF DE AUTORIZACIÓN CON FIRMA
  $pdfUrl = '';
  if (!empty($formData['signature'])) {
- $pdfUrl = tbv2_generate_authorization_pdf($orderId, $formData);
+ $pdfUrl = tmv2_generate_authorization_pdf($orderId, $formData);
  error_log('TBV2: PDF generado - ' . $pdfUrl);
  }
  
  // 3. PROCESAR ARCHIVOS SUBIDOS
  error_log('TBV2: Procesando archivos para orden ' . $orderId);
  error_log('TBV2: Datos de archivos recibidos: ' . print_r($formData['files'] ?? 'NO FILES', true));
- $uploadedFiles = tbv2_process_file_uploads($orderId, $formData['files'] ?? []);
+ $uploadedFiles = tmv2_process_file_uploads($orderId, $formData['files'] ?? []);
  error_log('TBV2: Archivos procesados - ' . count($uploadedFiles) . ' categorías con archivos');
  error_log('TBV2: Detalle de archivos: ' . json_encode($uploadedFiles));
  
@@ -8308,11 +8277,11 @@ function tbv2_process_successful_payment($orderId, $paymentData) {
  'status' => 'pending',
  'timestamp' => $formData['timestamp'] ?? date('Y-m-d H:i:s'),
  'processedAt' => date('Y-m-d H:i:s'),
- 'source' => 'TBV2_FORM'
+ 'source' => 'TMV2_FORM'
  ];
  
  // 5. ENVIAR EMAILS DE NOTIFICACIÓN
- tbv2_send_notification_emails($orderId, $formData, $pdfUrl, $uploadedFiles);
+ tmv2_send_notification_emails($orderId, $formData, $pdfUrl, $uploadedFiles);
  error_log('TBV2: Emails enviados');
  
  // 6. ENVÍO UNIFICADO AL WEBHOOK - NUEVA ESTRATEGIA JSON 
@@ -8386,7 +8355,7 @@ function tbv2_process_successful_payment($orderId, $paymentData) {
  }
  
  // 7. Limpiar datos temporales
- delete_transient('tbv2_transfer_' . $orderId);
+ delete_transient('tmv2_transfer_' . $orderId);
  
  error_log('TBV2: PROCESO COMPLETADO para orden ' . $orderId);
  
@@ -8399,7 +8368,7 @@ function tbv2_process_successful_payment($orderId, $paymentData) {
 /**
  * GENERAR PDF DE AUTORIZACIÓN CON FIRMA
  */
-function tbv2_generate_authorization_pdf($orderId, $formData) {
+function tmv2_generate_authorization_pdf($orderId, $formData) {
  try {
  // Crear directorio si no existe
  $upload_dir = wp_upload_dir();
@@ -8444,7 +8413,7 @@ function tbv2_generate_authorization_pdf($orderId, $formData) {
  $html .= '
  <h2>AUTORIZACIÓN</h2>
  <p>Por la presente, autorizo a TRAMITFY S.L. a realizar en mi nombre todos los trámites necesarios
- para la transferencia de titularidad de la embarcación descrita anteriormente.</p>
+ para la transferencia de titularidad de la moto de agua descrita anteriormente.</p>
  
  <div class="signature">
  <p><strong>Firma digital capturada:</strong></p>';
@@ -8490,7 +8459,7 @@ function tbv2_generate_authorization_pdf($orderId, $formData) {
 /**
  * PROCESAR Y MOVER ARCHIVOS SUBIDOS
  */
-function tbv2_process_file_uploads($orderId, $files) {
+function tmv2_process_file_uploads($orderId, $files) {
  $uploadedFiles = [];
  
  try {
@@ -8555,7 +8524,7 @@ function tbv2_process_file_uploads($orderId, $files) {
 /**
  * ENVIAR EMAILS DE NOTIFICACIÓN
  */
-function tbv2_send_notification_emails($orderId, $formData, $pdfUrl, $uploadedFiles) {
+function tmv2_send_notification_emails($orderId, $formData, $pdfUrl, $uploadedFiles) {
  try {
  // Calcular desglose de precios
  $basePrice = floatval($formData['basePrice']);
@@ -8564,7 +8533,7 @@ function tbv2_send_notification_emails($orderId, $formData, $pdfUrl, $uploadedFi
  
  // Email PROFESIONAL al cliente
  $to_customer = $formData['customerEmail'];
- $subject_customer = ' Confirmación de Transferencia de Embarcación - TRAMITFY';
+ $subject_customer = ' Confirmación de Transferencia de Moto de Agua - TRAMITFY';
  
  $message_customer = "
  <!DOCTYPE html>
@@ -8596,13 +8565,13 @@ function tbv2_send_notification_emails($orderId, $formData, $pdfUrl, $uploadedFi
  
  <p>Estimado/a <strong>{$formData['customerName']}</strong>,</p>
  
- <p>Nos complace confirmar que hemos recibido correctamente su solicitud de <strong>Transferencia de Embarcación</strong>.</p>
+ <p>Nos complace confirmar que hemos recibido correctamente su solicitud de <strong>Transferencia de Moto de Agua</strong>.</p>
  
  <div class='info-box'>
  <h3 style='margin-top: 0; color: #016d86;'> Detalles del Trámite</h3>
  <p><strong>Número de Referencia:</strong> {$orderId}</p>
  <p><strong>Fecha:</strong> " . date('d/m/Y H:i') . "</p>
- <p><strong>Tipo de Trámite:</strong> Transferencia de Embarcación</p>
+ <p><strong>Tipo de Trámite:</strong> Transferencia de Moto de Agua</p>
  </div>
  
  <div class='price-breakdown'>
@@ -8688,7 +8657,7 @@ function tbv2_send_notification_emails($orderId, $formData, $pdfUrl, $uploadedFi
  <body>
  <div class='admin-container'>
  <div class='admin-header'>
- <h2 style='margin: 0;'> Nueva Transferencia de Embarcación - TBV2</h2>
+ <h2 style='margin: 0;'> Nueva Transferencia de Moto de Agua - TBV2</h2>
  <p style='margin: 10px 0 0 0;'>Referencia: {$orderId}</p>
  <p style='margin: 5px 0 0 0;'>Fecha: " . date('d/m/Y H:i:s') . "</p>
  </div>
@@ -8718,7 +8687,7 @@ function tbv2_send_notification_emails($orderId, $formData, $pdfUrl, $uploadedFi
  
  $message_admin .= "
  <div class='section'>
- <h3 style='margin-top: 0; color: #016d86;'> Datos de la Embarcación</h3>
+ <h3 style='margin-top: 0; color: #016d86;'> Datos de la Moto de Agua</h3>
  <table>
  <tr><td class='label'>Fabricante:</td><td>{$manufacturer}</td></tr>
  <tr><td class='label'>Modelo:</td><td>{$model}</td></tr>
@@ -8793,7 +8762,7 @@ function tbv2_send_notification_emails($orderId, $formData, $pdfUrl, $uploadedFi
 /**
  * Procesar pago fallido
  */
-function tbv2_process_failed_payment($orderId, $paymentData) {
+function tmv2_process_failed_payment($orderId, $paymentData) {
  error_log('TBV2: Pago fallido para orden ' . $orderId . ' - Código: ' . $paymentData['Ds_Response']);
  
  // Mantener datos para reintento
@@ -8802,12 +8771,12 @@ function tbv2_process_failed_payment($orderId, $paymentData) {
 
 // Registro del shortcode
 if (!shortcode_exists('transferencia_barco_v2')) {
- add_shortcode('transferencia_barco_v2', 'tbv2_render_form');
+ add_shortcode('transferencia_barco_v2', 'tmv2_render_form');
 }
 
 // Registro alternativo del shortcode con _form
-if (!shortcode_exists('transferencia_barco_v2_form')) {
- add_shortcode('transferencia_barco_v2_form', 'tbv2_render_form');
+if (!shortcode_exists('transferencia_moto_v2_form')) {
+ add_shortcode('transferencia_moto_v2_form', 'tmv2_render_form');
 }
 
 
@@ -8817,12 +8786,12 @@ if (!shortcode_exists('transferencia_barco_v2_form')) {
 /**
  * Mejora el webhook existente para incluir archivos
  */
-function tbv2_enhanced_webhook_with_files($orderId, $formData) {
+function tmv2_enhanced_webhook_with_files($orderId, $formData) {
  error_log(" TBV2 ENHANCED: Procesando archivos para Order ID: $orderId");
  
  try {
  // 1. Procesar archivos si existen en $_FILES
- $attachments = tbv2_process_current_files($orderId);
+ $attachments = tmv2_process_current_files($orderId);
  
  // 2. Añadir archivos a los datos del formulario
  if (!empty($attachments)) {
@@ -8834,7 +8803,7 @@ function tbv2_enhanced_webhook_with_files($orderId, $formData) {
  }
  
  // 3. Enviar al webhook con archivos incluidos
- $webhook_result = tbv2_send_to_api_with_files($formData);
+ $webhook_result = tmv2_send_to_api_with_files($formData);
  
  return $webhook_result;
  
@@ -8847,7 +8816,7 @@ function tbv2_enhanced_webhook_with_files($orderId, $formData) {
 /**
  * Procesa archivos del $_FILES global
  */
-function tbv2_process_current_files($orderId) {
+function tmv2_process_current_files($orderId) {
  $processed_files = [];
  
  try {
@@ -8861,7 +8830,7 @@ function tbv2_process_current_files($orderId) {
  
  foreach ($file_fields as $field_name => $category) {
  if (isset($_FILES[$field_name]) && !empty($_FILES[$field_name]['tmp_name'])) {
- $files = tbv2_save_file_category($_FILES[$field_name], $category, $orderId);
+ $files = tmv2_save_file_category($_FILES[$field_name], $category, $orderId);
  if (!empty($files)) {
  $processed_files = array_merge($processed_files, $files);
  }
@@ -8879,7 +8848,7 @@ function tbv2_process_current_files($orderId) {
 /**
  * Guarda archivos de una categoría específica
  */
-function tbv2_save_file_category($file_data, $category, $orderId) {
+function tmv2_save_file_category($file_data, $category, $orderId) {
  $saved_files = [];
  
  try {
@@ -8934,7 +8903,7 @@ function tbv2_save_file_category($file_data, $category, $orderId) {
 /**
  * Envía datos con archivos al webhook API
  */
-function tbv2_send_to_api_with_files($formData) {
+function tmv2_send_to_api_with_files($formData) {
  try {
  $webhook_url = 'https://46-202-128-35.sslip.io/api/herramientas/barcos/webhook';
  
@@ -8946,7 +8915,7 @@ function tbv2_send_to_api_with_files($formData) {
  'customerEmail' => $formData['customerEmail'] ?? '',
  'customerDni' => $formData['customerDni'] ?? '',
  'customerPhone' => $formData['customerPhone'] ?? '',
- 'vehicleType' => 'Embarcación',
+ 'vehicleType' => 'Moto de Agua',
  'manufacturer' => $formData['manufacturer'] ?? '',
  'model' => $formData['model'] ?? '',
  'matriculationDate' => $formData['matriculationDate'] ?? '',
@@ -8994,9 +8963,9 @@ function tbv2_send_to_api_with_files($formData) {
 }
 
 // Hook en el punto exacto donde se procesa el pago exitoso
-add_action('tbv2_payment_success', function($orderId, $formData) {
+add_action('tmv2_payment_success', function($orderId, $formData) {
  error_log(" TBV2 ENHANCED: Hook activado para Order ID: $orderId");
- tbv2_enhanced_webhook_with_files($orderId, $formData);
+ tmv2_enhanced_webhook_with_files($orderId, $formData);
 }, 20, 2);
 
 error_log(" TBV2 ENHANCED: Sistema de archivos compatible cargado - NO intercepta JavaScript");
@@ -9005,19 +8974,18 @@ error_log(" TBV2 ENHANCED: Sistema de archivos compatible cargado - NO intercept
 // TBV2 TEMPORAL INTEGRATION SYSTEM
 // =====================================================
 
-// 🛡️ PROTECCIÓN QUIRÚRGICA - Usar función unificada tbv2_is_authorized_page()
+// 🛡️ PROTECCIÓN QUIRÚRGICA - Usar función unificada tmv2_is_authorized_page()
 
-// ❌ JAVASCRIPT GLOBAL ELIMINADO - CAUSABA CONFLICTOS AJAX
-// Este JavaScript se ejecutaba al cargar el archivo (require_once)
-// contaminando todas las respuestas AJAX con <script> tags
-/*
-if (tbv2_is_authorized_page()) { 
+// ✅ PROTECCIÓN AJAX AVANZADA - SOLO PÁGINAS AUTORIZADAS
+// Solo ejecutar en páginas autorizadas
+if (tmv2_is_authorized_page()) { // REACTIVADO CON PROTECCIÓN AJAX
+    // Solo output si está autorizado
 ?>
 <script>
 // TBV2 TEMPORAL INTEGRATION - SISTEMA INDEPENDIENTE
 console.log(' TBV2 TEMPORAL - Cargando sistema independiente...');
 
-const TBV2_TEMPORAL = {
+const TMV2_TEMPORAL = {
  API_BASE: 'https://tramitfy.org/api/temporal',
  DEBUG: true,
  
@@ -9146,7 +9114,7 @@ const TBV2_TEMPORAL = {
  },
  
  storeForCallback(orderId, data) {
- localStorage.setItem(`tbv2_temporal_${orderId}`, JSON.stringify({
+ localStorage.setItem(`tmv2_temporal_${orderId}`, JSON.stringify({
  ...data,
  stored_at: new Date().toISOString()
  }));
@@ -9156,7 +9124,7 @@ const TBV2_TEMPORAL = {
  console.log(' TBV2 TEMPORAL - Procesando callback:', orderId);
  
  try {
- const storedData = JSON.parse(localStorage.getItem(`tbv2_temporal_${orderId}`) || '{}');
+ const storedData = JSON.parse(localStorage.getItem(`tmv2_temporal_${orderId}`) || '{}');
  
  if (!storedData.temporal_id) {
  throw new Error('Temporal ID no encontrado');
@@ -9184,7 +9152,7 @@ const TBV2_TEMPORAL = {
  console.log(' Pago confirmado temporalmente');
  console.log(' Trámite final:', result.tramite_id);
  
- localStorage.removeItem(`tbv2_temporal_${orderId}`);
+ localStorage.removeItem(`tmv2_temporal_${orderId}`);
  
  return result;
  
@@ -9326,8 +9294,8 @@ const TBV2_TEMPORAL = {
  try {
  // Crear formulario de pago Redsys usando AJAX al backend PHP
  const redsysData = {
- action: 'tbv2_create_redsys_payment_generic',
- nonce: '<?php echo wp_create_nonce("tbv2_nonce"); ?>',
+ action: 'tmv2_create_redsys_payment_generic',
+ nonce: '<?php echo wp_create_nonce("tmv2_nonce"); ?>',
  orderId: formData.orderId,
  customerName: formData.personal?.customerName || this.extractValue('customer_name'),
  customerEmail: formData.personal?.customerEmail || this.extractValue('customer_email'),
@@ -9407,7 +9375,7 @@ document.addEventListener('DOMContentLoaded', function() {
  const originalData = await captureAllFormData();
  console.log(' Datos originales capturados:', originalData);
  
- const modifiedData = await TBV2_TEMPORAL.interceptPayment(originalData);
+ const modifiedData = await TMV2_TEMPORAL.interceptPayment(originalData);
  console.log(' Datos enviados al sistema temporal');
  
  // Continuar con el flujo de pago Redsys usando el OrderID temporal
@@ -9415,7 +9383,7 @@ document.addEventListener('DOMContentLoaded', function() {
  newBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Redirigiendo al TPV...';
  
  // Crear formulario de pago Redsys con el OrderID temporal
- await TBV2_TEMPORAL.continueWithRedsys(modifiedData);
+ await TMV2_TEMPORAL.continueWithRedsys(modifiedData);
  
  } catch (error) {
  console.error(' Error en pago temporal:', error);
@@ -9433,28 +9401,24 @@ document.addEventListener('DOMContentLoaded', function() {
  }, 1000);
 });
 
-window.TBV2_TEMPORAL_SYSTEM = TBV2_TEMPORAL;
+window.TMV2_TEMPORAL_SYSTEM = TMV2_TEMPORAL;
 
 console.log(' TBV2 TEMPORAL - Sistema de interceptor cargado');
 </script>
 <?php
-} // Cierre de la condición tbv2_is_authorized_page()
-*/
+} // Cierre de la condición tmv2_is_authorized_page()
 
 // =====================================================
 // AJAX HANDLER PARA CREAR FORMULARIO REDSYS TEMPORAL
 // =====================================================
 
-// ✅ AJAX HANDLERS PROTEGIDOS - Solo registrar si está autorizado
-if (tbv2_is_authorized_page()) {
-    add_action('wp_ajax_tbv2_create_redsys_payment_generic', 'tbv2_create_redsys_payment_handler');
-    add_action('wp_ajax_nopriv_tbv2_create_redsys_payment_generic', 'tbv2_create_redsys_payment_handler');
-}
+add_action('wp_ajax_tmv2_create_redsys_payment_generic', 'tmv2_create_redsys_payment_handler');
+add_action('wp_ajax_nopriv_tmv2_create_redsys_payment_generic', 'tmv2_create_redsys_payment_handler');
 
-function tbv2_create_redsys_payment_handler() {
+function tmv2_create_redsys_payment_handler() {
  try {
  // Verificar nonce
- if (!wp_verify_nonce($_POST['nonce'], 'tbv2_nonce')) {
+ if (!wp_verify_nonce($_POST['nonce'], 'tmv2_nonce')) {
  throw new Exception('Nonce inválido');
  }
  
@@ -9495,7 +9459,7 @@ function tbv2_create_redsys_payment_handler() {
  error_log(" Datos Redsys: " . print_r($orderData, true));
  
  // Crear formulario de pago Redsys
- $redsysForm = tbv2_redsys_create_payment_form($orderData);
+ $redsysForm = tmv2_redsys_create_payment_form($orderData);
  
  if (empty($redsysForm['url']) || empty($redsysForm['Ds_MerchantParameters'])) {
  throw new Exception('Error generando formulario Redsys');
@@ -9534,9 +9498,9 @@ function tbv2_create_redsys_payment_handler() {
 /**
  * Handler para enviar emails de confirmación cuando llega el callback de Redsys
  */
-function tbv2_send_confirmation_emails_handler() {
+function tmv2_send_confirmation_emails_handler() {
  // 🔒 BYPASS ADMIN: Admin siempre autorizado
- if (!is_admin() && !tbv2_is_authorized_request()) {
+ if (!is_admin() && !tmv2_is_authorized_request()) {
  error_log(' TBV2 EMAILS - Acceso denegado desde página no autorizada');
  wp_send_json_error('Acceso denegado');
  return;
@@ -9563,7 +9527,7 @@ function tbv2_send_confirmation_emails_handler() {
  $customerDni = sanitize_text_field($_POST['customerData']['dni'] ?? '');
  $customerPhone = sanitize_text_field($_POST['customerData']['phone'] ?? '');
  
- // Extraer datos de la embarcación
+ // Extraer datos de la moto de agua
  $manufacturer = sanitize_text_field($_POST['boatData']['manufacturer'] ?? '');
  $model = sanitize_text_field($_POST['boatData']['model'] ?? '');
  $region = sanitize_text_field($_POST['boatData']['region'] ?? '');
@@ -9636,7 +9600,7 @@ function tbv2_send_confirmation_emails_handler() {
 
  if (!empty($manufacturer) || !empty($model)) {
  $message_customer .= "
- <h3> Información de la Embarcación</h3>
+ <h3> Información de la Moto de Agua</h3>
  <div class='info-grid'>
  <div class='info-item'>
  <div class='info-label'>Fabricante</div>
@@ -9765,7 +9729,7 @@ function tbv2_send_confirmation_emails_handler() {
 
  if (!empty($manufacturer) || !empty($model)) {
  $message_admin .= "
- <h3> Datos Embarcación</h3>
+ <h3> Datos Moto de Agua</h3>
  <div class='data-grid'>
  <div class='data-item'>
  <div class='label'>Fabricante</div>
@@ -9831,10 +9795,7 @@ function tbv2_send_confirmation_emails_handler() {
 }
 
 // Registrar handler AJAX (para usuarios logueados y no logueados)
-// ✅ AJAX HANDLERS PROTEGIDOS - Solo registrar si está autorizado
-if (tbv2_is_authorized_page()) {
-    add_action('wp_ajax_tbv2_send_confirmation_emails', 'tbv2_send_confirmation_emails_handler');
-    add_action('wp_ajax_nopriv_tbv2_send_confirmation_emails', 'tbv2_send_confirmation_emails_handler');
-}
+add_action('wp_ajax_tmv2_send_confirmation_emails', 'tmv2_send_confirmation_emails_handler');
+add_action('wp_ajax_nopriv_tmv2_send_confirmation_emails', 'tmv2_send_confirmation_emails_handler');
 
 // ========================================

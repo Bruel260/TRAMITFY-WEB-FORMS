@@ -9,28 +9,28 @@ defined('ABSPATH') || exit;
 
 error_log("=== RDOC FILE START ===");
 
-// Configuración de Stripe
-define('STRIPE_MODE', 'live'); // test o live
+// ✅ CONFIGURACIÓN STRIPE CON PREFIJO ÚNICO (CLAUDE.MD)
+define('RDOC_STRIPE_MODE', 'live'); // test o live
 
-define('STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
-define('STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
+define('RDOC_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
+define('RDOC_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
 
-define('STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
-define('STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
+define('RDOC_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
+define('RDOC_STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
 
-if (STRIPE_MODE === 'test') {
-    $stripe_public_key = STRIPE_TEST_PUBLIC_KEY;
-    $stripe_secret_key = STRIPE_TEST_SECRET_KEY;
+if (RDOC_STRIPE_MODE === 'test') {
+    $stripe_public_key = RDOC_STRIPE_TEST_PUBLIC_KEY;
+    $stripe_secret_key = RDOC_STRIPE_TEST_SECRET_KEY;
 } else {
-    $stripe_public_key = STRIPE_LIVE_PUBLIC_KEY;
-    $stripe_secret_key = STRIPE_LIVE_SECRET_KEY;
+    $stripe_public_key = RDOC_STRIPE_LIVE_PUBLIC_KEY;
+    $stripe_secret_key = RDOC_STRIPE_LIVE_SECRET_KEY;
 }
 
-// Configuración del servicio
-define('PRECIO_TOTAL', 94.95);
-define('TASA_1', 19.03);
-define('TASA_2', 7.62);
-define('TRAMITFY_API_URL', 'https://tramitfy.org/api/herramientas/documentacion/webhook');
+// ✅ CONFIGURACIÓN DEL SERVICIO CON PREFIJO ÚNICO (CLAUDE.MD)
+define('RDOC_PRECIO_TOTAL', 94.95);
+define('RDOC_TASA_1', 19.03);
+define('RDOC_TASA_2', 7.62);
+define('RDOC_TRAMITFY_API_URL', 'https://tramitfy.org/api/herramientas/documentacion/webhook');
 
 // Cargar Stripe library ANTES de las funciones
 require_once(__DIR__ . '/vendor/autoload.php');
@@ -50,7 +50,7 @@ function rdoc_create_payment_intent() {
         $currentKey = \Stripe\Stripe::getApiKey();
         error_log('Stripe API Key confirmed: ' . substr($currentKey, 0, 25));
 
-        $amount = PRECIO_TOTAL * 100;
+        $amount = RDOC_PRECIO_TOTAL * 100;
 
         $paymentIntent = \Stripe\PaymentIntent::create([
             'amount' => $amount,
@@ -258,9 +258,9 @@ function rdoc_send_to_tramitfy() {
             'customerPhone' => $formData['customerPhone'],
             'vesselName' => $formData['vesselName'] ?? '',
             'vesselRegistration' => $formData['vesselRegistration'] ?? '',
-            'totalPrice' => PRECIO_TOTAL,
-            'tasa1' => TASA_1,
-            'tasa2' => TASA_2,
+            'totalPrice' => RDOC_PRECIO_TOTAL,
+            'tasa1' => RDOC_TASA_1,
+            'tasa2' => RDOC_TASA_2,
             'consentTerms' => $formData['consentTerms'] ?? false,
             'hasSignature' => !empty($signatureFile),
             'paymentIntentId' => $formData['paymentIntentId'] ?? '',
@@ -303,7 +303,7 @@ function rdoc_send_to_tramitfy() {
         }
 
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, TRAMITFY_API_URL);
+        curl_setopt($ch, CURLOPT_URL, RDOC_TRAMITFY_API_URL);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $form_data); // Array directo con CURLFile
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -361,8 +361,8 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
         'From: Tramitfy <info@tramitfy.es>'
     ];
 
-    $totalTasas = TASA_1 + TASA_2;
-    $honorariosBrutos = PRECIO_TOTAL - $totalTasas;
+    $totalTasas = RDOC_TASA_1 + RDOC_TASA_2;
+    $honorariosBrutos = RDOC_PRECIO_TOTAL - $totalTasas;
     $honorariosNetos = round($honorariosBrutos / 1.21, 2);
     $iva = round($honorariosBrutos - $honorariosNetos, 2);
 
@@ -450,7 +450,7 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
                                             </tr>
                                             <tr>
                                                 <td style='color: #6b7280; font-size: 14px; font-weight: 600;'>Importe:</td>
-                                                <td style='color: #374151; font-size: 14px; font-weight: 600;'>" . number_format(PRECIO_TOTAL, 2) . "€</td>
+                                                <td style='color: #374151; font-size: 14px; font-weight: 600;'>" . number_format(RDOC_PRECIO_TOTAL, 2) . "€</td>
                                             </tr>
                                         </table>
                                     </td>
@@ -559,18 +559,18 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
                     <table width='100%' cellpadding='6' cellspacing='0' style='font-size: 14px;'>
                         <tr>
                             <td style='color: #666;'>Precio total cobrado:</td>
-                            <td align='right' style='color: #333; font-weight: 700; font-size: 16px;'>" . number_format(PRECIO_TOTAL, 2) . " €</td>
+                            <td align='right' style='color: #333; font-weight: 700; font-size: 16px;'>" . number_format(RDOC_PRECIO_TOTAL, 2) . " €</td>
                         </tr>
                         <tr style='border-top: 1px solid #ffe082;'>
                             <td colspan='2' style='padding-top: 12px; padding-bottom: 6px; color: #888; font-size: 13px; font-weight: 600;'>DESGLOSE:</td>
                         </tr>
                         <tr>
                             <td style='color: #666; padding-left: 15px;'>Tasa 1:</td>
-                            <td align='right' style='color: #666;'>" . number_format(TASA_1, 2) . " €</td>
+                            <td align='right' style='color: #666;'>" . number_format(RDOC_TASA_1, 2) . " €</td>
                         </tr>
                         <tr>
                             <td style='color: #666; padding-left: 15px;'>Tasa 2:</td>
-                            <td align='right' style='color: #666;'>" . number_format(TASA_2, 2) . " €</td>
+                            <td align='right' style='color: #666;'>" . number_format(RDOC_TASA_2, 2) . " €</td>
                         </tr>
                         <tr>
                             <td style='color: #666; padding-left: 15px; border-bottom: 1px solid #ffe082; padding-bottom: 8px;'>Total tasas:</td>
@@ -2041,7 +2041,7 @@ function recuperar_documentacion_form_shortcode() {
 
             <div class="rdoc-price-box">
                 <div class="rdoc-price-label">Precio Total</div>
-                <div class="rdoc-price-amount"><?php echo PRECIO_TOTAL; ?>€</div>
+                <div class="rdoc-price-amount"><?php echo RDOC_PRECIO_TOTAL; ?>€</div>
                 <div class="rdoc-price-detail">Incluye todas las tasas</div>
             </div>
 
@@ -2308,7 +2308,7 @@ function recuperar_documentacion_form_shortcode() {
 
                         <button type="button" id="rdoc-submit-payment" class="rdoc-submit-btn rdoc-btn-large">
                             <i class="fas fa-lock"></i>
-                            <span>Confirmar y Pagar <?php echo PRECIO_TOTAL; ?>€</span>
+                            <span>Confirmar y Pagar <?php echo RDOC_PRECIO_TOTAL; ?>€</span>
                         </button>
 
                         <div class="rdoc-security-badges">

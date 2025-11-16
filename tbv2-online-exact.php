@@ -24,61 +24,33 @@ if (!defined('ABSPATH')) {
  * Detecta si estamos en una página autorizada para cargar TBV2
  */
 function tbv2_is_authorized_page() {
-    global $post;
+    // ✅ OPCIÓN 2: DETECCIÓN ULTRA-ESPECÍFICA
+    // Solo activar en URLs EXACTAS - nunca interferir con admin/WordPress
     
-    // 🚨 PROTECCIÓN AJAX: Nunca cargar en requests AJAX de otros formularios
-    if (defined('DOING_AJAX') && DOING_AJAX) {
-        $action = $_POST['action'] ?? $_GET['action'] ?? '';
-        error_log("🔍 TBV2 DEBUG: AJAX action = '$action'");
-        
-        // 🔒 BYPASS COMPLETO PARA ADMIN
-        if (is_admin()) {
-            error_log("🔍 TBV2 DEBUG: Admin bypass - returning true");
-            return true; // Admin siempre autorizado
-        }
-        
-        // Solo permitir AJAX para acciones específicas TBV2
-        $tbv2_ajax_actions = [
-            'tbv2_create_redsys_payment',
-            'tbv2_create_redsys_payment_generic', 
-            'tbv2_store_files',
-            'tbv2_send_confirmation_emails'
-        ];
-        
-        if (!in_array($action, $tbv2_ajax_actions)) {
-            error_log("🔍 TBV2 DEBUG: Action '$action' NOT in whitelist - returning FALSE");
-            return false; // Bloquear TBV2 en AJAX de otros formularios
-        } else {
-            error_log("🔍 TBV2 DEBUG: Action '$action' in whitelist - continuing...");
-        }
-    }
-    
-    // Admin siempre autorizado (solo para non-AJAX)
-    if (!defined('DOING_AJAX') && is_admin()) return true;
-    
-    // Verificar por URL
     $request_uri = $_SERVER['REQUEST_URI'] ?? '';
-    $authorized_pages = [
-        'testingfy',
-        'transferencia-propiedad-v2', 
-        'transferencia-barco-v2'
+    
+    // 🎯 URLs EXACTAS AUTORIZADAS (solo estas, sin excepciones)
+    $exact_authorized_paths = [
+        '/testingfy/',
+        '/transferencia-propiedad-v2/',
+        '/transferencia-barco-v2/'
     ];
     
-    foreach ($authorized_pages as $page) {
-        if (strpos($request_uri, $page) !== false) {
+    // Verificar coincidencia exacta de URL
+    foreach ($exact_authorized_paths as $path) {
+        if (strpos($request_uri, $path) !== false) {
             return true;
         }
     }
     
-    // Verificar por post object
-    if (is_object($post)) {
-        if (in_array($post->post_name, $authorized_pages) || 
-            strpos($post->post_content, '[transferencia_barco_v2]') !== false ||
-            strpos($post->post_content, '[transferencia_barco_v2_form]') !== false) {
-            return true;
-        }
+    // Verificar shortcode específico (sin tocar global WordPress)
+    global $post;
+    if (is_object($post) && 
+        strpos($post->post_content, '[transferencia_barco_v2_form]') !== false) {
+        return true;
     }
     
+    // Por defecto: NO activar TBV2 (máxima seguridad)
     return false;
 }
 
@@ -7107,18 +7079,23 @@ function tbv2_bypass_wp_security_filters() {
  error_log("TBV2: Filtros de seguridad y límites desactivados para uploads");
 }
 
-// ✅ PATRÓN CORREGIDO: Configuración directa sin init hook
-// Eliminar add_action('init') para evitar carga global
-if (tbv2_is_authorized_page()) {
+// Configurar al cargar el plugin - PROTEGIDO
+add_action('init', function() {
+ // 🛡️ PROTECCIÓN NUCLEAR: Solo en páginas autorizadas
+ if (!tbv2_is_authorized_page()) {
+  return; // Bloquear configuración en páginas no autorizadas
+ }
  tbv2_configure_file_uploads();
  tbv2_bypass_wp_security_filters();
-}
+});
 
 /**
- * ✅ SHORTCODE REGISTRATION DIRECTO (patrón hoja-asiento.php)
- * Sin init hook para evitar carga global
+ * Shortcode registration
  */
-add_shortcode('transferencia_barco_v2', 'tbv2_render_form');
+function tbv2_register_shortcode() {
+ add_shortcode('transferencia_barco_v2', 'tbv2_render_form');
+}
+add_action('init', 'tbv2_register_shortcode');
 
 /**
  * Enqueue scripts if needed
@@ -7401,11 +7378,8 @@ function tbv2_handle_create_redsys_payment() {
  ]);
  }
 }
-// ✅ AJAX HANDLERS PROTEGIDOS - Solo registrar si está autorizado
-if (tbv2_is_authorized_page()) {
-    add_action('wp_ajax_tbv2_create_redsys_payment', 'tbv2_handle_create_redsys_payment');
-    add_action('wp_ajax_nopriv_tbv2_create_redsys_payment', 'tbv2_handle_create_redsys_payment');
-}
+add_action('wp_ajax_tbv2_create_redsys_payment', 'tbv2_handle_create_redsys_payment');
+add_action('wp_ajax_nopriv_tbv2_create_redsys_payment', 'tbv2_handle_create_redsys_payment');
 
 /**
  * Handler para guardar archivos por separado (evitar 403)
@@ -7474,11 +7448,8 @@ function tbv2_handle_store_files() {
  wp_send_json_error(['message' => $e->getMessage()]);
  }
 }
-// ✅ AJAX HANDLERS PROTEGIDOS - Solo registrar si está autorizado
-if (tbv2_is_authorized_page()) {
-    add_action('wp_ajax_tbv2_store_files', 'tbv2_handle_store_files');
-    add_action('wp_ajax_nopriv_tbv2_store_files', 'tbv2_handle_store_files');
-}
+add_action('wp_ajax_tbv2_store_files', 'tbv2_handle_store_files');
+add_action('wp_ajax_nopriv_tbv2_store_files', 'tbv2_handle_store_files');
 
 /**
  * Handler para procesar el callback de Redsys (URL de retorno)
@@ -7526,9 +7497,7 @@ function tbv2_handle_redsys_callback() {
  
  exit;
 }
-// ✅ CALLBACK DIRECTO: Ejecutar inmediatamente si es necesario
-// Sin init hook para evitar carga global
-tbv2_handle_redsys_callback_init();
+add_action('init', 'tbv2_handle_redsys_callback_init');
 
 function tbv2_handle_redsys_callback_init() {
  // Debug logging
@@ -9007,11 +8976,10 @@ error_log(" TBV2 ENHANCED: Sistema de archivos compatible cargado - NO intercept
 
 // 🛡️ PROTECCIÓN QUIRÚRGICA - Usar función unificada tbv2_is_authorized_page()
 
-// ❌ JAVASCRIPT GLOBAL ELIMINADO - CAUSABA CONFLICTOS AJAX
-// Este JavaScript se ejecutaba al cargar el archivo (require_once)
-// contaminando todas las respuestas AJAX con <script> tags
-/*
-if (tbv2_is_authorized_page()) { 
+// ✅ PROTECCIÓN AJAX AVANZADA - SOLO PÁGINAS AUTORIZADAS
+// Solo ejecutar en páginas autorizadas
+if (tbv2_is_authorized_page()) { // REACTIVADO CON PROTECCIÓN AJAX
+    // Solo output si está autorizado
 ?>
 <script>
 // TBV2 TEMPORAL INTEGRATION - SISTEMA INDEPENDIENTE
@@ -9439,17 +9407,13 @@ console.log(' TBV2 TEMPORAL - Sistema de interceptor cargado');
 </script>
 <?php
 } // Cierre de la condición tbv2_is_authorized_page()
-*/
 
 // =====================================================
 // AJAX HANDLER PARA CREAR FORMULARIO REDSYS TEMPORAL
 // =====================================================
 
-// ✅ AJAX HANDLERS PROTEGIDOS - Solo registrar si está autorizado
-if (tbv2_is_authorized_page()) {
-    add_action('wp_ajax_tbv2_create_redsys_payment_generic', 'tbv2_create_redsys_payment_handler');
-    add_action('wp_ajax_nopriv_tbv2_create_redsys_payment_generic', 'tbv2_create_redsys_payment_handler');
-}
+add_action('wp_ajax_tbv2_create_redsys_payment_generic', 'tbv2_create_redsys_payment_handler');
+add_action('wp_ajax_nopriv_tbv2_create_redsys_payment_generic', 'tbv2_create_redsys_payment_handler');
 
 function tbv2_create_redsys_payment_handler() {
  try {
@@ -9831,10 +9795,7 @@ function tbv2_send_confirmation_emails_handler() {
 }
 
 // Registrar handler AJAX (para usuarios logueados y no logueados)
-// ✅ AJAX HANDLERS PROTEGIDOS - Solo registrar si está autorizado
-if (tbv2_is_authorized_page()) {
-    add_action('wp_ajax_tbv2_send_confirmation_emails', 'tbv2_send_confirmation_emails_handler');
-    add_action('wp_ajax_nopriv_tbv2_send_confirmation_emails', 'tbv2_send_confirmation_emails_handler');
-}
+add_action('wp_ajax_tbv2_send_confirmation_emails', 'tbv2_send_confirmation_emails_handler');
+add_action('wp_ajax_nopriv_tbv2_send_confirmation_emails', 'tbv2_send_confirmation_emails_handler');
 
 // ========================================

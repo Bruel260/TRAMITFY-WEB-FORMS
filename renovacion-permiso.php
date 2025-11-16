@@ -6,13 +6,13 @@ defined('ABSPATH') || exit;
 require_once(get_template_directory() . '/vendor/autoload.php');
 
 // Configuración de Stripe AL NIVEL GLOBAL (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
-define('NAVIGATION_PERMIT_STRIPE_MODE', 'test'); // 'test' o 'live' - MODO LIVE ACTIVADO
+define('NAVIGATION_PERMIT_STRIPE_MODE', 'test'); // 'test' o 'live' - MODO TEST MIENTRAS SE CONFIGURAN CLAVES
 
-define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'pk_test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
-define('NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY', 'sk_test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'pk_test_51SBOq2GXJ2PkUN8kmrKUUjCLbvY3v8sAsgr6rNtg8zHyUZjB6pFrB7Vz3Gm0l2Wm7y5xVoMap2NY8utwgdJOogNQ000qBYIX5V');
+define('NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY', 'sk_test_51SBOq2GXJ2PkUN8kFlbLBQU3pd1kTVpWsSooQzdPMcqC8jKFSykeptf5XKOtbBzwMT4yjVHM0AbHUFoncbWIe4V600wkzJwpXC');
 
-define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
-define('NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY', 'sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_51QHhtNGXGHYLV5CXu3P7PrAFezBnDuf0JsZzb2AxjSsV0okn4y19VOMIjW0NUOLpaFdI3CCRhiC4fvNBDDbPhiW100KkF6Uo2x');
+define('NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY', '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');
 
 define('NAVIGATION_PERMIT_SERVICE_PRICE', 65.00);
 define('NAVIGATION_PERMIT_TASA_CERTIFICADO', 15.00);
@@ -26,6 +26,17 @@ if (NAVIGATION_PERMIT_STRIPE_MODE === 'test') {
     $stripe_public_key = NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY;
     $stripe_secret_key = NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY;
 }
+
+// ==========================================
+// MANEJO DE AJAX - REGISTRAR ACCIONES
+// ==========================================
+// Registrar las acciones AJAX de forma normal
+add_action('wp_ajax_send_navigation_permit_to_tramitfy', 'send_navigation_permit_to_tramitfy');
+add_action('wp_ajax_nopriv_send_navigation_permit_to_tramitfy', 'send_navigation_permit_to_tramitfy');
+add_action('wp_ajax_send_navigation_permit_emails', 'send_navigation_permit_emails');
+add_action('wp_ajax_nopriv_send_navigation_permit_emails', 'send_navigation_permit_emails');
+add_action('wp_ajax_create_payment_intent_navigation_permit_renewal', 'create_payment_intent_navigation_permit_renewal');
+add_action('wp_ajax_nopriv_create_payment_intent_navigation_permit_renewal', 'create_payment_intent_navigation_permit_renewal');
 
 /**
  * Shortcode para el formulario de renovación de permiso de navegación
@@ -3755,7 +3766,8 @@ function create_payment_intent_navigation_permit_renewal() {
 
         error_log('Payment Intent created: ' . $paymentIntent->id);
 
-        echo json_encode([
+        // Devolver formato que espera el JavaScript (directo, no en 'data')
+        wp_die(json_encode([
             'clientSecret' => $paymentIntent->client_secret,
             'debug' => [
                 'mode' => NAVIGATION_PERMIT_STRIPE_MODE,
@@ -3763,23 +3775,15 @@ function create_payment_intent_navigation_permit_renewal() {
                 'keyConfirmed' => substr($currentKey, 0, 25) . '...',
                 'paymentIntentId' => $paymentIntent->id
             ]
-        ]);
+        ]), 200, ['Content-Type' => 'application/json']);
     } catch (Exception $e) {
         error_log('Error creating payment intent: ' . $e->getMessage());
-        echo json_encode(['error' => $e->getMessage()]);
+        wp_die(json_encode(['error' => $e->getMessage()]), 500, ['Content-Type' => 'application/json']);
     }
-
-    wp_die();
 }
 
-// Registrar shortcode y handlers AJAX al nivel global (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
+// Registrar shortcode SOLAMENTE (handlers AJAX ya están registrados al inicio del archivo)
 add_shortcode('navigation_permit_renewal_form', 'navigation_permit_renewal_form_shortcode');
 
-add_action('wp_ajax_create_payment_intent_navigation_permit_renewal', 'create_payment_intent_navigation_permit_renewal');
-add_action('wp_ajax_nopriv_create_payment_intent_navigation_permit_renewal', 'create_payment_intent_navigation_permit_renewal');
-
-add_action('wp_ajax_send_navigation_permit_to_tramitfy', 'send_navigation_permit_to_tramitfy');
-add_action('wp_ajax_nopriv_send_navigation_permit_to_tramitfy', 'send_navigation_permit_to_tramitfy');
-
-add_action('wp_ajax_send_navigation_permit_emails', 'send_navigation_permit_emails');
-add_action('wp_ajax_nopriv_send_navigation_permit_emails', 'send_navigation_permit_emails');
+// NOTA: Los handlers AJAX están registrados al inicio del archivo (líneas 34-39) 
+// NO duplicar aquí para evitar interferencia
