@@ -4533,3 +4533,6 @@ require_once get_template_directory() . '/sistema-prueba-seguro.php';  // 🔐 S
 // ===== SISTEMA DE PRUEBA REAL =====
 require_once get_template_directory() . '/sistema-prueba-real.php';  // 🏦 SISTEMA PRUEBA REAL TPV+VPS
 
+// ===== TMV2 - TRANSFERENCIA MOTOS V2 =====
+require_once get_template_directory() . '/transferencia-moto-v2.php';  // 🚤 TMV2: SISTEMA COMPLETO INDEPENDIENTE
+
