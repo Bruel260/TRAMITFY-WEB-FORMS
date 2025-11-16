@@ -17,6 +17,43 @@ if (!defined('ABSPATH')) {
 }
 
 // =====================================================
+// PROTECCIÓN CONTRA INTERFERENCIA CON OTROS FORMULARIOS
+// =====================================================
+// Solo ejecutar JavaScript TBV2 si estamos en la página correcta
+function tbv2_is_correct_page() {
+    global $post;
+    
+    // Verificar si estamos en la página específica del formulario TBV2
+    if (!is_object($post)) return false;
+    
+    // ID de la página o slug específico donde debe ejecutarse TBV2
+    $tbv2_pages = array(
+        'transferencia-propiedad-v2',  // slug
+        'transferencia-barco-v2',      // slug alternativo
+    );
+    
+    // Verificar si estamos en una de las páginas autorizadas
+    if (in_array($post->post_name, $tbv2_pages) || 
+        strpos($post->post_content, '[transferencia_barco_v2_form]') !== false) {
+        return true;
+    }
+    
+    return false;
+}
+
+// Si no estamos en la página correcta, no cargar JavaScript TBV2
+if (!tbv2_is_correct_page()) {
+    // Retornar formulario básico sin JavaScript para evitar interferencias
+    add_action('wp_head', function() {
+        echo '<script>
+        // Prevenir carga de variables globales TBV2 en otras páginas
+        window.TBV2_DISABLED = true;
+        console.log("TBV2: Deshabilitado en página no autorizada");
+        </script>';
+    });
+}
+
+// =====================================================
 // CONSTANTES DE CONFIGURACIÓN REDSYS V2
 // =====================================================
 
@@ -3359,7 +3396,14 @@ function tbv2_render_scripts() {
  ?>
  <script>
  document.addEventListener('DOMContentLoaded', function() {
- console.log(' TBV2 - Inicializando formulario idéntico...');
+ 
+ // PROTECCIÓN: Solo ejecutar en páginas autorizadas
+ if (window.TBV2_DISABLED === true) {
+     console.log('🚫 TBV2: Sistema deshabilitado en página no autorizada');
+     return; // Salir completamente, no ejecutar nada
+ }
+ 
+ console.log('✅ TBV2 - Inicializando formulario en página autorizada...');
  TBV2_Form.init();
  TBV2_Form.initRealTimeValidation();
  initializePaymentSystem();
@@ -3369,6 +3413,12 @@ function tbv2_render_scripts() {
  
  console.log(' Sistema de pago inicializado');
  });
+
+// PROTECCIÓN: Solo definir objetos globales en páginas autorizadas
+if (window.TBV2_DISABLED === true) {
+    console.log('🚫 TBV2: Objetos globales no definidos en página no autorizada');
+    return; // Salir del script completo
+}
 
  // Namespace principal del formulario
  const TBV2_Form = {
@@ -8901,105 +8951,440 @@ add_action('tbv2_payment_success', function($orderId, $formData) {
 error_log(" TBV2 ENHANCED: Sistema de archivos compatible cargado - NO intercepta JavaScript");
 
 // =====================================================
-// TBV2 TEMPORAL CAPTURE SYSTEM - CONTROLADO
+// TBV2 TEMPORAL INTEGRATION SYSTEM
 // =====================================================
 ?>
-<?php 
-// Cargar sistema temporal cuando se ejecute el shortcode TBV2 (NO en wp-admin)
-if (!is_admin()): ?>
 <script>
-// TBV2 TEMPORAL CAPTURE - SOLO EN PÁGINAS TBV2
-console.log('🔄 TBV2 Temporal System - Iniciando captura automática...');
+// TBV2 TEMPORAL INTEGRATION - SISTEMA INDEPENDIENTE
 
-// Sistema de intercepción para captura automática antes de Redsys
-window.TBV2_TEMPORAL_CAPTURE = {
-    
-    // Interceptar envío del formulario TBV2 para captura temporal
-    interceptFormSubmission: function() {
-        // Esperar a que TBV2_Form esté disponible
-        const checkAndIntercept = () => {
-            if (window.TBV2_Form && window.TBV2_Form.submitForm) {
-                console.log('🎯 TBV2 - Interceptando TBV2_Form.submitForm');
-                
-                const originalSubmit = window.TBV2_Form.submitForm.bind(window.TBV2_Form);
-                
-                window.TBV2_Form.submitForm = async function() {
-                    try {
-                        console.log('📡 TBV2 - Interceptando envío para captura temporal');
-                        
-                        // Capturar datos del formulario
-                        const formData = this.getAllFormData ? this.getAllFormData() : {};
-                        
-                        // Generar OrderID único
-                        const orderId = Date.now().toString().slice(-12);
-                        formData.orderId = orderId;
-                        
-                        // Añadir archivos de firma si existen
-                        if (window.tbv2SignatureData) {
-                            formData.files = formData.files || {};
-                            formData.files.firmaAutorizacion = [{
-                                name: 'firma_autorizacion.png',
-                                data: window.tbv2SignatureData,
-                                type: 'image/png'
-                            }];
-                        }
-                        
-                        console.log('📦 TBV2 - Datos a capturar:', formData);
-                        
-                        // Enviar a sistema temporal ANTES del pago
-                        const temporalResponse = await fetch('https://tramitfy.org/api/temporal/capture', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                orderId: orderId,
-                                formData: formData,
-                                timestamp: new Date().toISOString()
-                            })
-                        });
-                        
-                        if (temporalResponse.ok) {
-                            console.log('✅ TBV2 - Datos capturados en sistema temporal');
-                        } else {
-                            console.warn('⚠️ TBV2 - Error en captura temporal, continuando...');
-                        }
-                        
-                        // Continuar con el flujo normal
-                        return originalSubmit.call(this);
-                        
-                    } catch (error) {
-                        console.warn('⚠️ TBV2 - Error en intercepción:', error);
-                        // Continuar con flujo normal en caso de error
-                        return originalSubmit.call(this);
-                    }
-                };
-                
-                console.log('✅ TBV2 - Intercepción configurada exitosamente');
-            } else {
-                console.log('⏳ TBV2 - Esperando que TBV2_Form esté disponible...');
-                setTimeout(checkAndIntercept, 500);
-            }
-        };
-        
-        checkAndIntercept();
-    },
-    
-    // Inicializar sistema
-    init: function() {
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                setTimeout(() => this.interceptFormSubmission(), 1000);
-            });
-        } else {
-            setTimeout(() => this.interceptFormSubmission(), 1000);
-        }
-    }
+// PROTECCIÓN: Solo cargar sistema temporal en páginas autorizadas
+if (window.TBV2_DISABLED === true) {
+    console.log('🚫 TBV2 TEMPORAL: Sistema no cargado en página no autorizada');
+    return; // Salir del script completo
+}
+
+console.log('✅ TBV2 TEMPORAL - Cargando sistema independiente en página autorizada...');
+
+const TBV2_TEMPORAL = {
+ API_BASE: 'https://tramitfy.org/api/temporal',
+ DEBUG: true,
+ 
+ async interceptPayment(originalFormData) {
+ console.log(' TBV2 TEMPORAL - Interceptando flujo de pago');
+ 
+ try {
+ const tempOrderId = this.generateOrderId();
+ console.log('🆔 Order ID temporal:', tempOrderId);
+ 
+ const payload = await this.preparePayload(tempOrderId, originalFormData);
+ console.log(' Payload temporal:', payload);
+ 
+ const response = await this.sendToCapture(payload);
+ 
+ if (!response.success) {
+ throw new Error(`Error captura temporal: ${response.error}`);
+ }
+ 
+ console.log(' Datos capturados temporalmente');
+ console.log(' Temporal ID:', response.temporal_id);
+ 
+ this.storeForCallback(tempOrderId, {
+ temporal_id: response.temporal_id,
+ expires_at: response.expires_at
+ });
+ 
+ return {
+ ...originalFormData,
+ orderId: tempOrderId,
+ temporal_id: response.temporal_id
+ };
+ 
+ } catch (error) {
+ console.error(' Error en interceptor temporal:', error);
+ throw error;
+ }
+ },
+ 
+ generateOrderId() {
+ // Generar OrderID compatible con Redsys 
+ // Formato: timestamp en segundos (10 dígitos) + 2 dígitos aleatorios = 12 total
+ const timestamp = Math.floor(Date.now() / 1000); // Segundos desde epoch
+ const random = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+ const orderId = timestamp.toString() + random;
+ 
+ console.log('🆔 OrderID generado para Redsys:', orderId, '(', orderId.length, 'caracteres)');
+ return orderId;
+ },
+ 
+ async preparePayload(orderId, formData) {
+ console.log(' Preparando payload con extracción de archivos...');
+ 
+ const customerData = {
+ name: this.extractValue('customer_name') || formData.personal?.customerName,
+ dni: this.extractValue('customer_dni') || formData.personal?.customerDni,
+ email: this.extractValue('customer_email') || formData.personal?.customerEmail,
+ phone: this.extractValue('customer_phone') || formData.personal?.customerPhone
+ };
+ 
+ const boatData = {
+ manufacturer: this.extractValue('manufacturer') || formData.vehicle?.manufacturer,
+ model: this.extractValue('model') || formData.vehicle?.model,
+ purchasePrice: parseFloat(this.extractValue('purchase_price') || formData.vehicle?.purchasePrice || 0),
+ matriculationDate: this.extractValue('matriculation_date') || formData.vehicle?.matriculationDate,
+ region: this.extractValue('region') || formData.pricing?.region
+ };
+ 
+ const pricing = {
+ basePrice: 134.99,
+ finalAmount: parseFloat(this.extractValue('final_price') || formData.pricing?.finalAmount || 134.99),
+ transferTax: parseFloat(formData.pricing?.transferTax || 0),
+ extraFee: parseFloat(formData.pricing?.extraFee || 0)
+ };
+ 
+ // Extraer archivos del formulario
+ console.log(' Extrayendo archivos del formulario...');
+ const extractedFiles = await this.extractFiles();
+ const files = await this.processFiles(extractedFiles);
+ 
+ console.log(` Payload preparado: ${files.length} archivo(s) procesado(s)`);
+ 
+ return {
+ orderId,
+ customerData,
+ boatData,
+ files,
+ pricing
+ };
+ },
+ 
+ async processFiles(filesData) {
+ if (!filesData) return [];
+ 
+ const processed = [];
+ for (const [category, fileList] of Object.entries(filesData)) {
+ if (Array.isArray(fileList)) {
+ for (const file of fileList) {
+ if (file && file.base64) {
+ processed.push({
+ name: file.name || `${category}_file.${this.getExtension(file.base64)}`,
+ base64: file.base64,
+ type: category
+ });
+ }
+ }
+ }
+ }
+ return processed;
+ },
+ 
+ async sendToCapture(payload) {
+ const response = await fetch(this.API_BASE + '/capture', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify(payload)
+ });
+ 
+ const result = await response.json();
+ 
+ if (!response.ok) {
+ throw new Error(result.error || 'Error en captura temporal');
+ }
+ 
+ return result;
+ },
+ 
+ storeForCallback(orderId, data) {
+ localStorage.setItem(`tbv2_temporal_${orderId}`, JSON.stringify({
+ ...data,
+ stored_at: new Date().toISOString()
+ }));
+ },
+ 
+ async handleCallback(orderId, redsysData) {
+ console.log(' TBV2 TEMPORAL - Procesando callback:', orderId);
+ 
+ try {
+ const storedData = JSON.parse(localStorage.getItem(`tbv2_temporal_${orderId}`) || '{}');
+ 
+ if (!storedData.temporal_id) {
+ throw new Error('Temporal ID no encontrado');
+ }
+ 
+ const confirmPayload = {
+ temporal_id: storedData.temporal_id,
+ orderId: orderId,
+ payment_confirmed: true,
+ redsys_data: redsysData
+ };
+ 
+ const response = await fetch(this.API_BASE + '/confirm', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify(confirmPayload)
+ });
+ 
+ const result = await response.json();
+ 
+ if (!response.ok) {
+ throw new Error(result.error || 'Error confirmando pago');
+ }
+ 
+ console.log(' Pago confirmado temporalmente');
+ console.log(' Trámite final:', result.tramite_id);
+ 
+ localStorage.removeItem(`tbv2_temporal_${orderId}`);
+ 
+ return result;
+ 
+ } catch (error) {
+ console.error(' Error en callback temporal:', error);
+ throw error;
+ }
+ },
+ 
+ extractValue(fieldId) {
+ const field = document.getElementById(fieldId);
+ return field ? field.value.trim() : '';
+ },
+ 
+ // Extraer archivos del formulario y convertirlos a base64
+ async extractFiles() {
+ const fileMapping = {
+ 'upload-hoja-asiento': 'hojaAsiento',
+ 'upload-dni-comprador': 'dniComprador', 
+ 'upload-dni-vendedor': 'dniVendedor',
+ 'upload-contrato-compraventa': 'contratoCompraventa',
+ 'upload-modelo-620': 'itpComprobante'
+ };
+ 
+ const extractedFiles = {};
+ 
+ for (const [inputId, category] of Object.entries(fileMapping)) {
+ // Prioridad 1: Usar archivos del sistema de preview si existen
+ if (window.uploadedFiles && window.uploadedFiles[inputId] && window.uploadedFiles[inputId].length > 0) {
+ const files = window.uploadedFiles[inputId];
+ console.log(` Procesando ${files.length} archivo(s) de ${category} (desde preview system)`);
+ extractedFiles[category] = [];
+ 
+ for (let i = 0; i < files.length; i++) {
+ const file = files[i];
+ try {
+ const base64 = await this.fileToBase64(file);
+ extractedFiles[category].push({
+ name: file.name,
+ base64: base64,
+ size: file.size,
+ type: file.type
+ });
+ console.log(` Archivo convertido: ${file.name} (${file.size} bytes)`);
+ } catch (error) {
+ console.error(` Error procesando archivo ${file.name}:`, error);
+ }
+ }
+ }
+ // Fallback: Sistema tradicional
+ else {
+ const input = document.getElementById(inputId);
+ if (input && input.files && input.files.length > 0) {
+ console.log(` Procesando ${input.files.length} archivo(s) de ${category} (desde input tradicional)`);
+ extractedFiles[category] = [];
+ 
+ for (let i = 0; i < input.files.length; i++) {
+ const file = input.files[i];
+ try {
+ const base64 = await this.fileToBase64(file);
+ extractedFiles[category].push({
+ name: file.name,
+ base64: base64,
+ size: file.size,
+ type: file.type
+ });
+ console.log(` Archivo convertido: ${file.name} (${file.size} bytes)`);
+ } catch (error) {
+ console.error(` Error procesando archivo ${file.name}:`, error);
+ }
+ }
+ }
+ }
+ }
+ 
+ // Buscar firma digital - PRIORIDAD A DATOS PERSISTENTES
+ let signatureData = null;
+ 
+ // 1. Buscar en variable global persistente (desde acceptSignature)
+ if (window.tbv2SignatureData && window.tbv2SignatureData !== 'data:image/png;base64,') {
+ signatureData = window.tbv2SignatureData;
+ console.log(' Firma obtenida desde variable persistente');
+ } 
+ // 2. Fallback: Buscar en canvas activo
+ else {
+ const signatureCanvas = document.querySelector('#signature-pad canvas');
+ if (signatureCanvas) {
+ try {
+ const canvasData = signatureCanvas.toDataURL('image/png');
+ if (canvasData && canvasData !== 'data:image/png;base64,') {
+ signatureData = canvasData;
+ console.log(' Firma obtenida desde canvas activo');
+ }
+ } catch (error) {
+ console.error(' Error leyendo canvas de firma:', error);
+ }
+ }
+ }
+ 
+ // Añadir firma si se encontró
+ if (signatureData) {
+ extractedFiles['firmaAutorizacion'] = [{
+ name: 'firma_autorizacion.png',
+ base64: signatureData,
+ size: signatureData.length,
+ type: 'image/png'
+ }];
+ console.log(' Firma digital incluida en extractedFiles');
+ console.log(' Tamaño de firma:', signatureData.length, 'caracteres');
+ } else {
+ console.log(' No se encontró firma digital');
+ }
+ 
+ return extractedFiles;
+ },
+ 
+ // Convertir archivo a base64
+ fileToBase64(file) {
+ return new Promise((resolve, reject) => {
+ const reader = new FileReader();
+ reader.onload = () => resolve(reader.result);
+ reader.onerror = error => reject(error);
+ reader.readAsDataURL(file);
+ });
+ },
+ 
+ getExtension(base64) {
+ if (base64.includes('data:image/png')) return 'png';
+ if (base64.includes('data:image/jpeg')) return 'jpg';
+ if (base64.includes('data:application/pdf')) return 'pdf';
+ return 'bin';
+ },
+ 
+ // Continúa con el flujo de pago Redsys
+ async continueWithRedsys(formData) {
+ console.log(' Iniciando flujo Redsys con datos temporales');
+ console.log(' Order ID temporal:', formData.orderId);
+ 
+ try {
+ // Crear formulario de pago Redsys usando AJAX al backend PHP
+ const redsysData = {
+ action: 'create_redsys_payment',
+ nonce: '<?php echo wp_create_nonce("tbv2_nonce"); ?>',
+ orderId: formData.orderId,
+ customerName: formData.personal?.customerName || this.extractValue('customer_name'),
+ customerEmail: formData.personal?.customerEmail || this.extractValue('customer_email'),
+ finalAmount: formData.pricing?.total_amount || 134.99,
+ personal: formData.personal,
+ vehicle: formData.vehicle,
+ pricing: formData.pricing
+ };
+ 
+ console.log(' Enviando datos para crear formulario Redsys...');
+ 
+ const response = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/x-www-form-urlencoded'
+ },
+ body: new URLSearchParams(redsysData)
+ });
+ 
+ const result = await response.text();
+ console.log(' Respuesta Redsys backend:', result);
+ 
+ if (response.ok) {
+ // Si recibimos HTML del formulario, insertarlo y enviarlo
+ if (result.includes('<form')) {
+ console.log(' Formulario Redsys recibido, enviando...');
+ 
+ // Crear contenedor temporal para el formulario
+ const container = document.createElement('div');
+ container.innerHTML = result;
+ container.style.display = 'none';
+ document.body.appendChild(container);
+ 
+ // Buscar y enviar el formulario
+ const redsysForm = container.querySelector('form');
+ if (redsysForm) {
+ console.log(' Enviando formulario Redsys automáticamente');
+ redsysForm.submit();
+ } else {
+ throw new Error('Formulario Redsys no encontrado en respuesta');
+ }
+ } else {
+ throw new Error('Respuesta inválida del servidor Redsys');
+ }
+ } else {
+ throw new Error(`Error HTTP ${response.status}: ${result}`);
+ }
+ 
+ } catch (error) {
+ console.error(' Error en flujo Redsys:', error);
+ throw error;
+ }
+ }
 };
 
-// Activar solo en páginas TBV2
-window.TBV2_TEMPORAL_CAPTURE.init();
+// PATCH DEL SISTEMA EXISTENTE
+document.addEventListener('DOMContentLoaded', function() {
+ console.log(' TBV2 TEMPORAL - Aplicando patch al sistema existente');
+ 
+ setTimeout(function() {
+ const submitBtn = document.getElementById('submit-payment');
+ 
+ if (submitBtn) {
+ console.log(' Botón de pago encontrado, aplicando interceptor');
+ 
+ const newBtn = submitBtn.cloneNode(true);
+ submitBtn.parentNode.replaceChild(newBtn, submitBtn);
+ 
+ newBtn.addEventListener('click', async function(e) {
+ e.preventDefault();
+ console.log(' TBV2 TEMPORAL - Pago interceptado');
+ 
+ newBtn.disabled = true;
+ newBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparando datos...';
+ 
+ try {
+ const originalData = await captureAllFormData();
+ console.log(' Datos originales capturados:', originalData);
+ 
+ const modifiedData = await TBV2_TEMPORAL.interceptPayment(originalData);
+ console.log(' Datos enviados al sistema temporal');
+ 
+ // Continuar con el flujo de pago Redsys usando el OrderID temporal
+ console.log(' Continuando con pago Redsys...');
+ newBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Redirigiendo al TPV...';
+ 
+ // Crear formulario de pago Redsys con el OrderID temporal
+ await TBV2_TEMPORAL.continueWithRedsys(modifiedData);
+ 
+ } catch (error) {
+ console.error(' Error en pago temporal:', error);
+ alert('Error procesando el pago: ' + error.message);
+ 
+ newBtn.disabled = false;
+ newBtn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Proceder al Pago';
+ }
+ });
+ 
+ console.log(' Interceptor temporal instalado');
+ } else {
+ console.warn(' Botón de pago no encontrado');
+ }
+ }, 1000);
+});
 
+window.TBV2_TEMPORAL_SYSTEM = TBV2_TEMPORAL;
+
+console.log(' TBV2 TEMPORAL - Sistema de interceptor cargado');
 </script>
-<?php endif; ?>
 <?php
 
 // =====================================================
