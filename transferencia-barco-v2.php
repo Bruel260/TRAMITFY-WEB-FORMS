@@ -28,8 +28,9 @@ function tbv2_is_correct_page() {
     
     // ID de la página o slug específico donde debe ejecutarse TBV2
     $tbv2_pages = array(
-        'transferencia-propiedad-v2',  // slug
+        'transferencia-propiedad-v2',  // slug oficial
         'transferencia-barco-v2',      // slug alternativo
+        'testingfy',                   // página de testing
     );
     
     // Verificar si estamos en una de las páginas autorizadas
