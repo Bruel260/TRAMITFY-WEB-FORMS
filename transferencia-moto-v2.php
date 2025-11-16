@@ -26,14 +26,17 @@ if (!defined('ABSPATH')) {
 function tmv2_is_authorized_page() {
     global $post;
     
+    // 🔧 BYPASS PARA REQUIRE_ONCE: Siempre permitir funciones básicas
+    if (!isset($_SERVER['REQUEST_URI']) || !isset($_SERVER['HTTP_HOST'])) {
+        return true; // Durante require_once, permitir carga básica
+    }
+    
     // 🚨 PROTECCIÓN AJAX: Nunca cargar en requests AJAX de otros formularios
     if (defined('DOING_AJAX') && DOING_AJAX) {
         $action = $_POST['action'] ?? $_GET['action'] ?? '';
-        error_log("🔍 TMV2 DEBUG: AJAX action = '$action'");
         
         // 🔒 BYPASS COMPLETO PARA ADMIN
         if (is_admin()) {
-            error_log("🔍 TMV2 DEBUG: Admin bypass - returning true");
             return true; // Admin siempre autorizado
         }
         
@@ -46,10 +49,7 @@ function tmv2_is_authorized_page() {
         ];
         
         if (!in_array($action, $tmv2_ajax_actions)) {
-            error_log("🔍 TMV2 DEBUG: Action '$action' NOT in whitelist - returning FALSE");
             return false; // Bloquear TMV2 en AJAX de otros formularios
-        } else {
-            error_log("🔍 TMV2 DEBUG: Action '$action' in whitelist - continuing...");
         }
     }
     
