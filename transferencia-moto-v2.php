@@ -816,7 +816,24 @@ function tmv2_render_form() {
         init() {
             console.log('TMV2 System initialized');
             this.setupSidebarContent();
+            this.setupNavigation();
             this.updateSummary();
+        },
+
+        setupNavigation() {
+            // Configurar navegación libre en tabs del menú
+            const navTabs = document.querySelectorAll('.nav-tab');
+            navTabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const step = parseInt(tab.getAttribute('data-step'));
+                    if (step) {
+                        tmv2_goToStep(step);
+                    }
+                });
+                // Añadir cursor pointer para indicar que son clickeables
+                tab.style.cursor = 'pointer';
+            });
         },
 
         setupSidebarContent() {
@@ -1072,14 +1089,19 @@ function tmv2_render_form() {
         }
     };
 
-    // Funciones de navegación TMV2 (idénticas a TBV2)
+    // Funciones de navegación TMV2 - NAVEGACIÓN LIBRE
     function tmv2_nextStep(step) {
-        // Validar paso actual
-        if (!tmv2_validateStep(TMV2_System.currentStep)) {
-            return;
-        }
+        // NAVEGACIÓN LIBRE - Sin validaciones restrictivas
+        tmv2_goToStep(step);
+    }
 
-        // Cambiar a siguiente paso (usar clases de TBV2)
+    function tmv2_prevStep(step) {
+        // NAVEGACIÓN LIBRE - Sin validaciones restrictivas
+        tmv2_goToStep(step);
+    }
+
+    function tmv2_goToStep(step) {
+        // Cambiar a step sin validaciones (navegación libre)
         document.querySelectorAll('.form-page').forEach(el => {
             el.classList.remove('active');
             el.classList.add('hidden');
@@ -1096,26 +1118,42 @@ function tmv2_render_form() {
         }
 
         TMV2_System.currentStep = step;
+        TMV2_System.updateSidebarForStep(step);
         TMV2_System.updateSummary();
 
-        // Scroll to top (usar clase de TBV2)
+        // Scroll to top
         document.querySelector('.tramitfy-main-form').scrollIntoView({ behavior: 'smooth' });
     }
 
-    function tmv2_prevStep(step) {
-        tmv2_nextStep(step);
-    }
-
     function tmv2_validateStep(step) {
+        // NAVEGACIÓN LIBRE - Validación relajada solo para avisos informativos
         const stepEl = document.querySelector(`.form-page[data-step="${step}"]`);
         if (!stepEl) return true;
         
-        const requiredInputs = stepEl.querySelectorAll('input[required], select[required]');
+        // Solo validar campos críticos si van al pago
+        if (step === 4) {
+            return tmv2_validatePaymentFields();
+        }
         
-        for (let input of requiredInputs) {
-            if (!input.value.trim()) {
-                alert(`Por favor, completa el campo: ${input.previousElementSibling.textContent}`);
-                input.focus();
+        // Para otros pasos: navegación libre sin bloqueos
+        return true;
+    }
+
+    function tmv2_validatePaymentFields() {
+        // Validar solo campos esenciales para el pago
+        const requiredFields = [
+            { id: 'manufacturer', name: 'Fabricante' },
+            { id: 'model', name: 'Modelo' },
+            { id: 'buyerName', name: 'Nombre del comprador' },
+            { id: 'buyerDni', name: 'DNI del comprador' },
+            { id: 'buyerEmail', name: 'Email del comprador' }
+        ];
+        
+        for (let field of requiredFields) {
+            const input = document.getElementById(field.id);
+            if (!input || !input.value.trim()) {
+                alert(`Por favor, completa el campo: ${field.name}`);
+                if (input) input.focus();
                 return false;
             }
         }
@@ -1124,7 +1162,8 @@ function tmv2_render_form() {
     }
 
     function tmv2_processPayment() {
-        if (!tmv2_validateStep(4)) return;
+        // Validar solo los campos de pago requeridos (no navegación)
+        if (!tmv2_validatePaymentFields()) return;
 
         // Preparar datos del formulario para Redsys
         const formData = new FormData(document.getElementById('tmv2-transferencia-form'));
@@ -1377,10 +1416,12 @@ function tmv2_render_form() {
         document.addEventListener('DOMContentLoaded', () => {
             TMV2_System.init();
             TMV2_FileHandler.init();
+            console.log('✅ TMV2: Navegación libre activada - Todos los tabs son clickeables');
         });
     } else {
         TMV2_System.init();
         TMV2_FileHandler.init();
+        console.log('✅ TMV2: Navegación libre activada - Todos los tabs son clickeables');
     }
     </script>
 
