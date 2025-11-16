@@ -3400,25 +3400,7 @@ function tbv2_render_scripts() {
  }
  ?>
  <script>
- document.addEventListener('DOMContentLoaded', function() {
  
- // PROTECCIÓN: Solo ejecutar en páginas autorizadas
- if (window.TBV2_DISABLED === true) {
-     console.log('🚫 TBV2: Sistema deshabilitado en página no autorizada');
-     return; // Salir completamente, no ejecutar nada
- }
- 
- console.log('✅ TBV2 - Inicializando formulario en página autorizada...');
- TBV2_Form.init();
- TBV2_Form.initRealTimeValidation();
- initializePaymentSystem();
- 
- // Verificar si venimos de un pago exitoso
- checkSuccessfulPayment();
- 
- console.log(' Sistema de pago inicializado');
- });
-
 // PROTECCIÓN: Solo definir objetos globales en páginas autorizadas
 if (window.TBV2_DISABLED !== true) {
 
@@ -6960,6 +6942,26 @@ de la embarcación con matrícula <strong>${matricula}</strong>.
  }
  }
  
+// INICIALIZACIÓN DESPUÉS DE DEFINICIONES
+document.addEventListener('DOMContentLoaded', function() {
+ 
+ // PROTECCIÓN: Solo ejecutar en páginas autorizadas
+ if (window.TBV2_DISABLED === true) {
+     console.log('🚫 TBV2: Sistema deshabilitado en página no autorizada');
+     return; // Salir completamente, no ejecutar nada
+ }
+ 
+ console.log('✅ TBV2 - Inicializando formulario en página autorizada...');
+ TBV2_Form.init();
+ TBV2_Form.initRealTimeValidation();
+ initializePaymentSystem();
+ 
+ // Verificar si venimos de un pago exitoso
+ checkSuccessfulPayment();
+ 
+ console.log(' Sistema de pago inicializado');
+});
+
 } // Fin if TBV2_DISABLED !== true
  
  </script>
