@@ -9856,4 +9856,6 @@ if (tmv2_is_authorized_page()) {
     add_action('wp_ajax_nopriv_tmv2_send_confirmation_emails', 'tmv2_send_confirmation_emails_handler');
 }
 
+} // Cierre final tmv2_is_authorized_page() línea 8988
+
 // ========================================
