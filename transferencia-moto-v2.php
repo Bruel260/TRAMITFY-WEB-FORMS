@@ -118,256 +118,6 @@ global $tmv2_redsys_url;
 $tmv2_redsys_url = (TMV2_REDSYS_MODE === 'test') ? TMV2_REDSYS_URL_TEST : TMV2_REDSYS_URL_LIVE;
 
 // ============================================
-// 💳 SISTEMA DE PAGOS REDSYS TMV2
-// ============================================
-
-/**
- * Genera firma HMAC SHA256 para Redsys (TMV2)
- */
-function tmv2_redsys_generate_signature($data) {
-    $json_data = json_encode($data);
-    $params_base64 = base64_encode($json_data);
-    
-    // Usar clave de cifrado TMV2
-    $key = base64_decode(TMV2_REDSYS_SECRET_KEY);
-    $iv = substr($data['Ds_Merchant_Order'], 0, 8);
-    
-    // Generar clave específica
-    $cipher = "aes-128-cbc";
-    $encrypted_key = openssl_encrypt($iv, $cipher, $key, OPENSSL_RAW_DATA, str_repeat("\0", 16));
-    
-    // Calcular HMAC
-    $signature = hash_hmac('sha256', $params_base64, $encrypted_key, true);
-    
-    return base64_encode($signature);
-}
-
-/**
- * Crea formulario de pago Redsys para TMV2
- */
-function tmv2_redsys_create_payment_form($order_data) {
-    global $tmv2_redsys_url;
-    
-    // Parámetros del comercio TMV2
-    $params = [
-        'Ds_Merchant_MerchantCode' => TMV2_REDSYS_MERCHANT_CODE,
-        'Ds_Merchant_Terminal' => TMV2_REDSYS_TERMINAL,
-        'Ds_Merchant_Order' => $order_data['order_id'],
-        'Ds_Merchant_Amount' => $order_data['amount_cents'],
-        'Ds_Merchant_Currency' => TMV2_REDSYS_CURRENCY,
-        'Ds_Merchant_TransactionType' => '0', // Autorización
-        'Ds_Merchant_MerchantURL' => TMV2_REDSYS_URL_NOTIFICATION,
-        'Ds_Merchant_UrlOK' => TMV2_REDSYS_URL_OK,
-        'Ds_Merchant_UrlKO' => TMV2_REDSYS_URL_KO,
-        'Ds_Merchant_MerchantName' => 'Tramitfy - Motos de Agua',
-        'Ds_Merchant_ProductDescription' => 'Transferencia Moto de Agua',
-        'Ds_Merchant_ConsumerLanguage' => '001' // Español
-    ];
-    
-    // DEBUG
-    error_log("=== TMV2 PAYMENT PARAMS ===");
-    error_log("Order ID: " . $order_data['order_id']);
-    error_log("Amount: " . $order_data['amount_cents']);
-    error_log("============================");
-    
-    $signature = tmv2_redsys_generate_signature($params);
-    $merchant_parameters = base64_encode(json_encode($params));
-    
-    return [
-        'url' => $tmv2_redsys_url,
-        'Ds_MerchantParameters' => $merchant_parameters,
-        'Ds_SignatureVersion' => TMV2_REDSYS_SIGNATURE_VERSION,
-        'Ds_Signature' => $signature
-    ];
-}
-
-/**
- * Valida respuesta de Redsys para TMV2
- */
-function tmv2_redsys_validate_response($merchant_params, $signature_received) {
-    $params = json_decode(base64_decode($merchant_params), true);
-    
-    $signature_calculated = tmv2_redsys_generate_signature($params);
-    
-    return hash_equals($signature_calculated, $signature_received);
-}
-
-/**
- * Procesa callback de Redsys para TMV2
- */
-function tmv2_redsys_process_callback() {
-    $merchant_params = $_POST['Ds_MerchantParameters'] ?? '';
-    $signature = $_POST['Ds_Signature'] ?? '';
-    
-    if (!tmv2_redsys_validate_response($merchant_params, $signature)) {
-        error_log("TMV2: Firma inválida en callback");
-        return false;
-    }
-    
-    $params = json_decode(base64_decode($merchant_params), true);
-    
-    // Verificar transacción exitosa
-    if ($params['Ds_Response'] === '0000') {
-        // Procesar pago exitoso
-        tmv2_trigger_webhook($params);
-        return true;
-    }
-    
-    return false;
-}
-
-/**
- * Dispara webhook TMV2 tras pago exitoso
- */
-function tmv2_trigger_webhook($redsys_params) {
-    // Recuperar datos del sessionStorage (como TBV2)
-    $customer_data = get_transient('tmv2_customer_' . $redsys_params['Ds_Order']);
-    $vehicle_data = get_transient('tmv2_vehicle_' . $redsys_params['Ds_Order']);
-    $files_data = get_transient('tmv2_files_' . $redsys_params['Ds_Order']);
-    
-    if (!$customer_data || !$vehicle_data) {
-        error_log("TMV2: Datos no encontrados para order " . $redsys_params['Ds_Order']);
-        return;
-    }
-    
-    // Preparar payload para webhook TMV2
-    $webhook_data = [
-        'tramiteType' => 'transferencia-moto',
-        'paymentIntentId' => $redsys_params['Ds_Order'],
-        'finalAmount' => number_format($redsys_params['Ds_Amount'] / 100, 2),
-        'customerName' => $customer_data['buyerName'],
-        'customerDni' => $customer_data['buyerDni'],
-        'customerEmail' => $customer_data['buyerEmail'],
-        'customerPhone' => $customer_data['buyerPhone'],
-        'vehicleData' => $vehicle_data,
-        'sellerData' => [
-            'name' => $customer_data['sellerName'],
-            'dni' => $customer_data['sellerDni']
-        ],
-        'attachments' => $files_data ?? [],
-        'status' => 'pending',
-        'redsysData' => $redsys_params
-    ];
-    
-    // Enviar a webhook TMV2
-    wp_remote_post(TMV2_WEBHOOK_URL, [
-        'headers' => ['Content-Type' => 'application/json'],
-        'body' => json_encode($webhook_data),
-        'timeout' => 45
-    ]);
-    
-    // Limpiar datos temporales
-    delete_transient('tmv2_customer_' . $redsys_params['Ds_Order']);
-    delete_transient('tmv2_vehicle_' . $redsys_params['Ds_Order']);
-    delete_transient('tmv2_files_' . $redsys_params['Ds_Order']);
-}
-
-// ============================================
-// 📨 ACCIONES AJAX TMV2
-// ============================================
-
-/**
- * AJAX: Crear sesión de pago TMV2
- */
-function tmv2_ajax_create_payment() {
-    // Verificar nonce
-    if (!wp_verify_nonce($_POST['nonce'] ?? '', 'tmv2_nonce')) {
-        wp_die('Acceso denegado');
-    }
-    
-    // Generar OrderID único
-    $order_id = substr(time() . rand(1000, 9999), -12);
-    
-    // Calcular precio (base + ITP estimado)
-    $base_price = 89.00;
-    $purchase_price = floatval($_POST['purchasePrice'] ?? 0);
-    $itp_estimated = $purchase_price * 0.04; // 4% estimado
-    $total_amount = $base_price + $itp_estimated;
-    $amount_cents = round($total_amount * 100); // En céntimos
-    
-    // Guardar datos en transients temporales
-    $customer_data = [
-        'buyerName' => sanitize_text_field($_POST['buyerName'] ?? ''),
-        'buyerDni' => sanitize_text_field($_POST['buyerDni'] ?? ''),
-        'buyerEmail' => sanitize_email($_POST['buyerEmail'] ?? ''),
-        'buyerPhone' => sanitize_text_field($_POST['buyerPhone'] ?? ''),
-        'sellerName' => sanitize_text_field($_POST['sellerName'] ?? ''),
-        'sellerDni' => sanitize_text_field($_POST['sellerDni'] ?? '')
-    ];
-    
-    $vehicle_data = [
-        'manufacturer' => sanitize_text_field($_POST['manufacturer'] ?? ''),
-        'model' => sanitize_text_field($_POST['model'] ?? ''),
-        'year' => sanitize_text_field($_POST['year'] ?? ''),
-        'matricula' => sanitize_text_field($_POST['matricula'] ?? ''),
-        'purchasePrice' => $purchase_price
-    ];
-    
-    // Guardar con expiración de 2 horas
-    set_transient('tmv2_customer_' . $order_id, $customer_data, 2 * HOUR_IN_SECONDS);
-    set_transient('tmv2_vehicle_' . $order_id, $vehicle_data, 2 * HOUR_IN_SECONDS);
-    
-    // Crear formulario de pago
-    $payment_form = tmv2_redsys_create_payment_form([
-        'order_id' => $order_id,
-        'amount_cents' => $amount_cents,
-        'description' => 'Transferencia Moto ' . $vehicle_data['manufacturer'] . ' ' . $vehicle_data['model']
-    ]);
-    
-    wp_send_json_success([
-        'order_id' => $order_id,
-        'payment_form' => $payment_form,
-        'total_amount' => number_format($total_amount, 2)
-    ]);
-}
-
-/**
- * AJAX: Procesar archivos TMV2
- */
-function tmv2_ajax_store_files() {
-    if (!wp_verify_nonce($_POST['nonce'] ?? '', 'tmv2_nonce')) {
-        wp_die('Acceso denegado');
-    }
-    
-    $order_id = sanitize_text_field($_POST['order_id'] ?? '');
-    $files_data = [];
-    
-    // Procesar archivos subidos
-    if (!empty($_FILES)) {
-        foreach ($_FILES as $field_name => $files) {
-            if (is_array($files['name'])) {
-                // Múltiples archivos
-                for ($i = 0; $i < count($files['name']); $i++) {
-                    if ($files['error'][$i] === UPLOAD_ERR_OK) {
-                        $file_data = [
-                            'name' => $files['name'][$i],
-                            'type' => $files['type'][$i],
-                            'size' => $files['size'][$i],
-                            'content' => base64_encode(file_get_contents($files['tmp_name'][$i]))
-                        ];
-                        $files_data[$field_name][] = $file_data;
-                    }
-                }
-            }
-        }
-    }
-    
-    // Guardar archivos en transient
-    set_transient('tmv2_files_' . $order_id, $files_data, 2 * HOUR_IN_SECONDS);
-    
-    wp_send_json_success(['message' => 'Archivos guardados']);
-}
-
-// Registrar acciones AJAX TMV2
-if (function_exists('add_action')) {
-    add_action('wp_ajax_tmv2_create_redsys_payment', 'tmv2_ajax_create_payment');
-    add_action('wp_ajax_nopriv_tmv2_create_redsys_payment', 'tmv2_ajax_create_payment');
-    
-    add_action('wp_ajax_tmv2_store_files', 'tmv2_ajax_store_files');
-    add_action('wp_ajax_nopriv_tmv2_store_files', 'tmv2_ajax_store_files');
-}
-
-// ============================================
 // 🎨 FUNCIÓN DE ESTILOS TMV2
 // ============================================
 
@@ -393,178 +143,332 @@ function tmv2_render_styles() {
         --tmv2-radius-lg: 12px;
     }
 
-    /* Container principal TMV2 */
-    .tmv2-layout-wrapper {
+    /* ============================================
+    LAYOUT PRINCIPAL IDÉNTICO A TBV2 (TEMÁTICA MOTOS)
+    ============================================ */
+    
+    /* Container principal (idéntico a TBV2) */
+    .tramitfy-layout-wrapper {
         max-width: 1400px;
-        margin: 0 auto;
-        padding: 20px;
+        width: 95%;
+        margin: 40px auto 0 auto;
+        padding: 0;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
 
-    .tmv2-two-column {
-        display: grid;
-        grid-template-columns: 300px 1fr;
-        gap: 30px;
-        min-height: 80vh;
-        align-items: start;
-    }
-
-    /* Sidebar TMV2 */
-    .tmv2-sidebar {
-        background: linear-gradient(135deg, 
-            rgb(var(--tmv2-primary)) 0%, 
-            rgb(var(--tmv2-primary-dark)) 100%);
-        border-radius: var(--tmv2-radius-lg);
-        padding: var(--tmv2-spacing-lg);
-        color: white;
-        position: sticky;
-        top: 20px;
-        min-height: 400px;
-    }
-
-    .tmv2-sidebar h3 {
-        color: white;
-        margin: 0 0 var(--tmv2-spacing-md) 0;
-        font-size: 18px;
-        font-weight: 600;
-    }
-
-    /* Formulario principal TMV2 */
-    .tmv2-main-form {
+    .tramitfy-two-column {
+        display: grid !important;
+        grid-template-columns: 384px 1fr !important; /* Sidebar fijo 384px + formulario resto */
+        grid-template-areas: "sidebar content" !important;
+        gap: 0;
+        align-items: stretch;
         background: white;
-        border-radius: var(--tmv2-radius-lg);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.07);
-        overflow: hidden;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
     }
 
-    /* Navegación superior TMV2 */
-    .tmv2-nav-tabs-container {
+    /* SIDEBAR IZQUIERDO (idéntico a TBV2 con temática motos) */
+    .tramitfy-sidebar {
+        grid-area: sidebar;
+        position: relative;
+        background: #016d86; /* Color corporativo tramitfy */
+        border-radius: 12px 0 0 12px;
+        padding: 18px 16px;
+        box-shadow: none;
+        border: none;
+        backdrop-filter: none;
+        overflow-y: auto;
+        overflow-x: hidden;
+        color: #ffffff;
         display: flex;
-        background: #f8fafc;
-        border-bottom: 1px solid #e2e8f0;
+        flex-direction: column;
+        width: 384px;
+        min-height: 100%;
+        height: auto;
+        transition: width 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
     }
 
-    .tmv2-nav-tab {
+    .sidebar-content {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sidebar-body {
         flex: 1;
-        padding: 15px 20px;
-        text-align: center;
-        cursor: pointer;
-        border-bottom: 3px solid transparent;
-        transition: all 0.3s ease;
-        font-weight: 500;
-        color: #64748b;
     }
 
-    .tmv2-nav-tab.active {
-        color: rgb(var(--tmv2-primary));
-        border-bottom-color: rgb(var(--tmv2-primary));
+    /* FORMULARIO PRINCIPAL (idéntico a TBV2) */
+    .tramitfy-main-form {
+        grid-area: content;
         background: white;
+        border-radius: 0 12px 12px 0;
+        padding: 32px;
+        overflow-y: auto;
+        overflow-x: hidden;
     }
 
-    .tmv2-nav-tab:hover:not(.active) {
-        background: #f1f5f9;
-        color: rgb(var(--tmv2-primary-dark));
+    /* ============================================
+    NAVEGACIÓN IDÉNTICA A TBV2 (TEMÁTICA MOTOS)
+    ============================================ */
+    
+    /* Navegación principal superior (idéntica a TBV2) */
+    #form-navigation-top {
+        position: relative;
+        top: -32px;
+        left: -32px;
+        right: -32px;
+        width: calc(100% + 64px);
+        z-index: 10;
+        background: white;
+        border-bottom: 2px solid #f1f5f9;
+        border-radius: 16px 16px 0 0;
+        margin: 0;
+        padding: 0;
     }
 
-    /* Contenido de pasos TMV2 */
-    .tmv2-form-step {
-        padding: var(--tmv2-spacing-xl);
+    .nav-tabs-container {
+        display: flex;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        width: 100%;
+    }
+
+    .nav-tab {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        padding: 14px 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-right: 1px solid #f3f4f6;
+        position: relative;
+        background: #fafbfc;
+        min-height: 60px;
+    }
+
+    .nav-tab:last-child {
+        border-right: none;
+    }
+
+    .nav-tab:hover {
+        background: #f8f9fa;
+    }
+
+    .nav-tab.active {
+        background: #ffffff;
+        border-bottom: 2px solid #016d86;
+        box-shadow: 0 -1px 0 0 #016d86;
+    }
+
+    .nav-tab.completed {
+        background: #f9fdfb;
+        border-bottom: 2px solid #10b981;
+    }
+
+    .tab-content-centered {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        width: 100%;
+    }
+
+    .tab-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #374151;
+        line-height: 1;
+        text-align: center;
+    }
+
+    .nav-tab.active .tab-title {
+        color: #016d86;
+    }
+
+    .nav-tab.completed .tab-title {
+        color: #10b981;
+    }
+
+    /* ============================================
+    PÁGINAS Y FORMULARIOS IDÉNTICOS A TBV2
+    ============================================ */
+    
+    /* Páginas del formulario (idénticas a TBV2) */
+    .form-page {
+        transition: opacity 0.3s ease;
+    }
+
+    .form-page.hidden {
         display: none;
     }
 
-    .tmv2-form-step.active {
-        display: block;
-    }
-
-    .tmv2-form-step h2 {
-        color: rgb(var(--tmv2-primary));
-        margin: 0 0 var(--tmv2-spacing-lg) 0;
-        font-size: 24px;
+    .form-page h2 {
+        color: #016d86;
+        font-size: 26px;
         font-weight: 600;
+        margin-bottom: 20px;
+        border-bottom: 2px solid rgba(1, 109, 134, 0.1);
+        padding-bottom: 8px;
+    }
+
+    /* LAYOUTS COMPACTOS PARA FORMULARIO (idénticos a TBV2) */
+    .form-compact-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 18px;
+    }
+
+    .form-compact-row .form-group {
+        margin-bottom: 0;
+    }
+
+    .form-compact-triple {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .form-compact-triple .form-group {
+        margin-bottom: 0;
+    }
+
+    /* Campos de formulario (idénticos a TBV2) */
+    .form-group {
         display: flex;
-        align-items: center;
-        gap: var(--tmv2-spacing-sm);
+        flex-direction: column;
+        margin-bottom: 15px;
     }
 
-    /* Campos de formulario TMV2 */
-    .tmv2-form-group {
-        margin-bottom: var(--tmv2-spacing-lg);
-    }
-
-    .tmv2-form-group label {
-        display: block;
-        margin-bottom: var(--tmv2-spacing-sm);
+    .form-group label {
         font-weight: 500;
-        color: #374151;
+        margin-bottom: 6px;
+        color: #111827;
+        font-size: 14px;
     }
 
-    .tmv2-form-group input,
-    .tmv2-form-group select,
-    .tmv2-form-group textarea {
-        width: 100%;
-        padding: 12px 16px;
-        border: 1px solid #d1d5db;
-        border-radius: var(--tmv2-radius-sm);
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
         font-size: 16px;
-        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        transition: all 0.2s ease;
+        background: white;
+        box-sizing: border-box;
     }
 
-    .tmv2-form-group input:focus,
-    .tmv2-form-group select:focus,
-    .tmv2-form-group textarea:focus {
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
         outline: none;
-        border-color: rgb(var(--tmv2-primary));
-        box-shadow: 0 0 0 3px rgba(var(--tmv2-primary), 0.1);
+        border-color: #016d86;
+        box-shadow: 0 0 0 3px rgba(1, 109, 134, 0.1);
     }
 
-    /* Botones TMV2 */
-    .tmv2-btn {
+    /* Select styling (idéntico a TBV2) */
+    .form-group select {
+        -webkit-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23016d86' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+        padding-right: 40px;
+    }
+
+    /* Input hints (idéntico a TBV2) */
+    .input-hint {
+        font-size: 13px;
+        color: #64748b;
+        margin-top: 6px;
+        display: block;
+        line-height: 1.4;
+    }
+
+    /* ============================================
+    BOTONES IDÉNTICOS A TBV2
+    ============================================ */
+    
+    .btn {
         padding: 12px 24px;
-        border-radius: var(--tmv2-radius-sm);
+        border-radius: 6px;
         font-weight: 500;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
         border: none;
         font-size: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        gap: 8px;
     }
 
-    .tmv2-btn-primary {
-        background: rgb(var(--tmv2-primary));
+    .btn-primary {
+        background: #016d86;
         color: white;
     }
 
-    .tmv2-btn-primary:hover {
-        background: rgb(var(--tmv2-primary-dark));
+    .btn-primary:hover {
+        background: #01546a;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(1, 109, 134, 0.3);
     }
 
-    .tmv2-btn-secondary {
+    .btn-secondary {
         background: #6b7280;
         color: white;
     }
 
-    .tmv2-btn-secondary:hover {
+    .btn-secondary:hover {
         background: #4b5563;
     }
 
-    /* Responsive TMV2 */
+    /* ============================================
+    RESPONSIVE IDÉNTICO A TBV2
+    ============================================ */
+    
     @media (max-width: 768px) {
-        .tmv2-two-column {
-            grid-template-columns: 1fr;
-            gap: 20px;
+        .tramitfy-layout-wrapper {
+            margin: 20px auto 0 auto;
+            width: 98%;
         }
         
-        .tmv2-sidebar {
+        .tramitfy-two-column {
+            grid-template-columns: 1fr !important;
+            grid-template-areas: "sidebar" "content" !important;
+            border-radius: 8px;
+        }
+        
+        .tramitfy-sidebar {
+            width: 100% !important;
+            border-radius: 8px 8px 0 0;
             position: relative;
             top: 0;
         }
 
-        .tmv2-nav-tabs-container {
+        .tramitfy-main-form {
+            border-radius: 0 0 8px 8px;
+            padding: 20px;
+        }
+
+        .nav-tabs-container {
             flex-wrap: wrap;
         }
 
-        .tmv2-nav-tab {
+        .nav-tab {
             flex: 1 1 50%;
             min-width: 120px;
+            padding: 12px 8px;
+        }
+
+        .form-compact-row,
+        .form-compact-triple {
+            grid-template-columns: 1fr;
+            gap: 15px;
         }
     }
     </style>
@@ -587,193 +491,289 @@ function tmv2_render_form() {
     <!-- Estilos TMV2 -->
     <?php tmv2_render_styles(); ?>
 
-    <!-- FORMULARIO TMV2 PRINCIPAL -->
-    <form id="tmv2-transferencia-form" class="tmv2-form-container">
+    <!-- TMV2 - FORMULARIO PRINCIPAL IDÉNTICO A TBV2 -->
+    <form id="tmv2-transferencia-form" class="form-container">
         
-        <!-- LAYOUT WRAPPER TMV2 -->
-        <div class="tmv2-layout-wrapper">
-            <div class="tmv2-two-column">
+        <!-- LAYOUT WRAPPER IDÉNTICO A TBV2 -->
+        <div class="tramitfy-layout-wrapper">
+            <div class="tramitfy-two-column">
 
-                <!-- SIDEBAR IZQUIERDO TMV2 -->
-                <aside class="tmv2-sidebar">
-                    <div id="tmv2-sidebar-dynamic-content">
-                        <!-- Contenido dinámico por paso -->
-                    </div>
-
-                    <!-- Contenido universal del sidebar -->
-                    <div class="tmv2-sidebar-content">
-                        <h3>🚤 Transferencia Motos de Agua</h3>
-                        <p>Gestiona la transferencia de propiedad de tu moto de agua de forma rápida y segura.</p>
-                        
-                        <!-- Widget Trustpilot -->
-                        <div style="margin-top: 20px;">
-                            <script defer async src='https://cdn.trustindex.io/loader.js?f4fbfd341d12439e0c86fae7fc2'></script>
+                <!-- SIDEBAR IZQUIERDO IDÉNTICO A TBV2 -->
+                <aside class="tramitfy-sidebar">
+                    <div class="sidebar-content">
+                        <div class="sidebar-body">
+                            <div id="tmv2-sidebar-dynamic-content">
+                                <!-- Contenido dinámico por paso idéntico a TBV2 -->
+                            </div>
+                                
+                            <!-- Widget Trustpilot -->
+                            <div style="margin-top: 20px;">
+                                <script defer async src='https://cdn.trustindex.io/loader.js?f4fbfd341d12439e0c86fae7fc2'></script>
+                            </div>
                         </div>
                     </div>
                 </aside>
 
-                <!-- PANEL DERECHO - FORMULARIO -->
-                <div class="tmv2-main-form">
+                <!-- PANEL DERECHO - FORMULARIO IDÉNTICO A TBV2 -->
+                <div class="tramitfy-main-form">
 
-                    <!-- Navegación superior -->
-                    <div class="tmv2-nav-tabs-container">
-                        <div class="tmv2-nav-tab active" data-step="1">
-                            <span>🚤 Datos Moto</span>
-                        </div>
-                        <div class="tmv2-nav-tab" data-step="2">
-                            <span>👥 Propietarios</span>
-                        </div>
-                        <div class="tmv2-nav-tab" data-step="3">
-                            <span>📄 Documentos</span>
-                        </div>
-                        <div class="tmv2-nav-tab" data-step="4">
-                            <span>💳 Pago</span>
+                    <!-- Navegación superior idéntica a TBV2 -->
+                    <div id="form-navigation-top">
+                        <div class="nav-tabs-container">
+                            <div class="nav-tab active" data-step="1">
+                                <div class="tab-content-centered">
+                                    <span class="tab-title">🚤 Datos Moto</span>
+                                </div>
+                            </div>
+                            <div class="nav-tab" data-step="2">
+                                <div class="tab-content-centered">
+                                    <span class="tab-title">👥 Propietarios</span>
+                                </div>
+                            </div>
+                            <div class="nav-tab" data-step="3">
+                                <div class="tab-content-centered">
+                                    <span class="tab-title">📄 Documentos</span>
+                                </div>
+                            </div>
+                            <div class="nav-tab" data-step="4">
+                                <div class="tab-content-centered">
+                                    <span class="tab-title">💳 Pago</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- PASO 1: DATOS DE LA MOTO -->
-                    <div class="tmv2-form-step active" data-step="1">
+                    <!-- PASO 1: DATOS DE LA MOTO (estructura idéntica a TBV2) -->
+                    <div class="form-page active" data-step="1">
                         <h2>🚤 Datos de la Moto de Agua</h2>
                         
-                        <div class="tmv2-form-group">
-                            <label for="tmv2-manufacturer">Fabricante *</label>
-                            <select id="tmv2-manufacturer" name="manufacturer" required>
-                                <option value="">Selecciona fabricante</option>
-                                <option value="Sea-Doo">Sea-Doo</option>
-                                <option value="Yamaha">Yamaha</option>
-                                <option value="Kawasaki">Kawasaki</option>
-                                <option value="Honda">Honda</option>
-                                <option value="Polaris">Polaris</option>
-                                <option value="Otro">Otro</option>
-                            </select>
+                        <div class="form-compact-row">
+                            <div class="form-group">
+                                <label for="tmv2-manufacturer">Fabricante *</label>
+                                <select id="tmv2-manufacturer" name="manufacturer" required>
+                                    <option value="">Selecciona fabricante</option>
+                                    <option value="Sea-Doo">Sea-Doo</option>
+                                    <option value="Yamaha">Yamaha</option>
+                                    <option value="Kawasaki">Kawasaki</option>
+                                    <option value="Honda">Honda</option>
+                                    <option value="Polaris">Polaris</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="tmv2-model">Modelo *</label>
+                                <input type="text" id="tmv2-model" name="model" placeholder="ej. GTI 130" required>
+                            </div>
                         </div>
 
-                        <div class="tmv2-form-group">
-                            <label for="tmv2-model">Modelo *</label>
-                            <input type="text" id="tmv2-model" name="model" placeholder="ej. GTI 130" required>
+                        <div class="form-compact-row">
+                            <div class="form-group">
+                                <label for="tmv2-year">Año de fabricación *</label>
+                                <select id="tmv2-year" name="year" required>
+                                    <option value="">Selecciona año</option>
+                                    <?php
+                                    for ($year = date('Y'); $year >= 1990; $year--) {
+                                        echo "<option value='$year'>$year</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="tmv2-matricula">Matrícula *</label>
+                                <input type="text" id="tmv2-matricula" name="matricula" placeholder="ej. 1234ABC" required>
+                            </div>
                         </div>
 
-                        <div class="tmv2-form-group">
-                            <label for="tmv2-year">Año de fabricación *</label>
-                            <select id="tmv2-year" name="year" required>
-                                <option value="">Selecciona año</option>
-                                <?php
-                                for ($year = date('Y'); $year >= 1990; $year--) {
-                                    echo "<option value='$year'>$year</option>";
-                                }
-                                ?>
-                            </select>
-                        </div>
-
-                        <div class="tmv2-form-group">
-                            <label for="tmv2-matricula">Matrícula *</label>
-                            <input type="text" id="tmv2-matricula" name="matricula" placeholder="ej. 1234ABC" required>
-                        </div>
-
-                        <div class="tmv2-form-group">
+                        <div class="form-group">
                             <label for="tmv2-purchase-price">Precio de compraventa (€) *</label>
                             <input type="number" id="tmv2-purchase-price" name="purchasePrice" placeholder="15000" step="0.01" required>
                         </div>
 
                         <div style="text-align: right; margin-top: 30px;">
-                            <button type="button" class="tmv2-btn tmv2-btn-primary" onclick="tmv2_nextStep(2)">
+                            <button type="button" class="btn btn-primary" onclick="tmv2_nextStep(2)">
                                 Siguiente: Propietarios →
                             </button>
                         </div>
                     </div>
 
-                    <!-- PASO 2: DATOS DE PROPIETARIOS -->
-                    <div class="tmv2-form-step" data-step="2">
+                    <!-- PASO 2: DATOS DE PROPIETARIOS (estructura idéntica a TBV2) -->
+                    <div class="form-page hidden" data-step="2">
                         <h2>👥 Datos de Propietarios</h2>
                         
                         <h3 style="color: #059669; margin: 30px 0 20px 0;">Comprador (Nuevo propietario)</h3>
                         
-                        <div class="tmv2-form-group">
-                            <label for="tmv2-buyer-name">Nombre completo *</label>
-                            <input type="text" id="tmv2-buyer-name" name="buyerName" required>
+                        <div class="form-compact-row">
+                            <div class="form-group">
+                                <label for="tmv2-buyer-name">Nombre completo *</label>
+                                <input type="text" id="tmv2-buyer-name" name="buyerName" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="tmv2-buyer-dni">DNI/NIE *</label>
+                                <input type="text" id="tmv2-buyer-dni" name="buyerDni" placeholder="12345678A" required>
+                            </div>
                         </div>
 
-                        <div class="tmv2-form-group">
-                            <label for="tmv2-buyer-dni">DNI/NIE *</label>
-                            <input type="text" id="tmv2-buyer-dni" name="buyerDni" placeholder="12345678A" required>
-                        </div>
+                        <div class="form-compact-row">
+                            <div class="form-group">
+                                <label for="tmv2-buyer-email">Email *</label>
+                                <input type="email" id="tmv2-buyer-email" name="buyerEmail" required>
+                            </div>
 
-                        <div class="tmv2-form-group">
-                            <label for="tmv2-buyer-email">Email *</label>
-                            <input type="email" id="tmv2-buyer-email" name="buyerEmail" required>
-                        </div>
-
-                        <div class="tmv2-form-group">
-                            <label for="tmv2-buyer-phone">Teléfono *</label>
-                            <input type="tel" id="tmv2-buyer-phone" name="buyerPhone" placeholder="600123456" required>
+                            <div class="form-group">
+                                <label for="tmv2-buyer-phone">Teléfono *</label>
+                                <input type="tel" id="tmv2-buyer-phone" name="buyerPhone" placeholder="600123456" required>
+                            </div>
                         </div>
 
                         <h3 style="color: #dc2626; margin: 30px 0 20px 0;">Vendedor (Propietario actual)</h3>
                         
-                        <div class="tmv2-form-group">
-                            <label for="tmv2-seller-name">Nombre completo *</label>
-                            <input type="text" id="tmv2-seller-name" name="sellerName" required>
-                        </div>
+                        <div class="form-compact-row">
+                            <div class="form-group">
+                                <label for="tmv2-seller-name">Nombre completo *</label>
+                                <input type="text" id="tmv2-seller-name" name="sellerName" required>
+                            </div>
 
-                        <div class="tmv2-form-group">
-                            <label for="tmv2-seller-dni">DNI/NIE *</label>
-                            <input type="text" id="tmv2-seller-dni" name="sellerDni" placeholder="87654321B" required>
+                            <div class="form-group">
+                                <label for="tmv2-seller-dni">DNI/NIE *</label>
+                                <input type="text" id="tmv2-seller-dni" name="sellerDni" placeholder="87654321B" required>
+                            </div>
                         </div>
 
                         <div style="display: flex; gap: 15px; margin-top: 30px;">
-                            <button type="button" class="tmv2-btn tmv2-btn-secondary" onclick="tmv2_prevStep(1)">
+                            <button type="button" class="btn btn-secondary" onclick="tmv2_prevStep(1)">
                                 ← Anterior
                             </button>
-                            <button type="button" class="tmv2-btn tmv2-btn-primary" onclick="tmv2_nextStep(3)">
+                            <button type="button" class="btn btn-primary" onclick="tmv2_nextStep(3)">
                                 Siguiente: Documentos →
                             </button>
                         </div>
                     </div>
 
-                    <!-- PASO 3: DOCUMENTOS -->
-                    <div class="tmv2-form-step" data-step="3">
+                    <!-- PASO 3: DOCUMENTOS (estructura idéntica a TBV2) -->
+                    <div class="form-page hidden" data-step="3">
                         <h2>📄 Documentos Requeridos</h2>
                         
-                        <div class="tmv2-form-group">
-                            <label for="tmv2-dni-comprador">DNI/NIE del Comprador (ambas caras) *</label>
-                            <input type="file" id="tmv2-dni-comprador" name="dniComprador[]" multiple accept=".pdf,.jpg,.jpeg,.png" required>
-                            <small style="color: #6b7280;">PDF o imágenes. Máximo 10MB por archivo.</small>
-                        </div>
+                        <!-- Upload grid profesional idéntico a TBV2 -->
+                        <div class="upload-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0;">
+                            
+                            <!-- DNI Comprador -->
+                            <div class="upload-item" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px;">
+                                <label for="tmv2-dni-comprador" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                    <div>
+                                        <strong>🆔 DNI Comprador</strong>
+                                        <small style="display: block; color: #6b7280;">Documento Nacional de Identidad (ambas caras)</small>
+                                    </div>
+                                    <span class="view-example" data-doc="dni-comprador" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px;">Ver ejemplo</span>
+                                </label>
+                                <div class="upload-wrapper">
+                                    <input type="file" id="tmv2-dni-comprador" name="dniComprador[]" multiple accept=".pdf,.jpg,.jpeg,.png" required style="display: none;">
+                                    <div class="upload-button upload-button-responsive" style="background: #f8fafc; border: 2px dashed #d1d5db; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onclick="document.getElementById('tmv2-dni-comprador').click();">
+                                        <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivos</span>
+                                        <span class="mobile-text"><i class="fa-solid fa-camera"></i> Foto/Archivo</span>
+                                    </div>
+                                    <div class="file-count" data-input="tmv2-dni-comprador" style="margin-top: 8px; font-size: 14px; color: #6b7280;">Sin archivos</div>
+                                    <div class="file-preview-container" data-input="tmv2-dni-comprador" style="margin-top: 12px;"></div>
+                                </div>
+                            </div>
 
-                        <div class="tmv2-form-group">
-                            <label for="tmv2-dni-vendedor">DNI/NIE del Vendedor (ambas caras) *</label>
-                            <input type="file" id="tmv2-dni-vendedor" name="dniVendedor[]" multiple accept=".pdf,.jpg,.jpeg,.png" required>
-                            <small style="color: #6b7280;">PDF o imágenes. Máximo 10MB por archivo.</small>
-                        </div>
+                            <!-- DNI Vendedor -->
+                            <div class="upload-item" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px;">
+                                <label for="tmv2-dni-vendedor" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                    <div>
+                                        <strong>🆔 DNI Vendedor</strong>
+                                        <small style="display: block; color: #6b7280;">Documento Nacional de Identidad (ambas caras)</small>
+                                    </div>
+                                    <span class="view-example" data-doc="dni-vendedor" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px;">Ver ejemplo</span>
+                                </label>
+                                <div class="upload-wrapper">
+                                    <input type="file" id="tmv2-dni-vendedor" name="dniVendedor[]" multiple accept=".pdf,.jpg,.jpeg,.png" required style="display: none;">
+                                    <div class="upload-button upload-button-responsive" style="background: #f8fafc; border: 2px dashed #d1d5db; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onclick="document.getElementById('tmv2-dni-vendedor').click();">
+                                        <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivos</span>
+                                        <span class="mobile-text"><i class="fa-solid fa-camera"></i> Foto/Archivo</span>
+                                    </div>
+                                    <div class="file-count" data-input="tmv2-dni-vendedor" style="margin-top: 8px; font-size: 14px; color: #6b7280;">Sin archivos</div>
+                                    <div class="file-preview-container" data-input="tmv2-dni-vendedor" style="margin-top: 12px;"></div>
+                                </div>
+                            </div>
 
-                        <div class="tmv2-form-group">
-                            <label for="tmv2-permiso-circulacion">Permiso de Circulación *</label>
-                            <input type="file" id="tmv2-permiso-circulacion" name="permisoCirculacion[]" multiple accept=".pdf,.jpg,.jpeg,.png" required>
-                            <small style="color: #6b7280;">Documento original de la moto de agua.</small>
-                        </div>
+                            <!-- Permiso Circulación -->
+                            <div class="upload-item" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px;">
+                                <label for="tmv2-permiso-circulacion" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                    <div>
+                                        <strong>📄 Permiso Circulación</strong>
+                                        <small style="display: block; color: #6b7280;">Documento original de la moto de agua</small>
+                                    </div>
+                                    <span class="view-example" data-doc="permiso-circulacion" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px;">Ver ejemplo</span>
+                                </label>
+                                <div class="upload-wrapper">
+                                    <input type="file" id="tmv2-permiso-circulacion" name="permisoCirculacion[]" multiple accept=".pdf,.jpg,.jpeg,.png" required style="display: none;">
+                                    <div class="upload-button upload-button-responsive" style="background: #f8fafc; border: 2px dashed #d1d5db; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onclick="document.getElementById('tmv2-permiso-circulacion').click();">
+                                        <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivos</span>
+                                        <span class="mobile-text"><i class="fa-solid fa-camera"></i> Foto/Archivo</span>
+                                    </div>
+                                    <div class="file-count" data-input="tmv2-permiso-circulacion" style="margin-top: 8px; font-size: 14px; color: #6b7280;">Sin archivos</div>
+                                    <div class="file-preview-container" data-input="tmv2-permiso-circulacion" style="margin-top: 12px;"></div>
+                                </div>
+                            </div>
 
-                        <div class="tmv2-form-group">
-                            <label for="tmv2-contrato">Contrato de Compraventa</label>
-                            <input type="file" id="tmv2-contrato" name="contratoCompraventa[]" multiple accept=".pdf,.jpg,.jpeg,.png">
-                            <small style="color: #6b7280;">Opcional. Si no lo tienes, nosotros te ayudamos a generarlo.</small>
+                            <!-- Contrato Compraventa -->
+                            <div class="upload-item" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px;">
+                                <label for="tmv2-contrato" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                    <div>
+                                        <strong>📋 Contrato Compraventa</strong>
+                                        <small style="display: block; color: #6b7280;">Opcional. Si no lo tienes, te ayudamos a generarlo</small>
+                                    </div>
+                                    <span class="view-example" data-doc="contrato-compraventa" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px;">Ver ejemplo</span>
+                                </label>
+                                <div class="upload-wrapper">
+                                    <input type="file" id="tmv2-contrato" name="contratoCompraventa[]" multiple accept=".pdf,.jpg,.jpeg,.png" style="display: none;">
+                                    <div class="upload-button upload-button-responsive" style="background: #f8fafc; border: 2px dashed #d1d5db; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onclick="document.getElementById('tmv2-contrato').click();">
+                                        <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivos</span>
+                                        <span class="mobile-text"><i class="fa-solid fa-camera"></i> Foto/Archivo</span>
+                                    </div>
+                                    <div class="file-count" data-input="tmv2-contrato" style="margin-top: 8px; font-size: 14px; color: #6b7280;">Sin archivos</div>
+                                    <div class="file-preview-container" data-input="tmv2-contrato" style="margin-top: 12px;"></div>
+                                </div>
+                            </div>
+
+                            <!-- Firma Digital -->
+                            <div class="upload-item" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px;">
+                                <label for="tmv2-signature" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                    <div>
+                                        <strong>✍️ Firma Digital</strong>
+                                        <small style="display: block; color: #6b7280;">Firma la autorización para tramitar</small>
+                                    </div>
+                                </label>
+                                <div class="upload-wrapper">
+                                    <div id="tmv2-signature-field" class="upload-button upload-button-responsive" style="background: #f0f9ff; border: 2px dashed #016d86; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
+                                        <span class="desktop-text"><i class="fa-solid fa-signature"></i> Firmar documentos</span>
+                                        <span class="mobile-text"><i class="fa-solid fa-signature"></i> Firmar</span>
+                                    </div>
+                                    <div class="file-count" id="tmv2-signature-status" style="margin-top: 8px; font-size: 14px; color: #6b7280;">Pendiente de firma</div>
+                                </div>
+                            </div>
+
                         </div>
 
                         <div style="display: flex; gap: 15px; margin-top: 30px;">
-                            <button type="button" class="tmv2-btn tmv2-btn-secondary" onclick="tmv2_prevStep(2)">
+                            <button type="button" class="btn btn-secondary" onclick="tmv2_prevStep(2)">
                                 ← Anterior
                             </button>
-                            <button type="button" class="tmv2-btn tmv2-btn-primary" onclick="tmv2_nextStep(4)">
+                            <button type="button" class="btn btn-primary" onclick="tmv2_nextStep(4)">
                                 Siguiente: Pago →
                             </button>
                         </div>
                     </div>
 
-                    <!-- PASO 4: PAGO -->
-                    <div class="tmv2-form-step" data-step="4">
+                    <!-- PASO 4: PAGO (estructura idéntica a TBV2) -->
+                    <div class="form-page hidden" data-step="4">
                         <h2>💳 Resumen y Pago</h2>
                         
                         <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                            <h3 style="margin: 0 0 15px 0; color: rgb(var(--tmv2-primary));">Resumen del Trámite</h3>
+                            <h3 style="margin: 0 0 15px 0; color: #016d86;">Resumen del Trámite</h3>
                             <div id="tmv2-summary">
                                 <!-- Se llenará dinámicamente -->
                             </div>
@@ -787,19 +787,19 @@ function tmv2_render_form() {
                         </div>
 
                         <div style="display: flex; gap: 15px; margin-top: 30px;">
-                            <button type="button" class="tmv2-btn tmv2-btn-secondary" onclick="tmv2_prevStep(3)">
+                            <button type="button" class="btn btn-secondary" onclick="tmv2_prevStep(3)">
                                 ← Anterior
                             </button>
-                            <button type="button" class="tmv2-btn tmv2-btn-primary" onclick="tmv2_processPayment()" style="background: #059669;">
+                            <button type="button" class="btn btn-primary" onclick="tmv2_processPayment()" style="background: #059669;">
                                 💳 Pagar y Procesar Trámite
                             </button>
                         </div>
                     </div>
 
-                </div> <!-- .tmv2-main-form -->
+                </div> <!-- .tramitfy-main-form -->
 
-            </div> <!-- .tmv2-two-column -->
-        </div> <!-- .tmv2-layout-wrapper -->
+            </div> <!-- .tramitfy-two-column -->
+        </div> <!-- .tramitfy-layout-wrapper -->
 
     </form>
 
@@ -815,7 +815,242 @@ function tmv2_render_form() {
 
         init() {
             console.log('TMV2 System initialized');
+            this.setupSidebarContent();
             this.updateSummary();
+        },
+
+        setupSidebarContent() {
+            this.updateSidebarForStep(this.currentStep);
+        },
+
+        updateSidebarForStep(step) {
+            const sidebarContent = document.getElementById('tmv2-sidebar-dynamic-content');
+            if (!sidebarContent) return;
+
+            switch(step) {
+                case 1:
+                    sidebarContent.innerHTML = this.getVehiculoSidebarContent();
+                    break;
+                case 2:
+                    sidebarContent.innerHTML = this.getDatosSidebarContent();
+                    break;
+                case 3:
+                    sidebarContent.innerHTML = this.getDocumentosSidebarContent();
+                    break;
+                case 4:
+                    sidebarContent.innerHTML = this.getPagoSidebarContent();
+                    break;
+            }
+        },
+
+        getVehiculoSidebarContent() {
+            return `
+            <div style="padding: 0;">
+                <h3 style="color: white; font-size: 32px; margin: 0 0 16px 0; font-weight: 700; line-height: 1.2;">
+                    Cambio de Nombre Moto de Agua
+                </h3>
+                
+                <!-- Cuadro de precio más discreto -->
+                <div style="background: rgba(255,255,255,0.08); border-radius: 12px; padding: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.15); margin-bottom: 20px;">
+                    <div style="font-size: 11px; opacity: 0.8; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px; color: rgba(255,255,255,0.85); font-weight: 500;">PRECIO TOTAL</div>
+                    <div style="font-size: 32px; font-weight: 600; margin: 4px 0; color: rgba(255,255,255,0.95);">89.00€</div>
+                    <div style="font-size: 12px; opacity: 0.85; color: rgba(255,255,255,0.85); line-height: 1.3; margin-top: 6px;">IVA y tasas DGMM incluidas</div>
+                </div>
+                
+                <!-- 4 beneficios principales con checkmarks verdes - Más discretos -->
+                <div style="margin-bottom: 20px;">
+                    <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px;">
+                        <i class="fas fa-check" style="background: rgba(255,255,255,0.9); color: #10b981; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; font-size: 11px;"></i>
+                        <span style="color: rgba(255,255,255,0.85); font-size: 12px; line-height: 1.4;">Te entregamos un provisional en menos de 24h para que puedas navegar de inmediato</span>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px;">
+                        <i class="fas fa-check" style="background: rgba(255,255,255,0.9); color: #10b981; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; font-size: 11px;"></i>
+                        <span style="color: rgba(255,255,255,0.85); font-size: 12px; line-height: 1.4;">Gestión del ITP incluida</span>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px;">
+                        <i class="fas fa-check" style="background: rgba(255,255,255,0.9); color: #10b981; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; font-size: 11px;"></i>
+                        <span style="color: rgba(255,255,255,0.85); font-size: 12px; line-height: 1.4;">Seguimiento en todo momento del estado del trámite</span>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px;">
+                        <i class="fas fa-check" style="background: rgba(255,255,255,0.9); color: #10b981; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; font-size: 11px;"></i>
+                        <span style="color: rgba(255,255,255,0.85); font-size: 12px; line-height: 1.4;">Plazo aproximado de documentación definitiva: Unas tres semanas</span>
+                    </div>
+                </div>
+            </div>
+            `;
+        },
+
+        getDatosSidebarContent() {
+            // Obtener datos ingresados dinámicamente
+            const customerName = document.getElementById('buyerName')?.value || '';
+            const customerDni = document.getElementById('buyerDni')?.value || '';
+            const customerEmail = document.getElementById('buyerEmail')?.value || '';
+            const customerPhone = document.getElementById('buyerPhone')?.value || '';
+    
+            let personalInfo = '';
+            if (customerName || customerDni || customerEmail || customerPhone) {
+                personalInfo = `
+                <div class="sidebar-personal-info">
+                    <h4 style="color: #ffffff; font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-user" style="color: #4ade80;"></i>
+                        Tus Datos
+                    </h4>
+                    <div class="personal-details">
+                        ${customerName ? `
+                        <div class="detail-item">
+                            <span class="detail-label">Nombre:</span>
+                            <span class="detail-value">${customerName}</span>
+                        </div>
+                        ` : ''}
+                        ${customerDni ? `
+                        <div class="detail-item">
+                            <span class="detail-label">DNI:</span>
+                            <span class="detail-value">${customerDni}</span>
+                        </div>
+                        ` : ''}
+                        ${customerEmail ? `
+                        <div class="detail-item">
+                            <span class="detail-label">Email:</span>
+                            <span class="detail-value">${customerEmail}</span>
+                        </div>
+                        ` : ''}
+                        ${customerPhone ? `
+                        <div class="detail-item">
+                            <span class="detail-label">Teléfono:</span>
+                            <span class="detail-value">${customerPhone}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                `;
+            }
+            
+            return `
+            <div style="background: rgba(255,255,255,0.1); padding: 18px; border-radius: 8px;">
+                <h3 style="color: white; font-size: 16px; margin: 0 0 16px 0; font-weight: 600; line-height: 1.3;">
+                    Información Personal<br>y de Contacto
+                </h3>
+                
+                <!-- 3 puntos destacados -->
+                <div style="margin-bottom: 16px;">
+                    <div style="display: flex; align-items: center; margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; border-left: 3px solid rgba(255,255,255,0.6);">
+                        <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Datos protegidos según RGPD</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; border-left: 3px solid rgba(255,255,255,0.6);">
+                        <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Uso exclusivo para el trámite</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; border-left: 3px solid rgba(255,255,255,0.6);">
+                        <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Comunicación vía email/teléfono</span>
+                    </div>
+                </div>
+                ${personalInfo}
+            </div>
+            `;
+        },
+
+        getDocumentosSidebarContent() {
+            return `
+            <div style="padding: 0;">
+                <h3 style="color: white; font-size: 24px; margin: 0 0 16px 0; font-weight: 600; line-height: 1.2;">
+                    Documentación Necesaria
+                </h3>
+                
+                <p style="color: rgba(255,255,255,0.9); font-size: 13px; line-height: 1.5; margin: 0 0 20px 0;">
+                    Sube los documentos requeridos para completar la transferencia de tu moto de agua.
+                </p>
+                
+                <!-- Lista de documentos requeridos -->
+                <div style="background: rgba(255,255,255,0.08); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+                    <div style="color: rgba(255,255,255,0.95); font-size: 12px; font-weight: 600; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Documentos Obligatorios
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <i class="fas fa-file-alt" style="color: #10b981; font-size: 14px;"></i>
+                        <span style="color: rgba(255,255,255,0.85); font-size: 12px;">DNI del comprador (ambas caras)</span>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <i class="fas fa-file-alt" style="color: #10b981; font-size: 14px;"></i>
+                        <span style="color: rgba(255,255,255,0.85); font-size: 12px;">DNI del vendedor (ambas caras)</span>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <i class="fas fa-file-alt" style="color: #10b981; font-size: 14px;"></i>
+                        <span style="color: rgba(255,255,255,0.85); font-size: 12px;">Permiso de circulación</span>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-file-alt" style="color: #10b981; font-size: 14px;"></i>
+                        <span style="color: rgba(255,255,255,0.85); font-size: 12px;">Contrato de compraventa (opcional)</span>
+                    </div>
+                </div>
+                
+                <!-- Información de formato -->
+                <div style="background: rgba(255,255,255,0.05); border-left: 3px solid rgba(255,255,255,0.3); padding: 12px; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <i class="fas fa-info-circle" style="color: rgba(255,255,255,0.7); font-size: 12px;"></i>
+                        <span style="color: rgba(255,255,255,0.8); font-size: 11px; font-weight: 600;">Formatos aceptados</span>
+                    </div>
+                    <p style="color: rgba(255,255,255,0.7); font-size: 11px; line-height: 1.4; margin: 0;">
+                        PDF, JPG, PNG, JPEG (máx. 10MB por archivo)
+                    </p>
+                </div>
+                
+                <!-- Tiempo de procesamiento -->
+                <div style="background: rgba(255,255,255,0.05); border-left: 3px solid rgba(255,255,255,0.3); padding: 12px;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <i class="fas fa-clock" style="color: rgba(255,255,255,0.7); font-size: 12px;"></i>
+                        <span style="color: rgba(255,255,255,0.8); font-size: 11px; font-weight: 600;">Tiempo estimado</span>
+                    </div>
+                    <p style="color: rgba(255,255,255,0.7); font-size: 11px; line-height: 1.4; margin: 0;">
+                        Revisión de documentos en menos de 24h
+                    </p>
+                </div>
+            </div>
+            `;
+        },
+
+        getPagoSidebarContent() {
+            const basePrice = 89.00;
+            const totalAmount = basePrice;
+            
+            // Get customer data
+            const customerName = document.getElementById('buyerName')?.value || '';
+            const vehicleBrand = document.getElementById('manufacturer')?.value || '';
+            const vehicleModel = document.getElementById('model')?.value || '';
+            
+            return `
+            <div style="text-align: center;">
+                <h3 style="color: white; font-size: 18px; font-weight: 600; margin-bottom: 15px;">
+                    Tramitación para: Tramitfy S.L.
+                </h3>
+                
+                <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 16px; margin-bottom: 20px; text-align: left;">
+                    <div style="color: rgba(255,255,255,0.8); font-size: 12px; margin-bottom: 12px; text-transform: uppercase; font-weight: 600;">Desglose de Servicios</div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 8px 0;">
+                        <div style="color: rgba(255,255,255,0.9); font-size: 13px;">
+                            <div style="font-weight: 600;">Tramitación Completa</div>
+                            <div style="font-size: 11px; opacity: 0.7;">Gestión, tasas DGMM + IVA</div>
+                        </div>
+                        <span style="color: white; font-weight: 600; font-size: 14px;">${basePrice.toFixed(2)} €</span>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-top: 2px solid rgba(255,255,255,0.3); margin-top: 8px;">
+                        <span style="color: white; font-weight: 700; font-size: 15px;">TOTAL</span>
+                        <span style="color: #22c55e; font-weight: 700; font-size: 18px;">${totalAmount.toFixed(2)} €</span>
+                    </div>
+                </div>
+                
+                ${vehicleBrand && vehicleModel ? `
+                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 12px; margin-bottom: 16px; text-align: left;">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 4px; text-transform: uppercase;">Vehículo</div>
+                    <div style="color: white; font-size: 13px; font-weight: 600;">${vehicleBrand} ${vehicleModel}</div>
+                </div>
+                ` : ''}
+            </div>
+            `;
         },
 
         updateSummary() {
@@ -823,43 +1058,48 @@ function tmv2_render_form() {
             const summaryEl = document.getElementById('tmv2-summary');
             if (summaryEl) {
                 summaryEl.innerHTML = `
-                    <div style="display: flex; justify-content: between; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                         <span>Transferencia Moto de Agua:</span>
                         <strong>89.00€</strong>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                        <span>ITP (calculado automáticamente):</span>
-                        <strong>Variable</strong>
-                    </div>
-                    <hr>
-                    <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: rgb(var(--tmv2-primary));">
-                        <span>Total estimado:</span>
-                        <span>89.00€ + ITP</span>
+                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 15px 0;">
+                    <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: #016d86;">
+                        <span>Total:</span>
+                        <span>89.00€</span>
                     </div>
                 `;
             }
         }
     };
 
-    // Funciones de navegación TMV2
+    // Funciones de navegación TMV2 (idénticas a TBV2)
     function tmv2_nextStep(step) {
         // Validar paso actual
         if (!tmv2_validateStep(TMV2_System.currentStep)) {
             return;
         }
 
-        // Cambiar a siguiente paso
-        document.querySelectorAll('.tmv2-form-step').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.tmv2-nav-tab').forEach(el => el.classList.remove('active'));
+        // Cambiar a siguiente paso (usar clases de TBV2)
+        document.querySelectorAll('.form-page').forEach(el => {
+            el.classList.remove('active');
+            el.classList.add('hidden');
+        });
+        document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
 
-        document.querySelector(`.tmv2-form-step[data-step="${step}"]`).classList.add('active');
-        document.querySelector(`.tmv2-nav-tab[data-step="${step}"]`).classList.add('active');
+        const targetPage = document.querySelector(`.form-page[data-step="${step}"]`);
+        const targetTab = document.querySelector(`.nav-tab[data-step="${step}"]`);
+        
+        if (targetPage && targetTab) {
+            targetPage.classList.add('active');
+            targetPage.classList.remove('hidden');
+            targetTab.classList.add('active');
+        }
 
         TMV2_System.currentStep = step;
         TMV2_System.updateSummary();
 
-        // Scroll to top
-        document.querySelector('.tmv2-main-form').scrollIntoView({ behavior: 'smooth' });
+        // Scroll to top (usar clase de TBV2)
+        document.querySelector('.tramitfy-main-form').scrollIntoView({ behavior: 'smooth' });
     }
 
     function tmv2_prevStep(step) {
@@ -867,7 +1107,9 @@ function tmv2_render_form() {
     }
 
     function tmv2_validateStep(step) {
-        const stepEl = document.querySelector(`.tmv2-form-step[data-step="${step}"]`);
+        const stepEl = document.querySelector(`.form-page[data-step="${step}"]`);
+        if (!stepEl) return true;
+        
         const requiredInputs = stepEl.querySelectorAll('input[required], select[required]');
         
         for (let input of requiredInputs) {
@@ -884,144 +1126,261 @@ function tmv2_render_form() {
     function tmv2_processPayment() {
         if (!tmv2_validateStep(4)) return;
 
-        const submitBtn = document.querySelector('button[onclick="tmv2_processPayment()"]');
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '⏳ Procesando...';
-        }
-
-        // Recopilar todos los datos del formulario
-        const formData = tmv2_collectFormData();
+        // Preparar datos del formulario para Redsys
+        const formData = new FormData(document.getElementById('tmv2-transferencia-form'));
         
-        // Subir archivos primero
-        tmv2_uploadFiles(formData)
-            .then(() => {
-                // Crear sesión de pago
-                return tmv2_createPaymentSession(formData);
+        // Mostrar loading
+        const payButton = event.target;
+        const originalText = payButton.innerHTML;
+        payButton.innerHTML = '🔄 Procesando pago...';
+        payButton.disabled = true;
+
+        // Crear payment con Redsys
+        fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                action: 'tmv2_create_redsys_payment',
+                nonce: '<?php echo wp_create_nonce("tmv2_payment_nonce"); ?>',
+                manufacturer: formData.get('manufacturer'),
+                model: formData.get('model'),
+                year: formData.get('year'),
+                matricula: formData.get('matricula'),
+                purchasePrice: formData.get('purchasePrice'),
+                buyerName: formData.get('buyerName'),
+                buyerDni: formData.get('buyerDni'),
+                buyerEmail: formData.get('buyerEmail'),
+                buyerPhone: formData.get('buyerPhone'),
+                sellerName: formData.get('sellerName'),
+                sellerDni: formData.get('sellerDni')
             })
-            .then(response => {
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
                 // Redireccionar a Redsys
-                tmv2_redirectToRedsys(response.data.payment_form);
-            })
-            .catch(error => {
-                console.error('Error procesando pago:', error);
-                alert('Error procesando el pago. Por favor, inténtalo de nuevo.');
-                
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '💳 Pagar y Procesar Trámite';
-                }
-            });
-    }
-
-    function tmv2_collectFormData() {
-        return {
-            // Datos de la moto
-            manufacturer: document.getElementById('tmv2-manufacturer').value,
-            model: document.getElementById('tmv2-model').value,
-            year: document.getElementById('tmv2-year').value,
-            matricula: document.getElementById('tmv2-matricula').value,
-            purchasePrice: document.getElementById('tmv2-purchase-price').value,
-            
-            // Datos del comprador
-            buyerName: document.getElementById('tmv2-buyer-name').value,
-            buyerDni: document.getElementById('tmv2-buyer-dni').value,
-            buyerEmail: document.getElementById('tmv2-buyer-email').value,
-            buyerPhone: document.getElementById('tmv2-buyer-phone').value,
-            
-            // Datos del vendedor
-            sellerName: document.getElementById('tmv2-seller-name').value,
-            sellerDni: document.getElementById('tmv2-seller-dni').value
-        };
-    }
-
-    function tmv2_uploadFiles(formData) {
-        return new Promise((resolve, reject) => {
-            const uploadFormData = new FormData();
-            uploadFormData.append('action', 'tmv2_store_files');
-            uploadFormData.append('nonce', '<?php echo wp_create_nonce("tmv2_nonce"); ?>');
-            uploadFormData.append('order_id', 'temp_' + Date.now());
-            
-            // Agregar archivos
-            ['tmv2-dni-comprador', 'tmv2-dni-vendedor', 'tmv2-permiso-circulacion', 'tmv2-contrato'].forEach(fieldId => {
-                const fileInput = document.getElementById(fieldId);
-                if (fileInput && fileInput.files) {
-                    Array.from(fileInput.files).forEach(file => {
-                        uploadFormData.append(fieldId + '[]', file);
-                    });
-                }
-            });
-            
-            fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
-                method: 'POST',
-                body: uploadFormData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    resolve(data);
-                } else {
-                    reject(new Error('Error subiendo archivos'));
-                }
-            })
-            .catch(reject);
-        });
-    }
-
-    function tmv2_createPaymentSession(formData) {
-        return new Promise((resolve, reject) => {
-            const paymentData = new FormData();
-            paymentData.append('action', 'tmv2_create_redsys_payment');
-            paymentData.append('nonce', '<?php echo wp_create_nonce("tmv2_nonce"); ?>');
-            
-            // Agregar todos los datos del formulario
-            Object.keys(formData).forEach(key => {
-                paymentData.append(key, formData[key]);
-            });
-            
-            fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
-                method: 'POST',
-                body: paymentData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    resolve(data);
-                } else {
-                    reject(new Error('Error creando sesión de pago'));
-                }
-            })
-            .catch(reject);
-        });
-    }
-
-    function tmv2_redirectToRedsys(paymentForm) {
-        // Crear formulario dinámico para redirección
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = paymentForm.url;
-        
-        // Agregar campos ocultos
-        Object.keys(paymentForm).forEach(key => {
-            if (key !== 'url') {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = paymentForm[key];
-                form.appendChild(input);
+                document.body.innerHTML = data.data.redsys_form;
+                setTimeout(() => {
+                    document.getElementById('tmv2-redsys-form').submit();
+                }, 500);
+            } else {
+                alert('Error al procesar el pago: ' + (data.data || 'Error desconocido'));
+                payButton.innerHTML = originalText;
+                payButton.disabled = false;
             }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error de conexión al procesar el pago');
+            payButton.innerHTML = originalText;
+            payButton.disabled = false;
         });
-        
-        // Agregar al DOM y enviar
-        document.body.appendChild(form);
-        form.submit();
     }
 
-    // Inicializar cuando el DOM esté listo
+    // ============================================
+    // TMV2 - SISTEMA DE ARCHIVOS MÚLTIPLES (IDÉNTICO A TBV2)
+    // ============================================
+
+    // Sistema de file handling idéntico a TBV2
+    const TMV2_FileHandler = {
+        init() {
+            this.setupFileInputs();
+            this.setupExampleLinks();
+            this.setupSignatureField();
+        },
+
+        setupFileInputs() {
+            const fileInputs = document.querySelectorAll('input[type="file"]');
+            fileInputs.forEach(input => {
+                input.addEventListener('change', (e) => this.handleFileSelection(e));
+            });
+        },
+
+        setupExampleLinks() {
+            const exampleLinks = document.querySelectorAll('.view-example');
+            exampleLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const docType = e.target.getAttribute('data-doc');
+                    this.showExampleModal(docType);
+                });
+            });
+        },
+
+        setupSignatureField() {
+            const signatureField = document.getElementById('tmv2-signature-field');
+            if (signatureField) {
+                signatureField.addEventListener('click', () => this.openSignatureModal());
+            }
+        },
+
+        handleFileSelection(event) {
+            const input = event.target;
+            const files = input.files;
+            const inputId = input.id;
+            const countElement = document.querySelector(`[data-input="${inputId}"]`);
+            const previewContainer = document.querySelector(`[data-input="${inputId}"].file-preview-container`);
+
+            if (countElement) {
+                if (files.length === 0) {
+                    countElement.textContent = 'Sin archivos';
+                    countElement.style.color = '#6b7280';
+                } else if (files.length === 1) {
+                    countElement.textContent = `1 archivo seleccionado`;
+                    countElement.style.color = '#059669';
+                } else {
+                    countElement.textContent = `${files.length} archivos seleccionados`;
+                    countElement.style.color = '#059669';
+                }
+            }
+
+            // Preview simple de archivos
+            if (previewContainer && files.length > 0) {
+                previewContainer.innerHTML = '';
+                Array.from(files).slice(0, 3).forEach((file, index) => {
+                    const preview = document.createElement('div');
+                    preview.style.cssText = `
+                        display: inline-flex; 
+                        align-items: center; 
+                        background: #f0f9ff; 
+                        padding: 8px 12px; 
+                        border-radius: 6px; 
+                        margin: 4px 4px 0 0; 
+                        font-size: 12px;
+                        border: 1px solid #e0f2fe;
+                    `;
+                    
+                    const icon = file.type.includes('pdf') ? '📄' : '🖼️';
+                    const name = file.name.length > 20 ? file.name.substring(0, 20) + '...' : file.name;
+                    preview.innerHTML = `${icon} ${name}`;
+                    previewContainer.appendChild(preview);
+                });
+
+                if (files.length > 3) {
+                    const moreDiv = document.createElement('div');
+                    moreDiv.style.cssText = `
+                        display: inline-flex; 
+                        align-items: center; 
+                        color: #6b7280; 
+                        font-size: 12px; 
+                        margin: 4px 0 0 4px;
+                    `;
+                    moreDiv.textContent = `+${files.length - 3} más`;
+                    previewContainer.appendChild(moreDiv);
+                }
+            }
+        },
+
+        showExampleModal(docType) {
+            // Sistema de modales de ejemplo idéntico a TBV2
+            const modalId = 'tmv2-example-modal';
+            let modal = document.getElementById(modalId);
+            
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = modalId;
+                modal.style.cssText = `
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                    background: rgba(0,0,0,0.8); z-index: 10000; display: none;
+                    justify-content: center; align-items: center; padding: 20px;
+                `;
+                modal.innerHTML = `
+                    <div style="background: white; border-radius: 12px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative;">
+                        <div style="padding: 24px; border-bottom: 1px solid #e5e7eb;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h3 style="margin: 0; color: #016d86; font-size: 20px;">Ejemplo de Documento</h3>
+                                <button onclick="document.getElementById('${modalId}').style.display='none'" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280;">&times;</button>
+                            </div>
+                        </div>
+                        <div id="${modalId}-content" style="padding: 24px;">
+                            <!-- Contenido dinámico -->
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+
+            // Contenido específico por tipo de documento
+            const content = this.getExampleContent(docType);
+            document.getElementById(`${modalId}-content`).innerHTML = content;
+            modal.style.display = 'flex';
+        },
+
+        getExampleContent(docType) {
+            const examples = {
+                'dni-comprador': `
+                    <div style="text-align: center;">
+                        <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin-bottom: 16px;">
+                            <h4 style="margin: 0 0 12px 0; color: #016d86;">DNI/NIE del Comprador</h4>
+                            <p style="margin: 0; color: #374151; line-height: 1.5;">
+                                📸 Foto clara de <strong>ambas caras</strong> del documento<br>
+                                ✅ Sin brillos ni sombras<br>
+                                ✅ Todos los datos legibles
+                            </p>
+                        </div>
+                        <img src="https://tramitfy.es/wp-content/uploads/exampledocs/dni-placeholder.jpg" alt="Ejemplo DNI" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" onerror="this.style.display='none'">
+                    </div>
+                `,
+                'dni-vendedor': `
+                    <div style="text-align: center;">
+                        <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin-bottom: 16px;">
+                            <h4 style="margin: 0 0 12px 0; color: #016d86;">DNI/NIE del Vendedor</h4>
+                            <p style="margin: 0; color: #374151; line-height: 1.5;">
+                                📸 Foto clara de <strong>ambas caras</strong> del documento<br>
+                                ✅ Sin brillos ni sombras<br>
+                                ✅ Todos los datos legibles
+                            </p>
+                        </div>
+                        <img src="https://tramitfy.es/wp-content/uploads/exampledocs/dni-placeholder.jpg" alt="Ejemplo DNI" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" onerror="this.style.display='none'">
+                    </div>
+                `,
+                'permiso-circulacion': `
+                    <div style="text-align: center;">
+                        <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin-bottom: 16px;">
+                            <h4 style="margin: 0 0 12px 0; color: #016d86;">Permiso de Circulación</h4>
+                            <p style="margin: 0; color: #374151; line-height: 1.5;">
+                                📄 Documento original de la moto de agua<br>
+                                ✅ Con datos del propietario actual<br>
+                                ✅ Matrícula clara y legible
+                            </p>
+                        </div>
+                        <img src="https://tramitfy.es/wp-content/uploads/exampledocs/permiso-moto-placeholder.jpg" alt="Ejemplo Permiso" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" onerror="this.style.display='none'">
+                    </div>
+                `,
+                'contrato-compraventa': `
+                    <div style="text-align: center;">
+                        <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin-bottom: 16px;">
+                            <h4 style="margin: 0 0 12px 0; color: #016d86;">Contrato de Compraventa</h4>
+                            <p style="margin: 0; color: #374151; line-height: 1.5;">
+                                📋 Contrato firmado entre comprador y vendedor<br>
+                                ✅ Con datos de ambas partes<br>
+                                ✅ Precio y fecha de venta<br>
+                                <small style="color: #6b7280;">Si no tienes, nosotros te ayudamos a generarlo</small>
+                            </p>
+                        </div>
+                        <img src="https://tramitfy.es/wp-content/uploads/exampledocs/contrato-placeholder.jpg" alt="Ejemplo Contrato" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" onerror="this.style.display='none'">
+                    </div>
+                `
+            };
+            return examples[docType] || '<p>Ejemplo no disponible</p>';
+        },
+
+        openSignatureModal() {
+            alert('🚧 Sistema de firma digital en desarrollo.\n\nPróximamente disponible.');
+        }
+    };
+
+    // Inicializar sistemas cuando el DOM esté listo
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => TMV2_System.init());
+        document.addEventListener('DOMContentLoaded', () => {
+            TMV2_System.init();
+            TMV2_FileHandler.init();
+        });
     } else {
         TMV2_System.init();
+        TMV2_FileHandler.init();
     }
     </script>
 
@@ -1037,6 +1396,197 @@ function tmv2_render_form() {
 if (function_exists('add_shortcode') && !shortcode_exists('transferencia_moto_v2')) {
     add_shortcode('transferencia_moto_v2', 'tmv2_render_form');
     add_shortcode('transferencia_moto_v2_form', 'tmv2_render_form');
+}
+
+// ============================================
+// 🚀 FUNCIONES AJAX TMV2 - SISTEMA DE PAGOS
+// ============================================
+
+/**
+ * AJAX: Crear pago Redsys para TMV2
+ */
+function tmv2_create_redsys_payment() {
+    // Verificar nonce
+    if (!wp_verify_nonce($_POST['nonce'], 'tmv2_payment_nonce')) {
+        wp_die('Error de seguridad');
+    }
+    
+    // Protección adicional
+    if (!tmv2_is_page_authorized()) {
+        wp_send_json_error('No autorizado para TMV2');
+        return;
+    }
+
+    try {
+        // Recibir datos del formulario
+        $manufacturer = sanitize_text_field($_POST['manufacturer']);
+        $model = sanitize_text_field($_POST['model']);
+        $year = sanitize_text_field($_POST['year']);
+        $matricula = sanitize_text_field($_POST['matricula']);
+        $purchasePrice = floatval($_POST['purchasePrice']);
+        $buyerName = sanitize_text_field($_POST['buyerName']);
+        $buyerDni = sanitize_text_field($_POST['buyerDni']);
+        $buyerEmail = sanitize_email($_POST['buyerEmail']);
+        $buyerPhone = sanitize_text_field($_POST['buyerPhone']);
+        $sellerName = sanitize_text_field($_POST['sellerName']);
+        $sellerDni = sanitize_text_field($_POST['sellerDni']);
+
+        // Validaciones básicas
+        if (empty($manufacturer) || empty($buyerEmail) || empty($buyerName)) {
+            wp_send_json_error('Faltan campos obligatorios');
+            return;
+        }
+
+        // Calcular precio final TMV2 (fijo 89.00€)
+        $finalAmount = 89.00;
+        $finalAmountCents = $finalAmount * 100; // Redsys trabaja en centimos
+
+        // Generar OrderID único (12 dígitos)
+        $orderId = substr(time() . rand(100, 999), 0, 12);
+
+        // Preparar datos para almacenamiento
+        $transferData = [
+            'orderId' => $orderId,
+            'tramiteType' => 'transferencia-moto-v2',
+            'moto' => [
+                'manufacturer' => $manufacturer,
+                'model' => $model,
+                'year' => $year,
+                'matricula' => $matricula,
+                'purchasePrice' => $purchasePrice
+            ],
+            'customer' => [
+                'name' => $buyerName,
+                'dni' => $buyerDni,
+                'email' => $buyerEmail,
+                'phone' => $buyerPhone
+            ],
+            'seller' => [
+                'name' => $sellerName,
+                'dni' => $sellerDni
+            ],
+            'payment' => [
+                'amount' => $finalAmount,
+                'currency' => 'EUR'
+            ],
+            'timestamp' => time()
+        ];
+
+        // Guardar en sessionStorage + WordPress transient (método híbrido como TBV2)
+        $transient_key = 'tmv2_transfer_' . $orderId;
+        set_transient($transient_key, $transferData, 7200); // 2 horas
+
+        // Preparar parámetros Redsys
+        $redsysParams = [
+            'Ds_Merchant_Amount' => $finalAmountCents,
+            'Ds_Merchant_Order' => $orderId,
+            'Ds_Merchant_MerchantCode' => TMV2_REDSYS_MERCHANT_CODE,
+            'Ds_Merchant_Currency' => TMV2_REDSYS_CURRENCY,
+            'Ds_Merchant_TransactionType' => '0',
+            'Ds_Merchant_Terminal' => TMV2_REDSYS_TERMINAL,
+            'Ds_Merchant_MerchantURL' => TMV2_REDSYS_URL_NOTIFICATION,
+            'Ds_Merchant_UrlOK' => TMV2_REDSYS_URL_OK,
+            'Ds_Merchant_UrlKO' => TMV2_REDSYS_URL_KO
+        ];
+
+        // Codificar parámetros
+        $merchantParameters = base64_encode(json_encode($redsysParams));
+
+        // Generar firma (simplificada para este ejemplo)
+        $signature = base64_encode(hash_hmac('sha256', $merchantParameters, TMV2_REDSYS_SECRET_KEY, true));
+
+        // URL Redsys según modo
+        global $tmv2_redsys_url;
+        
+        // Crear formulario Redsys
+        $redsysForm = '
+        <form id="tmv2-redsys-form" action="' . $tmv2_redsys_url . '" method="POST" style="display:none;">
+            <input type="hidden" name="Ds_SignatureVersion" value="' . TMV2_REDSYS_SIGNATURE_VERSION . '">
+            <input type="hidden" name="Ds_MerchantParameters" value="' . $merchantParameters . '">
+            <input type="hidden" name="Ds_Signature" value="' . $signature . '">
+        </form>
+        <div style="text-align: center; padding: 40px; font-family: -apple-system, sans-serif;">
+            <h3>🔄 Redirigiendo al pago seguro...</h3>
+            <p>No cierres esta ventana</p>
+            <div style="margin: 20px 0;">
+                <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #016d86; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+            </div>
+        </div>
+        <style>
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        </style>';
+
+        wp_send_json_success(['redsys_form' => $redsysForm]);
+
+    } catch (Exception $e) {
+        error_log("TMV2 PAYMENT ERROR: " . $e->getMessage());
+        wp_send_json_error('Error interno del servidor');
+    }
+}
+
+/**
+ * AJAX: Callback Redsys para TMV2
+ */
+function tmv2_redsys_callback() {
+    // Este endpoint será llamado por Redsys tras el pago
+    error_log('🚤 TMV2 CALLBACK - Iniciado desde Redsys');
+    
+    // Obtener parámetros de Redsys (normalmente enviados por POST)
+    $redsys_params = $_POST;
+    
+    if (isset($redsys_params['Ds_Order'])) {
+        $orderId = $redsys_params['Ds_Order'];
+        
+        // Recuperar datos del transient
+        $transient_key = 'tmv2_transfer_' . $orderId;
+        $transferData = get_transient($transient_key);
+        
+        if ($transferData) {
+            // Preparar datos para webhook API
+            $webhookData = [
+                'tramiteType' => 'transferencia-moto-v2',
+                'customerName' => $transferData['customer']['name'],
+                'customerDni' => $transferData['customer']['dni'],
+                'customerEmail' => $transferData['customer']['email'],
+                'customerPhone' => $transferData['customer']['phone'],
+                'finalAmount' => $transferData['payment']['amount'],
+                'vehicleData' => $transferData['moto'],
+                'sellerData' => $transferData['seller'],
+                'paymentIntentId' => $orderId,
+                'redsys_data' => $redsys_params
+            ];
+            
+            // Enviar a webhook API
+            $webhook_response = wp_remote_post(TMV2_WEBHOOK_URL, [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Origin' => 'https://tramitfy.es'
+                ],
+                'body' => json_encode($webhookData),
+                'timeout' => 30
+            ]);
+            
+            // Limpiar transient
+            delete_transient($transient_key);
+            
+            error_log('🚤 TMV2 CALLBACK - Webhook enviado para OrderID: ' . $orderId);
+        } else {
+            error_log('🚤 TMV2 CALLBACK - No se encontraron datos para OrderID: ' . $orderId);
+        }
+    }
+    
+    // Responder a Redsys
+    echo 'OK';
+    exit;
+}
+
+// Registrar funciones AJAX
+if (tmv2_is_page_authorized()) {
+    add_action('wp_ajax_tmv2_create_redsys_payment', 'tmv2_create_redsys_payment');
+    add_action('wp_ajax_nopriv_tmv2_create_redsys_payment', 'tmv2_create_redsys_payment');
+    
+    add_action('wp_ajax_tmv2_redsys_callback', 'tmv2_redsys_callback');
+    add_action('wp_ajax_nopriv_tmv2_redsys_callback', 'tmv2_redsys_callback');
 }
 
 // ============================================
