@@ -51,6 +51,9 @@ if (!tbv2_is_correct_page()) {
         console.log("TBV2: Deshabilitado en página no autorizada");
         </script>';
     });
+    
+    // RETURN AQUÍ para evitar que se cargue el resto del script
+    return;
 }
 
 // =====================================================
@@ -3415,10 +3418,7 @@ function tbv2_render_scripts() {
  });
 
 // PROTECCIÓN: Solo definir objetos globales en páginas autorizadas
-if (window.TBV2_DISABLED === true) {
-    console.log('🚫 TBV2: Objetos globales no definidos en página no autorizada');
-    return; // Salir del script completo
-}
+if (window.TBV2_DISABLED !== true) {
 
  // Namespace principal del formulario
  const TBV2_Form = {
@@ -6958,6 +6958,8 @@ de la embarcación con matrícula <strong>${matricula}</strong>.
  }
  }
  
+} // Fin if TBV2_DISABLED !== true
+ 
  </script>
  <?php
 }
@@ -8958,10 +8960,7 @@ error_log(" TBV2 ENHANCED: Sistema de archivos compatible cargado - NO intercept
 // TBV2 TEMPORAL INTEGRATION - SISTEMA INDEPENDIENTE
 
 // PROTECCIÓN: Solo cargar sistema temporal en páginas autorizadas
-if (window.TBV2_DISABLED === true) {
-    console.log('🚫 TBV2 TEMPORAL: Sistema no cargado en página no autorizada');
-    return; // Salir del script completo
-}
+if (window.TBV2_DISABLED !== true) {
 
 console.log('✅ TBV2 TEMPORAL - Cargando sistema independiente en página autorizada...');
 
@@ -9384,6 +9383,8 @@ document.addEventListener('DOMContentLoaded', function() {
 window.TBV2_TEMPORAL_SYSTEM = TBV2_TEMPORAL;
 
 console.log(' TBV2 TEMPORAL - Sistema de interceptor cargado');
+
+} // Fin if TBV2_DISABLED !== true
 </script>
 <?php
 
