@@ -42,9 +42,11 @@ function tbv2_is_correct_page() {
     return false;
 }
 
-// Si no estamos en la página correcta, no cargar JavaScript TBV2
-if (!tbv2_is_correct_page()) {
-    // Retornar formulario básico sin JavaScript para evitar interferencias
+// Marcar si estamos en página autorizada para condicional posterior  
+$tbv2_page_authorized = tbv2_is_correct_page();
+
+// Si no estamos en página autorizada, desactivar JavaScript TBV2
+if (!$tbv2_page_authorized) {
     add_action('wp_head', function() {
         echo '<script>
         // Prevenir carga de variables globales TBV2 en otras páginas
@@ -52,9 +54,6 @@ if (!tbv2_is_correct_page()) {
         console.log("TBV2: Deshabilitado en página no autorizada");
         </script>';
     });
-    
-    // RETURN AQUÍ para evitar que se cargue el resto del script
-    return;
 }
 
 // =====================================================
@@ -3397,6 +3396,13 @@ function tbv2_render_styles() {
  * JavaScript IDÉNTICO al original
  */
 function tbv2_render_scripts() {
+ global $tbv2_page_authorized;
+ 
+ // Solo cargar scripts en páginas autorizadas
+ if (!$tbv2_page_authorized) {
+     echo '<script>console.log("🚫 TBV2 Scripts: No cargados en página no autorizada");</script>';
+     return;
+ }
  ?>
  <script>
  document.addEventListener('DOMContentLoaded', function() {
@@ -8956,6 +8962,9 @@ error_log(" TBV2 ENHANCED: Sistema de archivos compatible cargado - NO intercept
 // =====================================================
 // TBV2 TEMPORAL INTEGRATION SYSTEM
 // =====================================================
+
+// Solo cargar sistema temporal en páginas autorizadas
+if ($tbv2_page_authorized) {
 ?>
 <script>
 // TBV2 TEMPORAL INTEGRATION - SISTEMA INDEPENDIENTE
@@ -9388,6 +9397,7 @@ console.log(' TBV2 TEMPORAL - Sistema de interceptor cargado');
 } // Fin if TBV2_DISABLED !== true
 </script>
 <?php
+} // Fin if $tbv2_page_authorized
 
 // =====================================================
 // AJAX HANDLER PARA CREAR FORMULARIO REDSYS TEMPORAL
