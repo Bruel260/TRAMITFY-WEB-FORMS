@@ -28,16 +28,8 @@ function tbv2_is_authorized_page() {
     
     // 🚨 PROTECCIÓN AJAX: Nunca cargar en requests AJAX de otros formularios
     if (defined('DOING_AJAX') && DOING_AJAX) {
-        $action = $_POST['action'] ?? $_GET['action'] ?? '';
-        error_log("🔍 TBV2 DEBUG: AJAX action = '$action'");
-        
-        // 🔒 BYPASS COMPLETO PARA ADMIN
-        if (is_admin()) {
-            error_log("🔍 TBV2 DEBUG: Admin bypass - returning true");
-            return true; // Admin siempre autorizado
-        }
-        
         // Solo permitir AJAX para acciones específicas TBV2
+        $action = $_POST['action'] ?? $_GET['action'] ?? '';
         $tbv2_ajax_actions = [
             'tbv2_create_redsys_payment',
             'tbv2_create_redsys_payment_generic', 
@@ -46,10 +38,7 @@ function tbv2_is_authorized_page() {
         ];
         
         if (!in_array($action, $tbv2_ajax_actions)) {
-            error_log("🔍 TBV2 DEBUG: Action '$action' NOT in whitelist - returning FALSE");
             return false; // Bloquear TBV2 en AJAX de otros formularios
-        } else {
-            error_log("🔍 TBV2 DEBUG: Action '$action' in whitelist - continuing...");
         }
     }
     
@@ -73,7 +62,6 @@ function tbv2_is_authorized_page() {
     // Verificar por post object
     if (is_object($post)) {
         if (in_array($post->post_name, $authorized_pages) || 
-            strpos($post->post_content, '[transferencia_barco_v2]') !== false ||
             strpos($post->post_content, '[transferencia_barco_v2_form]') !== false) {
             return true;
         }
@@ -873,7 +861,7 @@ function tbv2_render_form() {
  <div class="form-compact-row">
  <div class="form-group">
  <label for="customer_email">Correo Electrónico</label>
- <input type="email" id="customer_email" name="customer_email" required />
+ <input type="text" id="customer_email" name="customer_email" required />
  <span class="input-hint">Recibirás notificaciones del trámite</span>
  </div>
 
@@ -1036,7 +1024,7 @@ function tbv2_render_form() {
  <span class="view-example" data-doc="registro-maritimo" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
  </label>
  <div class="upload-wrapper">
- <input type="file" id="upload-hoja-asiento" name="upload_hoja_asiento[]" multiple required accept="image/*,.pdf">
+ <input type="file" id="upload-hoja-asiento" name="upload_hoja_asiento[]" multiple required accept=".pdf,.jpg,.jpeg,.png" onchange="debugMobileFileUpload(this, 'hoja-asiento')">
  <div class="upload-button upload-button-responsive">
  <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivo</span>
  <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
@@ -1056,7 +1044,7 @@ function tbv2_render_form() {
  <span class="view-example" data-doc="dni-comprador" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
  </label>
  <div class="upload-wrapper">
- <input type="file" id="upload-dni-comprador" name="upload_dni_comprador[]" multiple required accept="image/*,.pdf">
+ <input type="file" id="upload-dni-comprador" name="upload_dni_comprador[]" multiple required accept=".pdf,.jpg,.jpeg,.png" onchange="debugMobileFileUpload(this, 'dni-comprador')">
  <div class="upload-button upload-button-responsive">
  <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivo</span>
  <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
@@ -1076,7 +1064,7 @@ function tbv2_render_form() {
  <span class="view-example" data-doc="dni-vendedor" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
  </label>
  <div class="upload-wrapper">
- <input type="file" id="upload-dni-vendedor" name="upload_dni_vendedor[]" multiple required accept="image/*,.pdf">
+ <input type="file" id="upload-dni-vendedor" name="upload_dni_vendedor[]" multiple required accept=".pdf,.jpg,.jpeg,.png" onchange="debugMobileFileUpload(this, 'dni-vendedor')">
  <div class="upload-button upload-button-responsive">
  <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivo</span>
  <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
@@ -1099,7 +1087,7 @@ function tbv2_render_form() {
  <span class="view-example" data-doc="contrato-compraventa" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
  </label>
  <div class="upload-wrapper">
- <input type="file" id="upload-contrato-compraventa" name="upload_contrato_compraventa[]" multiple required accept="image/*,.pdf">
+ <input type="file" id="upload-contrato-compraventa" name="upload_contrato_compraventa[]" multiple required accept=".pdf,.jpg,.jpeg,.png" onchange="debugMobileFileUpload(this, 'contrato-compraventa')">
  <div class="upload-button upload-button-responsive">
  <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivo</span>
  <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
@@ -1120,7 +1108,7 @@ function tbv2_render_form() {
  <span class="view-example" data-doc="modelo-620" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
  </label>
  <div class="upload-wrapper">
- <input type="file" id="upload-modelo-620" name="upload_modelo_620[]" multiple accept="image/*,.pdf">
+ <input type="file" id="upload-modelo-620" name="upload_modelo_620[]" multiple accept=".pdf,.jpg,.jpeg,.png" onchange="debugMobileFileUpload(this, 'modelo-620')">
  <div class="upload-button upload-button-responsive">
  <span class="desktop-text"><i class="fa-solid fa-upload"></i> Adjuntar Modelo 620</span>
  <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
@@ -1787,7 +1775,7 @@ function tbv2_render_styles() {
  }
 
  .button-primary {
- background: linear-gradient(135deg, var(--primary-color) 0%, #0891b2 100%);
+ background: linear-gradient(135deg, #014d5f 0%, #0e7490 100%);
  color: white;
  border: none;
  font-weight: 600;
@@ -1795,8 +1783,7 @@ function tbv2_render_styles() {
 
  .button-primary:hover {
  background: linear-gradient(135deg, #014d5f 0%, #0e7490 100%);
- transform: translateY(-2px);
- box-shadow: 0 8px 20px rgba(1, 109, 134, 0.4);
+ /* Sin animacion - mantiene el mismo color */
  }
 
  .button-secondary {
@@ -3109,29 +3096,164 @@ function tbv2_render_styles() {
  left: 0;
  width: 100%;
  height: 100%;
- background-color: rgba(0, 0, 0, 0.95);
- z-index: 999999;
+ background-color: rgba(0, 0, 0, 0.98);
+ z-index: 2147483647; /* Máximo z-index posible */
  display: none;
  align-items: center;
  justify-content: center;
  overflow: hidden;
+ backdrop-filter: blur(5px); /* Efecto blur en fondo */
+ -webkit-backdrop-filter: blur(5px);
  }
 
+ /* Forzar que modal esté por encima de TODO */
  .tbv2-signature-modal.active {
- display: flex;
+ display: flex !important;
+ position: fixed !important;
+ z-index: 2147483647 !important;
+ pointer-events: auto !important;
  }
+
+/* PREVENIR FONDOS BUGGEADOS EN MÓVILES - VERSIÓN ROBUSTA */
+body.tbv2-modal-open {
+ overflow: hidden !important;
+ position: fixed !important;
+ width: 100% !important;
+ height: 100% !important;
+ margin: 0 !important;
+ padding: 0 !important;
+ left: 0 !important;
+ right: 0 !important;
+ /* ✨ MOBILE ROBUST FIXES */
+ -webkit-overflow-scrolling: touch !important;
+ transform: translateZ(0) !important;
+ will-change: transform !important;
+}
+
+html.tbv2-modal-open {
+ overflow: hidden !important;
+ position: fixed !important;
+ width: 100% !important;
+ height: 100% !important;
+ margin: 0 !important;
+ padding: 0 !important;
+ /* ✨ MOBILE VIEWPORT FIXES */
+ min-height: 100vh !important;
+ min-height: 100dvh !important; /* Dynamic Viewport Height */
+}
+
+/* ⚡ MOBILE SPECIFIC ROBUST FIXES */
+@media (max-width: 768px) {
+ body.tbv2-modal-open {
+  height: 100vh !important;
+  height: 100dvh !important; /* Dynamic Viewport Height para móviles */
+  top: 0 !important;
+  bottom: 0 !important;
+  overscroll-behavior: none !important;
+ }
+ 
+ html.tbv2-modal-open {
+  height: 100vh !important;
+  height: 100dvh !important;
+  overscroll-behavior: none !important;
+ }
+ 
+ /* Forzar ocultación del footer en móviles */
+ body.tbv2-modal-open footer,
+ body.tbv2-modal-open .footer,
+ body.tbv2-modal-open [data-elementor-type="footer"] {
+  display: none !important;
+  visibility: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
+  z-index: -9999 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+ }
+}
+
+/* OCULTAR FOOTER ESPECÍFICAMENTE */
+body.tbv2-modal-open .footer,
+body.tbv2-modal-open #site_footer,
+body.tbv2-modal-open .page_footer,
+body.tbv2-modal-open [class*="footer"] {
+ display: none !important;
+ visibility: hidden !important;
+ z-index: -1 !important;
+ opacity: 0 !important;
+ pointer-events: none !important;
+}
+
+/* OCULTAR HEADER ESPECÍFICAMENTE */  
+body.tbv2-modal-open .header,
+body.tbv2-modal-open #site_header,
+body.tbv2-modal-open .page_header,
+body.tbv2-modal-open [class*="header"] {
+ display: none !important;
+ visibility: hidden !important;
+ z-index: -1 !important;
+ opacity: 0 !important;
+ pointer-events: none !important;
+}
+
+/* OCULTAR TODOS LOS POPUPS Y WIDGETS */
+body.tbv2-modal-open [class*="popup"],
+body.tbv2-modal-open [class*="cookie"],
+body.tbv2-modal-open [class*="whatsapp"],
+body.tbv2-modal-open [class*="chat"],
+body.tbv2-modal-open .trustindex,
+body.tbv2-modal-open [role="dialog"]:not(#signature-modal-advanced),
+body.tbv2-modal-open [class*="elementor-popup"] {
+ display: none !important;
+ visibility: hidden !important;
+ z-index: -1 !important;
+ opacity: 0 !important;
+ pointer-events: none !important;
+}
 
 
  .tbv2-modal-content {
  position: relative;
  background: white;
  border-radius: 12px;
- width: 90vw;
+ width: 95vw;
  max-width: 600px;
- max-height: 90vh;
+ max-height: 95vh;
  overflow: hidden;
  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+ z-index: 2147483647;
+ pointer-events: auto;
  }
+
+/* Optimización móvil para modal firma - VERSIÓN ROBUSTA */
+@media (max-width: 768px) {
+ .tbv2-modal-content {
+ width: 100vw !important;
+ max-width: 100vw !important;
+ height: 100dvh !important; /* Usa dynamic viewport height */
+ max-height: 100dvh !important;
+ min-height: 100vh !important; /* Fallback para navegadores antiguos */
+ border-radius: 0 !important;
+ margin: 0 !important;
+ position: fixed !important;
+ top: 0 !important;
+ left: 0 !important;
+ right: 0 !important;
+ bottom: 0 !important;
+ }
+ 
+ .tbv2-signature-modal {
+ padding: 0 !important;
+ margin: 0 !important;
+ align-items: stretch !important;
+ justify-content: stretch !important;
+ top: 0 !important;
+ left: 0 !important;
+ width: 100vw !important;
+ height: 100dvh !important;
+ min-height: 100vh !important;
+ }
+}
 
  .tbv2-modal-header {
  padding: 20px 24px;
@@ -4209,7 +4331,7 @@ function tbv2_render_scripts() {
  return `
  <div style="text-align: center;">
  <h3 style="color: white; font-size: 18px; font-weight: 600; margin-bottom: 15px;">
- Tramitación para: Tramitfy S.L.
+ Resumen de pago
  </h3>
  
  <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 16px; margin-bottom: 20px; text-align: left;">
@@ -5642,8 +5764,8 @@ function tbv2_render_scripts() {
  }
  
  // Verificar que el base64 es válido
- if (!base64.startsWith('data:')) {
- throw new Error('Base64 no tiene formato correcto');
+ if (!base64) {
+ throw new Error('Base64 resultado vacío');
  }
  
  console.log(` Procesando ${category}: ${file.name} (${(file.size/1024).toFixed(1)} KB)`);
@@ -5810,6 +5932,27 @@ function tbv2_render_scripts() {
  size: file?.size,
  constructor: file?.constructor?.name
  });
+
+ // VALIDACIÓN FORMATOS MÓVILES PROBLEMÁTICOS
+ const fileName = file?.name || '';
+ const fileType = file?.type || '';
+ const fileExtension = fileName.toLowerCase().split('.').pop();
+ 
+ // Rechazar formatos problemáticos en móviles
+ const problematicFormats = ['heic', 'heif', 'avif', 'webp'];
+ if (problematicFormats.includes(fileExtension)) {
+ console.error(` ❌ Formato ${fileExtension} no soportado en móviles`);
+ reject(new Error(`Formato .${fileExtension} no compatible. Use .jpg, .png o .pdf`));
+ return;
+ }
+ 
+ // Validar MIME types problemáticos
+ const problematicMimes = ['image/heic', 'image/heif', 'image/avif', 'image/webp'];
+ if (problematicMimes.includes(fileType)) {
+ console.error(` ❌ MIME type ${fileType} no soportado en móviles`);
+ reject(new Error('Formato de imagen no compatible. Use JPG, PNG o PDF'));
+ return;
+ }
  
  // Validar que el archivo es válido
  if (!file || typeof file.size === 'undefined') {
@@ -5827,7 +5970,24 @@ function tbv2_render_scripts() {
  return;
  }
  
- // SIN LÍMITE DE TAMAÑO - permitir archivos grandes para PDFs móviles
+ // AUTO-COMPRESIÓN PARA FOTOS MÓVILES GRANDES
+ if (file.type.startsWith('image/') && file.size > 1024 * 1024) { // Más de 1MB
+ console.log(` 🔧 FOTO GRANDE: ${file.name} (${(file.size/1024/1024).toFixed(1)}MB) - Comprimiendo...`);
+ 
+ // Usar función global de compresión (definida más abajo)
+ if (typeof compressImageForMobile === 'function') {
+ compressImageForMobile(file).then(compressedFile => {
+ console.log(` ✅ COMPRIMIDA: ${(file.size/1024/1024).toFixed(1)}MB → ${(compressedFile.size/1024/1024).toFixed(1)}MB`);
+ // Procesar archivo comprimido 
+ TramitfyFiles.fileToBase64(compressedFile).then(resolve).catch(reject);
+ }).catch(error => {
+ console.error(' ❌ Error comprimiendo:', error);
+ reject(new Error('Error comprimiendo: ' + error.message));
+ });
+ return; // Salir, la recursión maneja el resto
+ }
+ }
+ 
  console.log(` Archivo aceptado: ${file.name} (${(file.size/1024/1024).toFixed(1)}MB)`);
  
  // DEBUG SIMPLE DEL ARCHIVO
@@ -5864,12 +6024,19 @@ function tbv2_render_scripts() {
  return;
  }
  
- // Verificar formato Data URL pero ser permisivo con PDFs
+ // VALIDACIÓN MÓVIL ROBUSTA - Permisiva para múltiples formatos
  if (!result.startsWith('data:')) {
- console.error(` Resultado no es Data URL válido para: ${file.name}`);
- console.error(` Inicio del resultado: ${result.substring(0, 100)}`);
- reject(new Error('Resultado no es Data URL válido'));
+ // En móviles algunos archivos pueden no seguir el patrón exacto
+ console.warn(` ⚠️ Formato no estándar detectado para: ${file.name}`);
+ console.warn(` Inicio del resultado: ${result.substring(0, 100)}`);
+ 
+ // Intentar recuperar si parece un Data URL válido
+ if (result.includes(',') && (result.includes('base64,') || result.includes('data:'))) {
+ console.log(` ✅ Recuperando formato no estándar para: ${file.name}`);
+ } else {
+ reject(new Error('Formato de archivo no compatible con este dispositivo'));
  return;
+ }
  }
  
  // LOG ÉXITO CON DETALLES
@@ -6254,16 +6421,6 @@ function tbv2_render_scripts() {
  manufacturer = manufacturerSelect?.selectedOptions[0]?.text || '[Fabricante]';
  model = modelSelect?.selectedOptions[0]?.text || '[Modelo]';
  }
- 
- // Limpiar información de fabricante y mantener modelo original
- let cleanManufacturer = manufacturer;
- console.log('🔍 DEBUG fabricante original:', manufacturer);
- if (manufacturer && manufacturer !== '[Fabricante]') {
-     // Remover texto "(XX modelos)" del fabricante
-     cleanManufacturer = manufacturer.replace(/\s*\(\d+\s+modelos?\)\s*$/gi, '').trim();
-     console.log('🏭 Limpiando fabricante:', manufacturer, '→', cleanManufacturer);
- }
- console.log('🔍 DEBUG fabricante final usado en documento:', cleanManufacturer);
 
  // Construir el documento HTML
  const documentContent = `
@@ -6273,7 +6430,7 @@ function tbv2_render_scripts() {
  Yo, <strong>${buyerName}</strong>, con DNI <strong>${buyerDni}</strong> y correo electrónico <strong>${buyerEmail}</strong>, 
  en mi calidad de comprador, <strong>autorizo expresamente a TRAMITFY S.L.</strong> para que actúe en mi nombre y 
  representación en todos los trámites necesarios ante <strong>Capitanía Marítima</strong> para la transferencia de titularidad 
-de la embarcación <strong>${cleanManufacturer} ${model}</strong>.
+de la embarcación con matrícula <strong>${matricula}</strong>.
  </p>
  
  <p style="text-align: justify; margin-bottom: 16px;">
@@ -6316,19 +6473,167 @@ de la embarcación <strong>${cleanManufacturer} ${model}</strong>.
  }
 
  function openSignatureModal() {
- console.log(' Abriendo modal de firma');
+ console.log('🚀 ABRIENDO MODAL FIRMA - VERSIÓN ROBUSTA');
+ 
+ // 1. CAPTURAR SCROLL DE FORMA SEGURA
+ const currentScrollY = Math.max(
+ window.scrollY || 0,
+ document.documentElement.scrollTop || 0,
+ document.body.scrollTop || 0
+ );
+ console.log(`📏 Scroll capturado: ${currentScrollY}px`);
+ 
+ // 2. APLICAR BLOQUEOS INMEDIATAMENTE
+ document.body.classList.add('tbv2-modal-open');
+ document.documentElement.classList.add('tbv2-modal-open');
+ 
+ // 3. FORZAR LAYOUT RECALCULATION
+ document.body.offsetHeight; // Force reflow
+ 
+ // 🚀 MOBILE SPECIFIC ENHANCEMENTS - VERSIÓN ROBUSTA 
+ if (window.innerWidth <= 768) {
+  console.log('📱 Aplicando mejoras específicas para móvil');
+  
+  // Forzar altura viewport dinámico
+  document.documentElement.style.setProperty('height', '100dvh', 'important');
+  document.body.style.setProperty('height', '100dvh', 'important');
+  
+  // Prevenir overscroll behavior
+  document.body.style.setProperty('overscroll-behavior', 'none', 'important');
+  document.documentElement.style.setProperty('overscroll-behavior', 'none', 'important');
+  
+  // Asegurar posición fija robusta
+  document.body.style.setProperty('top', `-${currentScrollY}px`, 'important');
+  document.body.style.setProperty('left', '0', 'important');
+  document.body.style.setProperty('right', '0', 'important');
+  document.body.style.setProperty('bottom', '0', 'important');
+ }
+ 
+ // 4. BLOQUEAR SCROLL CON VALOR CAPTURADO
+ document.body.style.overflow = 'hidden';
+ document.body.style.position = 'fixed';
+ document.body.style.width = '100%';
+ document.body.style.top = `-${currentScrollY}px`;
+ document.body.style.left = '0';
+ document.body.style.right = '0';
+ 
+ // 5. BLOQUEAR HTML TAMBIÉN
+ document.documentElement.style.overflow = 'hidden';
+ document.documentElement.style.position = 'fixed';
+ document.documentElement.style.width = '100%';
+ document.documentElement.style.height = '100%';
+ document.documentElement.style.margin = '0';
+ document.documentElement.style.padding = '0';
+ 
+ // 6. CONFIGURAR MODAL INMEDIATAMENTE
+ signatureModal.style.zIndex = '2147483647';
+ signatureModal.style.position = 'fixed';
+ signatureModal.style.top = '0';
+ signatureModal.style.left = '0';
+ signatureModal.style.width = '100vw';
+ signatureModal.style.height = '100vh';
  signatureModal.classList.add('active');
- setTimeout(() => {
+ 
+ // 7. FORZAR OTRO LAYOUT RECALCULATION
+ signatureModal.offsetHeight; // Force reflow
+ 
+ // 8. OCULTACIÓN DIRECTA SIN DELAYS - MAS ROBUSTA
+ // Usar CSS ya aplicado por las clases, pero reforzar con JS directo
+ const directHideSelectors = [
+ '#site_footer', '.page_footer', '.footer', 
+ '#site_header', '.page_header', '.header',
+ '[class*="footer"]', '[class*="header"]',
+ '[class*="popup"]', '[class*="cookie"]', 
+ '[class*="whatsapp"]', '[class*="chat"]',
+ '.trustindex', '[class*="trustindex"]'
+ ];
+ 
+ directHideSelectors.forEach(selector => {
+ try {
+ document.querySelectorAll(selector).forEach(el => {
+ if (el && !signatureModal.contains(el)) {
+ el.style.display = 'none';
+ el.style.visibility = 'hidden';
+ el.style.zIndex = '-1';
+ el.style.opacity = '0';
+ el.style.pointerEvents = 'none';
+ el.setAttribute('data-tbv2-hidden', 'true');
+ }
+ });
+ } catch (e) {
+ console.warn('Error ocultando:', selector);
+ }
+ });
+ 
+ // 9. INICIALIZAR SIGNATURE PAD CON PEQUEÑO DELAY PARA ESTABILIDAD
+ requestAnimationFrame(() => {
  initializeSignaturePad();
- }, 100);
+ console.log('✅ Modal firma inicializado correctamente');
+ });
  }
 
  function closeSignatureModal() {
  console.log(' Cerrando modal de firma');
+ 
+ // REMOVER CLASES CSS
+ document.body.classList.remove('tbv2-modal-open');
+ document.documentElement.classList.remove('tbv2-modal-open');
+ 
+ // RESTAURAR SCROLL DEL BODY
+ const scrollY = document.body.style.top;
+ document.body.style.overflow = '';
+ document.body.style.position = '';
+ document.body.style.width = '';
+ document.body.style.top = '';
+ if (scrollY) {
+ window.scrollTo(0, parseInt(scrollY || '0') * -1);
+ }
+ 
+ // RESTAURAR DOCUMENTELEMENT
+ document.documentElement.style.overflow = '';
+ document.documentElement.style.position = '';
+ document.documentElement.style.width = '';
+ document.documentElement.style.height = '';
+ 
  signatureModal.classList.remove('active');
  if (signaturePad) {
  signaturePad.off();
  }
+ 
+ // RESTAURAR TODOS LOS ELEMENTOS OCULTOS
+ const hiddenElements = document.querySelectorAll('[data-tbv2-hidden="true"]');
+ hiddenElements.forEach(el => {
+ el.style.display = '';
+ el.style.visibility = '';
+ el.style.zIndex = '';
+ el.style.opacity = '';
+ el.style.pointerEvents = '';
+ el.removeAttribute('data-tbv2-hidden');
+ });
+ 
+ // 🚀 MOBILE SPECIFIC RESTORATION - VERSIÓN ROBUSTA
+ if (window.innerWidth <= 768) {
+  console.log('📱 Aplicando restauración específica para móvil');
+  
+  // Restaurar altura viewport
+  document.documentElement.style.removeProperty('height');
+  document.body.style.removeProperty('height');
+  
+  // Restaurar overscroll behavior
+  document.body.style.removeProperty('overscroll-behavior');
+  document.documentElement.style.removeProperty('overscroll-behavior');
+  
+  // Limpiar propiedades de posición específicas móvil
+  document.body.style.removeProperty('top');
+  document.body.style.removeProperty('left');
+  document.body.style.removeProperty('right');
+  document.body.style.removeProperty('bottom');
+  
+  // Forzar recálculo final en móvil
+  document.body.offsetHeight;
+ }
+ 
+ console.log(`✅ Restaurados ${hiddenElements.length} elementos ocultos`);
  }
 
  function initializeSignaturePad() {
@@ -7107,18 +7412,23 @@ function tbv2_bypass_wp_security_filters() {
  error_log("TBV2: Filtros de seguridad y límites desactivados para uploads");
 }
 
-// ✅ PATRÓN CORREGIDO: Configuración directa sin init hook
-// Eliminar add_action('init') para evitar carga global
-if (tbv2_is_authorized_page()) {
+// Configurar al cargar el plugin - PROTEGIDO
+add_action('init', function() {
+ // 🛡️ PROTECCIÓN NUCLEAR: Solo en páginas autorizadas
+ if (!tbv2_is_authorized_page()) {
+  return; // Bloquear configuración en páginas no autorizadas
+ }
  tbv2_configure_file_uploads();
  tbv2_bypass_wp_security_filters();
-}
+});
 
 /**
- * ✅ SHORTCODE REGISTRATION DIRECTO (patrón hoja-asiento.php)
- * Sin init hook para evitar carga global
+ * Shortcode registration
  */
-add_shortcode('transferencia_barco_v2', 'tbv2_render_form');
+function tbv2_register_shortcode() {
+ add_shortcode('transferencia_barco_v2', 'tbv2_render_form');
+}
+add_action('init', 'tbv2_register_shortcode');
 
 /**
  * Enqueue scripts if needed
@@ -7401,11 +7711,8 @@ function tbv2_handle_create_redsys_payment() {
  ]);
  }
 }
-// ✅ AJAX HANDLERS PROTEGIDOS - Solo registrar si está autorizado
-if (tbv2_is_authorized_page()) {
-    add_action('wp_ajax_tbv2_create_redsys_payment', 'tbv2_handle_create_redsys_payment');
-    add_action('wp_ajax_nopriv_tbv2_create_redsys_payment', 'tbv2_handle_create_redsys_payment');
-}
+add_action('wp_ajax_tbv2_create_redsys_payment', 'tbv2_handle_create_redsys_payment');
+add_action('wp_ajax_nopriv_tbv2_create_redsys_payment', 'tbv2_handle_create_redsys_payment');
 
 /**
  * Handler para guardar archivos por separado (evitar 403)
@@ -7474,11 +7781,8 @@ function tbv2_handle_store_files() {
  wp_send_json_error(['message' => $e->getMessage()]);
  }
 }
-// ✅ AJAX HANDLERS PROTEGIDOS - Solo registrar si está autorizado
-if (tbv2_is_authorized_page()) {
-    add_action('wp_ajax_tbv2_store_files', 'tbv2_handle_store_files');
-    add_action('wp_ajax_nopriv_tbv2_store_files', 'tbv2_handle_store_files');
-}
+add_action('wp_ajax_tbv2_store_files', 'tbv2_handle_store_files');
+add_action('wp_ajax_nopriv_tbv2_store_files', 'tbv2_handle_store_files');
 
 /**
  * Handler para procesar el callback de Redsys (URL de retorno)
@@ -7526,9 +7830,7 @@ function tbv2_handle_redsys_callback() {
  
  exit;
 }
-// ✅ CALLBACK DIRECTO: Ejecutar inmediatamente si es necesario
-// Sin init hook para evitar carga global
-tbv2_handle_redsys_callback_init();
+add_action('init', 'tbv2_handle_redsys_callback_init');
 
 function tbv2_handle_redsys_callback_init() {
  // Debug logging
@@ -9007,11 +9309,10 @@ error_log(" TBV2 ENHANCED: Sistema de archivos compatible cargado - NO intercept
 
 // 🛡️ PROTECCIÓN QUIRÚRGICA - Usar función unificada tbv2_is_authorized_page()
 
-// ❌ JAVASCRIPT GLOBAL ELIMINADO - CAUSABA CONFLICTOS AJAX
-// Este JavaScript se ejecutaba al cargar el archivo (require_once)
-// contaminando todas las respuestas AJAX con <script> tags
-/*
-if (tbv2_is_authorized_page()) { 
+// ✅ PROTECCIÓN AJAX AVANZADA - SOLO PÁGINAS AUTORIZADAS
+// Solo ejecutar en páginas autorizadas
+if (tbv2_is_authorized_page()) { // REACTIVADO CON PROTECCIÓN AJAX
+    // Solo output si está autorizado
 ?>
 <script>
 // TBV2 TEMPORAL INTEGRATION - SISTEMA INDEPENDIENTE
@@ -9301,12 +9602,96 @@ const TBV2_TEMPORAL = {
  return extractedFiles;
  },
  
- // Convertir archivo a base64
+ // Convertir archivo a base64 - VERSIÓN ROBUSTA MÓVIL
  fileToBase64(file) {
  return new Promise((resolve, reject) => {
+ // VALIDACIÓN FORMATOS MÓVILES PROBLEMÁTICOS
+ const fileName = file?.name || '';
+ const fileType = file?.type || '';
+ const fileExtension = fileName.toLowerCase().split('.').pop();
+ 
+ // Rechazar formatos problemáticos
+ const problematicFormats = ['heic', 'heif', 'avif', 'webp'];
+ if (problematicFormats.includes(fileExtension)) {
+ console.error(`❌ Formato ${fileExtension} no soportado`);
+ reject(new Error(`Formato .${fileExtension} no compatible. Use .jpg, .png o .pdf`));
+ return;
+ }
+ 
+ // Validar MIME types problemáticos
+ const problematicMimes = ['image/heic', 'image/heif', 'image/avif', 'image/webp'];
+ if (problematicMimes.includes(fileType)) {
+ console.error(`❌ MIME type ${fileType} no soportado`);
+ reject(new Error('Formato no compatible. Use JPG, PNG o PDF'));
+ return;
+ }
+
+ // Validar archivo válido
+ if (!file || typeof file.size === 'undefined') {
+ reject(new Error('Archivo inválido'));
+ return;
+ }
+
+ if (file.size === 0) {
+ reject(new Error('Archivo vacío'));
+ return;
+ }
+
+ // AUTO-COMPRESIÓN PARA FOTOS MÓVILES GRANDES
+ if (file.type.startsWith('image/') && file.size > 1024 * 1024) { // Más de 1MB
+ console.log(`🔧 SEGUNDA FUNCIÓN - Foto grande: ${file.name} (${(file.size/1024/1024).toFixed(1)}MB)`);
+ 
+ if (typeof compressImageForMobile === 'function') {
+ compressImageForMobile(file).then(compressedFile => {
+ console.log(`✅ SEGUNDA FUNCIÓN - Comprimida: ${(compressedFile.size/1024/1024).toFixed(1)}MB`);
+ // Procesar recursivamente
+ TBV2_TEMPORAL.fileToBase64(compressedFile).then(resolve).catch(reject);
+ }).catch(error => {
+ reject(new Error('Error comprimiendo: ' + error.message));
+ });
+ return;
+ }
+ }
+
  const reader = new FileReader();
- reader.onload = () => resolve(reader.result);
- reader.onerror = error => reject(error);
+ 
+ const timeout = setTimeout(() => {
+ reader.abort();
+ reject(new Error('Timeout leyendo archivo'));
+ }, 30000);
+
+ reader.onload = (event) => {
+ clearTimeout(timeout);
+ const result = event.target.result;
+
+ if (!result || typeof result !== 'string' || result.length === 0) {
+ reject(new Error('Resultado FileReader vacío'));
+ return;
+ }
+
+ // VALIDACIÓN MÓVIL PERMISIVA
+ if (!result.startsWith('data:')) {
+ if (result.includes(',') && (result.includes('base64,') || result.includes('data:'))) {
+ console.log('✅ Recuperando formato no estándar');
+ } else {
+ reject(new Error('Formato no compatible con este dispositivo'));
+ return;
+ }
+ }
+
+ resolve(result);
+ };
+
+ reader.onerror = () => {
+ clearTimeout(timeout);
+ reject(new Error('Error leyendo archivo'));
+ };
+
+ reader.onabort = () => {
+ clearTimeout(timeout);
+ reject(new Error('Lectura abortada'));
+ };
+
  reader.readAsDataURL(file);
  });
  },
@@ -9435,21 +9820,227 @@ document.addEventListener('DOMContentLoaded', function() {
 
 window.TBV2_TEMPORAL_SYSTEM = TBV2_TEMPORAL;
 
+// =====================================================
+// FUNCIÓN DEBUG ESPECÍFICA PARA CHROME MÓVIL
+// =====================================================
+
+function debugMobileFileUpload(input, fieldName) {
+	console.log('🔍 DEBUG MÓVIL - Inicio upload:', fieldName);
+	
+	if (!input || !input.files || input.files.length === 0) {
+		console.warn('⚠️ DEBUG MÓVIL - No files selected');
+		return;
+	}
+	
+	Array.from(input.files).forEach((file, index) => {
+		console.log(`📁 DEBUG MÓVIL - Archivo ${index + 1}/${input.files.length}:`, {
+			name: file.name,
+			size: file.size,
+			type: file.type,
+			lastModified: file.lastModified,
+			constructor: file.constructor.name
+		});
+		
+		// Detectar formatos problemáticos INMEDIATAMENTE
+		const fileName = file.name.toLowerCase();
+		const problematicExtensions = ['heic', 'heif', 'avif', 'webp'];
+		const fileExtension = fileName.split('.').pop();
+		
+		if (problematicExtensions.includes(fileExtension)) {
+			console.error('❌ DEBUG MÓVIL - Formato problemático detectado:', fileExtension);
+			alert(`Error: Formato .${fileExtension} no compatible.\nUse .jpg, .png o .pdf`);
+			input.value = ''; // Limpiar input
+			return;
+		}
+		
+		// AUTO-COMPRESIÓN PARA FOTOS MÓVILES
+		if (file.type.startsWith('image/') && file.size > 1024 * 1024) { // Más de 1MB
+			console.log(`🔧 DEBUG MÓVIL - Foto grande detectada (${(file.size/1024/1024).toFixed(1)}MB), comprimiendo...`);
+			
+			// Comprimir imagen automáticamente
+			compressImageForMobile(file).then(compressedFile => {
+				console.log(`✅ DEBUG MÓVIL - Foto comprimida: ${file.name}`);
+				console.log(`📊 Tamaño original: ${(file.size/1024/1024).toFixed(1)}MB → Comprimido: ${(compressedFile.size/1024/1024).toFixed(1)}MB`);
+				
+				// Test FileReader con archivo comprimido
+				testFileReader(compressedFile, file.name + ' (comprimido)');
+				
+			}).catch(error => {
+				console.error('❌ DEBUG MÓVIL - Error comprimiendo:', error);
+				alert(`Error procesando imagen: ${error.message}`);
+			});
+		} else {
+			// Test FileReader normal para archivos pequeños
+			testFileReader(file, file.name);
+		}
+	});
+}
+
+// Función para testear FileReader
+function testFileReader(file, fileName) {
+	const reader = new FileReader();
+	
+	reader.onerror = (e) => {
+		console.error('❌ DEBUG MÓVIL - Error FileReader:', e);
+		alert(`Error leyendo archivo: ${fileName}`);
+	};
+	
+	reader.onload = (e) => {
+		const result = e.target.result;
+		console.log(`✅ DEBUG MÓVIL - FileReader OK para ${fileName}:`, {
+			resultLength: result?.length || 0,
+			startsWithData: result?.startsWith('data:'),
+			firstChars: result?.substring(0, 50)
+		});
+		
+		// Validación específica para Chrome móvil
+		if (!result) {
+			console.error('❌ DEBUG MÓVIL - Resultado vacío');
+			alert(`Error: ${fileName} no se pudo leer correctamente`);
+			return;
+		}
+		
+		if (!result.startsWith('data:')) {
+			console.error('❌ DEBUG MÓVIL - Formato Data URL inválido');
+			console.error('Inicio del resultado:', result.substring(0, 100));
+			alert(`Error: ${fileName} - formato no válido para este navegador`);
+			return;
+		}
+		
+		console.log(`🎉 DEBUG MÓVIL - ${fileName} procesado exitosamente!`);
+	};
+	
+	// Ejecutar test
+	try {
+		reader.readAsDataURL(file);
+	} catch (error) {
+		console.error('❌ DEBUG MÓVIL - Exception en readAsDataURL:', error);
+		alert(`Error al leer ${fileName}: ${error.message}`);
+	}
+}
+
+// FUNCIÓN DE COMPRESIÓN AUTOMÁTICA PARA FOTOS MÓVILES
+function compressImageForMobile(file) {
+	return new Promise((resolve, reject) => {
+		// Límites móviles seguros
+		const MAX_WIDTH = 1200;
+		const MAX_HEIGHT = 1200; 
+		const MAX_SIZE_MB = 0.8; // 800KB máximo
+		const QUALITY = 0.8; // 80% calidad
+		
+		// Crear canvas para redimensionar
+		const canvas = document.createElement('canvas');
+		const ctx = canvas.getContext('2d');
+		const img = new Image();
+		
+		img.onload = function() {
+			// Calcular nuevas dimensiones
+			let { width, height } = img;
+			
+			if (width > MAX_WIDTH) {
+				height = (height * MAX_WIDTH) / width;
+				width = MAX_WIDTH;
+			}
+			
+			if (height > MAX_HEIGHT) {
+				width = (width * MAX_HEIGHT) / height;
+				height = MAX_HEIGHT;
+			}
+			
+			// Configurar canvas
+			canvas.width = width;
+			canvas.height = height;
+			
+			// Dibujar imagen redimensionada
+			ctx.drawImage(img, 0, 0, width, height);
+			
+			// Convertir a blob comprimido
+			canvas.toBlob((blob) => {
+				if (!blob) {
+					reject(new Error('Error generando imagen comprimida'));
+					return;
+				}
+				
+				// Crear File object desde blob
+				const compressedFile = new File([blob], file.name, {
+					type: 'image/jpeg', // Forzar JPEG para compatibilidad
+					lastModified: Date.now()
+				});
+				
+				resolve(compressedFile);
+				
+			}, 'image/jpeg', QUALITY);
+		};
+		
+		img.onerror = () => {
+			reject(new Error('Error cargando imagen para comprimir'));
+		};
+		
+		// Cargar imagen original
+		const reader = new FileReader();
+		reader.onload = (e) => img.src = e.target.result;
+		reader.onerror = () => reject(new Error('Error leyendo imagen original'));
+		reader.readAsDataURL(file);
+	});
+}
+
+// Hacer funciones globales
+window.debugMobileFileUpload = debugMobileFileUpload;
+window.compressImageForMobile = compressImageForMobile;
+
+// =====================================================
+// INTERCEPTOR DE ERRORES ESPECÍFICO PARA CHROME MÓVIL
+// =====================================================
+
+// Interceptar errores de JavaScript
+window.addEventListener('error', function(e) {
+	const errorMsg = e.message || '';
+	if (errorMsg.includes('string did not match') || errorMsg.includes('expected pattern')) {
+		console.error('🚨 INTERCEPTED ERROR - Chrome Móvil Pattern Error:', {
+			message: e.message,
+			filename: e.filename,
+			lineno: e.lineno,
+			colno: e.colno,
+			error: e.error,
+			stack: e.error?.stack,
+			timestamp: new Date().toISOString(),
+			userAgent: navigator.userAgent
+		});
+		
+		// Alerta para debugging en vivo
+		alert(`ERROR INTERCEPTADO:\n${e.message}\nLínea: ${e.lineno}\nRevisa consola para detalles`);
+	}
+});
+
+// Interceptar rechazos de Promise no manejados
+window.addEventListener('unhandledrejection', function(e) {
+	const reason = e.reason || '';
+	const reasonStr = typeof reason === 'string' ? reason : (reason.message || reason.toString());
+	
+	if (reasonStr.includes('string did not match') || reasonStr.includes('expected pattern')) {
+		console.error('🚨 INTERCEPTED PROMISE REJECTION - Chrome Móvil Pattern Error:', {
+			reason: e.reason,
+			promise: e.promise,
+			timestamp: new Date().toISOString(),
+			userAgent: navigator.userAgent
+		});
+		
+		// Alerta para debugging en vivo
+		alert(`PROMISE ERROR INTERCEPTADO:\n${reasonStr}\nRevisa consola para detalles`);
+	}
+});
+
 console.log(' TBV2 TEMPORAL - Sistema de interceptor cargado');
 </script>
 <?php
 } // Cierre de la condición tbv2_is_authorized_page()
-*/
 
 // =====================================================
 // AJAX HANDLER PARA CREAR FORMULARIO REDSYS TEMPORAL
 // =====================================================
 
-// ✅ AJAX HANDLERS PROTEGIDOS - Solo registrar si está autorizado
-if (tbv2_is_authorized_page()) {
-    add_action('wp_ajax_tbv2_create_redsys_payment_generic', 'tbv2_create_redsys_payment_handler');
-    add_action('wp_ajax_nopriv_tbv2_create_redsys_payment_generic', 'tbv2_create_redsys_payment_handler');
-}
+add_action('wp_ajax_tbv2_create_redsys_payment_generic', 'tbv2_create_redsys_payment_handler');
+add_action('wp_ajax_nopriv_tbv2_create_redsys_payment_generic', 'tbv2_create_redsys_payment_handler');
 
 function tbv2_create_redsys_payment_handler() {
  try {
@@ -9535,15 +10126,8 @@ function tbv2_create_redsys_payment_handler() {
  * Handler para enviar emails de confirmación cuando llega el callback de Redsys
  */
 function tbv2_send_confirmation_emails_handler() {
- // 🔒 BYPASS ADMIN: Admin siempre autorizado
- if (!is_admin() && !tbv2_is_authorized_request()) {
- error_log(' TBV2 EMAILS - Acceso denegado desde página no autorizada');
- wp_send_json_error('Acceso denegado');
- return;
- }
- 
  try {
- error_log(' TBV2 EMAILS - Handler iniciado desde página autorizada');
+ error_log(' TBV2 EMAILS - Handler iniciado');
  
  // Usar configuración SMTP global de WordPress (como otros formularios)
  
@@ -9831,10 +10415,7 @@ function tbv2_send_confirmation_emails_handler() {
 }
 
 // Registrar handler AJAX (para usuarios logueados y no logueados)
-// ✅ AJAX HANDLERS PROTEGIDOS - Solo registrar si está autorizado
-if (tbv2_is_authorized_page()) {
-    add_action('wp_ajax_tbv2_send_confirmation_emails', 'tbv2_send_confirmation_emails_handler');
-    add_action('wp_ajax_nopriv_tbv2_send_confirmation_emails', 'tbv2_send_confirmation_emails_handler');
-}
+add_action('wp_ajax_tbv2_send_confirmation_emails', 'tbv2_send_confirmation_emails_handler');
+add_action('wp_ajax_nopriv_tbv2_send_confirmation_emails', 'tbv2_send_confirmation_emails_handler');
 
 // ========================================
