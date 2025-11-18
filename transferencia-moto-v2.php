@@ -2,7 +2,7 @@
 /**
  * TRAMITFY - TRANSFERENCIA MOTOS DE AGUA V2 CON REDSYS
  * 
- * Versión refactorizada con integración Redsys (CaixaBank TPV)
+ * Versión refactorizada con integración Redsys (CaixaBank TPV)<
  * Estructura exacta: layout wrapper → two-column → sidebar + main-form
  * 
  * @version 2.2.0 - REDSYS EDITION
@@ -47,8 +47,8 @@ function tmv2_is_authorized_page() {
     // 🎯 URLs EXACTAS AUTORIZADAS (solo estas, sin excepciones)
     $exact_authorized_paths = [
         '/testingfy/',              // ← Añadido para coexistir con TMV2
-        '/testingfy-moto/',
-        '/transferencia-moto-v2/',
+        '/testingfy-mot/',
+        '/cambio-de-nombre-moto-agua/',
         '/transferencia-moto-redsys/'
     ];
     
@@ -93,7 +93,7 @@ if (strpos($request_uri, 'testingfy') !== false && strpos($request_uri, 'testing
 // CONSTANTES DE CONFIGURACIÓN REDSYS V2
 // =====================================================
 
-if (!defined('TMV2_REDSYS_MODE')) define('TMV2_REDSYS_MODE', 'test'); // test o live
+if (!defined('TMV2_REDSYS_MODE')) define('TMV2_REDSYS_MODE', 'live'); // test o live
 
 // Datos del comercio Redsys
 if (!defined('TMV2_REDSYS_MERCHANT_CODE')) define('TMV2_REDSYS_MERCHANT_CODE', '363391103');
@@ -101,7 +101,7 @@ if (!defined('TMV2_REDSYS_TERMINAL')) define('TMV2_REDSYS_TERMINAL', '1');
 if (!defined('TMV2_REDSYS_CURRENCY')) define('TMV2_REDSYS_CURRENCY', '978'); // EUR
 
 // Claves de cifrado
-if (!defined('TMV2_REDSYS_SECRET_KEY')) define('TMV2_REDSYS_SECRET_KEY', 'sq7HjrUOBfKmC576ILgskD5srU870gJ7');
+if (!defined('TMV2_REDSYS_SECRET_KEY')) define('TMV2_REDSYS_SECRET_KEY', 'ERDGGMADKbhFIngyRLnW6KrxEuKnjq9p');
 if (!defined('TMV2_REDSYS_SIGNATURE_VERSION')) define('TMV2_REDSYS_SIGNATURE_VERSION', 'HMAC_SHA256_V1');
 
 // URLs según entorno
@@ -229,8 +229,8 @@ function tmv2_redsys_create_payment_form($order_data) {
  'Ds_Merchant_MerchantURL' => TMV2_REDSYS_URL_NOTIFICATION,
  'Ds_Merchant_UrlOK' => TMV2_REDSYS_URL_OK,
  'Ds_Merchant_UrlKO' => TMV2_REDSYS_URL_KO,
- 'Ds_Merchant_MerchantName' => 'Tramitfy Test',
- 'Ds_Merchant_ProductDescription' => 'Test TPV', // EXACTO como test dummy
+ 'Ds_Merchant_MerchantName' => 'Tramitfy',
+ 'Ds_Merchant_ProductDescription' => 'Transferencia Moto Náutica',
  'Ds_Merchant_ConsumerLanguage' => '001' // Español
  ];
  
@@ -744,7 +744,7 @@ function tmv2_render_form() {
  <!-- PÁGINA 1: VEHÍCULO (IDÉNTICA AL ORIGINAL) -->
  <div id="page-vehiculo" class="form-page form-section-compact" style="padding-top: 0;">
  <!-- Título del formulario idéntico al original -->
- <h2 style="margin-bottom: 12px; color: #016d86; font-size: 24px; font-weight: 600;">Cambio de Titularidad Moto de Agua</h2>
+ <h2 style="margin-bottom: 12px; color: #016d86; font-size: 24px; font-weight: 600;">Datos de su Vehículo</h2>
  
  <!-- Tipo de vehículo fijo: Barco (igual que original) -->
  <input type="hidden" name="vehicle_type" value="Moto de Agua">
@@ -892,7 +892,7 @@ function tmv2_render_form() {
  <div class="form-group">
  <label for="customer_phone">Teléfono</label>
  <input type="tel" id="customer_phone" name="customer_phone" required />
- <span class="input-hint">Para contactarte si es necesario</span>
+ <span class="input-hint">Te contactaremos por WhatsApp</span>
  </div>
  </div>
 
@@ -1042,7 +1042,7 @@ function tmv2_render_form() {
  <div class="upload-item">
  <label for="upload-hoja-asiento" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
  <div>
- <strong> Registro Marítimo</strong>
+ <strong> Tarjeta de la Moto</strong>
  <small style="display: block;">Documento que acredita la propiedad de la moto de agua</small>
  </div>
  <span class="view-example" data-doc="registro-maritimo" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
@@ -3119,127 +3119,29 @@ function tmv2_render_styles() {
  left: 0;
  width: 100%;
  height: 100%;
- background-color: rgba(0, 0, 0, 0.98);
- z-index: 2147483647; /* Máximo z-index posible */
+ background-color: rgba(0, 0, 0, 0.95);
+ z-index: 999999;
  display: none;
  align-items: center;
  justify-content: center;
  overflow: hidden;
- backdrop-filter: blur(5px); /* Efecto blur en fondo */
- -webkit-backdrop-filter: blur(5px);
  }
 
- /* Forzar que modal TMV2 esté por encima de TODO */
  .tmv2-signature-modal.active {
- display: flex !important;
- position: fixed !important;
- z-index: 2147483647 !important;
- pointer-events: auto !important;
+ display: flex;
  }
-
-/* PREVENIR FONDOS BUGGEADOS EN MÓVILES TMV2 */
-body.tmv2-modal-open {
- overflow: hidden !important;
- position: fixed !important;
- width: 100% !important;
- height: 100% !important;
- margin: 0 !important;
- padding: 0 !important;
- left: 0 !important;
- right: 0 !important;
- /* ✨ MOBILE ROBUST FIXES */
- -webkit-overflow-scrolling: touch !important;
- transform: translateZ(0) !important;
- will-change: transform !important;
-}
-
-html.tmv2-modal-open {
- overflow: hidden !important;
- position: fixed !important;
- width: 100% !important;
- height: 100% !important;
- margin: 0 !important;
- padding: 0 !important;
- /* ✨ MOBILE VIEWPORT FIXES */
- min-height: 100vh !important;
- min-height: 100dvh !important; /* Dynamic Viewport Height */
-}
-
-/* ⚡ MOBILE SPECIFIC ROBUST FIXES */
-@media (max-width: 768px) {
- body.tmv2-modal-open {
-  height: 100vh !important;
-  height: 100dvh !important; /* Dynamic Viewport Height para móviles */
-  top: 0 !important;
-  bottom: 0 !important;
-  overscroll-behavior: none !important;
- }
- 
- html.tmv2-modal-open {
-  height: 100vh !important;
-  height: 100dvh !important;
-  overscroll-behavior: none !important;
- }
- 
- /* Forzar ocultación del footer en móviles */
- body.tmv2-modal-open footer,
- body.tmv2-modal-open .footer,
- body.tmv2-modal-open [data-elementor-type="footer"] {
-  display: none !important;
-  visibility: hidden !important;
-  position: absolute !important;
-  left: -9999px !important;
-  z-index: -9999 !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
- }
-}
-
-/* Ocultar elementos problemáticos cuando modal TMV2 está activo */
-.tmv2-signature-modal.active ~ * [class*="popup"],
-.tmv2-signature-modal.active ~ * [class*="cookie"],
-.tmv2-signature-modal.active ~ * [class*="whatsapp"],
-.tmv2-signature-modal.active ~ * [class*="chat"],
-.tmv2-signature-modal.active ~ * .trustindex,
-.tmv2-signature-modal.active ~ * [role="dialog"]:not(#signature-modal-advanced) {
- display: none !important;
- visibility: hidden !important;
- z-index: -1 !important;
- opacity: 0 !important;
- pointer-events: none !important;
-}
 
 
  .tmv2-modal-content {
  position: relative;
  background: white;
  border-radius: 12px;
- width: 95vw;
+ width: 90vw;
  max-width: 600px;
- max-height: 95vh;
+ max-height: 90vh;
  overflow: hidden;
  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
- z-index: 2147483647;
- pointer-events: auto;
  }
-
-/* Optimización móvil para modal firma TMV2 */
-@media (max-width: 768px) {
- .tmv2-modal-content {
- width: 100vw !important;
- max-width: 100vw !important;
- height: 100vh !important;
- max-height: 100vh !important;
- border-radius: 0 !important;
- margin: 0 !important;
- }
- 
- .tmv2-signature-modal {
- padding: 0 !important;
- align-items: stretch !important;
- justify-content: stretch !important;
- }
-}
 
  .tmv2-modal-header {
  padding: 20px 24px;
@@ -3977,7 +3879,7 @@ function tmv2_render_scripts() {
  case 'page-precio':
  content = `
  <div style="text-align: center;">
- <h3 style="color: white; font-size: 18px; font-weight: 600; margin-bottom: 15px;">
+ <h3 style="color: white; font-size: 20px; font-weight: 600; margin-bottom: 15px;">
  Información del ITP
  </h3>
  <p style="color: rgba(255,255,255,0.95); font-size: 14px; line-height: 1.5; margin-bottom: 20px;">
@@ -4011,7 +3913,7 @@ function tmv2_render_scripts() {
  ¿Qué incluimos?
  </div>
  <p style="color: rgba(255,255,255,0.85); font-size: 13px; line-height: 1.4; margin: 0;">
- Gestión completa en DGMM, tasas oficiales e IVA
+ Gestión completa en DGMM, tasas Capitanía Marítima, IVA y Gestión del ITP
  </p>
  </div>
  
@@ -4021,7 +3923,7 @@ function tmv2_render_scripts() {
  Cálculo Automático
  </div>
  <p style="color: rgba(255,255,255,0.85); font-size: 13px; line-height: 1.4; margin: 0;">
- ITP calculado automáticamente según precio y región
+ ITP calculado automáticamente según precio, vehículo y comunidad autónoma
  </p>
  </div>
  </div>
@@ -4114,7 +4016,7 @@ function tmv2_render_scripts() {
  return `
  <div style="padding: 0;">
  <h3 style="color: white; font-size: 32px; margin: 0 0 16px 0; font-weight: 700; line-height: 1.2;">
- Cambio de Nombre Moto de Agua de Recreo
+ Cambio de Nombre Moto Náutica
  </h3>
  
  <!-- Subtítulo -->
@@ -4196,7 +4098,7 @@ function tmv2_render_scripts() {
  
  return `
  <div style="background: rgba(255,255,255,0.1); padding: 18px; border-radius: 8px;">
- <h3 style="color: white; font-size: 16px; margin: 0 0 16px 0; font-weight: 600; line-height: 1.3;">
+ <h3 style="color: white; font-size: 20px; margin: 0 0 16px 0; font-weight: 600; line-height: 1.3;">
  Información Personal<br>y de Contacto
  </h3>
  
@@ -4206,10 +4108,10 @@ function tmv2_render_scripts() {
  <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Datos protegidos según RGPD</span>
  </div>
  <div style="display: flex; align-items: center; margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; border-left: 3px solid rgba(255,255,255,0.6);">
- <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Uso exclusivo para el trámite</span>
+ <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Uso exclusivo para su presentación ante Capitanía Marítima y Hacienda</span>
  </div>
  <div style="display: flex; align-items: center; margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; border-left: 3px solid rgba(255,255,255,0.6);">
- <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Comunicación vía email/teléfono</span>
+ <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Comunicación vía email/WhatsApp</span>
  </div>
  </div>
  
@@ -4221,7 +4123,7 @@ function tmv2_render_scripts() {
  
  return `
  <div style="padding: 0;">
- <h3 style="color: white; font-size: 24px; margin: 0 0 16px 0; font-weight: 600; line-height: 1.2;">
+ <h3 style="color: white; font-size: 20px; margin: 0 0 16px 0; font-weight: 600; line-height: 1.2;">
  Documentación Necesaria
  </h3>
  
@@ -4247,12 +4149,12 @@ function tmv2_render_scripts() {
  
  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
  <i class="fas fa-file-alt" style="color: #10b981; font-size: 14px;"></i>
- <span style="color: rgba(255,255,255,0.85); font-size: 12px;">Registro marítimo</span>
+ <span style="color: rgba(255,255,255,0.85); font-size: 12px;">Tarjeta de la Moto</span>
  </div>
  
  <div style="display: flex; align-items: center; gap: 10px;">
  <i class="fas fa-file-alt" style="color: #10b981; font-size: 14px;"></i>
- <span style="color: rgba(255,255,255,0.85); font-size: 12px;">Hoja de asiento o tarjeta náutica</span>
+ <span style="color: rgba(255,255,255,0.85); font-size: 12px;">Contrato Compraventa o Factura de Compra</span>
  </div>
  </div>
  
@@ -4316,8 +4218,8 @@ function tmv2_render_scripts() {
  
  return `
  <div style="text-align: center;">
- <h3 style="color: white; font-size: 18px; font-weight: 600; margin-bottom: 15px;">
- Tramitación para: Tramitfy S.L.
+ <h3 style="color: white; font-size: 22px; font-weight: 600; margin-bottom: 15px;">
+ Resumen de Pago
  </h3>
  
  <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 16px; margin-bottom: 20px; text-align: left;">
@@ -6441,157 +6343,19 @@ de la moto de agua <strong>${cleanManufacturer} ${model}</strong>.
  }
 
  function openSignatureModal() {
- console.log(' Abriendo modal TMV2 de firma');
- 
- // AGREGAR CLASES PARA PREVENIR BUGS TMV2
- document.body.classList.add('tmv2-modal-open');
- document.documentElement.classList.add('tmv2-modal-open');
- 
- // BLOQUEAR SCROLL DEL BODY
- document.body.style.overflow = 'hidden';
- document.body.style.position = 'fixed';
- document.body.style.width = '100%';
- document.body.style.top = `-${window.scrollY}px`;
- 
- // Asegurar z-index máximo
- signatureModal.style.zIndex = '2147483647';
+ console.log(' Abriendo modal de firma');
  signatureModal.classList.add('active');
- 
- // 🚀 MOBILE SPECIFIC ENHANCEMENTS - VERSIÓN ROBUSTA TMV2
- if (window.innerWidth <= 768) {
-  console.log('📱 Aplicando mejoras específicas TMV2 para móvil');
-  
-  // Forzar altura viewport dinámico
-  document.documentElement.style.setProperty('height', '100dvh', 'important');
-  document.body.style.setProperty('height', '100dvh', 'important');
-  
-  // Prevenir overscroll behavior
-  document.body.style.setProperty('overscroll-behavior', 'none', 'important');
-  document.documentElement.style.setProperty('overscroll-behavior', 'none', 'important');
-  
-  // Asegurar posición fija robusta
-  document.body.style.setProperty('left', '0', 'important');
-  document.body.style.setProperty('right', '0', 'important');
-  document.body.style.setProperty('bottom', '0', 'important');
-  
-  // Forzar recálculo de layout
-  document.body.offsetHeight;
- }
- 
- // PREVENIR INTERFERENCIAS COMPLETAS TMV2
  setTimeout(() => {
- // OCULTAR TODOS LOS ELEMENTOS PROBLEMÁTICOS
- const problematicSelectors = [
- // Headers y footers
- '.header', '.footer', 
- // Elementor widgets
- '.elementor-widget', '.elementor-popup', '[class*="elementor-popup"]',
- // Cookies popups
- '#CybotCookiebotDialog', '[id*="cookie"]', '[class*="cookie"]', '[class*="gdpr"]',
- // WhatsApp y chat widgets
- '[class*="whatsapp"]', '[class*="chat"]', '[class*="nta"]', '[id*="whatsapp"]',
- // Trust badges
- '.trustindex', '[class*="trustindex"]', '[id*="trustindex"]',
- // Otros popups comunes
- '[role="dialog"]:not(#signature-modal-advanced)', '[aria-modal="true"]:not(#signature-modal-advanced)', 
- '.wp-pointer', '[class*="popup"]', '[id*="popup"]',
- // Overlays y modales
- '.overlay:not(.tmv2-signature-modal)', '[class*="overlay"]:not(.tmv2-signature-modal)',
- // Widgets flotantes
- '[style*="position: fixed"]', '[style*="position: absolute"]'
- ];
- 
- problematicSelectors.forEach(selector => {
- try {
- const elements = document.querySelectorAll(selector);
- elements.forEach(el => {
- // Solo ocultar si NO es nuestro modal o parte de él
- if (el && !signatureModal.contains(el) && el !== signatureModal) {
- el.style.display = 'none !important';
- el.style.visibility = 'hidden !important';
- el.style.zIndex = '-1 !important';
- el.style.opacity = '0 !important';
- el.style.pointerEvents = 'none !important';
- // Marcar para restaurar después
- el.setAttribute('data-tmv2-hidden', 'true');
- }
- });
- } catch (e) {
- console.warn('TMV2 Error ocultando selector:', selector, e);
- }
- });
- 
- // PREVENIR SCROLL BUGS EN MÓVILES
- document.documentElement.style.overflow = 'hidden';
- document.documentElement.style.position = 'fixed';
- document.documentElement.style.width = '100%';
- document.documentElement.style.height = '100%';
- 
  initializeSignaturePad();
  }, 100);
  }
 
  function closeSignatureModal() {
- console.log(' Cerrando modal TMV2 de firma');
- 
- // REMOVER CLASES CSS TMV2
- document.body.classList.remove('tmv2-modal-open');
- document.documentElement.classList.remove('tmv2-modal-open');
- 
- // RESTAURAR SCROLL DEL BODY
- const scrollY = document.body.style.top;
- document.body.style.overflow = '';
- document.body.style.position = '';
- document.body.style.width = '';
- document.body.style.top = '';
- if (scrollY) {
- window.scrollTo(0, parseInt(scrollY || '0') * -1);
- }
- 
- // RESTAURAR DOCUMENTELEMENT
- document.documentElement.style.overflow = '';
- document.documentElement.style.position = '';
- document.documentElement.style.width = '';
- document.documentElement.style.height = '';
- 
+ console.log(' Cerrando modal de firma');
  signatureModal.classList.remove('active');
  if (signaturePad) {
  signaturePad.off();
  }
- 
- // RESTAURAR TODOS LOS ELEMENTOS OCULTOS TMV2
- const hiddenElements = document.querySelectorAll('[data-tmv2-hidden="true"]');
- hiddenElements.forEach(el => {
- el.style.display = '';
- el.style.visibility = '';
- el.style.zIndex = '';
- el.style.opacity = '';
- el.style.pointerEvents = '';
- el.removeAttribute('data-tmv2-hidden');
- });
- 
- // 🚀 MOBILE SPECIFIC RESTORATION TMV2 - VERSIÓN ROBUSTA
- if (window.innerWidth <= 768) {
-  console.log('📱 Aplicando restauración específica TMV2 para móvil');
-  
-  // Restaurar altura viewport
-  document.documentElement.style.removeProperty('height');
-  document.body.style.removeProperty('height');
-  
-  // Restaurar overscroll behavior
-  document.body.style.removeProperty('overscroll-behavior');
-  document.documentElement.style.removeProperty('overscroll-behavior');
-  
-  // Limpiar propiedades de posición específicas móvil
-  document.body.style.removeProperty('left');
-  document.body.style.removeProperty('right');
-  document.body.style.removeProperty('bottom');
-  
-  // Forzar recálculo final en móvil
-  document.body.offsetHeight;
- }
- 
- console.log(`✅ TMV2 Restaurados ${hiddenElements.length} elementos ocultos`);
  }
 
  function initializeSignaturePad() {
@@ -7078,7 +6842,7 @@ de la moto de agua <strong>${cleanManufacturer} ${model}</strong>.
  icon: 'fa-solid fa-file-text',
  title: 'Registro Marítimo',
  description: 'Documento oficial que acredita la propiedad de la moto de agua. Equivale a la "hoja de asiento" o "permiso de circulación" de los vehículos terrestres.',
- image: 'https://tramitfy.es/wp-content/uploads/exampledocs/permiso-caducado.jpg',
+ image: 'https://tramitfy.es/wp-content/uploads/exampledocs/tarjeta-moto.jpg',
  tips: [
  'Debe estar vigente y sin tachaduras',
  'Incluye datos del propietario actual y de la moto de agua',

@@ -4523,16 +4523,13 @@ require_once get_template_directory() . '/transferencia-moto.php';  // NUEVO
 require_once get_template_directory() . '/recuperar-documentacion.php';
 require_once get_template_directory() . '/consulta-registro.php';  // CONSULTA REGISTRO
 
-// ===== TBV3 - SISTEMAS ACTIVOS =====
-require_once get_template_directory() . '/transferencia-barco-v3-completo.php';  // ✅ V3: SISTEMA COMPLETO
-require_once get_template_directory() . '/transferencia-barco-v3-tpv.php';  // ✅ V3 TPV: SISTEMA DE PAGO REDSYS
 
-// ===== SISTEMA DE PRUEBA SEGURO =====
-require_once get_template_directory() . '/sistema-prueba-seguro.php';  // 🔐 SISTEMA PRUEBA SEGURA
+// ===== TBV2 - TRANSFERENCIA BARCOS V2 (PRIORITARIO) =====
+require_once get_template_directory() . '/transferencia-barco-v2.php';  // 🚢 TBV2: SISTEMA TEMPORAL + REDSYS
 
-// ===== SISTEMA DE PRUEBA REAL =====
-require_once get_template_directory() . '/sistema-prueba-real.php';  // 🏦 SISTEMA PRUEBA REAL TPV+VPS
+// ===== TMV2 - TRANSFERENCIA MOTOS V2 (TESTING DESHABILITADO) =====  
+require_once get_template_directory() . '/transferencia-moto-v2.php';  // 🚤 TMV2: VERSIÓN AVANZADA RESTAURADA
 
-// ===== TMV2 - TRANSFERENCIA MOTOS V2 =====
-require_once get_template_directory() . '/transferencia-moto-v2.php';  // 🚤 TMV2: SISTEMA COMPLETO INDEPENDIENTE
+// ===== TTV2 - TITULACIONES NÁUTICAS V2 =====
+require_once get_template_directory() . '/titulaciones-v2.php';  // 🎓 TTV2: RENOVACIÓN TITULACIONES CON REDSYS
 

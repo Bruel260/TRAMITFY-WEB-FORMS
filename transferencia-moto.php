@@ -70,16 +70,16 @@ if (!defined('MOTO_STRIPE_MODE')) {
 // CLAVES STRIPE - CONFIGURAR EN PRODUCCIÓN
 // Reemplazar con las claves reales en el servidor de producción
 if (!defined('MOTO_STRIPE_TEST_PUBLIC_KEY')) {
-    define('MOTO_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
+    define('MOTO_STRIPE_TEST_PUBLIC_KEY', 'pk_test_51Q3cLbRojhm8dCiULtMTJmyUP37N4QGbMuSKBrGJKaH8LQBhYMKPz7s9VzAqOKhjEWO1oajjqJhIYuFb4xpJz1Cg00N7oBJDJO');
 }
 if (!defined('MOTO_STRIPE_TEST_SECRET_KEY')) {
-    define('MOTO_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
+    define('MOTO_STRIPE_TEST_SECRET_KEY', 'sk_test_51Q3cLbRojhm8dCiUfWvRoIgdHheCOTDgkh9o5eH9x8ZHZGF3PY5hMQ5dTuYZ1oQ9EqrCqJHIqMO8zKX4AXQhvUGl004zV6QaZK');
 }
 if (!defined('MOTO_STRIPE_LIVE_PUBLIC_KEY')) {
-    define('MOTO_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
+    define('MOTO_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_51QHhtNGXGHYLV5CXu3P7PrAFezBnDuf0JsZzb2AxjSsV0okn4y19VOMIjW0NUOLpaFdI3CCRhiC4fvNBDDbPhiW100KkF6Uo2x');
 }
 if (!defined('MOTO_STRIPE_LIVE_SECRET_KEY')) {
-    define('MOTO_STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
+    define('MOTO_STRIPE_LIVE_SECRET_KEY', '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');
 }
 
 // Asignar claves a variables globales (igual que hoja-asiento.php - evita cache)

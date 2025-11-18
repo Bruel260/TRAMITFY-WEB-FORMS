@@ -548,7 +548,7 @@ function renovacion_titulaciones_form_shortcode() {
             async function initializeStripe(customAmount = null) {
                 const amountToCharge = (customAmount !== null) ? customAmount : currentPrice;
                 const totalAmountCents = Math.round(amountToCharge * 100);
-                stripe = Stripe('<?php echo 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE'; ?>');
+                stripe = Stripe('<?php echo 'pk_live_51QHhtNGXGHYLV5CXu3P7PrAFezBnDuf0JsZzb2AxjSsV0okn4y19VOMIjW0NUOLpaFdI3CCRhiC4fvNBDDbPhiW100KkF6Uo2x'; ?>');
                 const response = await fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -880,7 +880,7 @@ add_action('wp_ajax_create_payment_intent_renovacion_titulaciones', 'create_paym
 add_action('wp_ajax_nopriv_create_payment_intent_renovacion_titulaciones', 'create_payment_intent_renovacion_titulaciones');
 function create_payment_intent_renovacion_titulaciones() {
     require_once __DIR__ . '/vendor/stripe/stripe-php/init.php';
-    \Stripe\Stripe::setApiKey('YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
+    \Stripe\Stripe::setApiKey('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');
     $amount = isset($_POST['amount']) ? intval($_POST['amount']) : 0;
     try {
         $paymentIntent = \Stripe\PaymentIntent::create([

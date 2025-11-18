@@ -49,7 +49,7 @@ function tbv2_is_authorized_page() {
     $request_uri = $_SERVER['REQUEST_URI'] ?? '';
     $authorized_pages = [
         'testingfy',
-        'transferencia-propiedad-v2', 
+        'cambio-titularidad-embarcacion', 
         'transferencia-barco-v2'
     ];
     
@@ -74,7 +74,7 @@ function tbv2_is_authorized_page() {
 // CONSTANTES DE CONFIGURACIÓN REDSYS V2
 // =====================================================
 
-if (!defined('TBV2_REDSYS_MODE')) define('TBV2_REDSYS_MODE', 'test'); // test o live
+if (!defined('TBV2_REDSYS_MODE')) define('TBV2_REDSYS_MODE', 'live'); // test o live
 
 // Datos del comercio Redsys
 if (!defined('TBV2_REDSYS_MERCHANT_CODE')) define('TBV2_REDSYS_MERCHANT_CODE', '363391103');
@@ -82,7 +82,7 @@ if (!defined('TBV2_REDSYS_TERMINAL')) define('TBV2_REDSYS_TERMINAL', '1');
 if (!defined('TBV2_REDSYS_CURRENCY')) define('TBV2_REDSYS_CURRENCY', '978'); // EUR
 
 // Claves de cifrado
-if (!defined('TBV2_REDSYS_SECRET_KEY')) define('TBV2_REDSYS_SECRET_KEY', 'sq7HjrUOBfKmC576ILgskD5srU870gJ7');
+if (!defined('TBV2_REDSYS_SECRET_KEY')) define('TBV2_REDSYS_SECRET_KEY', 'ERDGGMADKbhFIngyRLnW6KrxEuKnjq9p');
 if (!defined('TBV2_REDSYS_SIGNATURE_VERSION')) define('TBV2_REDSYS_SIGNATURE_VERSION', 'HMAC_SHA256_V1');
 
 // URLs según entorno
@@ -210,8 +210,8 @@ function tbv2_redsys_create_payment_form($order_data) {
  'Ds_Merchant_MerchantURL' => TBV2_REDSYS_URL_NOTIFICATION,
  'Ds_Merchant_UrlOK' => TBV2_REDSYS_URL_OK,
  'Ds_Merchant_UrlKO' => TBV2_REDSYS_URL_KO,
- 'Ds_Merchant_MerchantName' => 'Tramitfy Test',
- 'Ds_Merchant_ProductDescription' => 'Test TPV', // EXACTO como test dummy
+ 'Ds_Merchant_MerchantName' => 'Tramitfy',
+ 'Ds_Merchant_ProductDescription' => 'Transferencia Embarcación',
  'Ds_Merchant_ConsumerLanguage' => '001' // Español
  ];
  
@@ -867,8 +867,8 @@ function tbv2_render_form() {
 
  <div class="form-group">
  <label for="customer_phone">Teléfono</label>
- <input type="tel" id="customer_phone" name="customer_phone" required />
- <span class="input-hint">Para contactarte si es necesario</span>
+ <input type="text" id="customer_phone" name="customer_phone" required />
+ <span class="input-hint">Te contactaremos por WhatsApp</span>
  </div>
  </div>
 
@@ -1018,8 +1018,8 @@ function tbv2_render_form() {
  <div class="upload-item">
  <label for="upload-hoja-asiento" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
  <div>
- <strong> Registro Marítimo</strong>
- <small style="display: block;">Documento que acredita la propiedad de la embarcación</small>
+ <strong> Registro Barco</strong>
+ <small style="display: block;">Registro Marítimo, Permiso de Navegación o Certificado de Inscripción (uno de estos)</small>
  </div>
  <span class="view-example" data-doc="registro-maritimo" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
  </label>
@@ -3096,164 +3096,29 @@ function tbv2_render_styles() {
  left: 0;
  width: 100%;
  height: 100%;
- background-color: rgba(0, 0, 0, 0.98);
- z-index: 2147483647; /* Máximo z-index posible */
+ background-color: rgba(0, 0, 0, 0.95);
+ z-index: 999999;
  display: none;
  align-items: center;
  justify-content: center;
  overflow: hidden;
- backdrop-filter: blur(5px); /* Efecto blur en fondo */
- -webkit-backdrop-filter: blur(5px);
  }
 
- /* Forzar que modal esté por encima de TODO */
  .tbv2-signature-modal.active {
- display: flex !important;
- position: fixed !important;
- z-index: 2147483647 !important;
- pointer-events: auto !important;
+ display: flex;
  }
-
-/* PREVENIR FONDOS BUGGEADOS EN MÓVILES - VERSIÓN ROBUSTA */
-body.tbv2-modal-open {
- overflow: hidden !important;
- position: fixed !important;
- width: 100% !important;
- height: 100% !important;
- margin: 0 !important;
- padding: 0 !important;
- left: 0 !important;
- right: 0 !important;
- /* ✨ MOBILE ROBUST FIXES */
- -webkit-overflow-scrolling: touch !important;
- transform: translateZ(0) !important;
- will-change: transform !important;
-}
-
-html.tbv2-modal-open {
- overflow: hidden !important;
- position: fixed !important;
- width: 100% !important;
- height: 100% !important;
- margin: 0 !important;
- padding: 0 !important;
- /* ✨ MOBILE VIEWPORT FIXES */
- min-height: 100vh !important;
- min-height: 100dvh !important; /* Dynamic Viewport Height */
-}
-
-/* ⚡ MOBILE SPECIFIC ROBUST FIXES */
-@media (max-width: 768px) {
- body.tbv2-modal-open {
-  height: 100vh !important;
-  height: 100dvh !important; /* Dynamic Viewport Height para móviles */
-  top: 0 !important;
-  bottom: 0 !important;
-  overscroll-behavior: none !important;
- }
- 
- html.tbv2-modal-open {
-  height: 100vh !important;
-  height: 100dvh !important;
-  overscroll-behavior: none !important;
- }
- 
- /* Forzar ocultación del footer en móviles */
- body.tbv2-modal-open footer,
- body.tbv2-modal-open .footer,
- body.tbv2-modal-open [data-elementor-type="footer"] {
-  display: none !important;
-  visibility: hidden !important;
-  position: absolute !important;
-  left: -9999px !important;
-  z-index: -9999 !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
- }
-}
-
-/* OCULTAR FOOTER ESPECÍFICAMENTE */
-body.tbv2-modal-open .footer,
-body.tbv2-modal-open #site_footer,
-body.tbv2-modal-open .page_footer,
-body.tbv2-modal-open [class*="footer"] {
- display: none !important;
- visibility: hidden !important;
- z-index: -1 !important;
- opacity: 0 !important;
- pointer-events: none !important;
-}
-
-/* OCULTAR HEADER ESPECÍFICAMENTE */  
-body.tbv2-modal-open .header,
-body.tbv2-modal-open #site_header,
-body.tbv2-modal-open .page_header,
-body.tbv2-modal-open [class*="header"] {
- display: none !important;
- visibility: hidden !important;
- z-index: -1 !important;
- opacity: 0 !important;
- pointer-events: none !important;
-}
-
-/* OCULTAR TODOS LOS POPUPS Y WIDGETS */
-body.tbv2-modal-open [class*="popup"],
-body.tbv2-modal-open [class*="cookie"],
-body.tbv2-modal-open [class*="whatsapp"],
-body.tbv2-modal-open [class*="chat"],
-body.tbv2-modal-open .trustindex,
-body.tbv2-modal-open [role="dialog"]:not(#signature-modal-advanced),
-body.tbv2-modal-open [class*="elementor-popup"] {
- display: none !important;
- visibility: hidden !important;
- z-index: -1 !important;
- opacity: 0 !important;
- pointer-events: none !important;
-}
 
 
  .tbv2-modal-content {
  position: relative;
  background: white;
  border-radius: 12px;
- width: 95vw;
+ width: 90vw;
  max-width: 600px;
- max-height: 95vh;
+ max-height: 90vh;
  overflow: hidden;
  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
- z-index: 2147483647;
- pointer-events: auto;
  }
-
-/* Optimización móvil para modal firma - VERSIÓN ROBUSTA */
-@media (max-width: 768px) {
- .tbv2-modal-content {
- width: 100vw !important;
- max-width: 100vw !important;
- height: 100dvh !important; /* Usa dynamic viewport height */
- max-height: 100dvh !important;
- min-height: 100vh !important; /* Fallback para navegadores antiguos */
- border-radius: 0 !important;
- margin: 0 !important;
- position: fixed !important;
- top: 0 !important;
- left: 0 !important;
- right: 0 !important;
- bottom: 0 !important;
- }
- 
- .tbv2-signature-modal {
- padding: 0 !important;
- margin: 0 !important;
- align-items: stretch !important;
- justify-content: stretch !important;
- top: 0 !important;
- left: 0 !important;
- width: 100vw !important;
- height: 100dvh !important;
- min-height: 100vh !important;
- }
-}
 
  .tbv2-modal-header {
  padding: 20px 24px;
@@ -3991,7 +3856,7 @@ function tbv2_render_scripts() {
  case 'page-precio':
  content = `
  <div style="text-align: center;">
- <h3 style="color: white; font-size: 18px; font-weight: 600; margin-bottom: 15px;">
+ <h3 style="color: white; font-size: 20px; font-weight: 600; margin-bottom: 15px;">
  Información del ITP
  </h3>
  <p style="color: rgba(255,255,255,0.95); font-size: 14px; line-height: 1.5; margin-bottom: 20px;">
@@ -4025,7 +3890,7 @@ function tbv2_render_scripts() {
  ¿Qué incluimos?
  </div>
  <p style="color: rgba(255,255,255,0.85); font-size: 13px; line-height: 1.4; margin: 0;">
- Gestión completa en DGMM, tasas oficiales e IVA
+ Gestión completa en DGMM, tasas Capitanía Marítima, IVA y Gestión del ITP
  </p>
  </div>
  
@@ -4035,7 +3900,7 @@ function tbv2_render_scripts() {
  Cálculo Automático
  </div>
  <p style="color: rgba(255,255,255,0.85); font-size: 13px; line-height: 1.4; margin: 0;">
- ITP calculado automáticamente según precio y región
+ ITP calculado automáticamente según precio, vehículo y comunidad autónoma
  </p>
  </div>
  </div>
@@ -4210,7 +4075,7 @@ function tbv2_render_scripts() {
  
  return `
  <div style="background: rgba(255,255,255,0.1); padding: 18px; border-radius: 8px;">
- <h3 style="color: white; font-size: 16px; margin: 0 0 16px 0; font-weight: 600; line-height: 1.3;">
+ <h3 style="color: white; font-size: 20px; margin: 0 0 16px 0; font-weight: 600; line-height: 1.3;">
  Información Personal<br>y de Contacto
  </h3>
  
@@ -4220,10 +4085,10 @@ function tbv2_render_scripts() {
  <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Datos protegidos según RGPD</span>
  </div>
  <div style="display: flex; align-items: center; margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; border-left: 3px solid rgba(255,255,255,0.6);">
- <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Uso exclusivo para el trámite</span>
+ <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Uso exclusivo para su presentación ante Capitanía Marítima y Haciendas Autonómicas</span>
  </div>
  <div style="display: flex; align-items: center; margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; border-left: 3px solid rgba(255,255,255,0.6);">
- <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Comunicación vía email/teléfono</span>
+ <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Comunicación vía email/WhatsApp</span>
  </div>
  </div>
  
@@ -4235,7 +4100,7 @@ function tbv2_render_scripts() {
  
  return `
  <div style="padding: 0;">
- <h3 style="color: white; font-size: 24px; margin: 0 0 16px 0; font-weight: 600; line-height: 1.2;">
+ <h3 style="color: white; font-size: 20px; margin: 0 0 16px 0; font-weight: 600; line-height: 1.2;">
  Documentación Necesaria
  </h3>
  
@@ -4261,12 +4126,12 @@ function tbv2_render_scripts() {
  
  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
  <i class="fas fa-file-alt" style="color: #10b981; font-size: 14px;"></i>
- <span style="color: rgba(255,255,255,0.85); font-size: 12px;">Registro marítimo</span>
+ <span style="color: rgba(255,255,255,0.85); font-size: 12px;">Registro Marítimo, Permiso de Navegación o Certificado de Inscripción (uno de estos)</span>
  </div>
  
  <div style="display: flex; align-items: center; gap: 10px;">
  <i class="fas fa-file-alt" style="color: #10b981; font-size: 14px;"></i>
- <span style="color: rgba(255,255,255,0.85); font-size: 12px;">Hoja de asiento o tarjeta náutica</span>
+ <span style="color: rgba(255,255,255,0.85); font-size: 12px;">Contrato Compraventa</span>
  </div>
  </div>
  
@@ -4330,7 +4195,7 @@ function tbv2_render_scripts() {
  
  return `
  <div style="text-align: center;">
- <h3 style="color: white; font-size: 18px; font-weight: 600; margin-bottom: 15px;">
+ <h3 style="color: white; font-size: 22px; font-weight: 600; margin-bottom: 15px;">
  Resumen de pago
  </h3>
  
@@ -6473,167 +6338,19 @@ de la embarcación con matrícula <strong>${matricula}</strong>.
  }
 
  function openSignatureModal() {
- console.log('🚀 ABRIENDO MODAL FIRMA - VERSIÓN ROBUSTA');
- 
- // 1. CAPTURAR SCROLL DE FORMA SEGURA
- const currentScrollY = Math.max(
- window.scrollY || 0,
- document.documentElement.scrollTop || 0,
- document.body.scrollTop || 0
- );
- console.log(`📏 Scroll capturado: ${currentScrollY}px`);
- 
- // 2. APLICAR BLOQUEOS INMEDIATAMENTE
- document.body.classList.add('tbv2-modal-open');
- document.documentElement.classList.add('tbv2-modal-open');
- 
- // 3. FORZAR LAYOUT RECALCULATION
- document.body.offsetHeight; // Force reflow
- 
- // 🚀 MOBILE SPECIFIC ENHANCEMENTS - VERSIÓN ROBUSTA 
- if (window.innerWidth <= 768) {
-  console.log('📱 Aplicando mejoras específicas para móvil');
-  
-  // Forzar altura viewport dinámico
-  document.documentElement.style.setProperty('height', '100dvh', 'important');
-  document.body.style.setProperty('height', '100dvh', 'important');
-  
-  // Prevenir overscroll behavior
-  document.body.style.setProperty('overscroll-behavior', 'none', 'important');
-  document.documentElement.style.setProperty('overscroll-behavior', 'none', 'important');
-  
-  // Asegurar posición fija robusta
-  document.body.style.setProperty('top', `-${currentScrollY}px`, 'important');
-  document.body.style.setProperty('left', '0', 'important');
-  document.body.style.setProperty('right', '0', 'important');
-  document.body.style.setProperty('bottom', '0', 'important');
- }
- 
- // 4. BLOQUEAR SCROLL CON VALOR CAPTURADO
- document.body.style.overflow = 'hidden';
- document.body.style.position = 'fixed';
- document.body.style.width = '100%';
- document.body.style.top = `-${currentScrollY}px`;
- document.body.style.left = '0';
- document.body.style.right = '0';
- 
- // 5. BLOQUEAR HTML TAMBIÉN
- document.documentElement.style.overflow = 'hidden';
- document.documentElement.style.position = 'fixed';
- document.documentElement.style.width = '100%';
- document.documentElement.style.height = '100%';
- document.documentElement.style.margin = '0';
- document.documentElement.style.padding = '0';
- 
- // 6. CONFIGURAR MODAL INMEDIATAMENTE
- signatureModal.style.zIndex = '2147483647';
- signatureModal.style.position = 'fixed';
- signatureModal.style.top = '0';
- signatureModal.style.left = '0';
- signatureModal.style.width = '100vw';
- signatureModal.style.height = '100vh';
+ console.log(' Abriendo modal de firma');
  signatureModal.classList.add('active');
- 
- // 7. FORZAR OTRO LAYOUT RECALCULATION
- signatureModal.offsetHeight; // Force reflow
- 
- // 8. OCULTACIÓN DIRECTA SIN DELAYS - MAS ROBUSTA
- // Usar CSS ya aplicado por las clases, pero reforzar con JS directo
- const directHideSelectors = [
- '#site_footer', '.page_footer', '.footer', 
- '#site_header', '.page_header', '.header',
- '[class*="footer"]', '[class*="header"]',
- '[class*="popup"]', '[class*="cookie"]', 
- '[class*="whatsapp"]', '[class*="chat"]',
- '.trustindex', '[class*="trustindex"]'
- ];
- 
- directHideSelectors.forEach(selector => {
- try {
- document.querySelectorAll(selector).forEach(el => {
- if (el && !signatureModal.contains(el)) {
- el.style.display = 'none';
- el.style.visibility = 'hidden';
- el.style.zIndex = '-1';
- el.style.opacity = '0';
- el.style.pointerEvents = 'none';
- el.setAttribute('data-tbv2-hidden', 'true');
- }
- });
- } catch (e) {
- console.warn('Error ocultando:', selector);
- }
- });
- 
- // 9. INICIALIZAR SIGNATURE PAD CON PEQUEÑO DELAY PARA ESTABILIDAD
- requestAnimationFrame(() => {
+ setTimeout(() => {
  initializeSignaturePad();
- console.log('✅ Modal firma inicializado correctamente');
- });
+ }, 100);
  }
 
  function closeSignatureModal() {
  console.log(' Cerrando modal de firma');
- 
- // REMOVER CLASES CSS
- document.body.classList.remove('tbv2-modal-open');
- document.documentElement.classList.remove('tbv2-modal-open');
- 
- // RESTAURAR SCROLL DEL BODY
- const scrollY = document.body.style.top;
- document.body.style.overflow = '';
- document.body.style.position = '';
- document.body.style.width = '';
- document.body.style.top = '';
- if (scrollY) {
- window.scrollTo(0, parseInt(scrollY || '0') * -1);
- }
- 
- // RESTAURAR DOCUMENTELEMENT
- document.documentElement.style.overflow = '';
- document.documentElement.style.position = '';
- document.documentElement.style.width = '';
- document.documentElement.style.height = '';
- 
  signatureModal.classList.remove('active');
  if (signaturePad) {
  signaturePad.off();
  }
- 
- // RESTAURAR TODOS LOS ELEMENTOS OCULTOS
- const hiddenElements = document.querySelectorAll('[data-tbv2-hidden="true"]');
- hiddenElements.forEach(el => {
- el.style.display = '';
- el.style.visibility = '';
- el.style.zIndex = '';
- el.style.opacity = '';
- el.style.pointerEvents = '';
- el.removeAttribute('data-tbv2-hidden');
- });
- 
- // 🚀 MOBILE SPECIFIC RESTORATION - VERSIÓN ROBUSTA
- if (window.innerWidth <= 768) {
-  console.log('📱 Aplicando restauración específica para móvil');
-  
-  // Restaurar altura viewport
-  document.documentElement.style.removeProperty('height');
-  document.body.style.removeProperty('height');
-  
-  // Restaurar overscroll behavior
-  document.body.style.removeProperty('overscroll-behavior');
-  document.documentElement.style.removeProperty('overscroll-behavior');
-  
-  // Limpiar propiedades de posición específicas móvil
-  document.body.style.removeProperty('top');
-  document.body.style.removeProperty('left');
-  document.body.style.removeProperty('right');
-  document.body.style.removeProperty('bottom');
-  
-  // Forzar recálculo final en móvil
-  document.body.offsetHeight;
- }
- 
- console.log(`✅ Restaurados ${hiddenElements.length} elementos ocultos`);
  }
 
  function initializeSignaturePad() {
