@@ -1197,24 +1197,28 @@ function ttv2_form_shortcode() {
                     <div class="ttv2-form-row">
                         <div class="ttv2-form-group">
                             <label for="ttv2-customer-name">Nombre y Apellidos <span class="required">*</span></label>
-                            <input type="text" id="ttv2-customer-name" name="customerName" required placeholder="Ej: Juan García López">
+                            <input type="text" id="ttv2-customer-name" name="customerName" required value="">
+                            <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">Introduzca su nombre completo tal como aparece en su DNI</small>
                         </div>
 
                         <div class="ttv2-form-group">
                             <label for="ttv2-customer-dni">DNI/NIE <span class="required">*</span></label>
-                            <input type="text" id="ttv2-customer-dni" name="customerDni" required placeholder="Ej: 12345678A">
+                            <input type="text" id="ttv2-customer-dni" name="customerDni" required value="">
+                            <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">Documento Nacional de Identidad o NIE sin espacios ni guiones</small>
                         </div>
                     </div>
 
                     <div class="ttv2-form-row">
                         <div class="ttv2-form-group">
                             <label for="ttv2-customer-email">Correo Electrónico <span class="required">*</span></label>
-                            <input type="email" id="ttv2-customer-email" name="customerEmail" required placeholder="Ej: email@ejemplo.com">
+                            <input type="email" id="ttv2-customer-email" name="customerEmail" required value="">
+                            <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">Recibirá las notificaciones del trámite en este email</small>
                         </div>
 
                         <div class="ttv2-form-group">
                             <label for="ttv2-customer-phone">Teléfono <span class="required">*</span></label>
-                            <input type="tel" id="ttv2-customer-phone" name="customerPhone" required placeholder="Ej: 600123456">
+                            <input type="tel" id="ttv2-customer-phone" name="customerPhone" required value="">
+                            <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">Teléfono móvil para contacto y notificaciones SMS</small>
                         </div>
                     </div>
 
@@ -1237,7 +1241,7 @@ function ttv2_form_shortcode() {
                         <!-- DNI -->
                         <div class="ttv2-document-box">
                             <div class="ttv2-document-header">
-                                <h3 class="ttv2-document-title">Copia del DNI por ambas caras <span class="required">*</span></h3>
+                                <h3 class="ttv2-document-title">Copia del DNI por ambas caras</h3>
                             </div>
                             <div class="ttv2-upload-area" onclick="document.getElementById('ttv2-dni').click()">
                                 <div class="ttv2-upload-content">
@@ -1245,7 +1249,7 @@ function ttv2_form_shortcode() {
                                     <span style="font-size: 11px; color: #999;">• JPG, PNG, PDF</span>
                                 </div>
                                 <a href="#" class="ttv2-example-link" data-doc="dni-comprador" onclick="event.stopPropagation();" style="margin: 0;">Ver ejemplo</a>
-                                <input type="file" id="ttv2-dni" name="dniFile" multiple accept="image/*,application/pdf" style="display:none;" required>
+                                <input type="file" id="ttv2-dni" name="dniFile" multiple accept="image/*,application/pdf" style="display:none;">
                             </div>
                             <div id="ttv2-dni-preview" class="ttv2-file-preview"></div>
                         </div>
@@ -1253,7 +1257,7 @@ function ttv2_form_shortcode() {
                         <!-- Certificado médico -->
                         <div class="ttv2-document-box">
                             <div class="ttv2-document-header">
-                                <h3 class="ttv2-document-title">Certificado médico psicotécnico por ambas caras <span class="required">*</span></h3>
+                                <h3 class="ttv2-document-title">Certificado médico psicotécnico por ambas caras</h3>
                             </div>
                             <div class="ttv2-upload-area" onclick="document.getElementById('ttv2-certificado').click()">
                                 <div class="ttv2-upload-content">
@@ -1261,7 +1265,7 @@ function ttv2_form_shortcode() {
                                     <span style="font-size: 11px; color: #999;">• JPG, PNG, PDF</span>
                                 </div>
                                 <a href="#" class="ttv2-example-link" data-doc="certificado-medico-plantilla" onclick="event.stopPropagation();" style="margin: 0;">Ver ejemplo</a>
-                                <input type="file" id="ttv2-certificado" name="certificadoFile" multiple accept="image/*,application/pdf" style="display:none;" required>
+                                <input type="file" id="ttv2-certificado" name="certificadoFile" multiple accept="image/*,application/pdf" style="display:none;">
                             </div>
                             <div id="ttv2-certificado-preview" class="ttv2-file-preview"></div>
                         </div>
@@ -1269,7 +1273,7 @@ function ttv2_form_shortcode() {
                         <!-- Documentación caducada -->
                         <div class="ttv2-document-box">
                             <div class="ttv2-document-header">
-                                <h3 class="ttv2-document-title">Copia documentación caducada <span class="required">*</span></h3>
+                                <h3 class="ttv2-document-title">Copia documentación caducada</h3>
                             </div>
                             <div class="ttv2-upload-area" onclick="document.getElementById('ttv2-titulacion').click()">
                                 <div class="ttv2-upload-content">
@@ -1277,7 +1281,7 @@ function ttv2_form_shortcode() {
                                     <span style="font-size: 11px; color: #999;">• JPG, PNG, PDF</span>
                                 </div>
                                 <a href="#" class="ttv2-example-link" data-doc="QUE-TITULO-NECESITO" onclick="event.stopPropagation();" style="margin: 0;">Ver ejemplo</a>
-                                <input type="file" id="ttv2-titulacion" name="titulacionFile" multiple accept="image/*,application/pdf" style="display:none;" required>
+                                <input type="file" id="ttv2-titulacion" name="titulacionFile" multiple accept="image/*,application/pdf" style="display:none;">
                             </div>
                             <div id="ttv2-titulacion-preview" class="ttv2-file-preview"></div>
                         </div>
@@ -1285,7 +1289,7 @@ function ttv2_form_shortcode() {
                         <!-- Firma del documento -->
                         <div class="ttv2-document-box">
                             <div class="ttv2-document-header">
-                                <h3 class="ttv2-document-title">Firma del documento de autorización <span class="required">*</span></h3>
+                                <h3 class="ttv2-document-title">Firma del documento de autorización</h3>
                             </div>
                             <div class="ttv2-signature-area">
                                 <div id="ttv2-authorization-document" style="display: none;"></div>
@@ -1318,114 +1322,45 @@ function ttv2_form_shortcode() {
 
                 <!-- PASO 4: Revisión y Pago -->
                 <div class="ttv2-step" data-step="4">
-                    <h2 style="margin-bottom: 25px; color: #333;">Confirmación y Pago</h2>
-                    
-                    <div class="ttv2-payment-container" style="display: grid; grid-template-columns: 1.2fr 380px; gap: 30px;">
-                        <!-- Columna izquierda: Resumen -->
-                        <div class="ttv2-payment-summary">
-                            <div class="ttv2-summary-section" style="background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 25px; margin-bottom: 20px;">
-                                <h3 style="font-size: 18px; margin: 0 0 20px 0; color: rgb(var(--ttv2-primary));">Datos Personales</h3>
-                                <div class="ttv2-summary-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                                    <div>
-                                        <label style="font-size: 12px; color: #999; display: block; margin-bottom: 4px;">Nombre completo</label>
-                                        <p style="margin: 0; font-size: 14px; color: #333;" id="ttv2-summary-name">-</p>
-                                    </div>
-                                    <div>
-                                        <label style="font-size: 12px; color: #999; display: block; margin-bottom: 4px;">DNI/NIE</label>
-                                        <p style="margin: 0; font-size: 14px; color: #333;" id="ttv2-summary-dni">-</p>
-                                    </div>
-                                    <div>
-                                        <label style="font-size: 12px; color: #999; display: block; margin-bottom: 4px;">Email</label>
-                                        <p style="margin: 0; font-size: 14px; color: #333;" id="ttv2-summary-email">-</p>
-                                    </div>
-                                    <div>
-                                        <label style="font-size: 12px; color: #999; display: block; margin-bottom: 4px;">Teléfono</label>
-                                        <p style="margin: 0; font-size: 14px; color: #333;" id="ttv2-summary-phone">-</p>
-                                    </div>
+                    <h2 style="margin-bottom: 12px; color: #016d86; font-size: 24px; font-weight: 600;">Método de Pago</h2>
+                    <p style="color: #666; margin-bottom: 25px; font-size: 15px; line-height: 1.6;">Pago seguro con TPV CaixaBank. Será redirigido a la pasarela segura para completar el pago.</p>
+
+                    <!-- Redsys Container - Ancho completo -->
+                    <div id="ttv2-redsys-container">
+                        <!-- Redsys Payment Info -->
+                        <div class="ttv2-redsys-payment-info" style="background: #f8f9ff; border: 1px solid #e0e7ff; border-radius: 12px; padding: 24px; margin-bottom: 25px;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                                <div style="background: #016d86; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fa-solid fa-credit-card"></i>
+                                </div>
+                                <div>
+                                    <h4 style="margin: 0 0 4px 0; color: #1f2937; font-size: 18px; font-weight: 600;">Pago Seguro CaixaBank</h4>
+                                    <p style="margin: 0; color: #6b7280; font-size: 14px;">TPV certificado con máxima seguridad</p>
                                 </div>
                             </div>
-
-                            <div class="ttv2-summary-section" style="background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 25px; margin-bottom: 20px;">
-                                <h3 style="font-size: 18px; margin: 0 0 20px 0; color: rgb(var(--ttv2-primary));">Detalles del Trámite</h3>
-                                <div style="space-y: 12px;">
-                                    <div style="padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                                        <label style="font-size: 12px; color: #999; display: block; margin-bottom: 4px;">Tipo de servicio</label>
-                                        <p style="margin: 0; font-size: 15px; color: #333; font-weight: 500;" id="ttv2-summary-service">-</p>
-                                    </div>
-                                    <div style="padding: 12px 0;">
-                                        <label style="font-size: 12px; color: #999; display: block; margin-bottom: 4px;">Titulación</label>
-                                        <p style="margin: 0; font-size: 14px; color: #333;" id="ttv2-summary-titulacion">-</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="ttv2-summary-section" style="background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 25px;">
-                                <h3 style="font-size: 18px; margin: 0 0 20px 0; color: rgb(var(--ttv2-primary));">Documentación</h3>
-                                <div class="ttv2-docs-status" style="display: flex; align-items: center; gap: 10px; padding: 15px; background: #f0fff4; border: 1px solid #d4edda; border-radius: 6px;">
-                                    <span style="color: #28a745; font-size: 20px;">✓</span>
-                                    <div>
-                                        <p style="margin: 0; font-size: 14px; color: #333; font-weight: 500;">Documentación completa</p>
-                                        <p style="margin: 0; font-size: 13px; color: #666;" id="ttv2-summary-docs">0 archivos adjuntos</p>
-                                    </div>
-                                </div>
+                            
+                            <div style="background: rgba(59, 130, 246, 0.1); padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                                <p style="margin: 0; font-size: 14px; color: #1e40af; line-height: 1.5;">
+                                    <i class="fa-solid fa-info-circle"></i> 
+                                    Al hacer clic en "Proceder al Pago", será redirigido a la pasarela segura de CaixaBank para completar el pago con tarjeta.
+                                </p>
                             </div>
                         </div>
 
-                        <!-- Columna derecha: Precio y pago -->
-                        <div class="ttv2-payment-box">
-                            <div style="background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 25px; position: sticky; top: 20px;">
-                                <h3 style="font-size: 18px; margin: 0 0 25px 0; color: #333;">Resumen del Pago</h3>
-                                
-                                <!-- Precio -->
-                                <div style="padding: 20px 0; border-top: 1px solid #f0f0f0; border-bottom: 1px solid #f0f0f0;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                                        <span style="font-size: 14px; color: #666;">Gestión del trámite</span>
-                                        <span style="font-size: 14px; color: #333;" id="ttv2-price-base">-</span>
-                                    </div>
-                                </div>
-
-                                <div style="padding: 20px 0; border-bottom: 2px solid #f0f0f0;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                                        <span style="font-size: 16px; font-weight: 600; color: #333;">Total a pagar</span>
-                                        <span style="font-size: 20px; font-weight: 600; color: rgb(var(--ttv2-primary));" id="ttv2-summary-total">0.00€</span>
-                                    </div>
-                                </div>
-
-                                <!-- Términos -->
-                                <div style="margin: 20px 0;">
-                                    <label style="display: flex; align-items: flex-start; cursor: pointer; font-size: 13px;">
-                                        <input type="checkbox" id="ttv2-terms" required style="width: auto; margin-right: 8px; margin-top: 2px;">
-                                        <span style="color: #666; line-height: 1.5;">Acepto los <a href="#" style="color: rgb(var(--ttv2-primary));">términos y condiciones</a> y autorizo el tratamiento de mis datos.</span>
-                                    </label>
-                                </div>
-
-                                <!-- Info de seguridad -->
-                                <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #f0f8ff; border: 1px solid #d1e7ff; border-radius: 6px; margin-bottom: 20px;">
-                                    <span style="font-size: 16px;">🔒</span>
-                                    <span style="font-size: 12px; color: #666;">Pago 100% seguro con Redsys</span>
-                                </div>
-
-                                <!-- Botón de pago -->
-                                <button type="button" class="ttv2-button" onclick="ttv2ProcessPayment()" id="ttv2-pay-button" style="width: 100%; padding: 14px; font-size: 16px; background: linear-gradient(135deg, rgb(var(--ttv2-primary)) 0%, rgb(var(--ttv2-primary-dark)) 100%);">
-                                    Proceder al Pago Seguro →
-                                </button>
-
-                                <!-- Métodos de pago aceptados -->
-                                <div style="text-align: center; margin-top: 15px;">
-                                    <p style="font-size: 11px; color: #999; margin-bottom: 8px;">Métodos de pago aceptados</p>
-                                    <div style="display: flex; justify-content: center; gap: 15px; opacity: 0.6; filter: grayscale(100%);">
-                                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCA0MCAyNCIgZmlsbD0ibm9uZSI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjI0IiByeD0iNCIgZmlsbD0iIzAwNTBBMCIvPjwvc3ZnPg==" alt="Visa" style="height: 24px;">
-                                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCA0MCAyNCIgZmlsbD0ibm9uZSI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjI0IiByeD0iNCIgZmlsbD0iI0VCMDAxQiIvPjwvc3ZnPg==" alt="Mastercard" style="height: 24px;">
-                                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCA0MCAyNCIgZmlsbD0ibm9uZSI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjI0IiByeD0iNCIgZmlsbD0iIzAwNjZDQyIvPjwvc3ZnPg==" alt="Maestro" style="height: 24px;">
-                                    </div>
-                                </div>
-                            </div>
+                        <!-- Terms and Conditions Checkbox -->
+                        <div class="ttv2-terms-container ttv2-payment-terms" style="margin: 20px 0; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px; background-color: #f9fafb;">
+                            <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.5; cursor: pointer; color: #374151;">
+                                <input type="checkbox" id="ttv2-terms-accept-pago" name="ttv2_terms_accept_pago" style="margin-top: 2px; width: 16px; height: 16px; accent-color: #016d86; cursor: pointer;">
+                                <span style="font-size: 14px;">Acepto los <a href="https://tramitfy.es/terminos-y-condiciones-de-uso/" target="_blank" style="color: #016d86; text-decoration: none; font-weight: 500;">términos y condiciones de pago</a></span>
+                            </label>
                         </div>
-                    </div>
 
-                    <div class="ttv2-buttons-group" style="margin-top: 30px;">
-                        <button type="button" class="ttv2-button ttv2-button-secondary" onclick="ttv2PrevStep()">
-                            ← Volver al paso anterior
+                        <!-- Payment Message -->
+                        <div id="ttv2-payment-message" class="hidden" style="margin: 20px 0; padding: 15px; border-radius: 8px; text-align: center; font-weight: 500; display: none;"></div>
+
+                        <!-- Payment Button -->
+                        <button type="button" id="ttv2-submit-payment" class="ttv2-btn-primary" style="width: 100%; padding: 16px; font-size: 18px; font-weight: 600; background: linear-gradient(135deg, #016d86 0%, #015266 100%); color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px; transition: all 0.3s ease; box-shadow: 0 4px 6px -1px rgba(1, 109, 134, 0.3), 0 2px 4px -1px rgba(1, 109, 134, 0.2);" disabled>
+                            <i class="fa-solid fa-credit-card"></i> Proceder al Pago
                         </button>
                     </div>
                 </div>
@@ -1521,6 +1456,21 @@ function ttv2_form_shortcode() {
 
         // Inicialización
         document.addEventListener('DOMContentLoaded', function() {
+            // Event listener para el checkbox de términos
+            const termsCheckbox = document.getElementById('ttv2-terms-accept-pago');
+            const submitButton = document.getElementById('ttv2-submit-payment');
+            
+            if (termsCheckbox && submitButton) {
+                termsCheckbox.addEventListener('change', function() {
+                    submitButton.disabled = !this.checked;
+                });
+                
+                submitButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    ttv2ProcessPayment();
+                });
+            }
+
             // Event listeners para service boxes
             document.querySelectorAll('.ttv2-service-box').forEach(box => {
                 box.addEventListener('click', function() {
@@ -1629,8 +1579,8 @@ function ttv2_form_shortcode() {
             const ttv2SaveSignatureBtn = document.getElementById('ttv2-save-signature');
             const ttv2CloseSignatureBtn = document.querySelector('.ttv2-close-signature');
             
-            // Función para generar documento de autorización
-            function ttv2GenerateAuthorizationDocument() {
+            // Hacer función global para que sea accesible desde ttv2GoToStep
+            window.ttv2GenerateAuthorizationDocument = function() {
                 const authDiv = document.getElementById('ttv2-authorization-document');
                 const authPreview = document.getElementById('ttv2-authorization-preview');
                 const customerName = document.getElementById('ttv2-customer-name').value || '[Nombre del titular]';
@@ -1755,10 +1705,7 @@ function ttv2_form_shortcode() {
                 });
             });
 
-            // Auto-fill para administradores
-            <?php if (current_user_can('administrator')): ?>
-            ttv2AutoFillAdmin();
-            <?php endif; ?>
+            // Auto-fill deshabilitado
         });
 
         // Navegación entre pasos
@@ -1804,9 +1751,9 @@ function ttv2_form_shortcode() {
                 setTimeout(ttv2GenerateAuthorizationDocument, 100);
             }
             
-            // Si es el último paso, actualizar resumen
+            // Si es el último paso, actualizar precio en botón
             if (step === 4) {
-                ttv2UpdateSummary();
+                // El precio ya se actualiza con ttv2SelectedPrice
             }
 
             // Scroll al inicio
@@ -1892,25 +1839,8 @@ function ttv2_form_shortcode() {
             }
 
             if (step === 3) {
-                // Validar documentación mínima
-                if (!ttv2Files['ttv2-dni'] || ttv2Files['ttv2-dni'].length === 0) {
-                    alert('Por favor, suba su DNI por ambas caras.');
-                    return false;
-                }
-                if (!ttv2Files['ttv2-certificado'] || ttv2Files['ttv2-certificado'].length === 0) {
-                    alert('Por favor, suba el certificado médico psicotécnico.');
-                    return false;
-                }
-                if (!ttv2Files['ttv2-titulacion'] || ttv2Files['ttv2-titulacion'].length === 0) {
-                    alert('Por favor, suba la copia de documentación caducada.');
-                    return false;
-                }
-                
-                // Validar firma
-                if (!ttv2Files['signature'] || ttv2Files['signature'] === null) {
-                    alert('Por favor, firme el documento de autorización.');
-                    return false;
-                }
+                // Sin validaciones - permitir continuar sin documentos
+                // Los documentos ahora son opcionales para pasar a la página de pago
             }
 
             return true;
@@ -1998,39 +1928,49 @@ function ttv2_form_shortcode() {
         // Procesar pago
         async function ttv2ProcessPayment() {
             // Validar términos
-            if (!document.getElementById('ttv2-terms').checked) {
+            const termsCheckbox = document.getElementById('ttv2-terms-accept-pago');
+            if (!termsCheckbox || !termsCheckbox.checked) {
                 alert('Por favor, acepte los términos y condiciones.');
                 return;
             }
 
             // Mostrar modal
             document.getElementById('ttv2-payment-modal').classList.add('active');
-            document.getElementById('ttv2-pay-button').disabled = true;
+            const submitBtn = document.getElementById('ttv2-submit-payment');
+            if (submitBtn) submitBtn.disabled = true;
 
             try {
+                // Verificar que tenemos datos
+                if (!ttv2FormData.amount) {
+                    ttv2FormData.amount = ttv2SelectedPrice || 55;
+                }
+                
+                console.log('TTV2 - Procesando pago con datos:', ttv2FormData);
+                
                 // 1. Almacenar datos temporalmente
                 const temporalData = new FormData();
                 temporalData.append('action', 'ttv2_store_temporal');
                 temporalData.append('orderId', '');
-                temporalData.append('customerName', ttv2FormData.customerName);
-                temporalData.append('customerDni', ttv2FormData.customerDni);
-                temporalData.append('customerEmail', ttv2FormData.customerEmail);
-                temporalData.append('customerPhone', ttv2FormData.customerPhone);
+                temporalData.append('customerName', ttv2FormData.customerName || '');
+                temporalData.append('customerDni', ttv2FormData.customerDni || '');
+                temporalData.append('customerEmail', ttv2FormData.customerEmail || '');
+                temporalData.append('customerPhone', ttv2FormData.customerPhone || '');
                 temporalData.append('customerAddress', '');
                 temporalData.append('customerCity', '');
                 temporalData.append('customerPostalCode', '');
-                temporalData.append('tipoTitulacion', ttv2FormData.tipoTitulacion);
-                temporalData.append('tipoServicio', ttv2FormData.tipoServicio);
+                temporalData.append('tipoTitulacion', ttv2FormData.tipoTitulacion || '');
+                temporalData.append('tipoServicio', ttv2FormData.tipoServicio || '');
                 temporalData.append('numeroTitulo', '');
                 temporalData.append('fechaExpedicion', '');
-                temporalData.append('amount', ttv2FormData.amount);
+                temporalData.append('amount', ttv2FormData.amount || 55);
 
                 // 2. Crear pago Redsys
                 const paymentData = new FormData();
                 paymentData.append('action', 'ttv2_create_redsys_payment');
                 paymentData.append('amount', ttv2FormData.amount);
 
-                const response = await fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                const ajaxUrl = '<?php echo admin_url("admin-ajax.php"); ?>';
+                const response = await fetch(ajaxUrl, {
                     method: 'POST',
                     body: paymentData
                 });
@@ -2040,7 +1980,7 @@ function ttv2_form_shortcode() {
                 if (result.success) {
                     // Actualizar datos temporales con OrderId
                     temporalData.set('orderId', result.data.orderId);
-                    await fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                    await fetch(ajaxUrl, {
                         method: 'POST',
                         body: temporalData
                     });
@@ -2064,21 +2004,11 @@ function ttv2_form_shortcode() {
                 console.error('Error:', error);
                 alert('Error al procesar el pago: ' + error.message);
                 document.getElementById('ttv2-payment-modal').classList.remove('active');
-                document.getElementById('ttv2-pay-button').disabled = false;
+                const payButton = document.getElementById('ttv2-submit-payment');
+                if (payButton) payButton.disabled = false;
             }
         }
 
-        // Auto-fill para administradores
-        function ttv2AutoFillAdmin() {
-            // Seleccionar primer servicio
-            document.querySelector('.ttv2-service-box').click();
-            
-            // Datos personales
-            document.getElementById('ttv2-customer-name').value = 'Admin Test TTV2';
-            document.getElementById('ttv2-customer-dni').value = '12345678Z';
-            document.getElementById('ttv2-customer-email').value = 'admin@tramitfy.es';
-            document.getElementById('ttv2-customer-phone').value = '600000000';
-        }
     </script>
 
     <?php
@@ -2087,3 +2017,54 @@ function ttv2_form_shortcode() {
 
 // Registrar shortcode
 add_shortcode('titulaciones_v2_form', 'ttv2_form_shortcode');
+
+/**
+ * Handler AJAX para crear formulario de pago Redsys
+ */
+function ttv2_handle_create_redsys_payment() {
+    // Limpiar cualquier output previo
+    if (ob_get_level()) {
+        ob_end_clean();
+    }
+    ob_start();
+    
+    try {
+        // Generar OrderID único
+        $orderId = str_pad(time(), 12, '0', STR_PAD_LEFT);
+        
+        // Obtener monto del formulario
+        $amount = floatval($_POST['amount'] ?? 55);
+        $amount_cents = strval(intval($amount * 100));
+        
+        error_log("TTV2: Creando pago - OrderID: $orderId, Amount: {$amount}€");
+        
+        // Crear datos de pago para Redsys
+        $payment_data = ttv2_redsys_create_payment_form([
+            'order_id' => $orderId,
+            'amount_cents' => $amount_cents,
+            'description' => 'Titulacion Nautica'
+        ]);
+        
+        // Limpiar buffer y enviar respuesta
+        ob_end_clean();
+        
+        wp_send_json_success([
+            'orderId' => $orderId,
+            'paymentData' => $payment_data
+        ]);
+        
+    } catch (Exception $e) {
+        ob_end_clean();
+        error_log("TTV2 Error: " . $e->getMessage());
+        wp_send_json_error(['message' => $e->getMessage()]);
+    }
+    
+    exit;
+}
+
+
+// Registrar handlers AJAX
+add_action('wp_ajax_ttv2_create_redsys_payment', 'ttv2_handle_create_redsys_payment');
+add_action('wp_ajax_nopriv_ttv2_create_redsys_payment', 'ttv2_handle_create_redsys_payment');
+add_action('wp_ajax_ttv2_store_temporal', 'ttv2_store_temporal');
+add_action('wp_ajax_nopriv_ttv2_store_temporal', 'ttv2_store_temporal');
