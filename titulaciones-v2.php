@@ -1845,7 +1845,7 @@ function ttv2_form_shortcode() {
         /* Eligibility Verification Page - Sobrio */
         /* ======================================== */
         .ttv2-eligibility-page {
-            max-width: 700px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 40px 30px;
             line-height: 1.6;
@@ -1859,7 +1859,7 @@ function ttv2_form_shortcode() {
         }
         
         .ttv2-elegibility-header h2 {
-            font-size: 24px;
+            font-size: 26px;
             color: #1f2937;
             margin-bottom: 10px;
             font-weight: 600;
@@ -1872,7 +1872,14 @@ function ttv2_form_shortcode() {
         }
         
         .ttv2-eligibility-content > div {
-            margin-bottom: 30px;
+            margin-bottom: 35px;
+        }
+        
+        .ttv2-main-messages {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 40px;
         }
         
         .ttv2-requirement h3,
@@ -1880,7 +1887,7 @@ function ttv2_form_shortcode() {
         .ttv2-guidance h3 {
             font-size: 18px;
             color: #374151;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
             font-weight: 600;
         }
         
@@ -1890,24 +1897,28 @@ function ttv2_form_shortcode() {
             color: #4b5563;
             font-size: 15px;
             margin: 0;
+            line-height: 1.7;
         }
         
         .ttv2-requirement {
-            padding: 20px;
+            padding: 25px;
             background: #f8fafc;
-            border-left: 3px solid #016d86;
+            border-left: 4px solid #016d86;
+            border-radius: 0 6px 6px 0;
         }
         
         .ttv2-restriction {
-            padding: 20px;
+            padding: 25px;
             background: #fafafa;
-            border-left: 3px solid #9ca3af;
+            border-left: 4px solid #9ca3af;
+            border-radius: 0 6px 6px 0;
         }
         
         .ttv2-guidance {
-            padding: 20px;
+            padding: 25px;
             background: #f9fafb;
-            border-left: 3px solid #d1d5db;
+            border-left: 4px solid #d1d5db;
+            border-radius: 0 6px 6px 0;
         }
         
         .ttv2-confirmation-section {
@@ -1982,14 +1993,20 @@ function ttv2_form_shortcode() {
         @media (max-width: 768px) {
             .ttv2-eligibility-page {
                 padding: 30px 20px;
+                max-width: 100%;
             }
             
             .ttv2-elegibility-header h2 {
-                font-size: 20px;
+                font-size: 22px;
             }
             
             .ttv2-subtitle {
-                font-size: 14px;
+                font-size: 15px;
+            }
+            
+            .ttv2-main-messages {
+                grid-template-columns: 1fr;
+                gap: 20px;
             }
             
             .ttv2-navigation-buttons {
@@ -2005,11 +2022,19 @@ function ttv2_form_shortcode() {
             .ttv2-requirement,
             .ttv2-restriction,
             .ttv2-guidance {
-                padding: 15px;
+                padding: 20px;
             }
             
             .ttv2-confirmation-section {
                 padding: 20px;
+            }
+        }
+        
+        /* Tablet responsive */
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .ttv2-eligibility-page {
+                max-width: 800px;
+                padding: 35px 25px;
             }
         }
     </style>
@@ -2094,14 +2119,16 @@ function ttv2_form_shortcode() {
                         </div>
                         
                         <div class="ttv2-eligibility-content">
-                            <div class="ttv2-requirement">
-                                <h3>Requisito Obligatorio</h3>
-                                <p>Este servicio está disponible únicamente para titulaciones expedidas por la <strong>Dirección General de la Marina Mercante (DGMM)</strong> o entidades estatales dependientes.</p>
-                            </div>
-                            
-                            <div class="ttv2-restriction">
-                                <h3>Titulaciones No Válidas</h3>
-                                <p>No podemos tramitar la renovación de titulaciones expedidas por administraciones autonómicas (Cataluña, País Vasco, Islas Baleares, Comunidad Valenciana, Canarias, etc.).</p>
+                            <div class="ttv2-main-messages">
+                                <div class="ttv2-requirement">
+                                    <h3>Solo Titulaciones DGMM</h3>
+                                    <p>Este servicio está disponible <strong>únicamente</strong> para titulaciones expedidas por la <strong>Dirección General de la Marina Mercante (DGMM)</strong> o entidades estatales dependientes del Ministerio de Transportes.</p>
+                                </div>
+                                
+                                <div class="ttv2-restriction">
+                                    <h3>Titulaciones Autonómicas No Válidas</h3>
+                                    <p><strong>No podemos tramitar</strong> la renovación de titulaciones expedidas por administraciones autonómicas como Cataluña, País Vasco, Islas Baleares, Comunidad Valenciana, Canarias o cualquier otra comunidad autónoma.</p>
+                                </div>
                             </div>
                             
                             <div class="ttv2-guidance">
