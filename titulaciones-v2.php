@@ -2108,9 +2108,9 @@ function ttv2_form_shortcode() {
                 </div>
             </div>
 
-            <!-- Widget de Reseñas -->
-            <div class="ttv2-reviews-widget" style="margin-top: auto;" id="ttv2-reviews-container">
-                <!-- Widget se carga con protección anti-interferencia -->
+            <!-- Espacio para contenido adicional futuro -->
+            <div class="ttv2-sidebar-footer" style="margin-top: auto;">
+                <!-- Widget de reseñas removido - causaba conflictos con verificación DGMM -->
             </div>
         </div>
 
@@ -2588,8 +2588,7 @@ function ttv2_form_shortcode() {
                         // Desproteger DGMM después de confirmación exitosa
                         ttv2DGMMProtected = false;
                         
-                        // Load reviews widget after DGMM confirmation
-                        setTimeout(() => ttv2LoadReviewsWidget(), 500);
+                        // Reviews widget removed - no longer loading
                     }
                 });
             }
@@ -2629,8 +2628,7 @@ function ttv2_form_shortcode() {
                 // Desproteger DGMM si ya está confirmado
                 ttv2DGMMProtected = false;
                 
-                // Load reviews widget if already confirmed
-                setTimeout(() => ttv2LoadReviewsWidget(), 500);
+                // Reviews widget removed - no longer loading
             } else {
                 // Ensure warning step is visible
                 const warningStep = document.getElementById('ttv2-dgmm-warning-step');
@@ -2639,12 +2637,7 @@ function ttv2_form_shortcode() {
                 }
             }
             
-            // Cargar widget de reseñas de forma segura al final del proceso
-            setTimeout(() => {
-                if (!document.querySelector('#ttv2-reviews-container script')) {
-                    ttv2LoadReviewsWidget();
-                }
-            }, 2000);
+            // Reviews widget removed - no longer auto-loading
             
             // Event listener para el checkbox de términos
             const termsCheckbox = document.getElementById('ttv2-terms-accept-pago');
@@ -3109,18 +3102,8 @@ function ttv2_form_shortcode() {
             // No need to update service/titulacion/total elements
         }
         
-        // Load reviews widget safely
-        function ttv2LoadReviewsWidget() {
-            const reviewsContainer = document.getElementById('ttv2-reviews-container');
-            if (reviewsContainer && !reviewsContainer.querySelector('script')) {
-                const script = document.createElement('script');
-                script.defer = true;
-                script.async = true;
-                script.src = 'https://cdn.trustindex.io/loader.js?f4fbfd341d12439e0c86fae7fc2';
-                reviewsContainer.appendChild(script);
-                console.log('Reviews widget loaded safely');
-            }
-        }
+        // Reviews widget removed - caused conflicts with DGMM verification
+        // function ttv2LoadReviewsWidget() { ... } // REMOVED
 
         // Actualizar resumen final
         function ttv2UpdateSummary() {
