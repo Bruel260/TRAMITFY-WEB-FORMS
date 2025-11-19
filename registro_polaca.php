@@ -1,7 +1,138 @@
 <?php
-// Versión formulario polaca: 2.1.0-1759083869 - Mejoras táctiles + WhatsApp ocultado
+// Versión formulario polaca: 3.0.0 - Integración Redsys TPV
 // Asegurarse de que el archivo no sea accedido directamente
 defined('ABSPATH') || exit;
+
+// =====================================================
+// PROTECCIÓN POLACA - DETECCIÓN DE PÁGINA AUTORIZADA
+// =====================================================
+
+/**
+ * Detecta si estamos en una página autorizada para cargar formulario Polaca
+ */
+function polaca_is_authorized_page() {
+    global $post;
+    
+    // PROTECCIÓN AJAX: Solo permitir acciones específicas
+    if (defined('DOING_AJAX') && DOING_AJAX) {
+        $action = $_POST['action'] ?? $_GET['action'] ?? '';
+        $polaca_ajax_actions = [
+            'polaca_create_redsys_payment',
+            'polaca_store_temporal_data',
+            'polaca_process_callback',
+            'polaca_send_confirmation_emails',
+            'create_polish_payment_intent', // Mantener para compatibilidad temporal
+            'handle_polish_registration_webhook' // Mantener para compatibilidad temporal
+        ];
+        
+        if (!in_array($action, $polaca_ajax_actions)) {
+            return false; // Bloquear en AJAX de otros formularios
+        }
+    }
+    
+    // Admin siempre autorizado (solo para non-AJAX)
+    if (!defined('DOING_AJAX') && is_admin()) return true;
+    
+    // Verificar por URL
+    $request_uri = $_SERVER['REQUEST_URI'] ?? '';
+    $authorized_pages = [
+        'bandera-polaca',
+        'registro-polaco',
+        'testingfy' // Para pruebas
+    ];
+    
+    foreach ($authorized_pages as $page) {
+        if (strpos($request_uri, $page) !== false) {
+            return true;
+        }
+    }
+    
+    // Verificar por post object
+    if (is_object($post)) {
+        if (in_array($post->post_name, $authorized_pages) || 
+            strpos($post->post_content, '[polish_registration_form]') !== false) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+// VERIFICACIÓN TEMPRANA - SALIR SI NO AUTORIZADO
+if (!polaca_is_authorized_page()) {
+    return '<!-- Formulario Polaca bloqueado: página no autorizada -->';
+}
+
+// =====================================================
+// CONFIGURACIÓN REDSYS TPV
+// =====================================================
+
+// Modo de operación
+if (!defined('POLACA_REDSYS_MODE')) define('POLACA_REDSYS_MODE', 'test'); // test o live
+
+// Datos del comercio Redsys
+if (!defined('POLACA_REDSYS_MERCHANT_CODE')) define('POLACA_REDSYS_MERCHANT_CODE', '363391103');
+if (!defined('POLACA_REDSYS_TERMINAL')) define('POLACA_REDSYS_TERMINAL', '1');
+if (!defined('POLACA_REDSYS_CURRENCY')) define('POLACA_REDSYS_CURRENCY', '978'); // EUR
+
+// Claves de cifrado
+if (!defined('POLACA_REDSYS_SECRET_KEY')) {
+    if (POLACA_REDSYS_MODE === 'test') {
+        define('POLACA_REDSYS_SECRET_KEY', 'sq7HjrUOBfKmC576ILgskD5srU870gJ7'); // Test
+    } else {
+        define('POLACA_REDSYS_SECRET_KEY', 'ERDGGMADKbhFIngyRLnW6KrxEuKnjq9p'); // Live
+    }
+}
+if (!defined('POLACA_REDSYS_SIGNATURE_VERSION')) define('POLACA_REDSYS_SIGNATURE_VERSION', 'HMAC_SHA256_V1');
+
+// URLs según entorno
+if (!defined('POLACA_REDSYS_URL_TEST')) define('POLACA_REDSYS_URL_TEST', 'https://sis-t.redsys.es:25443/sis/realizarPago');
+if (!defined('POLACA_REDSYS_URL_LIVE')) define('POLACA_REDSYS_URL_LIVE', 'https://sis.redsys.es/sis/realizarPago');
+
+// URLs de retorno
+if (!defined('POLACA_REDSYS_URL_OK')) define('POLACA_REDSYS_URL_OK', 'https://tramitfy.es/pago-completado-polaca/');
+if (!defined('POLACA_REDSYS_URL_KO')) define('POLACA_REDSYS_URL_KO', 'https://tramitfy.es/pago-error/');
+if (!defined('POLACA_REDSYS_URL_NOTIFICATION')) define('POLACA_REDSYS_URL_NOTIFICATION', 'https://tramitfy.org/api/temporal/polaca-confirm');
+
+// Webhook URL para el sistema definitivo
+if (!defined('POLACA_WEBHOOK_URL')) define('POLACA_WEBHOOK_URL', 'https://tramitfy.org/api/herramientas/polaca/webhook');
+
+// =====================================================
+// FUNCIONES REDSYS INTEGRADAS
+// =====================================================
+
+/**
+ * Función para generar firma HMAC SHA256 para Redsys
+ */
+function polaca_generate_redsys_signature($params, $order) {
+    $key = base64_decode(POLACA_REDSYS_SECRET_KEY);
+    
+    // Cifrar clave con 3DES usando el order number
+    $key = polaca_encrypt_3DES($order, $key);
+    
+    // Generar firma HMAC SHA256
+    $signature = hash_hmac('sha256', $params, $key, true);
+    
+    // Codificar en base64
+    return base64_encode($signature);
+}
+
+/**
+ * Cifrado 3DES para Redsys
+ */
+function polaca_encrypt_3DES($message, $key) {
+    $l = ceil(strlen($message) / 8) * 8;
+    $message = str_pad($message, $l, "\0");
+    
+    if (function_exists('openssl_encrypt')) {
+        $encrypted = openssl_encrypt($message, 'des-ede3-cbc', $key, OPENSSL_RAW_DATA | OPENSSL_NO_PADDING, "\0\0\0\0\0\0\0\0");
+    } else {
+        // Fallback para versiones antiguas
+        $encrypted = mcrypt_encrypt(MCRYPT_3DES, $key, $message, MCRYPT_MODE_CBC, "\0\0\0\0\0\0\0\0");
+    }
+    
+    return $encrypted;
+}
 
 /**
  * Función para calcular costos adicionales basados en las opciones seleccionadas
@@ -13,13 +144,13 @@ function calculate_additional_costs($tramite_type, $extra_data) {
     $option_prices = array(
         'registro' => array(
             'delivery_option' => array('express' => 180),
-            'mmsi_option' => array('mmsi_licensed' => 170, 'mmsi_unlicensed' => 170, 'mmsi_company' => 170),
-            'extra_services' => array()
+            'mmsi_option' => array('mmsi_licensed' => 170, 'mmsi_unlicensed' => 170, 'mmsi_company' => 170)
+            // extra_services eliminado
         ),
         'cambio_titularidad' => array(
             'boat_size' => array('size_7_12' => 50, 'size_12_24' => 100),
-            'mmsi_option' => array('mmsi_licensed' => 170, 'mmsi_unlicensed' => 170, 'mmsi_company' => 170),
-            'extra_services' => array()
+            'mmsi_option' => array('mmsi_licensed' => 170, 'mmsi_unlicensed' => 170, 'mmsi_company' => 170)
+            // extra_services eliminado
         ),
         'mmsi' => array()
     );
@@ -39,14 +170,8 @@ function calculate_additional_costs($tramite_type, $extra_data) {
         }
     }
 
-    // Calcular costos de servicios extra (array)
-    if (isset($extra_data['extra_services']) && is_array($extra_data['extra_services'])) {
-        foreach ($extra_data['extra_services'] as $service) {
-            if (isset($prices['extra_services'][$service])) {
-                $additional_cost += $prices['extra_services'][$service];
-            }
-        }
-    }
+    // SERVICIOS ADICIONALES ELIMINADOS - Ya no se calculan costos extra
+    // Los servicios adicionales han sido removidos del formulario
 
     return $additional_cost;
 }
@@ -269,7 +394,7 @@ function polish_registration_form_shortcode() {
 
     // Encolar los scripts y estilos necesarios
     wp_enqueue_style('polish-registration-form-style', get_template_directory_uri() . '/style.css', array(), $version);
-    wp_enqueue_script('stripe', 'https://js.stripe.com/v3/', array(), null, false);
+    // wp_enqueue_script('stripe', 'https://js.stripe.com/v3/', array(), null, false); // Ya no necesario con Redsys
     wp_enqueue_script('signature-pad', 'https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js', array(), null, false);
 
     // Iniciar el buffering de salida
@@ -329,6 +454,12 @@ function polish_registration_form_shortcode() {
             grid-template-columns: 420px 1fr;
             align-items: stretch;
             min-height: fit-content;
+            transition: grid-template-columns 0.3s ease;
+        }
+        
+        /* Cuando está en la página de Datos y Documentación */
+        .pr-container.narrow-sidebar {
+            grid-template-columns: 210px 1fr;
         }
 
         /* SIDEBAR IZQUIERDO */
@@ -340,6 +471,33 @@ function polish_registration_form_shortcode() {
             flex-direction: column;
             gap: 10px;
             min-height: 100%;
+            transition: padding 0.3s ease;
+        }
+        
+        /* Ajustes del sidebar cuando está estrecho */
+        .narrow-sidebar .pr-sidebar {
+            padding: 15px 10px;
+            font-size: 14px;
+        }
+        
+        .narrow-sidebar .pr-headline {
+            font-size: 18px;
+        }
+        
+        .narrow-sidebar .pr-subheadline {
+            font-size: 13px;
+        }
+        
+        .narrow-sidebar .pr-sidebar-reviews {
+            display: none; /* Ocultar reviews cuando está estrecho */
+        }
+        
+        .narrow-sidebar .pr-progress-title {
+            font-size: 13px;
+        }
+        
+        .narrow-sidebar .pr-progress-status {
+            font-size: 11px;
         }
 
         .pr-logo {
@@ -3848,8 +4006,8 @@ Auto-rellenar Formulario Completo (Modo TEST)
                             </div>
                         </div>
 
-                        <!-- Paso 4: Servicios adicionales -->
-                        <div id="step-extras" class="pr-selection-step">
+                        <!-- Paso 4: Servicios adicionales - ELIMINADO -->
+                        <div id="step-extras" class="pr-selection-step" style="display: none !important;">
                             <h3>Servicios adicionales</h3>
                             <p>Seleccione los servicios extra que necesite (Opcional):</p>
                             
@@ -3910,8 +4068,8 @@ Auto-rellenar Formulario Completo (Modo TEST)
                             </div>
                         </div>
 
-                        <!-- Paso 6: Resumen final -->
-                        <div id="step-summary" class="pr-selection-step">
+                        <!-- Paso 6: Resumen final - ELIMINADO -->
+                        <div id="step-summary" class="pr-selection-step" style="display: none !important;">
                             <h3>Resumen de su selección</h3>
                             <p>Revise todos los servicios seleccionados antes de continuar:</p>
                             
@@ -3931,7 +4089,8 @@ Auto-rellenar Formulario Completo (Modo TEST)
                                     <div id="summary-mmsi" class="pr-summary-item"></div>
                                 </div>
 
-                                <div class="pr-summary-section" id="summary-extras-section" style="display: none;">
+                                <!-- Servicios adicionales ELIMINADO -->
+                                <div class="pr-summary-section" id="summary-extras-section" style="display: none !important;">
                                     <h4>Servicios adicionales</h4>
                                     <div id="summary-extras" class="pr-summary-list"></div>
                                 </div>
@@ -4172,8 +4331,20 @@ Auto-rellenar Formulario Completo (Modo TEST)
                     <!-- Campo de pago directo sin títulos -->
                     <div class="pr-form-section">
                         <div class="pr-form-group">
-                            <label>Datos de la tarjeta</label>
-                            <div id="payment-element-inline" class="pr-stripe-field"></div>
+                            <label>🔒 Pago Seguro con Tarjeta</label>
+                            <div class="pr-redsys-info" style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
+                                <p style="margin: 0 0 10px 0; color: #495057;">
+                                    <strong>Serás redirigido a la pasarela de pago segura Redsys</strong>
+                                </p>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <img src="https://tramitfy.es/wp-content/uploads/2024/01/redsys-logo.png" alt="Redsys" style="height: 30px;">
+                                    <img src="https://tramitfy.es/wp-content/uploads/2024/01/visa-mastercard.png" alt="Visa Mastercard" style="height: 25px;">
+                                </div>
+                                <small style="color: #6c757d; display: block; margin-top: 10px;">
+                                    ✓ Pago 100% seguro con encriptación SSL<br>
+                                    ✓ Cumple con PCI DSS y 3D Secure 2.0
+                                </small>
+                            </div>
                             <div class="pr-payment-error" id="payment-error-inline"></div>
                         </div>
                     </div>
@@ -4236,8 +4407,7 @@ Auto-rellenar Formulario Completo (Modo TEST)
             <i class="fas fa-spinner fa-spin"></i> Cargando...
         </div>
 
-        <div id="payment-element"></div>
-        <div class="pr-payment-error" id="payment-error"></div>
+        <!-- Redsys payment info will be shown in the main form -->
 
         <button type="button" class="pr-btn pr-btn-primary" id="confirm-payment-btn" style="width: 100%; margin-top: 20px;" onclick="console.log('🔘 BOTÓN MODAL CLICKEADO'); confirmPayment()">
             <i class="fas fa-lock"></i> Confirmar Pago
@@ -4250,11 +4420,18 @@ Auto-rellenar Formulario Completo (Modo TEST)
         
         // Error handler global para detectar problemas JavaScript
         window.addEventListener('error', function(e) {
+            // Ignorar error de getSettings que viene de Stripe o alguna librería externa
+            if (e.message && e.message.includes('getSettings')) {
+                console.warn('Ignorando error de getSettings durante la inicialización');
+                return true; // Prevenir propagación
+            }
+            
             console.error('🚨 ERROR JAVASCRIPT DETECTADO:', e.error);
             console.error('  Archivo:', e.filename);
             console.error('  Línea:', e.lineno);
             console.error('  Mensaje:', e.message);
-            alert('ERROR JS: ' + e.message + ' en línea ' + e.lineno);
+            // Comentado el alert para no molestar al usuario
+            // alert('ERROR JS: ' + e.message + ' en línea ' + e.lineno);
         });
         
         console.log('🚀 SCRIPT POLACO INICIADO');
@@ -5041,6 +5218,16 @@ Auto-rellenar Formulario Completo (Modo TEST)
 
             // Actualizar sidebar
             updateSidebar(pageId);
+            
+            // Manejar el sidebar estrecho para página de documentos
+            const container = document.querySelector('.pr-container');
+            if (pageId === 'page-documents') {
+                // Estrechar el sidebar en la página de documentos
+                container.classList.add('narrow-sidebar');
+            } else {
+                // Restaurar el ancho normal del sidebar en otras páginas
+                container.classList.remove('narrow-sidebar');
+            }
 
             // Acciones específicas por página
             if (pageId === 'page-documents') {
@@ -5054,10 +5241,10 @@ Auto-rellenar Formulario Completo (Modo TEST)
                 if (progressiveSelection && progressiveSelection.tramite) {
                     updatePaymentSidebar();
                 }
-                // Inicializar Stripe inline cuando se carga la página
+                // Actualizar información de pago con Redsys
                 setTimeout(() => {
-                    initializePaymentElementInline();
-                }, 1000);
+                    initializePaymentInfo();
+                }, 500);
             }
         }
 
@@ -5784,15 +5971,12 @@ Auto-rellenar Formulario Completo (Modo TEST)
             errorElement.style.display = 'block';
         }
 
-        function confirmPaymentInline() {
-            console.log('🎯 CONFIRM PAYMENT INLINE EJECUTADO (página)');
-            
-            // Log inicial al servidor
-            logToServer('FUNCIÓN confirmPaymentInline() INICIADA');
+        // Nueva función con Redsys
+        async function confirmPaymentInline() {
+            console.log('🎯 INICIANDO PAGO CON REDSYS');
             
             if (!validateForm()) {
                 console.log('❌ Validación del formulario falló');
-                logToServer('VALIDACIÓN FORMULARIO FALLÓ');
                 return;
             }
 
@@ -5803,134 +5987,91 @@ Auto-rellenar Formulario Completo (Modo TEST)
             }
 
             confirmButton.disabled = true;
-            confirmButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+            confirmButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparando pago seguro...';
 
-            // Verificar que Stripe y elementos estén inicializados
-            if (!stripe || !elements) {
-                console.error('Stripe no está inicializado correctamente');
-                showPaymentErrorInline('Error de configuración. Por favor, recargue la página.');
-                confirmButton.disabled = false;
-                confirmButton.innerHTML = '<i class="fas fa-lock"></i> Confirmar Pago';
-                return;
-            }
-
-            if (!window.paymentClientSecret) {
-                showPaymentErrorInline('Error: Payment Intent no inicializado. Por favor, recargue la página.');
-                confirmButton.disabled = false;
-                confirmButton.innerHTML = '<i class="fas fa-lock"></i> Confirmar Pago';
-                return;
-            }
-
-            console.log('🔄 EJECUTANDO stripe.confirmPayment...');
-            console.log('🔧 ENVIRONMENT CHECK:');
-            console.log('   stripe object:', !!stripe);
-            console.log('   elements object:', !!elements);
-            console.log('   paymentClientSecret:', !!window.paymentClientSecret);
-            console.log('   current URL:', window.location.href);
-            console.log('   return URL:', window.location.origin + '/wp-admin/admin-ajax.php?action=handle_polish_registration_webhook&payment_success=true');
-            
-            // Log al servidor también
-            logToServer(`INICIANDO stripe.confirmPayment - stripe:${!!stripe}, elements:${!!elements}, clientSecret:${!!window.paymentClientSecret}`);
-            
-            // Verificar que todos los objetos estén disponibles
-            if (typeof stripe === 'undefined') {
-                console.error('❌ Stripe no está definido');
-                showPaymentErrorInline('Error: Stripe no se ha cargado correctamente. Por favor, recarga la página.');
-                confirmButton.disabled = false;
-                confirmButton.innerHTML = '<i class="fas fa-lock"></i> Confirmar Pago';
-                return;
-            }
-            
-            if (typeof elements === 'undefined' || !elements) {
-                console.error('❌ Elements no está definido');
-                showPaymentErrorInline('Error: Elementos de pago no están disponibles. Por favor, inténtelo de nuevo.');
-                confirmButton.disabled = false;
-                confirmButton.innerHTML = '<i class="fas fa-lock"></i> Confirmar Pago';
-                return;
-            }
-            
-            // Timeout de 15 segundos para detectar si Stripe se cuelga
-            const timeoutId = setTimeout(() => {
-                logToServer('TIMEOUT: stripe.confirmPayment tardó más de 15 segundos');
-                console.error('⏰ TIMEOUT: stripe.confirmPayment se colgó después de 15 segundos');
-                showPaymentErrorInline('El procesamiento del pago está tardando más de lo esperado. Por favor, inténtelo de nuevo.');
-                confirmButton.disabled = false;
-                confirmButton.innerHTML = '<i class="fas fa-lock"></i> Confirmar Pago';
-            }, 15000);
-            
-            stripe.confirmPayment({
-                elements: elements,
-                confirmParams: {
-                    return_url: window.location.origin + '/wp-admin/admin-ajax.php?action=handle_polish_registration_webhook&payment_success=true'
-                },
-                redirect: 'if_required'
-            }).then(function(result) {
-                clearTimeout(timeoutId); // Cancelar timeout
-                logToServer('STRIPE .then() EJECUTADO - result recibido');
-                console.log('🎉 STRIPE .then() EJECUTADO CORRECTAMENTE');
-                console.log('📋 RESULTADO stripe.confirmPayment:', result);
-                console.log('🔍 ANÁLISIS DETALLADO DEL RESULTADO:');
-                console.log('   result existe:', !!result);
-                console.log('   result.error:', result?.error);
-                console.log('   result.paymentIntent:', result?.paymentIntent);
-                console.log('   result.paymentIntent.status:', result?.paymentIntent?.status);
+            try {
+                // Paso 1: Preparar datos temporales
+                console.log('📦 Preparando datos temporales...');
+                const temporalData = await prepareTemporalData();
                 
-                // Log al servidor
-                fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
+                // Paso 2: Enviar al servidor para captura temporal
+                console.log('💾 Enviando datos al sistema temporal...');
+                const captureResponse = await fetch('https://tramitfy.org/api/temporal/polaca-capture', {
                     method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(temporalData)
+                });
+                
+                const captureResult = await captureResponse.json();
+                
+                if (!captureResult.success) {
+                    throw new Error(captureResult.message || 'Error al preparar el pago');
+                }
+                
+                console.log('✅ Datos temporales guardados:', captureResult);
+                POLACA_REDSYS.temporal_id = captureResult.temporal_id;
+                POLACA_REDSYS.order_id = captureResult.order_id;
+                
+                // Paso 3: Generar parámetros Redsys
+                console.log('🔐 Generando parámetros de pago Redsys...');
+                const redsysResponse = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
                     body: new URLSearchParams({
-                        action: 'log_polaca_debug',
-                        message: `STRIPE RESULT: status=${result?.paymentIntent?.status}, error=${!!result?.error}, paymentIntent=${!!result?.paymentIntent}`
+                        action: 'generate_polaca_redsys_params',
+                        amount: temporalData.amount,
+                        order_id: POLACA_REDSYS.order_id,
+                        description: `Registro Polaca - ${temporalData.customer_name}`,
+                        customer_email: temporalData.customer_email
                     })
                 });
                 
-                if (result && result.error) {
-                    console.error('🚨 ERROR STRIPE DETALLADO:', {
-                        code: result.error.code,
-                        type: result.error.type,
-                        message: result.error.message,
-                        decline_code: result.error.decline_code,
-                        payment_intent: result.error.payment_intent
-                    });
-                    showPaymentErrorInline(result.error.message);
-                    confirmButton.disabled = false;
-                    confirmButton.innerHTML = '<i class="fas fa-lock"></i> Confirmar Pago';
-                } else if (result && result.paymentIntent && result.paymentIntent.status === 'succeeded') {
-                    console.log('✅ PAGO EXITOSO - processFormSubmission:', result.paymentIntent.id);
-                    
-                    // Log al servidor
-                    fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
-                        method: 'POST',
-                        body: new URLSearchParams({
-                            action: 'log_polaca_debug',
-                            message: `PAGO EXITOSO - Llamando processFormSubmission con ID: ${result.paymentIntent.id}`
-                        })
-                    });
-                    
-                    processFormSubmission(result.paymentIntent.id);
-                } else {
-                    console.warn('⚠️ RESULTADO INESPERADO - sin error ni paymentIntent exitoso:', result);
+                const redsysData = await redsysResponse.json();
+                
+                if (!redsysData.success) {
+                    throw new Error(redsysData.data || 'Error al generar parámetros de pago');
                 }
-            }).catch(function(error) {
-                clearTimeout(timeoutId); // Cancelar timeout
-                logToServer('STRIPE .catch() EJECUTADO - error recibido');
-                console.log('⚠️ STRIPE .catch() EJECUTADO');
-                console.error('🚨 ERROR CRÍTICO EN stripe.confirmPayment:', error);
-                console.error('🔍 DETALLES DEL ERROR:', {
-                    name: error?.name,
-                    message: error?.message,
-                    stack: error?.stack,
-                    tipo: typeof error,
-                    toString: error?.toString()
+                
+                console.log('✅ Parámetros Redsys generados');
+                
+                // Paso 4: Crear formulario invisible y enviar a Redsys
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = redsysData.data.url;
+                form.style.display = 'none';
+                
+                const fields = [
+                    { name: 'Ds_SignatureVersion', value: redsysData.data.signatureVersion },
+                    { name: 'Ds_MerchantParameters', value: redsysData.data.params },
+                    { name: 'Ds_Signature', value: redsysData.data.signature }
+                ];
+                
+                fields.forEach(field => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = field.name;
+                    input.value = field.value;
+                    form.appendChild(input);
                 });
                 
-                // Log detallado al servidor
-                logToServer(`ERROR CRÍTICO stripe.confirmPayment: ${error?.name || 'Unknown'} - ${error?.message || error?.toString() || 'No message'}`);
+                document.body.appendChild(form);
                 
-                showPaymentErrorInline('Error en el procesamiento del pago: ' + (error?.message || 'Error desconocido'));
+                console.log('🚀 Redirigiendo a TPV Redsys...');
+                confirmButton.innerHTML = '<i class="fas fa-check"></i> Redirigiendo al pago seguro...';
+                
+                // Enviar formulario
+                form.submit();
+                
+            } catch (error) {
+                console.error('❌ Error en el proceso de pago:', error);
+                showPaymentErrorInline(error.message || 'Error al procesar el pago');
                 confirmButton.disabled = false;
                 confirmButton.innerHTML = '<i class="fas fa-lock"></i> Confirmar Pago';
-            });
+            }
         }
 
         function calculateProgressiveTotal() {
@@ -5968,7 +6109,8 @@ Auto-rellenar Formulario Completo (Modo TEST)
             return total;
         }
 
-        function initializePaymentElementInline() {
+        // Función simplificada para mostrar info de Redsys
+        function initializePaymentInfo() {
             // Calcular el total correctamente
             let totalAmount = 0;
             
@@ -5993,7 +6135,7 @@ Auto-rellenar Formulario Completo (Modo TEST)
                 }
             }
             
-            console.log('Total calculado para Stripe:', totalAmount);
+            console.log('Total calculado para Redsys:', totalAmount);
             
             if (totalAmount <= 0) {
                 console.error('El total debe ser mayor que 0. Total actual:', totalAmount);
@@ -6004,84 +6146,18 @@ Auto-rellenar Formulario Completo (Modo TEST)
                 console.log('Usando precio mínimo como último recurso:', totalAmount);
                 if (totalAmount <= 0) return;
             }
-
-            if (!stripe) {
-                console.error('Stripe no está inicializado');
-                return;
-            }
-
-            // Verificar que el elemento existe y está vacío
-            const mountElement = document.getElementById('payment-element-inline');
-            if (!mountElement) {
-                console.error('Elemento payment-element-inline no encontrado');
-                return;
-            }
-
-            // Limpiar elemento si ya tiene contenido
-            if (mountElement.innerHTML.trim() !== '') {
-                mountElement.innerHTML = '';
-            }
-
-            // Mostrar spinner mientras creamos el Payment Intent
-            mountElement.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>';
-
-            // Crear Payment Intent en el servidor
-            const formData = new FormData();
-            formData.append('action', 'create_polish_payment_intent');
-            formData.append('amount', totalAmount);
-
-            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Limpiar spinner
-                    mountElement.innerHTML = '';
-
-                    // Verificar que Stripe esté disponible
-                    if (typeof stripe === 'undefined') {
-                        console.error('❌ Stripe no está definido en inline payment');
-                        alert('Error: Stripe no se ha cargado correctamente. Por favor, recarga la página.');
-                        return;
-                    }
-
-                    // Inicializar elementos de Stripe con el client_secret
-                    elements = stripe.elements({
-                        clientSecret: data.data.client_secret
-                    });
-                    
-                    const paymentElementInline = elements.create('payment');
-                    paymentElementInline.mount('#payment-element-inline');
-                    console.log('Stripe Payment Element inline montado correctamente con total:', totalAmount);
-
-                    // Manejar errores en tiempo real
-                    paymentElementInline.on('change', function(event) {
-                        const errorElement = document.getElementById('payment-error-inline');
-                        if (event.error) {
-                            errorElement.textContent = event.error.message;
-                            errorElement.style.display = 'block';
-                        } else {
-                            errorElement.style.display = 'none';
-                        }
-                    });
-
-                    paymentElementInline.on('ready', function() {
-                        console.log('Stripe Payment Element inline está listo');
-                    });
-
-                    // Guardar client_secret para usarlo en confirmPaymentInline
-                    window.paymentClientSecret = data.data.client_secret;
-                } else {
-                    mountElement.innerHTML = '<div style="color: red; text-align: center; padding: 20px;">Error cargando el pago</div>';
-                    console.error('Error creando Payment Intent:', data.data);
+            
+            // Guardar el total para usar en el pago Redsys
+            window.totalPrice = totalAmount;
+            
+            // Actualizar información visual del pago si es necesario
+            const paymentInfo = document.querySelector('.pr-redsys-info');
+            if (paymentInfo) {
+                const amountElement = paymentInfo.querySelector('.payment-amount');
+                if (amountElement) {
+                    amountElement.textContent = `Total a pagar: €${totalAmount.toFixed(2)}`;
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                mountElement.innerHTML = '<div style="color: red; text-align: center; padding: 20px;">Error de conexión</div>';
-            });
+            }
         }
 
         function validateForm() {
@@ -6549,9 +6625,9 @@ Auto-rellenar Formulario Completo (Modo TEST)
             { id: 'tramite', name: 'Trámite', required: true },
             { id: 'boatsize', name: 'Tamaño', required: true, skipFor: ['mmsi'] },
             { id: 'mmsi', name: 'MMSI', required: false, skipFor: ['mmsi'] },
-            { id: 'extras', name: 'Extras', required: false },
-            { id: 'delivery', name: 'Entrega', required: true },
-            { id: 'summary', name: 'Resumen', required: true }
+            // Eliminado paso de extras - servicios adicionales
+            { id: 'delivery', name: 'Entrega', required: true }
+            // Eliminado paso de resumen - se va directo a página final
         ];
         
         // Inicializar selección progresiva
@@ -7362,6 +7438,75 @@ add_action('wp_ajax_nopriv_test_polish_emails', 'test_polish_emails_handler');
 function test_polish_emails_handler() {
     error_log('🧪 TEST HANDLER EJECUTADO - AJAX FUNCIONA');
     wp_send_json_success('Test handler funciona correctamente');
+}
+
+// =====================================================
+// HANDLERS AJAX PARA REDSYS TPV
+// =====================================================
+
+add_action('wp_ajax_polaca_create_redsys_payment', 'polaca_create_redsys_payment');
+add_action('wp_ajax_nopriv_polaca_create_redsys_payment', 'polaca_create_redsys_payment');
+
+/**
+ * Crear pago con Redsys
+ */
+function polaca_create_redsys_payment() {
+    try {
+        error_log('POLACA REDSYS: Iniciando creación de pago');
+        
+        // Verificar nonce
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'polaca_nonce')) {
+            throw new Exception('Security check failed');
+        }
+        
+        // Obtener datos del formulario
+        $orderId = sanitize_text_field($_POST['orderId'] ?? '');
+        $amount = floatval($_POST['amount'] ?? 0);
+        $description = sanitize_text_field($_POST['description'] ?? 'Registro Bandera Polaca');
+        
+        if (empty($orderId) || $amount <= 0) {
+            throw new Exception('Datos de pago inválidos');
+        }
+        
+        // Convertir cantidad a céntimos
+        $amountCents = intval($amount * 100);
+        
+        // Preparar parámetros Redsys
+        $params = array(
+            'Ds_Merchant_Amount' => $amountCents,
+            'Ds_Merchant_Currency' => POLACA_REDSYS_CURRENCY,
+            'Ds_Merchant_Order' => $orderId,
+            'Ds_Merchant_MerchantCode' => POLACA_REDSYS_MERCHANT_CODE,
+            'Ds_Merchant_Terminal' => POLACA_REDSYS_TERMINAL,
+            'Ds_Merchant_TransactionType' => '0',
+            'Ds_Merchant_ProductDescription' => $description,
+            'Ds_Merchant_UrlOK' => POLACA_REDSYS_URL_OK,
+            'Ds_Merchant_UrlKO' => POLACA_REDSYS_URL_KO,
+            'Ds_Merchant_MerchantURL' => POLACA_REDSYS_URL_NOTIFICATION
+        );
+        
+        // Codificar parámetros
+        $paramsBase64 = base64_encode(json_encode($params));
+        
+        // Generar firma
+        $signature = polaca_generate_redsys_signature($paramsBase64, $orderId);
+        
+        // URL según entorno
+        $redsysUrl = (POLACA_REDSYS_MODE === 'test') ? POLACA_REDSYS_URL_TEST : POLACA_REDSYS_URL_LIVE;
+        
+        error_log('POLACA REDSYS: Pago preparado - OrderID: ' . $orderId . ' - Amount: ' . $amountCents);
+        
+        wp_send_json_success([
+            'url' => $redsysUrl,
+            'params' => $paramsBase64,
+            'signature' => $signature,
+            'signatureVersion' => POLACA_REDSYS_SIGNATURE_VERSION
+        ]);
+        
+    } catch (Exception $e) {
+        error_log('POLACA REDSYS ERROR: ' . $e->getMessage());
+        wp_send_json_error($e->getMessage());
+    }
 }
 
 // Logger simple para debug de JavaScript
