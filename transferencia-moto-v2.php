@@ -668,7 +668,6 @@ function tmv2_render_form() {
   return '<!-- TMV2: Bypass HTML durante AJAX -->';
  }
  
- global $tmv2_stripe_public_key;
  $datos_csv = tmv2_cargar_datos_csv();
  
  ob_start();
@@ -1298,7 +1297,6 @@ function tmv2_render_form() {
  <script>
  // Datos CSV para JavaScript
  const tmv2DatosCsv = <?php echo json_encode($datos_csv); ?>;
- const tmv2StripePublicKey = '<?php echo esc_js($tmv2_stripe_public_key); ?>';
  </script>
  <?php tmv2_render_scripts(); ?>
  
@@ -3278,14 +3276,6 @@ function tmv2_render_styles() {
  /* ============================
  PAYMENT PAGE STYLES
  ============================ */
- .stripe-spinner {
- border: 4px solid #f3f3f3;
- border-top: 4px solid #016d86;
- border-radius: 50%;
- width: 40px;
- height: 40px;
- display: inline-block;
- }
 
 
  #submit-payment {
@@ -3400,7 +3390,7 @@ function tmv2_render_styles() {
  box-shadow: 0 2px 4px rgba(1, 109, 134, 0.1);
  }
 
- /* Stripe Elements Styling */
+ /* Payment Elements Styling */
  #payment-element {
  border-radius: 8px;
  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
@@ -5184,11 +5174,10 @@ function tmv2_render_scripts() {
  this.showPaymentElements();
  },
 
- initializeStripe() {
- const stripe = Stripe(tmv2StripePublicKey);
+ initializePayment() {
+ // Payment system: Redsys only
  
  // Show loading state
- const stripeLoading = document.getElementById('stripe-loading');
  const paymentElement = document.getElementById('payment-element');
  const termsContainer = document.querySelector('.payment-terms');
  const securityBadges = document.querySelector('.payment-security');
@@ -5196,7 +5185,6 @@ function tmv2_render_scripts() {
  
  // Simulate loading for better UX
  setTimeout(() => {
- if (stripeLoading) stripeLoading.style.display = 'none';
  this.showPaymentElements();
  }, 1500);
  },
@@ -5227,13 +5215,13 @@ function tmv2_render_scripts() {
  }
  });
  
- // Show a placeholder for Stripe Elements
+ // Show payment placeholder
  const paymentElement = document.getElementById('payment-element');
  if (paymentElement) {
  paymentElement.innerHTML = `
  <div style="padding: 20px; border: 2px dashed #e5e7eb; border-radius: 8px; text-align: center; background: #f9fafb;">
- <i class="fa-brands fa-stripe" style="font-size: 24px; color: #635bff; margin-bottom: 8px;"></i>
- <div style="color: #6b7280; font-size: 14px;">Elementos de pago Stripe</div>
+ <i class="fa-solid fa-credit-card" style="font-size: 24px; color: #016d86; margin-bottom: 8px;"></i>
+ <div style="color: #6b7280; font-size: 14px;">Sistema de pago seguro</div>
  <div style="color: #9ca3af; font-size: 12px; margin-top: 4px;">
  En producción: Formulario de tarjeta de crédito
  </div>

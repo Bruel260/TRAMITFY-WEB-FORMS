@@ -3453,6 +3453,11 @@ function send_navigation_permit_emails() {
         );
 
         error_log("📧 Preparando email al cliente: $customerEmail");
+        error_log("📧 DEBUG customerEmail: '" . $customerEmail . "' (length: " . strlen($customerEmail) . ")");
+        
+        if (empty($customerEmail)) {
+            error_log("❌ ERROR: customerEmail está vacío - no se enviará email al cliente");
+        }
 
         $customerSubject = '✓ Solicitud Recibida - Renovar Permiso de Navegación';
         $customerMessage = "
@@ -3563,8 +3568,18 @@ function send_navigation_permit_emails() {
         </html>
         ";
 
-        $mail_sent_customer = wp_mail($customerEmail, $customerSubject, $customerMessage, $headers);
-        error_log("📧 Email cliente enviado: " . ($mail_sent_customer ? 'SÍ ✅' : 'NO ❌'));
+        if (!empty($customerEmail)) {
+            error_log("📧 Intentando enviar email a cliente: $customerEmail");
+            $mail_sent_customer = wp_mail($customerEmail, $customerSubject, $customerMessage, $headers);
+            error_log("📧 Email cliente enviado: " . ($mail_sent_customer ? 'SÍ ✅' : 'NO ❌'));
+            
+            if (!$mail_sent_customer) {
+                error_log("❌ FALLO wp_mail cliente - Posibles causas: email inválido, servidor mail, etc.");
+            }
+        } else {
+            error_log("❌ No se envía email cliente: customerEmail está vacío");
+            $mail_sent_customer = false;
+        }
 
         // ============================================
         // EMAIL AL ADMIN

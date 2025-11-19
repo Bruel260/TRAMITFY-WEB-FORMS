@@ -80,7 +80,7 @@ if (!defined('TTV2_REDSYS_SECRET_KEY')) {
 if (!defined('TTV2_REDSYS_SIGNATURE_VERSION')) define('TTV2_REDSYS_SIGNATURE_VERSION', 'HMAC_SHA256_V1');
 if (!defined('TTV2_REDSYS_URL_TEST')) define('TTV2_REDSYS_URL_TEST', 'https://sis-t.redsys.es:25443/sis/realizarPago');
 if (!defined('TTV2_REDSYS_URL_LIVE')) define('TTV2_REDSYS_URL_LIVE', 'https://sis.redsys.es/sis/realizarPago');
-if (!defined('TTV2_REDSYS_URL_OK')) define('TTV2_REDSYS_URL_OK', 'https://tramitfy.es/pago-realizado-con-exito/');
+if (!defined('TTV2_REDSYS_URL_OK')) define('TTV2_REDSYS_URL_OK', 'https://tramitfy.es/pago-completado-tn/');
 if (!defined('TTV2_REDSYS_URL_KO')) define('TTV2_REDSYS_URL_KO', 'https://tramitfy.es/titulaciones-v2/');
 if (!defined('TTV2_REDSYS_URL_NOTIFICATION')) define('TTV2_REDSYS_URL_NOTIFICATION', 'https://tramitfy.org/api/temporal/ttv2-confirm');
 if (!defined('TTV2_WEBHOOK_URL')) define('TTV2_WEBHOOK_URL', 'https://tramitfy.org/api/herramientas/titulaciones-v2/webhook');
@@ -482,39 +482,29 @@ function ttv2_form_shortcode() {
 
         /* PÁGINA 1: Selector de servicios en grid 3-2 */
         .ttv2-services-wrapper {
-            max-width: 900px;
+            max-width: 700px;
             margin: 30px auto;
         }
         
-        .ttv2-services-grid {
+        .ttv2-services-grid-2x2 {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 20px;
             margin-bottom: 15px;
         }
         
-        .ttv2-services-row-2 {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            max-width: calc(66.66% - 5px);
-            margin: 0 auto;
-        }
-        
         @media (max-width: 768px) {
-            .ttv2-services-grid {
+            .ttv2-services-grid-2x2 {
                 grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .ttv2-services-row-2 {
-                max-width: 100%;
+                gap: 15px;
             }
         }
         
         @media (max-width: 480px) {
-            .ttv2-services-grid,
-            .ttv2-services-row-2 {
+            .ttv2-services-grid-2x2 {
                 grid-template-columns: 1fr;
+                grid-template-rows: auto;
             }
         }
 
@@ -1227,29 +1217,6 @@ function ttv2_form_shortcode() {
             padding: 0 20px;
         }
         
-        .ttv2-toggle-document {
-            width: 100%;
-            padding: 12px;
-            background: #f3f4f6;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin: 15px 0;
-            color: #4b5563;
-            font-size: 14px;
-        }
-        
-        .ttv2-toggle-document:hover {
-            background: #e5e7eb;
-        }
-        
-        .ttv2-toggle-document.active i {
-            transform: rotate(180deg);
-        }
         
         .ttv2-authorization-preview {
             background: #f9fafb;
@@ -1370,15 +1337,12 @@ function ttv2_form_shortcode() {
             }
             
             .ttv2-authorization-section {
+                order: 1;
                 margin-top: 60px;
                 padding: 0 15px;
+                flex-shrink: 0;
             }
             
-            .ttv2-toggle-document {
-                margin: 10px 0;
-                font-size: 13px;
-                padding: 10px;
-            }
             
             .ttv2-authorization-preview {
                 font-size: 12px;
@@ -1386,12 +1350,14 @@ function ttv2_form_shortcode() {
             }
             
             .ttv2-signature-canvas-container {
+                order: 2;
                 flex: 1;
                 padding: 15px;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 background: white;
+                min-height: 250px; /* Altura mínima para el canvas */
             }
             
             .ttv2-signature-instruction {
@@ -1406,15 +1372,13 @@ function ttv2_form_shortcode() {
             }
             
             .ttv2-signature-actions {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
+                order: 3;
+                position: static;
                 padding: 15px;
                 background: white;
                 border-top: 1px solid #e5e7eb;
-                box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-                border-radius: 0;
+                margin: 0 15px;
+                border-radius: 0 0 8px 8px;
                 gap: 10px;
             }
             
@@ -1442,6 +1406,47 @@ function ttv2_form_shortcode() {
                 .ttv2-btn-clear span,
                 .ttv2-btn-save span {
                     display: inline;
+                }
+            }
+            
+            /* Ocultar modales externos cuando firma está activa en móvil */
+            body.ttv2-signature-modal-open {
+                /* Selectores comunes de cookies */
+                #cookie-banner,
+                .cookie-notice,
+                .cookie-consent,
+                .cookie-popup,
+                .cookies-banner,
+                #cookies-banner,
+                .gdpr-banner,
+                .wpcc-banner,
+                .moove_gdpr_cookie_modal,
+                .cli-modal-backdrop,
+                
+                /* Selectores comunes de WhatsApp */
+                #whatsapp-widget,
+                .whatsapp-widget,
+                .wa-widget,
+                .wa-button,
+                .whatsapp-button,
+                .whatsapp-float,
+                .wp-whatsapp,
+                .joinchat,
+                .cht-widget,
+                .wa-chat-box,
+                
+                /* Otros modales comunes */
+                .popup-overlay,
+                .modal-backdrop,
+                .newsletter-popup,
+                .promo-banner,
+                .gtranslate_wrapper,
+                .translate-widget {
+                    display: none !important;
+                    visibility: hidden !important;
+                    opacity: 0 !important;
+                    pointer-events: none !important;
+                    z-index: -1 !important;
                 }
             }
         }
@@ -1593,7 +1598,7 @@ function ttv2_form_shortcode() {
                 padding: 20px;
             }
 
-            .ttv2-services-grid {
+            .ttv2-services-grid-2x2 {
                 grid-template-columns: 1fr;
             }
 
@@ -2063,26 +2068,42 @@ function ttv2_form_shortcode() {
     <div class="ttv2-container" id="ttv2-main-container">
         <!-- Sidebar Izquierdo -->
         <div class="ttv2-sidebar">
-            <div class="ttv2-logo">
-                <h2>⚓ TRAMITFY</h2>
-                <p style="opacity: 0.9; font-size: 14px;">Gestión de Titulaciones Náuticas</p>
+            <div style="padding: 0 0 20px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <h3 style="font-size: 20px; font-weight: 700; margin: 0 0 10px 0; line-height: 1.3;">
+                    Renueva tu título náutico sin moverte de casa
+                </h3>
+                <p style="opacity: 0.95; font-size: 14px; margin: 0; line-height: 1.6;">
+                    Renueva el PER, PNB, patrón o capitán de yate en 1 minuto y 100% online.
+                </p>
             </div>
 
-            <div class="ttv2-pricing-box">
+            <div class="ttv2-pricing-box" style="margin-top: 20px;">
                 <div class="ttv2-pricing-header">
-                    <h3>Precio del Servicio</h3>
+                    <h3 style="margin: 0 0 5px 0;">Renovación de Titulación Náutica</h3>
                 </div>
                 <div class="ttv2-pricing-content">
-                    <div class="ttv2-price-main" id="ttv2-sidebar-price">
-                        55,00€
+                    <div style="display: flex; align-items: baseline; margin: 10px 0;">
+                        <span style="font-size: 24px; opacity: 0.8;">€</span>
+                        <span class="ttv2-price-main" id="ttv2-sidebar-price" style="font-size: 48px; margin: 0 5px;">55</span>
+                        <span style="font-size: 24px; opacity: 0.8;">,00</span>
                     </div>
-                    <div class="ttv2-price-description">
-                        <div class="ttv2-price-item">
-                            <span>Renovación</span>
-                            <span id="ttv2-sidebar-price-value">55,00€</span>
+                    
+                    <div style="margin-top: 20px;">
+                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <span style="color: #4ade80; margin-right: 8px;">✓</span>
+                            <span style="font-size: 14px;">Provisional en menos de 24h</span>
                         </div>
-                        <div class="ttv2-price-note">
-                            *Precio fijo para todas las titulaciones
+                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <span style="color: #4ade80; margin-right: 8px;">✓</span>
+                            <span style="font-size: 14px;">IVA incluido</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <span style="color: #4ade80; margin-right: 8px;">✓</span>
+                            <span style="font-size: 14px;">Tasas administrativas incluidas</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <span style="color: #4ade80; margin-right: 8px;">✓</span>
+                            <span style="font-size: 14px;">Seguimiento personalizado</span>
                         </div>
                     </div>
                 </div>
@@ -2108,9 +2129,9 @@ function ttv2_form_shortcode() {
                 </div>
             </div>
 
-            <!-- Espacio para contenido adicional futuro -->
+            <!-- Widget de Reseñas Trustindex -->
             <div class="ttv2-sidebar-footer" style="margin-top: auto;">
-                <!-- Widget de reseñas removido - causaba conflictos con verificación DGMM -->
+                <div id="ttv2-reviews-container"></div>
             </div>
         </div>
 
@@ -2164,6 +2185,12 @@ function ttv2_form_shortcode() {
                                 </label>
                             </div>
                             
+                            <!-- Mensaje de advertencia cuando no está marcado el checkbox -->
+                            <div id="ttv2-dgmm-warning" class="ttv2-alert ttv2-alert-warning" style="display: none; margin-top: 20px;">
+                                <span>⚠️ <strong>Verificación Requerida</strong><br>
+                                Debe aceptar la verificación de elegibilidad DGMM antes de continuar con el formulario.</span>
+                            </div>
+                            
                             <div class="ttv2-navigation-buttons">
                                 <button type="button" class="ttv2-btn-back" onclick="window.location.href='https://tramitfy.es'">
                                     Volver al Inicio
@@ -2182,7 +2209,7 @@ function ttv2_form_shortcode() {
                     <p>Selecciona el tipo de titulación náutica que deseas renovar.</p>
 
                     <div class="ttv2-services-wrapper">
-                        <div class="ttv2-services-grid">
+                        <div class="ttv2-services-grid-2x2">
                             <div class="ttv2-service-box" data-service="PNB" data-price="55">
                                 <div class="ttv2-service-title">P.N.B.</div>
                                 <div class="ttv2-service-description">Patrón de Navegación Básica</div>
@@ -2197,17 +2224,10 @@ function ttv2_form_shortcode() {
                                 <div class="ttv2-service-title">PATRÓN DE YATE</div>
                                 <div class="ttv2-service-description">Titulación para yates hasta 24 metros</div>
                             </div>
-                        </div>
-                        
-                        <div class="ttv2-services-row-2">
+                            
                             <div class="ttv2-service-box" data-service="capitan_de_yate" data-price="55">
                                 <div class="ttv2-service-title">CAPITÁN DE YATE</div>
                                 <div class="ttv2-service-description">Máxima titulación náutica recreativa</div>
-                            </div>
-
-                            <div class="ttv2-service-box" data-service="moto_a_o_b" data-price="55">
-                                <div class="ttv2-service-title">MOTO A O B</div>
-                                <div class="ttv2-service-description">Licencia de navegación para motos de agua</div>
                             </div>
                         </div>
                     </div>
@@ -2452,13 +2472,10 @@ function ttv2_form_shortcode() {
                 <span class="ttv2-close-signature">&times;</span>
             </div>
             
-            <!-- Documento preview (colapsable en móvil) -->
+            <!-- Documento preview (siempre visible) -->
             <div class="ttv2-authorization-section">
-                <button type="button" class="ttv2-toggle-document" onclick="toggleAuthDocument()">
-                    <span>Ver documento de autorización</span>
-                    <i class="fa-solid fa-chevron-down"></i>
-                </button>
-                <div id="ttv2-authorization-preview" class="ttv2-authorization-preview" style="display: none;"></div>
+                <h4 style="margin: 15px 0 10px 0; color: #4b5563; font-size: 14px; font-weight: 600;">Documento de autorización</h4>
+                <div id="ttv2-authorization-preview" class="ttv2-authorization-preview"></div>
             </div>
             
             <!-- Canvas de firma responsivo -->
@@ -2500,24 +2517,20 @@ function ttv2_form_shortcode() {
         const ttv2ServiceDescriptions = {
             'PNB': {
                 title: 'Patrón de Navegación Básica',
-                info: 'Renovación de P.N.B. Necesitarás tu titulación actual y DNI. Proceso rápido en 24-48h.'
+                info: 'Renovación de P.N.B. Necesitarás tu titulación actual y DNI.'
             },
             'PER': {
                 title: 'Patrón de Embarcaciones de Recreo',
-                info: 'Renovación de P.E.R. Gestión completa del trámite. Proceso en 24-48h.'
+                info: 'Renovación de P.E.R. Gestión completa del trámite.'
             },
             'patron_de_yate': {
                 title: 'Patrón de Yate',
-                info: 'Renovación de Patrón de Yate. Incluye gestión completa. Proceso en 3-5 días.'
+                info: 'Renovación de Patrón de Yate. Incluye gestión completa.'
             },
             'capitan_de_yate': {
                 title: 'Capitán de Yate',
-                info: 'Renovación de Capitán de Yate. Máxima titulación recreativa. Proceso en 3-5 días.'
+                info: 'Renovación de Capitán de Yate. Máxima titulación recreativa.'
             },
-            'moto_a_o_b': {
-                title: 'Licencia Motos de Agua',
-                info: 'Renovación de licencia para motos de agua. Proceso rápido en 24h.'
-            }
         };
 
         // Inicialización SIMPLIFICADA
@@ -2559,35 +2572,101 @@ function ttv2_form_shortcode() {
                 dgmmCheckbox.addEventListener('change', function() {
                     console.log('Checkbox changed to:', this.checked);
                     dgmmContinueBtn.disabled = !this.checked;
+                    
+                    // Si se marca el checkbox, solo habilitar el botón y ocultar advertencia
+                    if (this.checked) {
+                        console.log('DGMM confirmed, continue button enabled');
+                        // Guardar confirmación
+                        sessionStorage.setItem('ttv2_dgmm_confirmed', 'true');
+                        // Ocultar mensaje de advertencia si estaba visible
+                        const warningMsg = document.getElementById('ttv2-dgmm-warning');
+                        if (warningMsg) {
+                            warningMsg.style.display = 'none';
+                        }
+                    }
                 });
                 
                 dgmmContinueBtn.addEventListener('click', function() {
                     console.log('Continue button clicked, checkbox status:', dgmmCheckbox.checked);
                     
-                    if (dgmmCheckbox.checked) {
-                        console.log('Proceeding to step 1 using navigation system...');
-                        
-                        // Guardar confirmación
-                        sessionStorage.setItem('ttv2_dgmm_confirmed', 'true');
-                        
-                        // Usar el sistema de navegación estándar
-                        ttv2GoToStep(1);
-                        
-                        console.log('Transition complete via ttv2GoToStep(1)');
+                    if (!dgmmCheckbox.checked) {
+                        // Mostrar mensaje de advertencia
+                        const warningMsg = document.getElementById('ttv2-dgmm-warning');
+                        if (warningMsg) {
+                            warningMsg.style.display = 'block';
+                            // Hacer scroll suave al mensaje
+                            warningMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                        return; // No continuar
                     }
+                    
+                    // Si está marcado, proceder normalmente
+                    console.log('Proceeding to step 1 using navigation system...');
+                    
+                    // Ocultar mensaje de advertencia si estaba visible
+                    const warningMsg = document.getElementById('ttv2-dgmm-warning');
+                    if (warningMsg) {
+                        warningMsg.style.display = 'none';
+                    }
+                    
+                    // Guardar confirmación
+                    sessionStorage.setItem('ttv2_dgmm_confirmed', 'true');
+                    
+                    // Usar el sistema de navegación estándar
+                    ttv2GoToStep(1);
+                    
+                    console.log('Transition complete via ttv2GoToStep(1)');
                 });
             } else {
                 console.error('DGMM elements not found!');
             }
+            
+            // Cargar widget de reseñas después de inicialización DGMM
+            setTimeout(function() {
+                ttv2LoadReviewsWidget();
+            }, 1000);
             
             // Event listener para el checkbox de términos
             const termsCheckbox = document.getElementById('ttv2-terms-accept-pago');
             const submitButton = document.getElementById('ttv2-submit-payment');
             
             if (termsCheckbox && submitButton) {
-                termsCheckbox.addEventListener('change', function() {
-                    submitButton.disabled = !this.checked;
-                });
+                // Función para validar y actualizar estado del botón
+                function updatePaymentButtonState() {
+                    const errors = ttv2ValidateForPayment();
+                    const isValid = errors.length === 0;
+                    
+                    submitButton.disabled = !isValid;
+                    
+                    if (isValid) {
+                        submitButton.style.opacity = '1';
+                        submitButton.style.cursor = 'pointer';
+                        submitButton.innerHTML = '<i class="fa-solid fa-credit-card"></i> Proceder al Pago';
+                    } else {
+                        submitButton.style.opacity = '0.6';
+                        submitButton.style.cursor = 'not-allowed';
+                        const missingCount = errors.length;
+                        submitButton.innerHTML = `<i class="fa-solid fa-exclamation-triangle"></i> Faltan ${missingCount} campo${missingCount > 1 ? 's' : ''}`;
+                    }
+                }
+                
+                // Actualizar inicialmente
+                updatePaymentButtonState();
+                
+                // Listener para términos
+                termsCheckbox.addEventListener('change', updatePaymentButtonState);
+                
+                // Listeners para campos del formulario
+                document.getElementById('ttv2-customer-name')?.addEventListener('input', updatePaymentButtonState);
+                document.getElementById('ttv2-customer-dni')?.addEventListener('input', updatePaymentButtonState);
+                document.getElementById('ttv2-customer-email')?.addEventListener('input', updatePaymentButtonState);
+                document.getElementById('ttv2-customer-phone')?.addEventListener('input', updatePaymentButtonState);
+                
+                // Listener para cambios de archivos (delegado para archivos dinámicos)
+                document.addEventListener('ttv2-files-updated', updatePaymentButtonState);
+                
+                // Listener para firma (cuando se guarde)
+                document.addEventListener('ttv2-signature-saved', updatePaymentButtonState);
                 
                 submitButton.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -2631,12 +2710,19 @@ function ttv2_form_shortcode() {
                 });
             });
 
-            // Event listeners para navegación
+            // Event listeners para navegación (libre - sin restricciones)
             document.querySelectorAll('.ttv2-nav-item').forEach(item => {
                 item.addEventListener('click', function() {
                     const targetStep = parseInt(this.dataset.nav);
-                    if (targetStep < ttv2CurrentStep || ttv2ValidateCurrentStep()) {
+                    // Navegación libre - solo verificar que no estemos en DGMM (step 0)
+                    if (ttv2CurrentStep > 0) {
                         ttv2GoToStep(targetStep);
+                        console.log(`TTV2: Free navigation to step ${targetStep}`);
+                    } else {
+                        // Estamos en step 0 (DGMM), mostrar aviso
+                        ttv2ShowAlert('⚠️ Verificación Requerida', 
+                            'Debe aceptar la verificación de elegibilidad DGMM antes de continuar con el formulario.',
+                            'warning');
                     }
                 });
             });
@@ -2683,6 +2769,8 @@ function ttv2_form_shortcode() {
                 }
                 if (event.target === ttv2SignatureModal) {
                     ttv2SignatureModal.style.display = 'none';
+                    document.body.classList.remove('ttv2-signature-modal-open');
+                    ttv2ShowExternalModals();
                 }
             });
 
@@ -2724,25 +2812,156 @@ function ttv2_form_shortcode() {
                 if (authPreview) authPreview.innerHTML = authContent;
             }
             
-            // Función para toggle del documento
-            window.toggleAuthDocument = function() {
-                const preview = document.getElementById('ttv2-authorization-preview');
-                const button = document.querySelector('.ttv2-toggle-document');
+            // Función para ocultar modales externos agresivamente
+            function ttv2HideExternalModals() {
+                const modalSelectors = [
+                    // Cookies
+                    '#cookie-banner', '.cookie-notice', '.cookie-consent', '.cookie-popup',
+                    '.cookies-banner', '#cookies-banner', '.gdpr-banner', '.wpcc-banner',
+                    '.moove_gdpr_cookie_modal', '.cli-modal-backdrop', '.wp-cookies-ok',
+                    '.cookie-law-info-bar', '.cookie-notice-hidden',
+                    
+                    // WhatsApp
+                    '#whatsapp-widget', '.whatsapp-widget', '.wa-widget', '.wa-button',
+                    '.whatsapp-button', '.whatsapp-float', '.wp-whatsapp', '.joinchat',
+                    '.cht-widget', '.wa-chat-box', '.whatsapp-launcher', '.wa-widget-send-button',
+                    
+                    // Otros comunes
+                    '.popup-overlay', '.modal-backdrop', '.newsletter-popup', '.promo-banner',
+                    '.gtranslate_wrapper', '.translate-widget', '#google_translate_element',
+                    '.crisp-client', '.intercom-launcher', '.tawk-widget',
+                    '.facebook-messenger', '.messenger-widget'
+                ];
                 
-                if (preview.style.display === 'none') {
-                    preview.style.display = 'block';
-                    button.classList.add('active');
-                } else {
-                    preview.style.display = 'none';
-                    button.classList.remove('active');
-                }
+                modalSelectors.forEach(selector => {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(element => {
+                        if (element) {
+                            element.style.display = 'none';
+                            element.style.visibility = 'hidden';
+                            element.style.opacity = '0';
+                            element.style.pointerEvents = 'none';
+                            element.style.zIndex = '-9999';
+                            element.setAttribute('data-ttv2-hidden', 'true');
+                        }
+                    });
+                });
+                
+                console.log('TTV2: External modals hidden for signature view');
             }
+            
+            // Función para restaurar modales externos
+            function ttv2ShowExternalModals() {
+                const hiddenElements = document.querySelectorAll('[data-ttv2-hidden="true"]');
+                hiddenElements.forEach(element => {
+                    element.style.display = '';
+                    element.style.visibility = '';
+                    element.style.opacity = '';
+                    element.style.pointerEvents = '';
+                    element.style.zIndex = '';
+                    element.removeAttribute('data-ttv2-hidden');
+                });
+                
+                console.log('TTV2: External modals restored');
+            }
+            
+            // Función para mostrar alertas personalizadas
+            function ttv2ShowAlert(title, message, type = 'info') {
+                const alertTypes = {
+                    'warning': { icon: '⚠️', color: '#f59e0b', bg: '#fef3c7' },
+                    'error': { icon: '❌', color: '#dc2626', bg: '#fef2f2' },
+                    'success': { icon: '✅', color: '#16a34a', bg: '#f0fdf4' },
+                    'info': { icon: 'ℹ️', color: '#2563eb', bg: '#eff6ff' }
+                };
+                
+                const alertConfig = alertTypes[type] || alertTypes['info'];
+                
+                // Generar ID único para el modal
+                const alertId = 'ttv2-alert-' + Date.now();
+                
+                // Crear modal de alerta
+                const alertModal = document.createElement('div');
+                alertModal.id = alertId;
+                alertModal.style.cssText = `
+                    position: fixed;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    background: rgba(0,0,0,0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                    animation: fadeIn 0.3s ease;
+                `;
+                
+                const alertContent = document.createElement('div');
+                alertContent.style.cssText = `
+                    background: white;
+                    border-radius: 12px;
+                    padding: 25px;
+                    max-width: 400px;
+                    margin: 20px;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+                    text-align: center;
+                    animation: slideIn 0.3s ease;
+                `;
+                
+                const buttonId = alertId + '-btn';
+                
+                alertContent.innerHTML = `
+                    <div style="color: ${alertConfig.color}; font-size: 48px; margin-bottom: 15px;">
+                        ${alertConfig.icon}
+                    </div>
+                    <h3 style="margin: 0 0 15px 0; color: #374151; font-size: 18px; font-weight: 600;">
+                        ${title}
+                    </h3>
+                    <p style="margin: 0 0 25px 0; color: #6b7280; line-height: 1.5; font-size: 14px;">
+                        ${message}
+                    </p>
+                    <button id="${buttonId}" 
+                            style="background: ${alertConfig.color}; color: white; border: none; 
+                                   padding: 10px 24px; border-radius: 6px; cursor: pointer; 
+                                   font-weight: 500; font-size: 14px; transition: all 0.2s;">
+                        Entendido
+                    </button>
+                `;
+                
+                alertModal.appendChild(alertContent);
+                document.body.appendChild(alertModal);
+                
+                // Agregar event listener al botón
+                const closeButton = document.getElementById(buttonId);
+                if (closeButton) {
+                    closeButton.addEventListener('click', function() {
+                        alertModal.remove();
+                    });
+                }
+                
+                // Click fuera del modal para cerrarlo
+                alertModal.addEventListener('click', function(e) {
+                    if (e.target === alertModal) {
+                        alertModal.remove();
+                    }
+                });
+                
+                // Auto-remove after 8 seconds
+                setTimeout(() => {
+                    if (alertModal.parentNode) {
+                        alertModal.remove();
+                    }
+                }, 8000);
+            }
+            
+            // Función de validación movida fuera del bloque DOMContentLoaded
             
             // Inicializar SignaturePad cuando se abre el modal
             if (ttv2OpenSignatureBtn) {
                 ttv2OpenSignatureBtn.addEventListener('click', function() {
                     ttv2GenerateAuthorizationDocument();
                     ttv2SignatureModal.style.display = 'flex';
+                    document.body.classList.add('ttv2-signature-modal-open');
+                    
+                    // Forzar ocultación de modales específicos
+                    ttv2HideExternalModals();
                     
                     // Esperar un momento para que el modal se renderice
                     setTimeout(() => {
@@ -2845,9 +3064,14 @@ function ttv2_form_shortcode() {
                         
                         // Cerrar modal con animación
                         ttv2SignatureModal.style.display = 'none';
+                        document.body.classList.remove('ttv2-signature-modal-open');
+                        ttv2ShowExternalModals();
                         
                         // Guardar en el array de archivos para enviar con el formulario
                         ttv2Files['signature'] = ttv2SignatureData;
+                        
+                        // Disparar evento para actualizar botón de pago
+                        document.dispatchEvent(new CustomEvent('ttv2-signature-saved'));
                     } else {
                         alert('Por favor, firme el documento antes de guardar.');
                         // Vibrar para error
@@ -2862,6 +3086,8 @@ function ttv2_form_shortcode() {
             if (ttv2CloseSignatureBtn) {
                 ttv2CloseSignatureBtn.addEventListener('click', function() {
                     ttv2SignatureModal.style.display = 'none';
+                    document.body.classList.remove('ttv2-signature-modal-open');
+                    ttv2ShowExternalModals();
                 });
             }
             
@@ -2898,7 +3124,12 @@ function ttv2_form_shortcode() {
 
         // Navegación entre pasos
         function ttv2NextStep() {
-            if (ttv2ValidateCurrentStep()) {
+            // Solo validar DGMM (step 0), el resto navegación libre
+            if (ttv2CurrentStep === 0) {
+                if (ttv2ValidateCurrentStep()) {
+                    ttv2GoToStep(ttv2CurrentStep + 1);
+                }
+            } else {
                 ttv2GoToStep(ttv2CurrentStep + 1);
             }
         }
@@ -2908,29 +3139,46 @@ function ttv2_form_shortcode() {
         }
 
         function ttv2GoToStep(step) {
+            console.log(`TTV2: Navigating from step ${ttv2CurrentStep} to step ${step}`);
             if (step < 0 || step > 4) return;
 
             // Ocultar paso actual
-            document.querySelector(`.ttv2-step[data-step="${ttv2CurrentStep}"]`).classList.remove('active');
+            const currentStepElement = document.querySelector(`.ttv2-step[data-step="${ttv2CurrentStep}"]`);
+            if (currentStepElement) currentStepElement.classList.remove('active');
             
-            // Actualizar navegación
-            document.querySelector(`.ttv2-nav-item[data-nav="${ttv2CurrentStep}"]`).classList.remove('active');
-            const currentProgressStep = document.querySelector(`.ttv2-progress-step[data-step="${ttv2CurrentStep}"]`);
-            if (currentProgressStep) currentProgressStep.classList.remove('active');
+            // Actualizar navegación (solo si no es step 0 - DGMM)
+            if (ttv2CurrentStep > 0) {
+                const currentNavItem = document.querySelector(`.ttv2-nav-item[data-nav="${ttv2CurrentStep}"]`);
+                if (currentNavItem) currentNavItem.classList.remove('active');
+                const currentProgressStep = document.querySelector(`.ttv2-progress-step[data-step="${ttv2CurrentStep}"]`);
+                if (currentProgressStep) currentProgressStep.classList.remove('active');
+            }
             
-            // Si el paso actual se completó
-            if (step > ttv2CurrentStep) {
-                document.querySelector(`.ttv2-nav-item[data-nav="${ttv2CurrentStep}"]`).classList.add('completed');
+            // Si el paso actual se completó (solo para steps > 0)
+            if (step > ttv2CurrentStep && ttv2CurrentStep > 0) {
+                const completedNavItem = document.querySelector(`.ttv2-nav-item[data-nav="${ttv2CurrentStep}"]`);
+                if (completedNavItem) completedNavItem.classList.add('completed');
                 const progressStep = document.querySelector(`.ttv2-progress-step[data-step="${ttv2CurrentStep}"]`);
                 if (progressStep) progressStep.classList.add('completed');
             }
 
             // Mostrar nuevo paso
             ttv2CurrentStep = step;
-            document.querySelector(`.ttv2-step[data-step="${step}"]`).classList.add('active');
-            document.querySelector(`.ttv2-nav-item[data-nav="${step}"]`).classList.add('active');
-            const newProgressStep = document.querySelector(`.ttv2-progress-step[data-step="${step}"]`);
-            if (newProgressStep) newProgressStep.classList.add('active');
+            const newStepElement = document.querySelector(`.ttv2-step[data-step="${step}"]`);
+            if (newStepElement) {
+                newStepElement.classList.add('active');
+                console.log(`TTV2: Step ${step} element found and activated`);
+            } else {
+                console.error(`TTV2: Step ${step} element NOT FOUND!`);
+            }
+            
+            // Activar navegación (solo para steps > 0)
+            if (step > 0) {
+                const newNavItem = document.querySelector(`.ttv2-nav-item[data-nav="${step}"]`);
+                if (newNavItem) newNavItem.classList.add('active');
+                const newProgressStep = document.querySelector(`.ttv2-progress-step[data-step="${step}"]`);
+                if (newProgressStep) newProgressStep.classList.add('active');
+            }
 
             // Si es el paso 2, actualizar la titulación seleccionada
             if (step === 2) {
@@ -2957,8 +3205,7 @@ function ttv2_form_shortcode() {
                 'PNB': 'P.N.B. - Patrón de Navegación Básica',
                 'PER': 'P.E.R - Patrón de Embarcaciones de Recreo',
                 'patron_de_yate': 'Patrón de Yate',
-                'capitan_de_yate': 'Capitán de Yate',
-                'moto_a_o_b': 'Moto A o B - Licencia de motos de agua'
+                'capitan_de_yate': 'Capitán de Yate'
             };
             
             const titleElement = document.getElementById('ttv2-selected-title-name');
@@ -3120,6 +3367,9 @@ function ttv2_form_shortcode() {
             
             // Actualizar ttv2Files para compatibilidad
             ttv2Files[inputId] = ttv2UploadedFiles[inputId];
+            
+            // Disparar evento para actualizar botón de pago
+            document.dispatchEvent(new CustomEvent('ttv2-files-updated'));
         }
         
         function ttv2RenderFilesList(inputId) {
@@ -3187,6 +3437,9 @@ function ttv2_form_shortcode() {
             
             // Actualizar ttv2Files para compatibilidad
             ttv2Files[inputId] = ttv2UploadedFiles[inputId];
+            
+            // Disparar evento para actualizar botón de pago
+            document.dispatchEvent(new CustomEvent('ttv2-files-updated'));
         }
         
         function ttv2UpdateInputFiles(inputId) {
@@ -3220,7 +3473,59 @@ function ttv2_form_shortcode() {
             return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
         }
 
-        // Función para convertir archivo a base64
+        // Función para comprimir imagen antes de convertir a base64
+        async function ttv2CompressImage(file, maxWidth = 1920, maxHeight = 1920, quality = 0.8) {
+            return new Promise((resolve, reject) => {
+                // Si no es imagen, devolver sin comprimir
+                if (!file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                    return;
+                }
+                
+                const img = new Image();
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                img.onload = function() {
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // Calcular nuevo tamaño manteniendo proporción
+                    if (width > maxWidth || height > maxHeight) {
+                        const ratio = Math.min(maxWidth / width, maxHeight / height);
+                        width = Math.round(width * ratio);
+                        height = Math.round(height * ratio);
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    // Dibujar imagen redimensionada
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Convertir a base64 con calidad reducida
+                    const compressedBase64 = canvas.toDataURL(file.type || 'image/jpeg', quality);
+                    
+                    console.log(`TTV2: Imagen comprimida de ${file.size} bytes a ~${compressedBase64.length * 0.75} bytes`);
+                    resolve(compressedBase64);
+                };
+                
+                img.onerror = reject;
+                
+                // Leer archivo original
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // Función para convertir archivo a base64 (sin comprimir para PDFs)
         function ttv2FileToBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -3250,16 +3555,21 @@ function ttv2_form_shortcode() {
                     
                     for (const file of filesToUse) {
                         try {
-                            const base64 = await ttv2FileToBase64(file);
+                            // Usar compresión para imágenes, conversión normal para otros archivos
+                            const base64 = file.type.startsWith('image/') 
+                                ? await ttv2CompressImage(file, 1920, 1920, 0.8)
+                                : await ttv2FileToBase64(file);
+                            
                             // Usar el mismo formato que TBV2
                             filesArray.push({
                                 name: file.name,
                                 base64: base64,
-                                size: file.size,
+                                size: file.size, // Tamaño original (para referencia)
+                                compressedSize: base64.length * 0.75, // Tamaño aproximado comprimido
                                 type: file.type,
                                 category: inputId // Mantener la categoría
                             });
-                            console.log(`TTV2: Archivo convertido: ${file.name}`);
+                            console.log(`TTV2: Archivo procesado: ${file.name} (${file.type.startsWith('image/') ? 'comprimido' : 'sin comprimir'})`);
                         } catch (error) {
                             console.error(`Error convirtiendo archivo ${file.name}:`, error);
                         }
@@ -3285,10 +3595,14 @@ function ttv2_form_shortcode() {
 
         // Procesar pago
         async function ttv2ProcessPayment() {
-            // Validar términos
-            const termsCheckbox = document.getElementById('ttv2-terms-accept-pago');
-            if (!termsCheckbox || !termsCheckbox.checked) {
-                alert('Por favor, acepte los términos y condiciones.');
+            // Validar datos completos antes del pago
+            const validationErrors = ttv2ValidateForPayment();
+            if (validationErrors.length > 0) {
+                const errorMessage = validationErrors.length === 1 ? 
+                    validationErrors[0] : 
+                    `Por favor, complete los siguientes campos:\n\n• ${validationErrors.join('\n• ')}`;
+                
+                ttv2ShowAlert('📋 Datos Incompletos', errorMessage, 'warning');
                 return;
             }
 
@@ -3310,19 +3624,44 @@ function ttv2_form_shortcode() {
                 const filesArray = await ttv2ConvertFilesToBase64();
                 console.log('TTV2: Archivos convertidos:', filesArray.length, 'archivos');
                 
-                // Generar OrderID aquí (igual que PHP) para que coincida con Redsys
-                const timestamp = Math.floor(Date.now() / 1000); // Timestamp en segundos como PHP time()
-                const generatedOrderId = timestamp.toString().padStart(12, '0');
-                console.log('TTV2: OrderID generado para Redsys:', generatedOrderId);
+                // Generar OrderID aquí con precisión de 10 segundos para evitar discrepancias
+                // Redondeamos a la decena más cercana para dar margen en dispositivos lentos
+                const timestamp = Math.floor(Date.now() / 10000) * 10; // Timestamp redondeado a 10 segundos
+                const generatedOrderId = '00' + timestamp.toString().padStart(10, '0');
+                console.log('TTV2: OrderID generado para Redsys (redondeado):', generatedOrderId);
                 
-                // Preparar datos completos para API temporal
+                // Preparar estructura temporal sin datos de formulario (se capturarán después)
+                const baseCaptureData = {
+                    orderId: generatedOrderId,
+                    files: filesArray,
+                    tramiteType: 'titulaciones-v2',
+                    metadata: {
+                        timestamp: Date.now(),
+                        formId: 'ttv2'
+                    }
+                };
+                
+                // NUEVO: Capturar datos del DOM justo antes del pago (estado final)
+                const customerName = document.getElementById('ttv2-customer-name')?.value?.trim() || '';
+                const customerDni = document.getElementById('ttv2-customer-dni')?.value?.trim() || '';
+                const customerEmail = document.getElementById('ttv2-customer-email')?.value?.trim() || '';
+                const customerPhone = document.getElementById('ttv2-customer-phone')?.value?.trim() || '';
+                
+                console.log('TTV2: Capturando datos del DOM en estado final:', {
+                    name: customerName,
+                    dni: customerDni, 
+                    email: customerEmail,
+                    phone: customerPhone
+                });
+                
+                // Completar datos de captura con información del formulario
                 const captureData = {
-                    orderId: generatedOrderId, // Usar el mismo OrderID que usará Redsys
+                    ...baseCaptureData,
                     customerData: {
-                        name: ttv2FormData.customerName || '',
-                        dni: ttv2FormData.customerDni || '',
-                        email: ttv2FormData.customerEmail || '',
-                        phone: ttv2FormData.customerPhone || '',
+                        name: customerName,
+                        dni: customerDni,
+                        email: customerEmail,
+                        phone: customerPhone,
                         address: '',
                         city: '',
                         postalCode: '',
@@ -3339,12 +3678,10 @@ function ttv2_form_shortcode() {
                         basePrice: 55,
                         tasas: 35,
                         honorarios: 20
-                    },
-                    files: filesArray,  // Ahora es un array como TBV2
-                    tramiteType: 'titulaciones-v2'
+                    }
                 };
                 
-                console.log('TTV2: Enviando al API temporal...');
+                console.log('TTV2: Enviando al API temporal con datos completos...');
                 
                 // Enviar al API temporal de Tramitfy
                 const captureResponse = await fetch('https://tramitfy.org/api/temporal/capture', {
@@ -3407,6 +3744,83 @@ function ttv2_form_shortcode() {
             }
         }
 
+        // Función para cargar widget de reseñas de forma segura
+        function ttv2LoadReviewsWidget() {
+            console.log('TTV2: Loading reviews widget...');
+            
+            const container = document.getElementById('ttv2-reviews-container');
+            if (!container) {
+                console.error('TTV2: Reviews container not found');
+                return;
+            }
+            
+            // Crear script de Trustindex
+            const script = document.createElement('script');
+            script.defer = true;
+            script.async = true;
+            script.src = 'https://cdn.trustindex.io/loader.js?f4fbfd341d12439e0c86fae7fc2';
+            
+            script.onload = function() {
+                console.log('TTV2: Reviews widget loaded successfully');
+            };
+            
+            script.onerror = function() {
+                console.error('TTV2: Failed to load reviews widget');
+            };
+            
+            // Agregar al container
+            container.appendChild(script);
+        }
+
+        // Función para validar datos completos antes del pago (MOVIDA FUERA DE DOMContentLoaded)
+        function ttv2ValidateForPayment() {
+            const errors = [];
+            
+            // Validar servicio seleccionado
+            if (!ttv2SelectedService) {
+                errors.push('Debe seleccionar un tipo de servicio');
+            }
+            
+            // Validar datos personales
+            const name = document.getElementById('ttv2-customer-name')?.value?.trim();
+            const dni = document.getElementById('ttv2-customer-dni')?.value?.trim();
+            const email = document.getElementById('ttv2-customer-email')?.value?.trim();
+            const phone = document.getElementById('ttv2-customer-phone')?.value?.trim();
+            
+            if (!name) errors.push('Debe ingresar su nombre completo');
+            if (!dni) errors.push('Debe ingresar su DNI/NIE');
+            if (!email) errors.push('Debe ingresar su email');
+            if (!phone) errors.push('Debe ingresar su teléfono');
+            
+            // Validar documentación
+            const dniFiles = ttv2UploadedFiles['ttv2-dni'] || ttv2Files['ttv2-dni'] || [];
+            const certificadoFiles = ttv2UploadedFiles['ttv2-certificado'] || ttv2Files['ttv2-certificado'] || [];
+            const titulacionFiles = ttv2UploadedFiles['ttv2-titulacion'] || ttv2Files['ttv2-titulacion'] || [];
+            
+            if (dniFiles.length === 0) {
+                errors.push('Debe subir su DNI/NIE por ambas caras');
+            }
+            if (certificadoFiles.length === 0) {
+                errors.push('Debe subir su certificado médico psicotécnico');
+            }
+            if (titulacionFiles.length === 0) {
+                errors.push('Debe subir la copia de la documentación caducada');
+            }
+            
+            // Validar firma
+            if (!window.ttv2SignatureData) {
+                errors.push('Debe firmar el documento de autorización');
+            }
+            
+            // Validar términos y condiciones
+            const termsCheckbox = document.getElementById('ttv2-terms-accept-pago');
+            if (termsCheckbox && !termsCheckbox.checked) {
+                errors.push('Debe aceptar los términos y condiciones');
+            }
+            
+            return errors;
+        }
+
     </script>
 
     <?php
@@ -3466,3 +3880,226 @@ add_action('wp_ajax_ttv2_create_redsys_payment', 'ttv2_handle_create_redsys_paym
 add_action('wp_ajax_nopriv_ttv2_create_redsys_payment', 'ttv2_handle_create_redsys_payment');
 add_action('wp_ajax_ttv2_store_temporal', 'ttv2_store_temporal');
 add_action('wp_ajax_nopriv_ttv2_store_temporal', 'ttv2_store_temporal');
+add_action('wp_ajax_ttv2_send_confirmation_emails', 'ttv2_send_confirmation_emails_handler');
+add_action('wp_ajax_nopriv_ttv2_send_confirmation_emails', 'ttv2_send_confirmation_emails_handler');
+
+/**
+ * Envía emails de confirmación para TTV2 usando wp_mail
+ */
+function ttv2_send_confirmation_emails($orderId, $paymentData, $formData) {
+    error_log("TTV2 EMAILS - Iniciando para OrderID: $orderId");
+    error_log("TTV2 EMAILS - paymentData recibido: " . print_r($paymentData, true));
+    error_log("TTV2 EMAILS - formData recibido: " . print_r($formData, true));
+    
+    // Extraer datos del pago y formulario
+    $finalAmount = floatval($paymentData['Ds_Amount']) / 100; // Redsys envía en centimos
+    $authCode = $paymentData['Ds_AuthorisationCode'] ?? '';
+    $tramiteId = 'TTV2-' . $orderId;
+    
+    // Datos del cliente desde formulario
+    $customerEmail = $formData['customerEmail'] ?? $formData['personal']['customerEmail'] ?? 'cliente@example.com';
+    $customerName = $formData['customerName'] ?? $formData['personal']['customerName'] ?? 'Cliente';
+    $customerDni = $formData['customerDni'] ?? '';
+    $tipoServicio = $formData['tipoServicio'] ?? 'Renovación de Titulación';
+    
+    error_log("TTV2 EMAILS - Datos extraídos: Email=$customerEmail, Nombre=$customerName, DNI=$customerDni, Servicio=$tipoServicio, Importe=$finalAmount");
+    error_log("TTV2 EMAILS - DEBUG customerEmail: '" . ($formData['customerEmail'] ?? 'VACÍO') . "'");
+    error_log("TTV2 EMAILS - DEBUG customerName: '" . ($formData['customerName'] ?? 'VACÍO') . "'");
+    error_log("TTV2 EMAILS - DEBUG usando fallbacks: Email=" . ($customerEmail === 'cliente@example.com' ? 'SÍ' : 'NO') . ", Nombre=" . ($customerName === 'Cliente' ? 'SÍ' : 'NO'));
+    
+    // Headers para emails (formato compatible como TMV2)
+    $headers = ['Content-Type: text/html; charset=UTF-8'];
+    
+    // === EMAIL AL CLIENTE (USANDO PATRÓN EXACTO TBV2) ===
+    $to_customer = $customerEmail;  // Misma variable que TBV2 funciona
+    $subject_customer = ' Confirmación de Renovación de Titulación - TRAMITFY';  // Mismo formato que TBV2
+    
+    $message_customer = "
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset='UTF-8'>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #016d86; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; background: #f9f9f9; }
+            .footer { padding: 15px; text-align: center; background: #eee; font-size: 12px; }
+        </style>
+    </head>
+    <body>
+        <div class='container'>
+            <div class='header'>
+                <h1>🚢 TRAMITFY</h1>
+                <h2>Renovación de Titulación Confirmada</h2>
+            </div>
+            <div class='content'>
+                <p>Estimado/a <strong>$customerName</strong>,</p>
+                
+                <p>Su solicitud de renovación de titulación náutica ha sido recibida y confirmada correctamente.</p>
+                
+                <h3>📋 Resumen del Trámite:</h3>
+                <ul>
+                    <li><strong>Número de Trámite:</strong> $tramiteId</li>
+                    <li><strong>Tipo de Servicio:</strong> $tipoServicio</li>
+                    <li><strong>Importe Total:</strong> " . number_format($finalAmount, 2) . "€</li>
+                    <li><strong>Código de Autorización:</strong> $authCode</li>
+                </ul>
+                
+                <h3>📋 Próximos Pasos:</h3>
+                <p>Procesaremos su documentación y gestionaremos la renovación ante la Capitanía Marítima correspondiente. Le mantendremos informado del estado de su trámite.</p>
+                
+                <h3>🔗 Enlaces Útiles:</h3>
+                <p><a href='https://tramitfy.org/seguimiento/$tramiteId' style='color: #016d86; text-decoration: none;'>📱 Seguir mi trámite</a></p>
+                
+                <p>Gracias por confiar en TRAMITFY para sus trámites náuticos.</p>
+            </div>
+            <div class='footer'>
+                <p>© 2024 TRAMITFY - Gestión de Trámites Náuticos<br>
+                Web: tramitfy.org | Email: info@tramitfy.es</p>
+            </div>
+        </div>
+    </body>
+    </html>";
+    
+    // DEBUG CRÍTICO: Verificar destinatario del email del cliente (PATRÓN TBV2)
+    error_log("TTV2 EMAILS - ENVIANDO CLIENTE - Destinatario: '$to_customer'");
+    error_log("TTV2 EMAILS - ENVIANDO CLIENTE - Subject: '$subject_customer'");
+    error_log("TTV2 EMAILS - ENVIANDO CLIENTE - Headers: " . print_r(['Content-Type: text/html; charset=UTF-8'], true));
+    
+    // Usar EXACTAMENTE el mismo formato que TBV2 (que SÍ funciona)
+    $email_sent_customer = wp_mail($to_customer, $subject_customer, $message_customer, ['Content-Type: text/html; charset=UTF-8']);
+    
+    error_log("TTV2 EMAILS - RESULTADO CLIENTE - Email enviado a '$to_customer': " . ($email_sent_customer ? 'SUCCESS' : 'FAILED'));
+    error_log("TTV2 EMAILS - wp_mail return: " . var_export($email_sent_customer, true));
+    
+    // === EMAIL AL ADMIN ===
+    $admin_email = 'ipmgroup24@gmail.com';
+    $subject_admin = "🎓 Nueva Renovación TTV2 - $tramiteId - " . number_format($finalAmount, 2) . "€";
+    
+    $message_admin = "
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset='UTF-8'>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #dc2626; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; background: #f9f9f9; }
+            .data { background: white; padding: 15px; margin: 10px 0; border-left: 4px solid #dc2626; }
+        </style>
+    </head>
+    <body>
+        <div class='container'>
+            <div class='header'>
+                <h1>🎓 NUEVA RENOVACIÓN TTV2</h1>
+                <h2>$tramiteId</h2>
+            </div>
+            <div class='content'>
+                <div class='data'>
+                    <h3>👤 Datos del Cliente:</h3>
+                    <p><strong>Nombre:</strong> $customerName</p>
+                    <p><strong>DNI:</strong> $customerDni</p>
+                    <p><strong>Email:</strong> $customerEmail</p>
+                </div>
+                
+                <div class='data'>
+                    <h3>🎓 Datos del Servicio:</h3>
+                    <p><strong>Tipo:</strong> $tipoServicio</p>
+                    <p><strong>Importe:</strong> " . number_format($finalAmount, 2) . "€</p>
+                    <p><strong>OrderID:</strong> $orderId</p>
+                    <p><strong>Autorización:</strong> $authCode</p>
+                </div>
+                
+                <div class='data'>
+                    <h3>🔗 Enlaces Rápidos:</h3>
+                    <p><a href='https://tramitfy.org/tramites/$tramiteId' style='color: #dc2626;'>📊 Ver en Dashboard</a></p>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>";
+    
+    // Usar EXACTAMENTE el mismo formato que TMV2 (que funciona)  
+    $email_sent_admin = wp_mail($admin_email, $subject_admin, $message_admin, ['Content-Type: text/html; charset=UTF-8']);
+    error_log("TTV2 EMAILS - Email admin a $admin_email: " . ($email_sent_admin ? 'SUCCESS' : 'FAILED'));
+    
+    return [
+        'client' => $email_sent_customer,
+        'admin' => $email_sent_admin,
+        'tramite_id' => $tramiteId
+    ];
+}
+
+/**
+ * Handler AJAX para envío de emails de confirmación TTV2
+ */
+function ttv2_send_confirmation_emails_handler() {
+    error_log('TTV2 EMAILS HANDLER - Iniciado');
+    
+    // Verificar que es una petición AJAX válida
+    if (!defined('DOING_AJAX') || !DOING_AJAX) {
+        error_log('TTV2 EMAILS - No es petición AJAX');
+        wp_die('Acceso directo no permitido');
+        return;
+    }
+    
+    try {
+        error_log('TTV2 EMAILS - Datos recibidos: ' . print_r($_POST, true));
+        
+        $orderId = $_POST['orderId'] ?? '';
+        $paymentDataJson = $_POST['paymentData'] ?? '{}';
+        $formDataJson = $_POST['formData'] ?? '{}';
+        
+        // DEBUG: Datos RAW recibidos
+        error_log('TTV2 EMAILS - formDataJson RAW: ' . $formDataJson);
+        
+        // Decodificar JSON
+        $paymentData = json_decode($paymentDataJson, true);
+        $formData = json_decode($formDataJson, true);
+        
+        // DEBUG: Verificar si json_decode falló
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log('TTV2 EMAILS - ERROR JSON: ' . json_last_error_msg());
+        }
+        
+        error_log('TTV2 EMAILS - OrderID: ' . $orderId);
+        error_log('TTV2 EMAILS - PaymentData: ' . print_r($paymentData, true));
+        error_log('TTV2 EMAILS - FormData: ' . print_r($formData, true));
+        error_log('TTV2 EMAILS - FormData[customerEmail]: ' . ($formData['customerEmail'] ?? 'NO EXISTE'));
+        
+        // DEBUG: Forzar logging en archivo específico
+        file_put_contents('/tmp/ttv2-debug.log', 
+            "[" . date('Y-m-d H:i:s') . "] formDataJson: $formDataJson\n" .
+            "[" . date('Y-m-d H:i:s') . "] formData decoded: " . print_r($formData, true) . "\n" .
+            "[" . date('Y-m-d H:i:s') . "] customerEmail: " . ($formData['customerEmail'] ?? 'NO EXISTE') . "\n\n", 
+            FILE_APPEND
+        );
+        
+        if (empty($orderId)) {
+            error_log('TTV2 EMAILS - OrderID vacío');
+            wp_send_json_error('OrderID requerido');
+            return;
+        }
+        
+        // Enviar emails
+        $emailResults = ttv2_send_confirmation_emails($orderId, $paymentData, $formData);
+        
+        error_log('TTV2 EMAILS - Resultados: ' . print_r($emailResults, true));
+        
+        // Responder éxito
+        wp_send_json_success([
+            'message' => 'Emails enviados correctamente',
+            'client_email_sent' => $emailResults['client'],
+            'admin_email_sent' => $emailResults['admin'],
+            'tramite_id' => $emailResults['tramite_id']
+        ]);
+        
+    } catch (Exception $e) {
+        error_log('TTV2 EMAILS - Error: ' . $e->getMessage());
+        wp_send_json_error('Error al enviar emails: ' . $e->getMessage());
+    }
+    
+    wp_die();
+}

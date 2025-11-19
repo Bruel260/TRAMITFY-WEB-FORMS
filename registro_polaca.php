@@ -92,7 +92,7 @@ if (!defined('POLACA_REDSYS_URL_LIVE')) define('POLACA_REDSYS_URL_LIVE', 'https:
 // URLs de retorno
 if (!defined('POLACA_REDSYS_URL_OK')) define('POLACA_REDSYS_URL_OK', 'https://tramitfy.es/pago-completado-polaca/');
 if (!defined('POLACA_REDSYS_URL_KO')) define('POLACA_REDSYS_URL_KO', 'https://tramitfy.es/pago-error/');
-if (!defined('POLACA_REDSYS_URL_NOTIFICATION')) define('POLACA_REDSYS_URL_NOTIFICATION', 'https://tramitfy.org/api/temporal/polaca-confirm');
+if (!defined('POLACA_REDSYS_URL_NOTIFICATION')) define('POLACA_REDSYS_URL_NOTIFICATION', 'https://tramitfy.org/api/temporal/confirm');
 
 // Webhook URL para el sistema definitivo
 if (!defined('POLACA_WEBHOOK_URL')) define('POLACA_WEBHOOK_URL', 'https://tramitfy.org/api/herramientas/polaca/webhook');
@@ -4337,8 +4337,8 @@ Auto-rellenar Formulario Completo (Modo TEST)
                                     <strong>Serás redirigido a la pasarela de pago segura Redsys</strong>
                                 </p>
                                 <div style="display: flex; align-items: center; gap: 10px;">
-                                    <img src="https://tramitfy.es/wp-content/uploads/2024/01/redsys-logo.png" alt="Redsys" style="height: 30px;">
-                                    <img src="https://tramitfy.es/wp-content/uploads/2024/01/visa-mastercard.png" alt="Visa Mastercard" style="height: 25px;">
+                                    <i class="fas fa-credit-card" style="color: #016d86; margin-right: 5px;"></i>
+                                    <span style="color: #666; font-size: 12px;">Pago seguro con tarjeta</span>
                                 </div>
                                 <small style="color: #6c757d; display: block; margin-top: 10px;">
                                     ✓ Pago 100% seguro con encriptación SSL<br>
@@ -5035,7 +5035,6 @@ Auto-rellenar Formulario Completo (Modo TEST)
             
             initializeForm();
             initializeSignature();
-            initializeStripe();
         });
 
         function initializeForm() {
@@ -5181,24 +5180,6 @@ Auto-rellenar Formulario Completo (Modo TEST)
             }
         }
 
-        function initializeStripe() {
-            console.log('💳 Inicializando Stripe...');
-            
-            // Log al servidor
-            logToServer('initializeStripe() INICIADA - public_key: <?php echo substr($stripe_public_key, 0, 10); ?>...');
-            
-            try {
-                stripe = Stripe('<?php echo $stripe_public_key; ?>');
-                console.log('✅ Stripe inicializado correctamente');
-                
-                logToServer('Stripe inicializado correctamente');
-                
-            } catch(error) {
-                console.error('❌ Error inicializando Stripe:', error);
-                
-                logToServer('ERROR inicializando Stripe: ' + error.message);
-            }
-        }
 
         function showPage(pageId) {
             // Ocultar todas las páginas
@@ -5971,6 +5952,94 @@ Auto-rellenar Formulario Completo (Modo TEST)
             errorElement.style.display = 'block';
         }
 
+        // Función para preparar datos temporales antes del pago
+        async function prepareTemporalData() {
+            console.log('📦 Preparando datos temporales para sistema polaco...');
+            
+            // Generar OrderID único con timestamp
+            const orderIdBase = Date.now();
+            const orderId = orderIdBase.toString().padStart(12, '0').slice(0, 12);
+            
+            // Capturar todos los datos del formulario
+            const formData = {
+                // Datos del cliente
+                customer_name: document.getElementById('customer_name').value,
+                customer_dni: document.getElementById('customer_dni').value,
+                customer_email: document.getElementById('customer_email').value,
+                customer_phone: document.getElementById('customer_phone').value,
+                
+                // Tipo de trámite seleccionado
+                tramite_type: progressiveSelection.tramite.id,
+                tramite_title: progressiveSelection.tramite.title,
+                
+                // Precio calculado
+                final_amount: calculateTotal(),
+                
+                // Datos de pago
+                order_id: orderId,
+                payment_method: 'redsys_tpv',
+                
+                // Firma digital si existe
+                signature_data: globalSignatureData || null,
+                
+                // Timestamp
+                timestamp: new Date().toISOString()
+            };
+            
+            // Capturar archivos si existen
+            const attachments = await polacaCaptureFiles();
+            if (attachments && attachments.length > 0) {
+                formData.attachments = attachments;
+            }
+            
+            console.log('📦 Datos temporales preparados:', {
+                orderId: formData.order_id,
+                tramite: formData.tramite_type,
+                amount: formData.final_amount,
+                hasSignature: !!formData.signature_data,
+                filesCount: attachments ? attachments.length : 0
+            });
+            
+            return formData;
+        }
+        
+        // Función auxiliar para capturar archivos
+        async function polacaCaptureFiles() {
+            const files = [];
+            const fileInputs = document.querySelectorAll('input[type="file"]');
+            
+            for (const input of fileInputs) {
+                if (input.files && input.files.length > 0) {
+                    for (const file of input.files) {
+                        try {
+                            const base64 = await polacaFileToBase64(file);
+                            files.push({
+                                name: file.name,
+                                size: file.size,
+                                type: file.type,
+                                fieldName: input.name || input.id,
+                                base64: base64
+                            });
+                        } catch (error) {
+                            console.error('Error convirtiendo archivo:', error);
+                        }
+                    }
+                }
+            }
+            
+            return files;
+        }
+        
+        // Función auxiliar para convertir archivos a base64
+        function polacaFileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
         // Nueva función con Redsys
         async function confirmPaymentInline() {
             console.log('🎯 INICIANDO PAGO CON REDSYS');
@@ -5996,7 +6065,7 @@ Auto-rellenar Formulario Completo (Modo TEST)
                 
                 // Paso 2: Enviar al servidor para captura temporal
                 console.log('💾 Enviando datos al sistema temporal...');
-                const captureResponse = await fetch('https://tramitfy.org/api/temporal/polaca-capture', {
+                const captureResponse = await fetch('https://tramitfy.org/api/temporal/capture', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
