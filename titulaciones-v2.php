@@ -2134,15 +2134,6 @@ function ttv2_form_shortcode() {
                             </div>
                             
                             <div class="ttv2-dgmm-valid-box">
-                                <h3>
-                                    <span style="color: #22c55e;">✅</span>
-                                    Organismos Emisores Válidos
-                                </h3>
-                                <ul class="ttv2-dgmm-list">
-                                    <li>Dirección General de la Marina Mercante (DGMM)</li>
-                                    <li>Capitanías Marítimas dependientes del Estado</li>
-                                    <li>Ministerio de Transportes, Movilidad y Agenda Urbana</li>
-                                </ul>
                                 <p class="ttv2-dgmm-help-text">
                                     💡 <strong>¿Cómo identificar el organismo emisor?</strong><br>
                                     Revisa el sello o logo en tu titulación. Si aparece el escudo de una comunidad autónoma 
