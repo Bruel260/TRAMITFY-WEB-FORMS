@@ -2555,8 +2555,12 @@ function ttv2_form_shortcode() {
                 // Handle continue button click
                 dgmmContinueBtn.addEventListener('click', function() {
                     if (dgmmCheckbox.checked) {
-                        // Mark as confirmed
-                        sessionStorage.setItem('ttv2_dgmm_confirmed', 'true');
+                        // Mark as confirmed with timestamp (30 min expiry)
+                        const confirmData = {
+                            confirmed: true,
+                            timestamp: Date.now()
+                        };
+                        sessionStorage.setItem('ttv2_dgmm_confirmed', JSON.stringify(confirmData));
                         
                         // Hide warning step
                         document.getElementById('ttv2-dgmm-warning-step').classList.remove('active');
@@ -2574,9 +2578,29 @@ function ttv2_form_shortcode() {
                 });
             }
             
-            // Check if already confirmed in this session
-            const isDGMMConfirmed = sessionStorage.getItem('ttv2_dgmm_confirmed');
-            if (isDGMMConfirmed === 'true') {
+            // Check if already confirmed in this session (with 30 min expiry)
+            const dgmmSessionData = sessionStorage.getItem('ttv2_dgmm_confirmed');
+            let isConfirmedAndValid = false;
+            
+            if (dgmmSessionData) {
+                try {
+                    const parsed = JSON.parse(dgmmSessionData);
+                    const now = Date.now();
+                    const thirtyMinutes = 30 * 60 * 1000; // 30 minutes in milliseconds
+                    
+                    if (parsed.confirmed && (now - parsed.timestamp) < thirtyMinutes) {
+                        isConfirmedAndValid = true;
+                    } else {
+                        // Session expired, remove it
+                        sessionStorage.removeItem('ttv2_dgmm_confirmed');
+                    }
+                } catch(e) {
+                    // Invalid data, remove it
+                    sessionStorage.removeItem('ttv2_dgmm_confirmed');
+                }
+            }
+            
+            if (isConfirmedAndValid) {
                 // Hide warning step and show step 1 directly
                 const warningStep = document.getElementById('ttv2-dgmm-warning-step');
                 if (warningStep) {
@@ -2585,6 +2609,12 @@ function ttv2_form_shortcode() {
                 document.querySelector('.ttv2-step[data-step="1"]').classList.add('active');
                 const progressStep = document.querySelector('.ttv2-progress-step[data-step="1"]');
                 if (progressStep) progressStep.classList.add('active');
+            } else {
+                // Ensure warning step is visible
+                const warningStep = document.getElementById('ttv2-dgmm-warning-step');
+                if (warningStep) {
+                    warningStep.classList.add('active');
+                }
             }
             
             // Event listener para el checkbox de términos
