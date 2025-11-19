@@ -1842,199 +1842,174 @@ function ttv2_form_shortcode() {
         }
         
         /* ======================================== */
-        /* DGMM Warning Page Styles */
+        /* Eligibility Verification Page - Sobrio */
         /* ======================================== */
-        .ttv2-dgmm-page {
-            max-width: 800px;
+        .ttv2-eligibility-page {
+            max-width: 700px;
             margin: 0 auto;
-            padding: 30px;
-        }
-        
-        .ttv2-dgmm-header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e5e7eb;
-        }
-        
-        .ttv2-dgmm-header h2 {
-            font-size: 28px;
-            color: #1f2937;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-        }
-        
-        .ttv2-dgmm-alert {
-            background: #fef2f2;
-            border-left: 4px solid #ef4444;
-            padding: 20px;
-            margin-bottom: 25px;
-            border-radius: 8px;
-        }
-        
-        .ttv2-dgmm-main-text {
-            font-size: 16px;
+            padding: 40px 30px;
             line-height: 1.6;
-            color: #991b1b;
-            margin-bottom: 15px;
         }
         
-        .ttv2-dgmm-secondary-text {
-            font-size: 15px;
-            line-height: 1.5;
-            color: #7f1d1d;
+        .ttv2-elegibility-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #e5e7eb;
         }
         
-        .ttv2-dgmm-valid-box {
-            background: #f0fdf4;
-            border: 2px solid #86efac;
-            border-radius: 12px;
-            padding: 25px;
+        .ttv2-elegibility-header h2 {
+            font-size: 24px;
+            color: #1f2937;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .ttv2-subtitle {
+            color: #6b7280;
+            font-size: 16px;
+            margin: 0;
+        }
+        
+        .ttv2-eligibility-content > div {
             margin-bottom: 30px;
         }
         
-        .ttv2-dgmm-valid-box h3 {
-            font-size: 20px;
-            color: #14532d;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .ttv2-dgmm-list {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 20px 0;
-        }
-        
-        .ttv2-dgmm-list li {
-            padding: 10px 0;
-            padding-left: 30px;
-            position: relative;
-            color: #166534;
-            font-size: 15px;
-        }
-        
-        .ttv2-dgmm-list li:before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: #22c55e;
-            font-weight: bold;
+        .ttv2-requirement h3,
+        .ttv2-restriction h3,
+        .ttv2-guidance h3 {
             font-size: 18px;
+            color: #374151;
+            margin-bottom: 12px;
+            font-weight: 600;
         }
         
-        .ttv2-dgmm-help-text {
-            background: #fff;
-            border: 1px solid #d1fae5;
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 14px;
-            line-height: 1.5;
-            color: #064e3b;
+        .ttv2-requirement p,
+        .ttv2-restriction p,
+        .ttv2-guidance p {
+            color: #4b5563;
+            font-size: 15px;
+            margin: 0;
         }
         
-        .ttv2-dgmm-confirmation {
-            background: #f9fafb;
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
+        .ttv2-requirement {
             padding: 20px;
-            margin-bottom: 30px;
+            background: #f8fafc;
+            border-left: 3px solid #016d86;
         }
         
-        .ttv2-dgmm-checkbox-label {
+        .ttv2-restriction {
+            padding: 20px;
+            background: #fafafa;
+            border-left: 3px solid #9ca3af;
+        }
+        
+        .ttv2-guidance {
+            padding: 20px;
+            background: #f9fafb;
+            border-left: 3px solid #d1d5db;
+        }
+        
+        .ttv2-confirmation-section {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            padding: 25px;
+            margin: 35px 0;
+        }
+        
+        .ttv2-confirmation-label {
             display: flex;
             align-items: flex-start;
             cursor: pointer;
         }
         
-        .ttv2-dgmm-checkbox-label input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
+        .ttv2-confirmation-label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
             margin-right: 15px;
             margin-top: 2px;
             cursor: pointer;
             flex-shrink: 0;
         }
         
-        .ttv2-dgmm-checkbox-text {
+        .ttv2-confirmation-text {
+            color: #374151;
             font-size: 15px;
             line-height: 1.6;
-            color: #374151;
         }
         
-        .ttv2-dgmm-actions {
+        .ttv2-navigation-buttons {
             display: flex;
+            justify-content: space-between;
             gap: 20px;
-            justify-content: center;
-            margin-top: 30px;
+            margin-top: 40px;
         }
         
-        .ttv2-dgmm-actions .ttv2-btn {
-            padding: 14px 30px;
-            font-size: 16px;
-            font-weight: 600;
-            border-radius: 8px;
-            border: none;
+        .ttv2-btn-back,
+        .ttv2-btn-continue {
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 500;
+            border: 1px solid #d1d5db;
+            background: #ffffff;
+            color: #374151;
             cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 200px;
+            transition: all 0.2s ease;
         }
         
-        .ttv2-dgmm-actions .ttv2-btn-secondary {
+        .ttv2-btn-back:hover {
             background: #f3f4f6;
-            color: #6b7280;
         }
         
-        .ttv2-dgmm-actions .ttv2-btn-secondary:hover {
-            background: #e5e7eb;
-        }
-        
-        .ttv2-dgmm-actions .ttv2-btn-primary {
+        .ttv2-btn-continue {
             background: #016d86;
             color: white;
+            border-color: #016d86;
         }
         
-        .ttv2-dgmm-actions .ttv2-btn-primary:hover:not(:disabled) {
+        .ttv2-btn-continue:hover:not(:disabled) {
             background: #015a70;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(1, 109, 134, 0.3);
         }
         
-        .ttv2-dgmm-actions .ttv2-btn-primary:disabled {
-            background: #cbd5e1;
+        .ttv2-btn-continue:disabled {
+            background: #d1d5db;
+            color: #9ca3af;
             cursor: not-allowed;
-            opacity: 0.6;
+            border-color: #d1d5db;
         }
         
-        /* Mobile responsive for DGMM page */
+        /* Mobile responsive */
         @media (max-width: 768px) {
-            .ttv2-dgmm-page {
-                padding: 20px;
+            .ttv2-eligibility-page {
+                padding: 30px 20px;
             }
             
-            .ttv2-dgmm-header h2 {
-                font-size: 22px;
+            .ttv2-elegibility-header h2 {
+                font-size: 20px;
             }
             
-            .ttv2-dgmm-actions {
+            .ttv2-subtitle {
+                font-size: 14px;
+            }
+            
+            .ttv2-navigation-buttons {
                 flex-direction: column;
             }
             
-            .ttv2-dgmm-actions .ttv2-btn {
+            .ttv2-btn-back,
+            .ttv2-btn-continue {
                 width: 100%;
-                min-width: auto;
+                text-align: center;
             }
             
-            .ttv2-dgmm-valid-box {
-                padding: 20px;
-            }
-            
-            .ttv2-dgmm-alert {
+            .ttv2-requirement,
+            .ttv2-restriction,
+            .ttv2-guidance {
                 padding: 15px;
+            }
+            
+            .ttv2-confirmation-section {
+                padding: 20px;
             }
         }
     </style>
@@ -2110,53 +2085,45 @@ function ttv2_form_shortcode() {
 
             <!-- Formulario -->
             <form id="ttv2-form">
-                <!-- PASO 0: Advertencia DGMM -->
+                <!-- PASO 0: Verificación de Elegibilidad -->
                 <div class="ttv2-step active" data-step="0" id="ttv2-dgmm-warning-step">
-                    <div class="ttv2-dgmm-page">
-                        <div class="ttv2-dgmm-header">
-                            <h2>
-                                <span style="color: #ff4444; font-size: 28px;">⚠️</span>
-                                Advertencia Importante sobre la Renovación
-                            </h2>
+                    <div class="ttv2-eligibility-page">
+                        <div class="ttv2-elegibility-header">
+                            <h2>Verificación de Elegibilidad</h2>
+                            <p class="ttv2-subtitle">Antes de iniciar el proceso, necesitamos confirmar que su titulación puede ser renovada a través de este servicio.</p>
                         </div>
                         
-                        <div class="ttv2-dgmm-content">
-                            <div class="ttv2-dgmm-alert">
-                                <p class="ttv2-dgmm-main-text">
-                                    <strong>🔴 ATENCIÓN:</strong> Este servicio está disponible <strong>EXCLUSIVAMENTE</strong> para renovar titulaciones 
-                                    expedidas por la <strong>Dirección General de la Marina Mercante (DGMM)</strong>.
-                                </p>
-                                <p class="ttv2-dgmm-secondary-text">
-                                    <strong>NO PODEMOS TRAMITAR</strong> la renovación de titulaciones expedidas por 
-                                    administraciones autonómicas como Cataluña, País Vasco, Islas Baleares, Comunidad Valenciana, 
-                                    Canarias o cualquier otra comunidad autónoma.
-                                </p>
+                        <div class="ttv2-eligibility-content">
+                            <div class="ttv2-requirement">
+                                <h3>Requisito Obligatorio</h3>
+                                <p>Este servicio está disponible únicamente para titulaciones expedidas por la <strong>Dirección General de la Marina Mercante (DGMM)</strong> o entidades estatales dependientes.</p>
                             </div>
                             
-                            <p style="text-align: center; font-size: 16px; color: #374151; margin: 25px 0; font-weight: 500;">
-                                💡 <strong>¿Cómo identificar el organismo emisor?</strong><br>
-                                Revisa el sello o logo en tu titulación. Si aparece el escudo de una comunidad autónoma 
-                                o referencias a organismos autonómicos, NO podemos renovarla.
-                            </p>
+                            <div class="ttv2-restriction">
+                                <h3>Titulaciones No Válidas</h3>
+                                <p>No podemos tramitar la renovación de titulaciones expedidas por administraciones autonómicas (Cataluña, País Vasco, Islas Baleares, Comunidad Valenciana, Canarias, etc.).</p>
+                            </div>
                             
-                            <div class="ttv2-dgmm-confirmation">
-                                <label class="ttv2-dgmm-checkbox-label">
+                            <div class="ttv2-guidance">
+                                <h3>¿Cómo verificar el organismo emisor?</h3>
+                                <p>Revise el sello o logo en su titulación. Si aparece el escudo de una comunidad autónoma o referencias a organismos autonómicos, no podemos procesar su renovación.</p>
+                            </div>
+                            
+                            <div class="ttv2-confirmation-section">
+                                <label class="ttv2-confirmation-label">
                                     <input type="checkbox" id="ttv2-dgmm-confirm" name="dgmm_confirm" required>
-                                    <span class="ttv2-dgmm-checkbox-text">
-                                        Confirmo que mi titulación náutica fue expedida por la 
-                                        <strong>Dirección General de la Marina Mercante</strong> o entidades estatales 
-                                        dependientes, y entiendo que las titulaciones autonómicas NO pueden 
-                                        tramitarse a través de este servicio.
+                                    <span class="ttv2-confirmation-text">
+                                        Confirmo que mi titulación náutica fue expedida por la Dirección General de la Marina Mercante (DGMM) y entiendo que las titulaciones autonómicas no pueden tramitarse a través de este servicio.
                                     </span>
                                 </label>
                             </div>
                             
-                            <div class="ttv2-dgmm-actions">
-                                <button type="button" class="ttv2-btn ttv2-btn-secondary" onclick="window.location.href='https://tramitfy.es'">
-                                    ← Volver al Inicio
+                            <div class="ttv2-navigation-buttons">
+                                <button type="button" class="ttv2-btn-back" onclick="window.location.href='https://tramitfy.es'">
+                                    Volver al Inicio
                                 </button>
-                                <button type="button" class="ttv2-btn ttv2-btn-primary" id="ttv2-dgmm-continue" disabled>
-                                    Continuar con la Renovación →
+                                <button type="button" class="ttv2-btn-continue" id="ttv2-dgmm-continue" disabled>
+                                    Continuar
                                 </button>
                             </div>
                         </div>
