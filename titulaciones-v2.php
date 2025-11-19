@@ -170,7 +170,8 @@ if (ttv2_is_authorized_page()) {
 
 function ttv2_create_redsys_payment() {
     try {
-        $order_id = str_pad(time(), 12, '0', STR_PAD_LEFT);
+        // Usar el OrderID recibido del frontend (ya padeado) o generar uno nuevo si no viene
+        $order_id = !empty($_POST['orderId']) ? $_POST['orderId'] : str_pad(time(), 12, '0', STR_PAD_LEFT);
         $amount = floatval($_POST['amount'] ?? TTV2_PRECIO_RENOVACION);
         $amount_cents = strval(intval($amount * 100));
         
@@ -687,6 +688,10 @@ function ttv2_form_shortcode() {
 
         .ttv2-document-header {
             padding: 10px 15px;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             background: linear-gradient(135deg, rgba(var(--ttv2-primary), 0.03) 0%, rgba(var(--ttv2-primary), 0.01) 100%);
             border-bottom: 1px solid #e5e5e5;
         }
@@ -699,6 +704,206 @@ function ttv2_form_shortcode() {
             line-height: 1.4;
         }
 
+        /* Sistema de upload múltiple TBV2 style */
+        .ttv2-document-upload {
+            padding: 15px;
+            background: #f8f9fa;
+            border-top: 1px solid #e5e5e5;
+        }
+        
+        .ttv2-upload-wrapper {
+            position: relative;
+        }
+        
+        .ttv2-upload-btn {
+            width: 100%;
+            padding: 12px 20px;
+            background: rgb(var(--ttv2-primary));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ttv2-upload-btn:hover {
+            background: rgb(var(--ttv2-primary-dark));
+            transform: translateY(-1px);
+        }
+        
+        .ttv2-upload-btn.has-files {
+            background: #ecfdf5;
+            color: #10b981;
+            border: 1px solid #10b981;
+        }
+        
+        .ttv2-upload-btn .desktop-text {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .ttv2-upload-btn .mobile-text {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .ttv2-upload-btn .desktop-text {
+                display: none;
+            }
+            .ttv2-upload-btn .mobile-text {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 16px;
+            }
+        }
+        
+        .ttv2-file-input {
+            display: none;
+        }
+        
+        .ttv2-file-count {
+            font-size: 12px;
+            color: #6b7280;
+            text-align: center;
+            margin-top: 5px;
+        }
+        
+        .ttv2-file-count.has-files {
+            color: #10b981;
+        }
+        
+        /* Preview de archivos múltiples */
+        .ttv2-file-preview-container {
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            border-radius: 6px;
+        }
+        
+        .ttv2-file-preview-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            margin-bottom: 4px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        
+        .ttv2-file-preview-item:hover {
+            border-color: rgba(var(--ttv2-primary), 0.3);
+            background: #fafbfc;
+        }
+        
+        .ttv2-file-preview-info {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            min-width: 0;
+            gap: 8px;
+        }
+        
+        .ttv2-file-preview-icon {
+            font-size: 16px;
+            color: #6b7280;
+            flex-shrink: 0;
+        }
+        
+        .ttv2-file-preview-details {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .ttv2-file-preview-name {
+            font-weight: 500;
+            color: #374151;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+        
+        .ttv2-file-preview-size {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+        
+        .ttv2-file-remove-btn {
+            background: #ef4444;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        
+        .ttv2-file-remove-btn:hover {
+            background: #dc2626;
+            transform: scale(1.1);
+        }
+        
+        @media (max-width: 768px) {
+            .ttv2-file-preview-container {
+                max-height: 120px;
+            }
+            
+            .ttv2-file-preview-item {
+                padding: 6px 8px;
+                font-size: 11px;
+            }
+            
+            .ttv2-file-preview-icon {
+                font-size: 14px;
+            }
+            
+            .ttv2-file-preview-size {
+                font-size: 10px;
+            }
+            
+            .ttv2-file-remove-btn {
+                width: 20px;
+                height: 20px;
+                font-size: 12px;
+            }
+        }
+        
+        /* Ver ejemplo link */
+        .ttv2-view-example {
+            color: rgba(var(--ttv2-primary), 1);
+            text-decoration: underline;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 500;
+            padding: 2px 6px;
+            background: rgba(var(--ttv2-primary), 0.08);
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .ttv2-view-example:hover {
+            background: rgba(var(--ttv2-primary), 0.15);
+            text-decoration: none;
+        }
+        
         .ttv2-upload-area {
             border: 1px solid #e5e5e5;
             border-radius: 0;
@@ -741,6 +946,19 @@ function ttv2_form_shortcode() {
             justify-content: space-between;
             align-items: center;
             position: relative;
+        }
+        
+        @media (max-width: 768px) {
+            .ttv2-signature-area {
+                flex-direction: column;
+                gap: 10px;
+                padding: 15px;
+            }
+            
+            .ttv2-signature-area .ttv2-button {
+                width: 100%;
+                padding: 12px;
+            }
         }
 
 
@@ -906,6 +1124,304 @@ function ttv2_form_shortcode() {
             text-decoration: none;
         }
 
+        /* Modal de firma responsivo */
+        .ttv2-signature-modal-responsive {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .ttv2-signature-modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .ttv2-signature-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .ttv2-signature-title {
+            margin: 0;
+            font-size: 20px;
+            color: #1f2937;
+            font-weight: 600;
+        }
+        
+        .ttv2-close-signature {
+            font-size: 28px;
+            color: #9ca3af;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0 5px;
+            transition: color 0.2s;
+        }
+        
+        .ttv2-close-signature:hover {
+            color: #374151;
+        }
+        
+        .ttv2-authorization-section {
+            padding: 0 20px;
+        }
+        
+        .ttv2-toggle-document {
+            width: 100%;
+            padding: 12px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 15px 0;
+            color: #4b5563;
+            font-size: 14px;
+        }
+        
+        .ttv2-toggle-document:hover {
+            background: #e5e7eb;
+        }
+        
+        .ttv2-toggle-document.active i {
+            transform: rotate(180deg);
+        }
+        
+        .ttv2-authorization-preview {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #374151;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .ttv2-signature-canvas-container {
+            padding: 20px;
+            background: #fafafa;
+        }
+        
+        .ttv2-signature-instruction {
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+            margin: 0 0 15px 0;
+        }
+        
+        .ttv2-canvas-wrapper {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+            height: 250px;
+        }
+        
+        .ttv2-signature-canvas {
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+            touch-action: none;
+        }
+        
+        .ttv2-signature-actions {
+            padding: 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            border-top: 1px solid #e5e7eb;
+            background: #fafafa;
+            border-radius: 0 0 16px 16px;
+        }
+        
+        .ttv2-btn-clear,
+        .ttv2-btn-save {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        
+        .ttv2-btn-clear {
+            background: #f3f4f6;
+            color: #6b7280;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .ttv2-btn-clear:hover {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        
+        .ttv2-btn-save {
+            background: rgb(var(--ttv2-primary));
+            color: white;
+            flex: 1;
+            max-width: 200px;
+        }
+        
+        .ttv2-btn-save:hover {
+            background: rgb(var(--ttv2-primary-dark));
+            transform: translateY(-1px);
+        }
+        
+        /* Responsive móvil para firma */
+        @media (max-width: 768px) {
+            .ttv2-signature-modal-responsive {
+                padding: 0;
+            }
+            
+            .ttv2-signature-modal-content {
+                max-width: 100%;
+                height: 100%;
+                max-height: 100%;
+                border-radius: 0;
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .ttv2-signature-header {
+                padding: 15px;
+                border-radius: 0;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                background: white;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            
+            .ttv2-signature-title {
+                font-size: 18px;
+            }
+            
+            .ttv2-authorization-section {
+                margin-top: 60px;
+                padding: 0 15px;
+            }
+            
+            .ttv2-toggle-document {
+                margin: 10px 0;
+                font-size: 13px;
+                padding: 10px;
+            }
+            
+            .ttv2-authorization-preview {
+                font-size: 12px;
+                max-height: 150px;
+            }
+            
+            .ttv2-signature-canvas-container {
+                flex: 1;
+                padding: 15px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                background: white;
+            }
+            
+            .ttv2-signature-instruction {
+                font-size: 13px;
+                margin-bottom: 10px;
+            }
+            
+            .ttv2-canvas-wrapper {
+                height: 200px;
+                max-height: 40vh;
+                border-radius: 8px;
+            }
+            
+            .ttv2-signature-actions {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                padding: 15px;
+                background: white;
+                border-top: 1px solid #e5e7eb;
+                box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+                border-radius: 0;
+                gap: 10px;
+            }
+            
+            .ttv2-btn-clear,
+            .ttv2-btn-save {
+                padding: 14px 20px;
+                font-size: 14px;
+            }
+            
+            .ttv2-btn-clear {
+                min-width: 100px;
+            }
+            
+            .ttv2-btn-save {
+                flex: 1;
+                max-width: none;
+            }
+            
+            .ttv2-btn-clear span,
+            .ttv2-btn-save span {
+                display: none;
+            }
+            
+            @media (min-width: 360px) {
+                .ttv2-btn-clear span,
+                .ttv2-btn-save span {
+                    display: inline;
+                }
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .ttv2-canvas-wrapper {
+                height: 150px;
+            }
+            
+            .ttv2-signature-actions {
+                padding: 12px;
+            }
+            
+            .ttv2-btn-clear,
+            .ttv2-btn-save {
+                padding: 12px 16px;
+                font-size: 13px;
+            }
+        }
+        
         /* Modal para ejemplos de documentos */
         .ttv2-document-popup {
             display: none;
@@ -974,6 +1490,20 @@ function ttv2_form_shortcode() {
 
             .ttv2-sidebar {
                 padding: 20px;
+            }
+            
+            /* Página de pago móvil optimizada */
+            #ttv2-redsys-container {
+                padding: 15px;
+            }
+            
+            .ttv2-redsys-payment-info {
+                padding: 18px;
+            }
+            
+            #ttv2-submit-payment {
+                padding: 14px;
+                font-size: 16px;
             }
             
             .ttv2-navigation {
@@ -1064,9 +1594,313 @@ function ttv2_form_shortcode() {
             border-left: 4px solid rgb(var(--ttv2-warning));
             color: #856404;
         }
+        
+        /* Modal de Advertencia Inicial */
+        .ttv2-warning-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 100000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .ttv2-warning-overlay.hidden {
+            display: none;
+        }
+        
+        .ttv2-warning-modal {
+            background: white;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 100%;
+            padding: 0;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .ttv2-warning-header {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+        }
+        
+        .ttv2-warning-header h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: white !important;
+        }
+        
+        .ttv2-warning-header .warning-icon {
+            background: rgba(255, 255, 255, 0.2);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .ttv2-warning-body {
+            padding: 35px 30px;
+        }
+        
+        .ttv2-warning-message {
+            background: #fef2f2;
+            border: 2px solid #fee2e2;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .ttv2-warning-message p {
+            margin: 0 0 15px 0;
+            color: #7f1d1d;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        
+        .ttv2-warning-message p:last-child {
+            margin-bottom: 0;
+        }
+        
+        .ttv2-warning-message strong {
+            color: #991b1b;
+            font-weight: 700;
+        }
+        
+        .ttv2-valid-entities {
+            background: #f0fdf4;
+            border: 2px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .ttv2-valid-entities h4 {
+            margin: 0 0 12px 0;
+            color: #14532d;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .ttv2-valid-entities ul {
+            margin: 0;
+            padding-left: 25px;
+            color: #166534;
+        }
+        
+        .ttv2-valid-entities li {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        
+        .ttv2-warning-checkbox {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .ttv2-warning-checkbox label {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #374151;
+        }
+        
+        .ttv2-warning-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
+            margin-top: 2px;
+            accent-color: rgb(var(--ttv2-primary));
+            cursor: pointer;
+        }
+        
+        .ttv2-warning-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .ttv2-btn-cancel {
+            padding: 14px 30px;
+            background: #f3f4f6;
+            color: #6b7280;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .ttv2-btn-cancel:hover {
+            background: #e5e7eb;
+            color: #4b5563;
+        }
+        
+        .ttv2-btn-confirm {
+            padding: 14px 40px;
+            background: rgb(var(--ttv2-primary));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        
+        .ttv2-btn-confirm.enabled {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .ttv2-btn-confirm.enabled:hover {
+            background: rgb(var(--ttv2-primary-dark));
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(var(--ttv2-primary), 0.3);
+        }
+        
+        /* Formulario bloqueado */
+        .ttv2-container.blocked {
+            filter: blur(3px);
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        
+        @media (max-width: 768px) {
+            .ttv2-warning-modal {
+                margin: 10px;
+                max-width: calc(100% - 20px);
+            }
+            
+            .ttv2-warning-header {
+                padding: 25px 20px;
+            }
+            
+            .ttv2-warning-header h2 {
+                font-size: 20px;
+            }
+            
+            .ttv2-warning-body {
+                padding: 25px 20px;
+            }
+            
+            .ttv2-warning-message p {
+                font-size: 14px;
+            }
+            
+            .ttv2-valid-entities li {
+                font-size: 13px;
+            }
+            
+            .ttv2-warning-actions {
+                flex-direction: column;
+            }
+            
+            .ttv2-btn-cancel,
+            .ttv2-btn-confirm {
+                width: 100%;
+                padding: 16px;
+            }
+        }
     </style>
 
-    <div class="ttv2-container">
+    <!-- Modal de Advertencia Inicial -->
+    <div id="ttv2-warning-overlay" class="ttv2-warning-overlay">
+        <div class="ttv2-warning-modal">
+            <div class="ttv2-warning-header">
+                <h2>
+                    <span class="warning-icon">⚠️</span>
+                    Advertencia Importante
+                </h2>
+            </div>
+            
+            <div class="ttv2-warning-body">
+                <div class="ttv2-warning-message">
+                    <p>
+                        <strong>🔴 ATENCIÓN:</strong> Solo se podrán renovar mediante este formulario las titulaciones 
+                        expedidas por la <strong>Dirección General de la Marina Mercante</strong>.
+                    </p>
+                    <p>
+                        <strong>NO son válidas</strong> para su renovación las titulaciones expedidas por 
+                        administraciones autonómicas (Cataluña, País Vasco, Islas Baleares, etc.).
+                    </p>
+                </div>
+                
+                <div class="ttv2-valid-entities">
+                    <h4>
+                        <span>✅</span>
+                        Organismos emisores válidos:
+                    </h4>
+                    <ul>
+                        <li>Dirección General de la Marina Mercante (DGMM)</li>
+                        <li>Capitanías Marítimas dependientes del Estado</li>
+                        <li>Ministerio de Transportes, Movilidad y Agenda Urbana</li>
+                    </ul>
+                </div>
+                
+                <div class="ttv2-warning-checkbox">
+                    <label for="ttv2-confirm-dgmm">
+                        <input type="checkbox" id="ttv2-confirm-dgmm" name="confirm_dgmm">
+                        <span>
+                            Confirmo que mi titulación náutica ha sido expedida por la 
+                            <strong>Dirección General de la Marina Mercante</strong> o entidades estatales 
+                            dependientes y que entiendo que las titulaciones autonómicas no pueden 
+                            tramitarse a través de este servicio.
+                        </span>
+                    </label>
+                </div>
+                
+                <div class="ttv2-warning-actions">
+                    <button type="button" class="ttv2-btn-cancel" onclick="window.history.back()">
+                        Cancelar
+                    </button>
+                    <button type="button" id="ttv2-btn-confirm" class="ttv2-btn-confirm" disabled>
+                        Continuar con la Renovación
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="ttv2-container blocked" id="ttv2-main-container">
         <!-- Sidebar Izquierdo -->
         <div class="ttv2-sidebar">
             <div class="ttv2-logo">
@@ -1242,48 +2076,57 @@ function ttv2_form_shortcode() {
                         <div class="ttv2-document-box">
                             <div class="ttv2-document-header">
                                 <h3 class="ttv2-document-title">Copia del DNI por ambas caras</h3>
+                                <a href="#" class="ttv2-example-link ttv2-view-example" data-doc="dni-comprador" onclick="event.stopPropagation();">Ver ejemplo</a>
                             </div>
-                            <div class="ttv2-upload-area" onclick="document.getElementById('ttv2-dni').click()">
-                                <div class="ttv2-upload-content">
-                                    <span style="font-size: 13px; color: #666;">Seleccionar archivo</span>
-                                    <span style="font-size: 11px; color: #999;">• JPG, PNG, PDF</span>
+                            <div class="ttv2-document-upload">
+                                <div class="ttv2-upload-wrapper">
+                                    <input type="file" id="ttv2-dni" class="ttv2-file-input" name="dniFile[]" multiple accept="image/*,application/pdf" onchange="ttv2HandleMultipleFiles(this, 'ttv2-dni')">
+                                    <div class="ttv2-upload-btn" onclick="document.getElementById('ttv2-dni').click()" data-input="ttv2-dni">
+                                        <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivos</span>
+                                        <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
+                                    </div>
+                                    <div class="ttv2-file-count" data-input="ttv2-dni">Sin archivos</div>
+                                    <div class="ttv2-file-preview-container" data-input="ttv2-dni"></div>
                                 </div>
-                                <a href="#" class="ttv2-example-link" data-doc="dni-comprador" onclick="event.stopPropagation();" style="margin: 0;">Ver ejemplo</a>
-                                <input type="file" id="ttv2-dni" name="dniFile" multiple accept="image/*,application/pdf" style="display:none;">
                             </div>
-                            <div id="ttv2-dni-preview" class="ttv2-file-preview"></div>
                         </div>
 
                         <!-- Certificado médico -->
                         <div class="ttv2-document-box">
                             <div class="ttv2-document-header">
                                 <h3 class="ttv2-document-title">Certificado médico psicotécnico por ambas caras</h3>
+                                <a href="#" class="ttv2-example-link ttv2-view-example" data-doc="certificado-medico-plantilla" onclick="event.stopPropagation();">Ver ejemplo</a>
                             </div>
-                            <div class="ttv2-upload-area" onclick="document.getElementById('ttv2-certificado').click()">
-                                <div class="ttv2-upload-content">
-                                    <span style="font-size: 13px; color: #666;">Seleccionar archivo</span>
-                                    <span style="font-size: 11px; color: #999;">• JPG, PNG, PDF</span>
+                            <div class="ttv2-document-upload">
+                                <div class="ttv2-upload-wrapper">
+                                    <input type="file" id="ttv2-certificado" class="ttv2-file-input" name="certificadoFile[]" multiple accept="image/*,application/pdf" onchange="ttv2HandleMultipleFiles(this, 'ttv2-certificado')">
+                                    <div class="ttv2-upload-btn" onclick="document.getElementById('ttv2-certificado').click()" data-input="ttv2-certificado">
+                                        <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivos</span>
+                                        <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
+                                    </div>
+                                    <div class="ttv2-file-count" data-input="ttv2-certificado">Sin archivos</div>
+                                    <div class="ttv2-file-preview-container" data-input="ttv2-certificado"></div>
                                 </div>
-                                <a href="#" class="ttv2-example-link" data-doc="certificado-medico-plantilla" onclick="event.stopPropagation();" style="margin: 0;">Ver ejemplo</a>
-                                <input type="file" id="ttv2-certificado" name="certificadoFile" multiple accept="image/*,application/pdf" style="display:none;">
                             </div>
-                            <div id="ttv2-certificado-preview" class="ttv2-file-preview"></div>
                         </div>
 
                         <!-- Documentación caducada -->
                         <div class="ttv2-document-box">
                             <div class="ttv2-document-header">
                                 <h3 class="ttv2-document-title">Copia documentación caducada</h3>
+                                <a href="#" class="ttv2-example-link ttv2-view-example" data-doc="QUE-TITULO-NECESITO" onclick="event.stopPropagation();">Ver ejemplo</a>
                             </div>
-                            <div class="ttv2-upload-area" onclick="document.getElementById('ttv2-titulacion').click()">
-                                <div class="ttv2-upload-content">
-                                    <span style="font-size: 13px; color: #666;">Seleccionar archivo</span>
-                                    <span style="font-size: 11px; color: #999;">• JPG, PNG, PDF</span>
+                            <div class="ttv2-document-upload">
+                                <div class="ttv2-upload-wrapper">
+                                    <input type="file" id="ttv2-titulacion" class="ttv2-file-input" name="titulacionFile[]" multiple accept="image/*,application/pdf" onchange="ttv2HandleMultipleFiles(this, 'ttv2-titulacion')">
+                                    <div class="ttv2-upload-btn" onclick="document.getElementById('ttv2-titulacion').click()" data-input="ttv2-titulacion">
+                                        <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivos</span>
+                                        <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
+                                    </div>
+                                    <div class="ttv2-file-count" data-input="ttv2-titulacion">Sin archivos</div>
+                                    <div class="ttv2-file-preview-container" data-input="ttv2-titulacion"></div>
                                 </div>
-                                <a href="#" class="ttv2-example-link" data-doc="QUE-TITULO-NECESITO" onclick="event.stopPropagation();" style="margin: 0;">Ver ejemplo</a>
-                                <input type="file" id="ttv2-titulacion" name="titulacionFile" multiple accept="image/*,application/pdf" style="display:none;">
                             </div>
-                            <div id="ttv2-titulacion-preview" class="ttv2-file-preview"></div>
                         </div>
 
                         <!-- Firma del documento -->
@@ -1395,27 +2238,41 @@ function ttv2_form_shortcode() {
         </div>
     </div>
 
-    <!-- Modal para firma -->
-    <div id="ttv2-signature-modal" class="ttv2-document-popup" style="display:none;">
-        <div class="ttv2-popup-content" style="max-width: 700px;">
-            <span class="ttv2-close-signature" style="position: absolute; top: 15px; right: 20px; font-size: 32px; cursor: pointer; color: #999;">&times;</span>
-            <h3 style="margin-bottom: 20px;">Firme el documento de autorización</h3>
-            
-            <div style="background: #f5f5f5; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; line-height: 1.6;">
-                <div id="ttv2-authorization-preview"></div>
+    <!-- Modal para firma optimizado móvil -->
+    <div id="ttv2-signature-modal" class="ttv2-signature-modal-responsive" style="display:none;">
+        <div class="ttv2-signature-modal-content">
+            <!-- Header del modal -->
+            <div class="ttv2-signature-header">
+                <h3 class="ttv2-signature-title">Firma Digital</h3>
+                <span class="ttv2-close-signature">&times;</span>
             </div>
             
-            <div style="text-align: center; margin: 20px 0;">
-                <p style="font-size: 14px; color: #666; margin-bottom: 10px;">Firme en el recuadro inferior usando el ratón o el dedo</p>
-                <canvas id="ttv2-signature-pad" width="600" height="200" style="border: 2px solid #ddd; border-radius: 6px; background: white; touch-action: none;"></canvas>
-            </div>
-            
-            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
-                <button type="button" class="ttv2-button ttv2-button-secondary" id="ttv2-clear-signature">
-                    Limpiar Firma
+            <!-- Documento preview (colapsable en móvil) -->
+            <div class="ttv2-authorization-section">
+                <button type="button" class="ttv2-toggle-document" onclick="toggleAuthDocument()">
+                    <span>Ver documento de autorización</span>
+                    <i class="fa-solid fa-chevron-down"></i>
                 </button>
-                <button type="button" class="ttv2-button" id="ttv2-save-signature">
-                    Guardar Firma
+                <div id="ttv2-authorization-preview" class="ttv2-authorization-preview" style="display: none;"></div>
+            </div>
+            
+            <!-- Canvas de firma responsivo -->
+            <div class="ttv2-signature-canvas-container">
+                <p class="ttv2-signature-instruction">Firme con el dedo o ratón</p>
+                <div class="ttv2-canvas-wrapper">
+                    <canvas id="ttv2-signature-pad" class="ttv2-signature-canvas"></canvas>
+                </div>
+            </div>
+            
+            <!-- Botones de acción -->
+            <div class="ttv2-signature-actions">
+                <button type="button" class="ttv2-btn-clear" id="ttv2-clear-signature">
+                    <i class="fa-solid fa-eraser"></i>
+                    <span>Limpiar</span>
+                </button>
+                <button type="button" class="ttv2-btn-save" id="ttv2-save-signature">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Guardar Firma</span>
                 </button>
             </div>
         </div>
@@ -1428,7 +2285,11 @@ function ttv2_form_shortcode() {
         let ttv2SelectedPrice = 0;
         let ttv2SelectedTitulacion = null;
         let ttv2FormData = {};
-        let ttv2Files = {};
+        let ttv2Files = {
+            'ttv2-dni': [],
+            'ttv2-certificado': [],
+            'ttv2-titulacion': []
+        };
 
         // Textos descriptivos para servicios
         const ttv2ServiceDescriptions = {
@@ -1456,6 +2317,89 @@ function ttv2_form_shortcode() {
 
         // Inicialización
         document.addEventListener('DOMContentLoaded', function() {
+            // ============================================
+            // MODAL DE ADVERTENCIA DGMM - INICIO
+            // ============================================
+            const warningOverlay = document.getElementById('ttv2-dgmm-warning-overlay');
+            const dgmmCheckbox = document.getElementById('ttv2-dgmm-confirmation');
+            const continueButton = document.getElementById('ttv2-continue-form');
+            const cancelButton = document.getElementById('ttv2-cancel-form');
+            
+            // Verificar si ya fue confirmado en esta sesión
+            const isDGMMConfirmed = sessionStorage.getItem('ttv2_dgmm_confirmed');
+            
+            if (!isDGMMConfirmed && warningOverlay) {
+                // Mostrar overlay al cargar
+                warningOverlay.style.display = 'flex';
+                
+                // Deshabilitar todos los inputs del formulario principal
+                const formInputs = document.querySelectorAll('#ttv2-form input, #ttv2-form select, #ttv2-form textarea, #ttv2-form button');
+                formInputs.forEach(input => {
+                    input.disabled = true;
+                    input.style.pointerEvents = 'none';
+                });
+            } else if (warningOverlay) {
+                // Si ya fue confirmado, ocultar overlay
+                warningOverlay.style.display = 'none';
+            }
+            
+            // Manejar checkbox de confirmación DGMM
+            if (dgmmCheckbox && continueButton) {
+                dgmmCheckbox.addEventListener('change', function() {
+                    continueButton.disabled = !this.checked;
+                    if (this.checked) {
+                        continueButton.classList.add('enabled');
+                        continueButton.style.backgroundColor = '#016d86';
+                        continueButton.style.cursor = 'pointer';
+                    } else {
+                        continueButton.classList.remove('enabled');
+                        continueButton.style.backgroundColor = '#ccc';
+                        continueButton.style.cursor = 'not-allowed';
+                    }
+                });
+                
+                // Manejar click en continuar
+                continueButton.addEventListener('click', function() {
+                    if (dgmmCheckbox.checked) {
+                        // Guardar confirmación en sessionStorage
+                        sessionStorage.setItem('ttv2_dgmm_confirmed', 'true');
+                        
+                        // Ocultar overlay con animación
+                        warningOverlay.style.opacity = '0';
+                        setTimeout(() => {
+                            warningOverlay.style.display = 'none';
+                        }, 300);
+                        
+                        // Habilitar todos los inputs del formulario
+                        const formInputs = document.querySelectorAll('#ttv2-form input, #ttv2-form select, #ttv2-form textarea, #ttv2-form button');
+                        formInputs.forEach(input => {
+                            input.disabled = false;
+                            input.style.pointerEvents = 'auto';
+                        });
+                        
+                        // Focus en el primer campo
+                        const firstInput = document.querySelector('#ttv2-form input[type="text"]');
+                        if (firstInput) {
+                            firstInput.focus();
+                        }
+                    }
+                });
+            }
+            
+            // Manejar click en cancelar
+            if (cancelButton) {
+                cancelButton.addEventListener('click', function() {
+                    // Redirigir a la página principal o mostrar mensaje
+                    if (confirm('¿Está seguro que desea salir? Solo podemos renovar títulos expedidos por la DGMM.')) {
+                        // Redirigir a página principal
+                        window.location.href = 'https://tramitfy.es';
+                    }
+                });
+            }
+            // ============================================
+            // MODAL DE ADVERTENCIA DGMM - FIN
+            // ============================================
+            
             // Event listener para el checkbox de términos
             const termsCheckbox = document.getElementById('ttv2-terms-accept-pago');
             const submitButton = document.getElementById('ttv2-submit-payment');
@@ -1517,15 +2461,7 @@ function ttv2_form_shortcode() {
                 });
             });
 
-            // File uploads
-            ['ttv2-dni', 'ttv2-titulacion', 'ttv2-certificado'].forEach(inputId => {
-                const input = document.getElementById(inputId);
-                if (input) {
-                    input.addEventListener('change', function(e) {
-                        ttv2HandleFileSelect(e, inputId);
-                    });
-                }
-            });
+            // Sistema de archivos múltiples inicializado por onchange en HTML
 
             // Modal para ejemplos de documentos
             const ttv2Popup = document.getElementById('ttv2-document-popup');
@@ -1608,36 +2544,80 @@ function ttv2_form_shortcode() {
                 if (authPreview) authPreview.innerHTML = authContent;
             }
             
+            // Función para toggle del documento
+            window.toggleAuthDocument = function() {
+                const preview = document.getElementById('ttv2-authorization-preview');
+                const button = document.querySelector('.ttv2-toggle-document');
+                
+                if (preview.style.display === 'none') {
+                    preview.style.display = 'block';
+                    button.classList.add('active');
+                } else {
+                    preview.style.display = 'none';
+                    button.classList.remove('active');
+                }
+            }
+            
             // Inicializar SignaturePad cuando se abre el modal
             if (ttv2OpenSignatureBtn) {
                 ttv2OpenSignatureBtn.addEventListener('click', function() {
                     ttv2GenerateAuthorizationDocument();
                     ttv2SignatureModal.style.display = 'flex';
                     
-                    if (!ttv2SignaturePad) {
-                        const canvas = document.getElementById('ttv2-signature-pad');
-                        ttv2SignaturePad = new SignaturePad(canvas, {
-                            backgroundColor: 'rgb(255, 255, 255)',
-                            penColor: 'rgb(0, 0, 0)'
-                        });
-                        
-                        // Ajustar canvas para alta resolución
-                        function resizeCanvas() {
-                            const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                            canvas.width = canvas.offsetWidth * ratio;
-                            canvas.height = canvas.offsetHeight * ratio;
-                            canvas.getContext("2d").scale(ratio, ratio);
-                            ttv2SignaturePad.clear();
+                    // Esperar un momento para que el modal se renderice
+                    setTimeout(() => {
+                        if (!ttv2SignaturePad) {
+                            const canvas = document.getElementById('ttv2-signature-pad');
+                            const wrapper = canvas.parentElement;
+                            
+                            // Configuración responsiva del canvas
+                            function setupCanvas() {
+                                const rect = wrapper.getBoundingClientRect();
+                                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                                
+                                // Ajustar tamaño del canvas al contenedor
+                                canvas.width = rect.width * ratio;
+                                canvas.height = rect.height * ratio;
+                                canvas.style.width = rect.width + 'px';
+                                canvas.style.height = rect.height + 'px';
+                                
+                                // Escalar contexto para alta resolución
+                                const ctx = canvas.getContext('2d');
+                                ctx.scale(ratio, ratio);
+                                
+                                return { width: rect.width, height: rect.height };
+                            }
+                            
+                            const dimensions = setupCanvas();
+                            
+                            // Inicializar SignaturePad con configuración optimizada
+                            ttv2SignaturePad = new SignaturePad(canvas, {
+                                backgroundColor: 'rgb(255, 255, 255)',
+                                penColor: 'rgb(0, 0, 0)',
+                                minWidth: window.innerWidth < 768 ? 1.5 : 0.5,
+                                maxWidth: window.innerWidth < 768 ? 3 : 2.5,
+                                throttle: 16, // Mejor rendimiento en móvil
+                                minDistance: window.innerWidth < 768 ? 3 : 5,
+                                velocityFilterWeight: 0.7
+                            });
+                            
+                            // Redimensionar canvas cuando cambia el tamaño de ventana
+                            let resizeTimeout;
+                            window.addEventListener('resize', function() {
+                                clearTimeout(resizeTimeout);
+                                resizeTimeout = setTimeout(() => {
+                                    const signatureData = ttv2SignaturePad.toDataURL();
+                                    setupCanvas();
+                                    ttv2SignaturePad.fromDataURL(signatureData);
+                                }, 250);
+                            });
                         }
                         
-                        window.addEventListener("resize", resizeCanvas);
-                        resizeCanvas();
-                    }
-                    
-                    // Restaurar firma si ya existe
-                    if (ttv2SignatureData) {
-                        ttv2SignaturePad.fromDataURL(ttv2SignatureData);
-                    }
+                        // Restaurar firma si ya existe
+                        if (ttv2SignatureData && ttv2SignaturePad) {
+                            ttv2SignaturePad.fromDataURL(ttv2SignatureData);
+                        }
+                    }, 100);
                 });
             }
             
@@ -1646,6 +2626,10 @@ function ttv2_form_shortcode() {
                 ttv2ClearSignatureBtn.addEventListener('click', function() {
                     if (ttv2SignaturePad) {
                         ttv2SignaturePad.clear();
+                        // Vibrar en móvil para feedback táctil
+                        if ('vibrate' in navigator && window.innerWidth < 768) {
+                            navigator.vibrate(50);
+                        }
                     }
                 });
             }
@@ -1656,16 +2640,40 @@ function ttv2_form_shortcode() {
                     if (ttv2SignaturePad && !ttv2SignaturePad.isEmpty()) {
                         ttv2SignatureData = ttv2SignaturePad.toDataURL();
                         
-                        // Mostrar estado de firma completada
-                        document.getElementById('ttv2-signature-status').style.display = 'block';
+                        // Hacer la firma accesible globalmente
+                        window.ttv2SignatureData = ttv2SignatureData;
                         
-                        // Cerrar modal
+                        // Mostrar estado de firma completada
+                        const signatureStatus = document.getElementById('ttv2-signature-status');
+                        if (signatureStatus) {
+                            signatureStatus.style.display = 'block';
+                        }
+                        
+                        // Actualizar botón de firma
+                        const signBtn = document.getElementById('ttv2-open-signature-modal');
+                        if (signBtn) {
+                            signBtn.innerHTML = '<i class="fa-solid fa-check"></i> Firmado';
+                            signBtn.style.background = '#ecfdf5';
+                            signBtn.style.color = '#10b981';
+                            signBtn.style.border = '1px solid #10b981';
+                        }
+                        
+                        // Vibrar en móvil para feedback táctil
+                        if ('vibrate' in navigator && window.innerWidth < 768) {
+                            navigator.vibrate([50, 50, 100]);
+                        }
+                        
+                        // Cerrar modal con animación
                         ttv2SignatureModal.style.display = 'none';
                         
                         // Guardar en el array de archivos para enviar con el formulario
                         ttv2Files['signature'] = ttv2SignatureData;
                     } else {
                         alert('Por favor, firme el documento antes de guardar.');
+                        // Vibrar para error
+                        if ('vibrate' in navigator && window.innerWidth < 768) {
+                            navigator.vibrate([100, 50, 100]);
+                        }
                     }
                 });
             }
@@ -1887,42 +2895,203 @@ function ttv2_form_shortcode() {
             }
         }
 
-        // Manejo de archivos
-        function ttv2RemoveFile(inputId, index) {
-            ttv2Files[inputId].splice(index, 1);
-            ttv2HandleFileSelect({ target: { files: ttv2Files[inputId] } }, inputId);
+        // Sistema de manejo de archivos múltiples con preview (TBV2 style)
+        let ttv2UploadedFiles = {};
+        
+        function ttv2HandleMultipleFiles(input, inputId) {
+            const files = Array.from(input.files);
+            const countElement = document.querySelector(`[data-input="${inputId}"]`);
+            const previewContainer = document.querySelector(`.ttv2-file-preview-container[data-input="${inputId}"]`);
+            const uploadBtn = document.querySelector(`.ttv2-upload-btn[data-input="${inputId}"]`);
+            
+            // Inicializar array si no existe
+            if (!ttv2UploadedFiles[inputId]) {
+                ttv2UploadedFiles[inputId] = [];
+            }
+            
+            // Agregar nuevos archivos
+            ttv2UploadedFiles[inputId] = [...ttv2UploadedFiles[inputId], ...files];
+            
+            // Actualizar contador
+            if (countElement) {
+                const fileCount = ttv2UploadedFiles[inputId].length;
+                if (fileCount === 0) {
+                    countElement.textContent = 'Sin archivos';
+                    countElement.classList.remove('has-files');
+                    uploadBtn?.classList.remove('has-files');
+                } else {
+                    countElement.textContent = `${fileCount} archivo${fileCount > 1 ? 's' : ''} seleccionado${fileCount > 1 ? 's' : ''}`;
+                    countElement.classList.add('has-files');
+                    uploadBtn?.classList.add('has-files');
+                }
+            }
+            
+            // Actualizar preview
+            ttv2RenderFilesList(inputId);
+            
+            // Actualizar ttv2Files para compatibilidad
+            ttv2Files[inputId] = ttv2UploadedFiles[inputId];
         }
         
-        function ttv2HandleFileSelect(event, inputId) {
-            const files = event.target.files;
-            ttv2Files[inputId] = Array.from(files);
+        function ttv2RenderFilesList(inputId) {
+            const container = document.querySelector(`.ttv2-file-preview-container[data-input="${inputId}"]`);
+            if (!container || !ttv2UploadedFiles[inputId]) return;
             
-            // Mostrar preview
-            const previewId = inputId + '-preview';
-            const previewContainer = document.getElementById(previewId);
-            if (previewContainer) {
-                previewContainer.innerHTML = '';
-                ttv2Files[inputId].forEach((file, index) => {
-                    const fileDiv = document.createElement('div');
-                    fileDiv.className = 'ttv2-file-item';
-                    
-                    const fileExt = file.name.split('.').pop().toUpperCase();
-                    const isImage = ['JPG', 'JPEG', 'PNG'].includes(fileExt);
-                    const isPDF = fileExt === 'PDF';
-                    
-                    fileDiv.innerHTML = `
-                        <div class="ttv2-file-info">
-                            <div class="ttv2-file-icon"></div>
-                            <div>
-                                <div style="font-size: 14px; color: #333; font-weight: 500;">${file.name}</div>
-                                <div style="font-size: 12px; color: #999;">${(file.size / 1024).toFixed(1)} KB</div>
-                            </div>
-                        </div>
-                        <span class="ttv2-file-remove" onclick="ttv2RemoveFile('${inputId}', ${index})">×</span>
-                    `;
-                    previewContainer.appendChild(fileDiv);
-                });
+            const files = ttv2UploadedFiles[inputId];
+            container.innerHTML = '';
+            
+            files.forEach((file, index) => {
+                const previewItem = ttv2CreateFilePreviewItem(file, inputId, index);
+                container.appendChild(previewItem);
+            });
+        }
+        
+        function ttv2CreateFilePreviewItem(file, inputId, index) {
+            const item = document.createElement('div');
+            item.className = 'ttv2-file-preview-item';
+            
+            const fileIcon = ttv2GetFileIcon(file.type);
+            const fileSize = ttv2FormatFileSize(file.size);
+            
+            item.innerHTML = `
+                <div class="ttv2-file-preview-info">
+                    <i class="${fileIcon} ttv2-file-preview-icon"></i>
+                    <div class="ttv2-file-preview-details">
+                        <div class="ttv2-file-preview-name" title="${file.name}">${file.name}</div>
+                        <div class="ttv2-file-preview-size">${fileSize}</div>
+                    </div>
+                </div>
+                <button type="button" class="ttv2-file-remove-btn" onclick="ttv2RemoveFile('${inputId}', ${index})">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            `;
+            
+            return item;
+        }
+        
+        function ttv2RemoveFile(inputId, index) {
+            if (!ttv2UploadedFiles[inputId]) return;
+            
+            // Eliminar archivo del array
+            ttv2UploadedFiles[inputId].splice(index, 1);
+            
+            // Re-renderizar lista
+            ttv2RenderFilesList(inputId);
+            
+            // Actualizar contador
+            const countElement = document.querySelector(`.ttv2-file-count[data-input="${inputId}"]`);
+            const uploadBtn = document.querySelector(`.ttv2-upload-btn[data-input="${inputId}"]`);
+            const fileCount = ttv2UploadedFiles[inputId].length;
+            
+            if (countElement) {
+                if (fileCount === 0) {
+                    countElement.textContent = 'Sin archivos';
+                    countElement.classList.remove('has-files');
+                    uploadBtn?.classList.remove('has-files');
+                } else {
+                    countElement.textContent = `${fileCount} archivo${fileCount > 1 ? 's' : ''} seleccionado${fileCount > 1 ? 's' : ''}`;
+                }
             }
+            
+            // Actualizar input file
+            ttv2UpdateInputFiles(inputId);
+            
+            // Actualizar ttv2Files para compatibilidad
+            ttv2Files[inputId] = ttv2UploadedFiles[inputId];
+        }
+        
+        function ttv2UpdateInputFiles(inputId) {
+            const input = document.getElementById(inputId);
+            if (!input || !ttv2UploadedFiles[inputId]) return;
+            
+            // Crear DataTransfer para actualizar el input
+            const dt = new DataTransfer();
+            ttv2UploadedFiles[inputId].forEach(file => {
+                dt.items.add(file);
+            });
+            
+            input.files = dt.files;
+        }
+        
+        function ttv2GetFileIcon(fileType) {
+            if (fileType.startsWith('image/')) {
+                return 'fa-solid fa-image';
+            } else if (fileType === 'application/pdf') {
+                return 'fa-solid fa-file-pdf';
+            } else {
+                return 'fa-solid fa-file';
+            }
+        }
+        
+        function ttv2FormatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        // Función para convertir archivo a base64
+        function ttv2FileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Función para convertir todos los archivos a base64
+        async function ttv2ConvertFilesToBase64() {
+            const filesArray = [];
+            
+            // Procesar cada categoría de archivo
+            const fileCategories = [
+                'ttv2-dni',
+                'ttv2-certificado',
+                'ttv2-titulacion'
+            ];
+            
+            for (const inputId of fileCategories) {
+                // Usar ttv2UploadedFiles si existe, sino ttv2Files
+                const filesToUse = ttv2UploadedFiles[inputId] || ttv2Files[inputId];
+                
+                if (filesToUse && filesToUse.length > 0) {
+                    console.log(`TTV2: Procesando ${filesToUse.length} archivo(s) de ${inputId}`);
+                    
+                    for (const file of filesToUse) {
+                        try {
+                            const base64 = await ttv2FileToBase64(file);
+                            // Usar el mismo formato que TBV2
+                            filesArray.push({
+                                name: file.name,
+                                base64: base64,
+                                size: file.size,
+                                type: file.type,
+                                category: inputId // Mantener la categoría
+                            });
+                            console.log(`TTV2: Archivo convertido: ${file.name}`);
+                        } catch (error) {
+                            console.error(`Error convirtiendo archivo ${file.name}:`, error);
+                        }
+                    }
+                }
+            }
+            
+            // Añadir firma digital si existe
+            if (window.ttv2SignatureData) {
+                filesArray.push({
+                    name: 'firma_digital.png',
+                    base64: window.ttv2SignatureData,
+                    size: window.ttv2SignatureData.length,
+                    type: 'image/png',
+                    category: 'signature'
+                });
+                console.log('TTV2: Firma digital incluida');
+            }
+            
+            console.log('TTV2: Total archivos convertidos:', filesArray.length);
+            return filesArray;
         }
 
         // Procesar pago
@@ -1947,28 +3116,73 @@ function ttv2_form_shortcode() {
                 
                 console.log('TTV2 - Procesando pago con datos:', ttv2FormData);
                 
-                // 1. Almacenar datos temporalmente
-                const temporalData = new FormData();
-                temporalData.append('action', 'ttv2_store_temporal');
-                temporalData.append('orderId', '');
-                temporalData.append('customerName', ttv2FormData.customerName || '');
-                temporalData.append('customerDni', ttv2FormData.customerDni || '');
-                temporalData.append('customerEmail', ttv2FormData.customerEmail || '');
-                temporalData.append('customerPhone', ttv2FormData.customerPhone || '');
-                temporalData.append('customerAddress', '');
-                temporalData.append('customerCity', '');
-                temporalData.append('customerPostalCode', '');
-                temporalData.append('tipoTitulacion', ttv2FormData.tipoTitulacion || '');
-                temporalData.append('tipoServicio', ttv2FormData.tipoServicio || '');
-                temporalData.append('numeroTitulo', '');
-                temporalData.append('fechaExpedicion', '');
-                temporalData.append('amount', ttv2FormData.amount || 55);
-
-                // 2. Crear pago Redsys
+                // NUEVO: Convertir archivos a base64
+                console.log('TTV2: Iniciando conversión de archivos a base64...');
+                const filesArray = await ttv2ConvertFilesToBase64();
+                console.log('TTV2: Archivos convertidos:', filesArray.length, 'archivos');
+                
+                // Generar OrderID aquí (igual que PHP) para que coincida con Redsys
+                const timestamp = Math.floor(Date.now() / 1000); // Timestamp en segundos como PHP time()
+                const generatedOrderId = timestamp.toString().padStart(12, '0');
+                console.log('TTV2: OrderID generado para Redsys:', generatedOrderId);
+                
+                // Preparar datos completos para API temporal
+                const captureData = {
+                    orderId: generatedOrderId, // Usar el mismo OrderID que usará Redsys
+                    customerData: {
+                        name: ttv2FormData.customerName || '',
+                        dni: ttv2FormData.customerDni || '',
+                        email: ttv2FormData.customerEmail || '',
+                        phone: ttv2FormData.customerPhone || '',
+                        address: '',
+                        city: '',
+                        postalCode: '',
+                        province: ''
+                    },
+                    serviceData: {
+                        tipoServicio: ttv2FormData.tipoServicio || 'PNB',
+                        tipoTitulacion: ttv2FormData.tipoTitulacion || '',
+                        numeroTitulo: ttv2FormData.numeroTitulo || '',
+                        fechaExpedicion: ttv2FormData.fechaExpedicion || ''
+                    },
+                    pricing: {
+                        amount: ttv2FormData.amount || 55,
+                        basePrice: 55,
+                        tasas: 35,
+                        honorarios: 20
+                    },
+                    files: filesArray,  // Ahora es un array como TBV2
+                    tramiteType: 'titulaciones-v2'
+                };
+                
+                console.log('TTV2: Enviando al API temporal...');
+                
+                // Enviar al API temporal de Tramitfy
+                const captureResponse = await fetch('https://tramitfy.org/api/temporal/capture', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(captureData)
+                });
+                
+                const captureResult = await captureResponse.json();
+                console.log('TTV2: Respuesta del API temporal:', captureResult);
+                
+                if (!captureResult.success) {
+                    throw new Error(captureResult.error || 'Error capturando datos temporales');
+                }
+                
+                // Usar el OrderID que generamos antes para garantizar sincronización
+                const orderId = generatedOrderId; // Usar el mismo que enviamos al temporal
+                console.log('TTV2: OrderId para Redsys:', orderId);
+                
+                // Crear pago Redsys con el OrderId sincronizado
                 const paymentData = new FormData();
                 paymentData.append('action', 'ttv2_create_redsys_payment');
                 paymentData.append('amount', ttv2FormData.amount);
-
+                paymentData.append('orderId', orderId); // Usar el OrderId generado localmente
+                
                 const ajaxUrl = '<?php echo admin_url("admin-ajax.php"); ?>';
                 const response = await fetch(ajaxUrl, {
                     method: 'POST',
@@ -1978,13 +3192,8 @@ function ttv2_form_shortcode() {
                 const result = await response.json();
 
                 if (result.success) {
-                    // Actualizar datos temporales con OrderId
-                    temporalData.set('orderId', result.data.orderId);
-                    await fetch(ajaxUrl, {
-                        method: 'POST',
-                        body: temporalData
-                    });
-
+                    console.log('TTV2: Pago Redsys creado, redirigiendo...');
+                    
                     // Preparar formulario Redsys
                     const form = document.getElementById('ttv2-redsys-form');
                     form.action = result.data.paymentData.url;
@@ -2001,7 +3210,7 @@ function ttv2_form_shortcode() {
                 }
 
             } catch (error) {
-                console.error('Error:', error);
+                console.error('TTV2 Error:', error);
                 alert('Error al procesar el pago: ' + error.message);
                 document.getElementById('ttv2-payment-modal').classList.remove('active');
                 const payButton = document.getElementById('ttv2-submit-payment');
