@@ -302,6 +302,46 @@ function ttv2_form_shortcode() {
             margin: 0 0 10px 0;
         }
 
+        .ttv2-pricing-box {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 25px;
+        }
+
+        .ttv2-pricing-header h3 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .ttv2-price-main {
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+
+        .ttv2-price-description {
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 15px;
+        }
+
+        .ttv2-price-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .ttv2-price-note {
+            font-size: 12px;
+            opacity: 0.8;
+            font-style: italic;
+            margin-top: 10px;
+        }
+
         .ttv2-progress {
             margin-top: 20px;
         }
@@ -1492,6 +1532,15 @@ function ttv2_form_shortcode() {
                 padding: 20px;
             }
             
+            .ttv2-pricing-box {
+                padding: 15px;
+                margin-top: 20px;
+            }
+            
+            .ttv2-price-main {
+                font-size: 28px;
+            }
+            
             /* Página de pago móvil optimizada */
             #ttv2-redsys-container {
                 padding: 15px;
@@ -2019,22 +2068,23 @@ function ttv2_form_shortcode() {
                 <p style="opacity: 0.9; font-size: 14px;">Gestión de Titulaciones Náuticas</p>
             </div>
 
-            <div class="ttv2-progress">
-                <div class="ttv2-progress-step active" data-step="1">
-                    <div class="step-number">1</div>
-                    <div class="step-text">Tipo de Servicio</div>
+            <div class="ttv2-pricing-box">
+                <div class="ttv2-pricing-header">
+                    <h3>Precio del Servicio</h3>
                 </div>
-                <div class="ttv2-progress-step" data-step="2">
-                    <div class="step-number">2</div>
-                    <div class="step-text">Datos Personales</div>
-                </div>
-                <div class="ttv2-progress-step" data-step="3">
-                    <div class="step-number">3</div>
-                    <div class="step-text">Documentación</div>
-                </div>
-                <div class="ttv2-progress-step" data-step="4">
-                    <div class="step-number">4</div>
-                    <div class="step-text">Pago</div>
+                <div class="ttv2-pricing-content">
+                    <div class="ttv2-price-main" id="ttv2-sidebar-price">
+                        55,00€
+                    </div>
+                    <div class="ttv2-price-description">
+                        <div class="ttv2-price-item">
+                            <span>Renovación</span>
+                            <span id="ttv2-sidebar-price-value">55,00€</span>
+                        </div>
+                        <div class="ttv2-price-note">
+                            *Precio fijo para todas las titulaciones
+                        </div>
+                    </div>
                 </div>
             </div>
 
