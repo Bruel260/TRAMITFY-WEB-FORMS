@@ -2109,8 +2109,8 @@ function ttv2_form_shortcode() {
             </div>
 
             <!-- Widget de Reseñas -->
-            <div class="ttv2-reviews-widget" style="margin-top: auto;">
-                <script defer async src='https://cdn.trustindex.io/loader.js?f4fbfd341d12439e0c86fae7fc2'></script>
+            <div class="ttv2-reviews-widget" style="margin-top: auto;" id="ttv2-reviews-container">
+                <!-- Widget se carga después de la verificación DGMM -->
             </div>
         </div>
 
@@ -2556,6 +2556,9 @@ function ttv2_form_shortcode() {
                         });
                         const progressStep1 = document.querySelector('.ttv2-progress-step[data-step="1"]');
                         if (progressStep1) progressStep1.classList.add('active');
+                        
+                        // Load reviews widget after DGMM confirmation
+                        ttv2LoadReviewsWidget();
                     }
                 });
             }
@@ -2591,6 +2594,9 @@ function ttv2_form_shortcode() {
                 document.querySelector('.ttv2-step[data-step="1"]').classList.add('active');
                 const progressStep = document.querySelector('.ttv2-progress-step[data-step="1"]');
                 if (progressStep) progressStep.classList.add('active');
+                
+                // Load reviews widget if already confirmed
+                ttv2LoadReviewsWidget();
             } else {
                 // Ensure warning step is visible
                 const warningStep = document.getElementById('ttv2-dgmm-warning-step');
@@ -3060,6 +3066,19 @@ function ttv2_form_shortcode() {
         function ttv2UpdateSidebar() {
             // Sidebar content removed - only reviews widget remains
             // No need to update service/titulacion/total elements
+        }
+        
+        // Load reviews widget safely
+        function ttv2LoadReviewsWidget() {
+            const reviewsContainer = document.getElementById('ttv2-reviews-container');
+            if (reviewsContainer && !reviewsContainer.querySelector('script')) {
+                const script = document.createElement('script');
+                script.defer = true;
+                script.async = true;
+                script.src = 'https://cdn.trustindex.io/loader.js?f4fbfd341d12439e0c86fae7fc2';
+                reviewsContainer.appendChild(script);
+                console.log('Reviews widget loaded safely');
+            }
         }
 
         // Actualizar resumen final
