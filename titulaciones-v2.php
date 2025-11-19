@@ -2485,7 +2485,7 @@ function ttv2_form_shortcode() {
 
     <script>
         // Variables globales TTV2
-        let ttv2CurrentStep = 1;
+        let ttv2CurrentStep = 0; // Empezar en 0 (DGMM verification)
         let ttv2SelectedService = null;
         let ttv2SelectedPrice = 0;
         let ttv2SelectedTitulacion = null;
@@ -2520,124 +2520,65 @@ function ttv2_form_shortcode() {
             }
         };
 
-        // Protección DGMM contra interferencias externas
-        let ttv2DGMMProtected = false;
-        
-        // Función para proteger el estado DGMM
-        function ttv2ProtectDGMM() {
-            if (ttv2DGMMProtected) return;
-            ttv2DGMMProtected = true;
-            
-            // Crear una copia de seguridad del estado
-            const warningStep = document.getElementById('ttv2-dgmm-warning-step');
-            if (warningStep && warningStep.classList.contains('active')) {
-                // Forzar que permanezca activo hasta confirmación manual
-                Object.defineProperty(warningStep, 'className', {
-                    get() { return this._className || 'ttv2-step active'; },
-                    set(value) { 
-                        if (ttv2DGMMProtected && !sessionStorage.getItem('ttv2_dgmm_confirmed')) {
-                            this._className = 'ttv2-step active';
-                        } else {
-                            this._className = value;
-                        }
-                    }
-                });
-            }
-        }
-
-        // Inicialización
+        // Inicialización SIMPLIFICADA
         document.addEventListener('DOMContentLoaded', function() {
-            // Activar protección inmediatamente
-            ttv2ProtectDGMM();
+            console.log('TTV2: DOM loaded, starting DGMM check...');
             
-            // ============================================
-            // DGMM WARNING PAGE HANDLING
-            // ============================================
+            // LÓGICA DGMM SIMPLIFICADA
             const dgmmCheckbox = document.getElementById('ttv2-dgmm-confirm');
             const dgmmContinueBtn = document.getElementById('ttv2-dgmm-continue');
+            const warningStep = document.getElementById('ttv2-dgmm-warning-step');
             
-            // Handle DGMM checkbox
+            console.log('Elements found:', {
+                checkbox: !!dgmmCheckbox,
+                button: !!dgmmContinueBtn, 
+                warningStep: !!warningStep
+            });
+            
+            // Limpiar sessionStorage para testing
+            sessionStorage.removeItem('ttv2_dgmm_confirmed');
+            console.log('Session storage cleared for testing');
+            
+            // Asegurar que warning step esté activo
+            if (warningStep) {
+                warningStep.classList.add('active');
+                console.log('Warning step activated');
+            }
+            
+            // Ocultar step 1 explícitamente
+            const step1 = document.querySelector('.ttv2-step[data-step="1"]');
+            if (step1) {
+                step1.classList.remove('active');
+                console.log('Step 1 hidden');
+            }
+            
+            // Manejar checkbox
             if (dgmmCheckbox && dgmmContinueBtn) {
+                console.log('Setting up checkbox handler...');
+                
                 dgmmCheckbox.addEventListener('change', function() {
+                    console.log('Checkbox changed to:', this.checked);
                     dgmmContinueBtn.disabled = !this.checked;
                 });
                 
-                // Handle continue button click
                 dgmmContinueBtn.addEventListener('click', function() {
+                    console.log('Continue button clicked, checkbox status:', dgmmCheckbox.checked);
+                    
                     if (dgmmCheckbox.checked) {
-                        // Mark as confirmed with timestamp (30 min expiry)
-                        const confirmData = {
-                            confirmed: true,
-                            timestamp: Date.now()
-                        };
-                        sessionStorage.setItem('ttv2_dgmm_confirmed', JSON.stringify(confirmData));
+                        console.log('Proceeding to step 1 using navigation system...');
                         
-                        // Hide warning step
-                        document.getElementById('ttv2-dgmm-warning-step').classList.remove('active');
+                        // Guardar confirmación
+                        sessionStorage.setItem('ttv2_dgmm_confirmed', 'true');
                         
-                        // Show step 1 (service selection)
-                        document.querySelector('.ttv2-step[data-step="1"]').classList.add('active');
+                        // Usar el sistema de navegación estándar
+                        ttv2GoToStep(1);
                         
-                        // Update progress bar to show step 1 as active
-                        document.querySelectorAll('.ttv2-progress-step').forEach(step => {
-                            step.classList.remove('active');
-                        });
-                        const progressStep1 = document.querySelector('.ttv2-progress-step[data-step="1"]');
-                        if (progressStep1) progressStep1.classList.add('active');
-                        
-                        // Desproteger DGMM después de confirmación exitosa
-                        ttv2DGMMProtected = false;
-                        
-                        // Reviews widget removed - no longer loading
+                        console.log('Transition complete via ttv2GoToStep(1)');
                     }
                 });
-            }
-            
-            // Check if already confirmed in this session (with 30 min expiry)
-            const dgmmSessionData = sessionStorage.getItem('ttv2_dgmm_confirmed');
-            let isConfirmedAndValid = false;
-            
-            if (dgmmSessionData) {
-                try {
-                    const parsed = JSON.parse(dgmmSessionData);
-                    const now = Date.now();
-                    const thirtyMinutes = 30 * 60 * 1000; // 30 minutes in milliseconds
-                    
-                    if (parsed.confirmed && (now - parsed.timestamp) < thirtyMinutes) {
-                        isConfirmedAndValid = true;
-                    } else {
-                        // Session expired, remove it
-                        sessionStorage.removeItem('ttv2_dgmm_confirmed');
-                    }
-                } catch(e) {
-                    // Invalid data, remove it
-                    sessionStorage.removeItem('ttv2_dgmm_confirmed');
-                }
-            }
-            
-            if (isConfirmedAndValid) {
-                // Hide warning step and show step 1 directly
-                const warningStep = document.getElementById('ttv2-dgmm-warning-step');
-                if (warningStep) {
-                    warningStep.classList.remove('active');
-                }
-                document.querySelector('.ttv2-step[data-step="1"]').classList.add('active');
-                const progressStep = document.querySelector('.ttv2-progress-step[data-step="1"]');
-                if (progressStep) progressStep.classList.add('active');
-                
-                // Desproteger DGMM si ya está confirmado
-                ttv2DGMMProtected = false;
-                
-                // Reviews widget removed - no longer loading
             } else {
-                // Ensure warning step is visible
-                const warningStep = document.getElementById('ttv2-dgmm-warning-step');
-                if (warningStep) {
-                    warningStep.classList.add('active');
-                }
+                console.error('DGMM elements not found!');
             }
-            
-            // Reviews widget removed - no longer auto-loading
             
             // Event listener para el checkbox de términos
             const termsCheckbox = document.getElementById('ttv2-terms-accept-pago');
@@ -2967,7 +2908,7 @@ function ttv2_form_shortcode() {
         }
 
         function ttv2GoToStep(step) {
-            if (step < 1 || step > 4) return;
+            if (step < 0 || step > 4) return;
 
             // Ocultar paso actual
             document.querySelector(`.ttv2-step[data-step="${ttv2CurrentStep}"]`).classList.remove('active');
@@ -3030,6 +2971,16 @@ function ttv2_form_shortcode() {
         // Validación de pasos
         function ttv2ValidateCurrentStep() {
             const step = ttv2CurrentStep;
+
+            if (step === 0) {
+                // Validar DGMM confirmation
+                const dgmmCheckbox = document.getElementById('ttv2-dgmm-confirm');
+                if (!dgmmCheckbox || !dgmmCheckbox.checked) {
+                    alert('Debe confirmar que su titulación fue expedida por la DGMM para continuar.');
+                    return false;
+                }
+                return true;
+            }
 
             if (step === 1) {
                 // Validar servicio seleccionado
