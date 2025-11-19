@@ -2088,6 +2088,26 @@ function ttv2_form_shortcode() {
                 </div>
             </div>
 
+            <!-- Mini Progress Indicator (oculto) -->
+            <div class="ttv2-progress" style="display: none;">
+                <div class="ttv2-progress-step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-text">Tipo de Servicio</div>
+                </div>
+                <div class="ttv2-progress-step" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-text">Datos Personales</div>
+                </div>
+                <div class="ttv2-progress-step" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="step-text">Documentación</div>
+                </div>
+                <div class="ttv2-progress-step" data-step="4">
+                    <div class="step-number">4</div>
+                    <div class="step-text">Pago</div>
+                </div>
+            </div>
+
             <div class="ttv2-price-summary" style="margin-top: auto; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 12px;">
                 <h3>Resumen del trámite</h3>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
@@ -2548,7 +2568,8 @@ function ttv2_form_shortcode() {
                         document.querySelectorAll('.ttv2-progress-step').forEach(step => {
                             step.classList.remove('active');
                         });
-                        document.querySelector('.ttv2-progress-step[data-step="1"]').classList.add('active');
+                        const progressStep1 = document.querySelector('.ttv2-progress-step[data-step="1"]');
+                        if (progressStep1) progressStep1.classList.add('active');
                     }
                 });
             }
@@ -2562,7 +2583,8 @@ function ttv2_form_shortcode() {
                     warningStep.classList.remove('active');
                 }
                 document.querySelector('.ttv2-step[data-step="1"]').classList.add('active');
-                document.querySelector('.ttv2-progress-step[data-step="1"]').classList.add('active');
+                const progressStep = document.querySelector('.ttv2-progress-step[data-step="1"]');
+                if (progressStep) progressStep.classList.add('active');
             }
             
             // Event listener para el checkbox de términos
@@ -2900,19 +2922,22 @@ function ttv2_form_shortcode() {
             
             // Actualizar navegación
             document.querySelector(`.ttv2-nav-item[data-nav="${ttv2CurrentStep}"]`).classList.remove('active');
-            document.querySelector(`.ttv2-progress-step[data-step="${ttv2CurrentStep}"]`).classList.remove('active');
+            const currentProgressStep = document.querySelector(`.ttv2-progress-step[data-step="${ttv2CurrentStep}"]`);
+            if (currentProgressStep) currentProgressStep.classList.remove('active');
             
             // Si el paso actual se completó
             if (step > ttv2CurrentStep) {
                 document.querySelector(`.ttv2-nav-item[data-nav="${ttv2CurrentStep}"]`).classList.add('completed');
-                document.querySelector(`.ttv2-progress-step[data-step="${ttv2CurrentStep}"]`).classList.add('completed');
+                const progressStep = document.querySelector(`.ttv2-progress-step[data-step="${ttv2CurrentStep}"]`);
+                if (progressStep) progressStep.classList.add('completed');
             }
 
             // Mostrar nuevo paso
             ttv2CurrentStep = step;
             document.querySelector(`.ttv2-step[data-step="${step}"]`).classList.add('active');
             document.querySelector(`.ttv2-nav-item[data-nav="${step}"]`).classList.add('active');
-            document.querySelector(`.ttv2-progress-step[data-step="${step}"]`).classList.add('active');
+            const newProgressStep = document.querySelector(`.ttv2-progress-step[data-step="${step}"]`);
+            if (newProgressStep) newProgressStep.classList.add('active');
 
             // Si es el paso 2, actualizar la titulación seleccionada
             if (step === 2) {
