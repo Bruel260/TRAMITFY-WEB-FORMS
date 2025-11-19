@@ -2108,27 +2108,9 @@ function ttv2_form_shortcode() {
                 </div>
             </div>
 
-            <div class="ttv2-price-summary" style="margin-top: auto; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 12px;">
-                <h3>Resumen del trámite</h3>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                    <span>Servicio:</span>
-                    <span id="ttv2-sidebar-service">-</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; opacity: 0.9;">
-                    <span>Titulación:</span>
-                    <span id="ttv2-sidebar-titulacion">-</span>
-                </div>
-                <!-- Precio oculto por solicitud -->
-                <div style="display: none;">
-                    <span>Total:</span>
-                    <span id="ttv2-sidebar-total">0.00€</span>
-                </div>
-            </div>
-
-            <div class="ttv2-contact" style="padding: 15px; background: rgba(255,255,255,0.1); border-radius: 12px;">
-                <p style="margin: 0; font-size: 13px; opacity: 0.9;">¿Necesitas ayuda?</p>
-                <p style="margin: 5px 0 0 0; font-weight: bold;">📞 900 123 456</p>
-                <p style="margin: 5px 0 0 0; font-size: 13px;">info@tramitfy.es</p>
+            <!-- Widget de Reseñas -->
+            <div class="ttv2-reviews-widget" style="margin-top: auto;">
+                <script defer async src='https://cdn.trustindex.io/loader.js?f4fbfd341d12439e0c86fae7fc2'></script>
             </div>
         </div>
 
@@ -3076,15 +3058,8 @@ function ttv2_form_shortcode() {
 
         // Actualizar sidebar
         function ttv2UpdateSidebar() {
-            if (ttv2SelectedService) {
-                const serviceText = ttv2ServiceDescriptions[ttv2SelectedService]?.title || ttv2SelectedService;
-                document.getElementById('ttv2-sidebar-service').textContent = serviceText;
-                document.getElementById('ttv2-sidebar-total').textContent = ttv2SelectedPrice.toFixed(2) + '€';
-            }
-            
-            if (ttv2SelectedTitulacion) {
-                document.getElementById('ttv2-sidebar-titulacion').textContent = ttv2SelectedTitulacion;
-            }
+            // Sidebar content removed - only reviews widget remains
+            // No need to update service/titulacion/total elements
         }
 
         // Actualizar resumen final
