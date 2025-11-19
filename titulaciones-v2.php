@@ -1851,26 +1851,6 @@ function ttv2_form_shortcode() {
             line-height: 1.6;
         }
         
-        .ttv2-elegibility-header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding-bottom: 25px;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        
-        .ttv2-elegibility-header h2 {
-            font-size: 26px;
-            color: #1f2937;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-        
-        .ttv2-subtitle {
-            color: #6b7280;
-            font-size: 16px;
-            margin: 0;
-        }
-        
         .ttv2-eligibility-content > div {
             margin-bottom: 35px;
         }
@@ -1996,14 +1976,6 @@ function ttv2_form_shortcode() {
                 max-width: 100%;
             }
             
-            .ttv2-elegibility-header h2 {
-                font-size: 22px;
-            }
-            
-            .ttv2-subtitle {
-                font-size: 15px;
-            }
-            
             .ttv2-main-messages {
                 grid-template-columns: 1fr;
                 gap: 20px;
@@ -2113,11 +2085,6 @@ function ttv2_form_shortcode() {
                 <!-- PASO 0: Verificación de Elegibilidad -->
                 <div class="ttv2-step active" data-step="0" id="ttv2-dgmm-warning-step">
                     <div class="ttv2-eligibility-page">
-                        <div class="ttv2-elegibility-header">
-                            <h2>Verificación de Elegibilidad</h2>
-                            <p class="ttv2-subtitle">Antes de iniciar el proceso, necesitamos confirmar que su titulación puede ser renovada a través de este servicio.</p>
-                        </div>
-                        
                         <div class="ttv2-eligibility-content">
                             <div class="ttv2-main-messages">
                                 <div class="ttv2-requirement">
