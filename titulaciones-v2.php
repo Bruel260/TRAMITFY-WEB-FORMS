@@ -2133,13 +2133,11 @@ function ttv2_form_shortcode() {
                                 </p>
                             </div>
                             
-                            <div class="ttv2-dgmm-valid-box">
-                                <p class="ttv2-dgmm-help-text">
-                                    💡 <strong>¿Cómo identificar el organismo emisor?</strong><br>
-                                    Revisa el sello o logo en tu titulación. Si aparece el escudo de una comunidad autónoma 
-                                    o referencias a organismos autonómicos, NO podemos renovarla.
-                                </p>
-                            </div>
+                            <p style="text-align: center; font-size: 16px; color: #374151; margin: 25px 0; font-weight: 500;">
+                                💡 <strong>¿Cómo identificar el organismo emisor?</strong><br>
+                                Revisa el sello o logo en tu titulación. Si aparece el escudo de una comunidad autónoma 
+                                o referencias a organismos autonómicos, NO podemos renovarla.
+                            </p>
                             
                             <div class="ttv2-dgmm-confirmation">
                                 <label class="ttv2-dgmm-checkbox-label">
