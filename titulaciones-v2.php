@@ -1840,67 +1840,206 @@ function ttv2_form_shortcode() {
                 padding: 16px;
             }
         }
+        
+        /* ======================================== */
+        /* DGMM Warning Page Styles */
+        /* ======================================== */
+        .ttv2-dgmm-page {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        
+        .ttv2-dgmm-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .ttv2-dgmm-header h2 {
+            font-size: 28px;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .ttv2-dgmm-alert {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+        }
+        
+        .ttv2-dgmm-main-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #991b1b;
+            margin-bottom: 15px;
+        }
+        
+        .ttv2-dgmm-secondary-text {
+            font-size: 15px;
+            line-height: 1.5;
+            color: #7f1d1d;
+        }
+        
+        .ttv2-dgmm-valid-box {
+            background: #f0fdf4;
+            border: 2px solid #86efac;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .ttv2-dgmm-valid-box h3 {
+            font-size: 20px;
+            color: #14532d;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .ttv2-dgmm-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+        
+        .ttv2-dgmm-list li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+            color: #166534;
+            font-size: 15px;
+        }
+        
+        .ttv2-dgmm-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #22c55e;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .ttv2-dgmm-help-text {
+            background: #fff;
+            border: 1px solid #d1fae5;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #064e3b;
+        }
+        
+        .ttv2-dgmm-confirmation {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .ttv2-dgmm-checkbox-label {
+            display: flex;
+            align-items: flex-start;
+            cursor: pointer;
+        }
+        
+        .ttv2-dgmm-checkbox-label input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            margin-top: 2px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .ttv2-dgmm-checkbox-text {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #374151;
+        }
+        
+        .ttv2-dgmm-actions {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        
+        .ttv2-dgmm-actions .ttv2-btn {
+            padding: 14px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+        
+        .ttv2-dgmm-actions .ttv2-btn-secondary {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        
+        .ttv2-dgmm-actions .ttv2-btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .ttv2-dgmm-actions .ttv2-btn-primary {
+            background: #016d86;
+            color: white;
+        }
+        
+        .ttv2-dgmm-actions .ttv2-btn-primary:hover:not(:disabled) {
+            background: #015a70;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(1, 109, 134, 0.3);
+        }
+        
+        .ttv2-dgmm-actions .ttv2-btn-primary:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        /* Mobile responsive for DGMM page */
+        @media (max-width: 768px) {
+            .ttv2-dgmm-page {
+                padding: 20px;
+            }
+            
+            .ttv2-dgmm-header h2 {
+                font-size: 22px;
+            }
+            
+            .ttv2-dgmm-actions {
+                flex-direction: column;
+            }
+            
+            .ttv2-dgmm-actions .ttv2-btn {
+                width: 100%;
+                min-width: auto;
+            }
+            
+            .ttv2-dgmm-valid-box {
+                padding: 20px;
+            }
+            
+            .ttv2-dgmm-alert {
+                padding: 15px;
+            }
+        }
     </style>
 
-    <!-- Modal de Advertencia Inicial -->
-    <div id="ttv2-warning-overlay" class="ttv2-warning-overlay">
-        <div class="ttv2-warning-modal">
-            <div class="ttv2-warning-header">
-                <h2>
-                    <span class="warning-icon">⚠️</span>
-                    Advertencia Importante
-                </h2>
-            </div>
-            
-            <div class="ttv2-warning-body">
-                <div class="ttv2-warning-message">
-                    <p>
-                        <strong>🔴 ATENCIÓN:</strong> Solo se podrán renovar mediante este formulario las titulaciones 
-                        expedidas por la <strong>Dirección General de la Marina Mercante</strong>.
-                    </p>
-                    <p>
-                        <strong>NO son válidas</strong> para su renovación las titulaciones expedidas por 
-                        administraciones autonómicas (Cataluña, País Vasco, Islas Baleares, etc.).
-                    </p>
-                </div>
-                
-                <div class="ttv2-valid-entities">
-                    <h4>
-                        <span>✅</span>
-                        Organismos emisores válidos:
-                    </h4>
-                    <ul>
-                        <li>Dirección General de la Marina Mercante (DGMM)</li>
-                        <li>Capitanías Marítimas dependientes del Estado</li>
-                        <li>Ministerio de Transportes, Movilidad y Agenda Urbana</li>
-                    </ul>
-                </div>
-                
-                <div class="ttv2-warning-checkbox">
-                    <label for="ttv2-confirm-dgmm">
-                        <input type="checkbox" id="ttv2-confirm-dgmm" name="confirm_dgmm">
-                        <span>
-                            Confirmo que mi titulación náutica ha sido expedida por la 
-                            <strong>Dirección General de la Marina Mercante</strong> o entidades estatales 
-                            dependientes y que entiendo que las titulaciones autonómicas no pueden 
-                            tramitarse a través de este servicio.
-                        </span>
-                    </label>
-                </div>
-                
-                <div class="ttv2-warning-actions">
-                    <button type="button" class="ttv2-btn-cancel" onclick="window.history.back()">
-                        Cancelar
-                    </button>
-                    <button type="button" id="ttv2-btn-confirm" class="ttv2-btn-confirm" disabled>
-                        Continuar con la Renovación
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="ttv2-container blocked" id="ttv2-main-container">
+    <div class="ttv2-container" id="ttv2-main-container">
         <!-- Sidebar Izquierdo -->
         <div class="ttv2-sidebar">
             <div class="ttv2-logo">
@@ -1971,8 +2110,72 @@ function ttv2_form_shortcode() {
 
             <!-- Formulario -->
             <form id="ttv2-form">
+                <!-- PASO 0: Advertencia DGMM -->
+                <div class="ttv2-step active" data-step="0" id="ttv2-dgmm-warning-step">
+                    <div class="ttv2-dgmm-page">
+                        <div class="ttv2-dgmm-header">
+                            <h2>
+                                <span style="color: #ff4444; font-size: 28px;">⚠️</span>
+                                Advertencia Importante sobre la Renovación
+                            </h2>
+                        </div>
+                        
+                        <div class="ttv2-dgmm-content">
+                            <div class="ttv2-dgmm-alert">
+                                <p class="ttv2-dgmm-main-text">
+                                    <strong>🔴 ATENCIÓN:</strong> Este servicio está disponible <strong>EXCLUSIVAMENTE</strong> para renovar titulaciones 
+                                    expedidas por la <strong>Dirección General de la Marina Mercante (DGMM)</strong>.
+                                </p>
+                                <p class="ttv2-dgmm-secondary-text">
+                                    <strong>NO PODEMOS TRAMITAR</strong> la renovación de titulaciones expedidas por 
+                                    administraciones autonómicas como Cataluña, País Vasco, Islas Baleares, Comunidad Valenciana, 
+                                    Canarias o cualquier otra comunidad autónoma.
+                                </p>
+                            </div>
+                            
+                            <div class="ttv2-dgmm-valid-box">
+                                <h3>
+                                    <span style="color: #22c55e;">✅</span>
+                                    Organismos Emisores Válidos
+                                </h3>
+                                <ul class="ttv2-dgmm-list">
+                                    <li>Dirección General de la Marina Mercante (DGMM)</li>
+                                    <li>Capitanías Marítimas dependientes del Estado</li>
+                                    <li>Ministerio de Transportes, Movilidad y Agenda Urbana</li>
+                                </ul>
+                                <p class="ttv2-dgmm-help-text">
+                                    💡 <strong>¿Cómo identificar el organismo emisor?</strong><br>
+                                    Revisa el sello o logo en tu titulación. Si aparece el escudo de una comunidad autónoma 
+                                    o referencias a organismos autonómicos, NO podemos renovarla.
+                                </p>
+                            </div>
+                            
+                            <div class="ttv2-dgmm-confirmation">
+                                <label class="ttv2-dgmm-checkbox-label">
+                                    <input type="checkbox" id="ttv2-dgmm-confirm" name="dgmm_confirm" required>
+                                    <span class="ttv2-dgmm-checkbox-text">
+                                        Confirmo que mi titulación náutica fue expedida por la 
+                                        <strong>Dirección General de la Marina Mercante</strong> o entidades estatales 
+                                        dependientes, y entiendo que las titulaciones autonómicas NO pueden 
+                                        tramitarse a través de este servicio.
+                                    </span>
+                                </label>
+                            </div>
+                            
+                            <div class="ttv2-dgmm-actions">
+                                <button type="button" class="ttv2-btn ttv2-btn-secondary" onclick="window.location.href='https://tramitfy.es'">
+                                    ← Volver al Inicio
+                                </button>
+                                <button type="button" class="ttv2-btn ttv2-btn-primary" id="ttv2-dgmm-continue" disabled>
+                                    Continuar con la Renovación →
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- PASO 1: Selector de Tipo de Servicio -->
-                <div class="ttv2-step active" data-step="1">
+                <div class="ttv2-step" data-step="1">
                     <h2>Elige tu titulación a renovar</h2>
                     <p>Selecciona el tipo de titulación náutica que deseas renovar.</p>
 
@@ -2318,87 +2521,49 @@ function ttv2_form_shortcode() {
         // Inicialización
         document.addEventListener('DOMContentLoaded', function() {
             // ============================================
-            // MODAL DE ADVERTENCIA DGMM - INICIO
+            // DGMM WARNING PAGE HANDLING
             // ============================================
-            const warningOverlay = document.getElementById('ttv2-dgmm-warning-overlay');
-            const dgmmCheckbox = document.getElementById('ttv2-dgmm-confirmation');
-            const continueButton = document.getElementById('ttv2-continue-form');
-            const cancelButton = document.getElementById('ttv2-cancel-form');
+            const dgmmCheckbox = document.getElementById('ttv2-dgmm-confirm');
+            const dgmmContinueBtn = document.getElementById('ttv2-dgmm-continue');
             
-            // Verificar si ya fue confirmado en esta sesión
-            const isDGMMConfirmed = sessionStorage.getItem('ttv2_dgmm_confirmed');
-            
-            if (!isDGMMConfirmed && warningOverlay) {
-                // Mostrar overlay al cargar
-                warningOverlay.style.display = 'flex';
-                
-                // Deshabilitar todos los inputs del formulario principal
-                const formInputs = document.querySelectorAll('#ttv2-form input, #ttv2-form select, #ttv2-form textarea, #ttv2-form button');
-                formInputs.forEach(input => {
-                    input.disabled = true;
-                    input.style.pointerEvents = 'none';
-                });
-            } else if (warningOverlay) {
-                // Si ya fue confirmado, ocultar overlay
-                warningOverlay.style.display = 'none';
-            }
-            
-            // Manejar checkbox de confirmación DGMM
-            if (dgmmCheckbox && continueButton) {
+            // Handle DGMM checkbox
+            if (dgmmCheckbox && dgmmContinueBtn) {
                 dgmmCheckbox.addEventListener('change', function() {
-                    continueButton.disabled = !this.checked;
-                    if (this.checked) {
-                        continueButton.classList.add('enabled');
-                        continueButton.style.backgroundColor = '#016d86';
-                        continueButton.style.cursor = 'pointer';
-                    } else {
-                        continueButton.classList.remove('enabled');
-                        continueButton.style.backgroundColor = '#ccc';
-                        continueButton.style.cursor = 'not-allowed';
-                    }
+                    dgmmContinueBtn.disabled = !this.checked;
                 });
                 
-                // Manejar click en continuar
-                continueButton.addEventListener('click', function() {
+                // Handle continue button click
+                dgmmContinueBtn.addEventListener('click', function() {
                     if (dgmmCheckbox.checked) {
-                        // Guardar confirmación en sessionStorage
+                        // Mark as confirmed
                         sessionStorage.setItem('ttv2_dgmm_confirmed', 'true');
                         
-                        // Ocultar overlay con animación
-                        warningOverlay.style.opacity = '0';
-                        setTimeout(() => {
-                            warningOverlay.style.display = 'none';
-                        }, 300);
+                        // Hide warning step
+                        document.getElementById('ttv2-dgmm-warning-step').classList.remove('active');
                         
-                        // Habilitar todos los inputs del formulario
-                        const formInputs = document.querySelectorAll('#ttv2-form input, #ttv2-form select, #ttv2-form textarea, #ttv2-form button');
-                        formInputs.forEach(input => {
-                            input.disabled = false;
-                            input.style.pointerEvents = 'auto';
+                        // Show step 1 (service selection)
+                        document.querySelector('.ttv2-step[data-step="1"]').classList.add('active');
+                        
+                        // Update progress bar to show step 1 as active
+                        document.querySelectorAll('.ttv2-progress-step').forEach(step => {
+                            step.classList.remove('active');
                         });
-                        
-                        // Focus en el primer campo
-                        const firstInput = document.querySelector('#ttv2-form input[type="text"]');
-                        if (firstInput) {
-                            firstInput.focus();
-                        }
+                        document.querySelector('.ttv2-progress-step[data-step="1"]').classList.add('active');
                     }
                 });
             }
             
-            // Manejar click en cancelar
-            if (cancelButton) {
-                cancelButton.addEventListener('click', function() {
-                    // Redirigir a la página principal o mostrar mensaje
-                    if (confirm('¿Está seguro que desea salir? Solo podemos renovar títulos expedidos por la DGMM.')) {
-                        // Redirigir a página principal
-                        window.location.href = 'https://tramitfy.es';
-                    }
-                });
+            // Check if already confirmed in this session
+            const isDGMMConfirmed = sessionStorage.getItem('ttv2_dgmm_confirmed');
+            if (isDGMMConfirmed === 'true') {
+                // Hide warning step and show step 1 directly
+                const warningStep = document.getElementById('ttv2-dgmm-warning-step');
+                if (warningStep) {
+                    warningStep.classList.remove('active');
+                }
+                document.querySelector('.ttv2-step[data-step="1"]').classList.add('active');
+                document.querySelector('.ttv2-progress-step[data-step="1"]').classList.add('active');
             }
-            // ============================================
-            // MODAL DE ADVERTENCIA DGMM - FIN
-            // ============================================
             
             // Event listener para el checkbox de términos
             const termsCheckbox = document.getElementById('ttv2-terms-accept-pago');
