@@ -2110,7 +2110,7 @@ function ttv2_form_shortcode() {
 
             <!-- Widget de Reseñas -->
             <div class="ttv2-reviews-widget" style="margin-top: auto;" id="ttv2-reviews-container">
-                <!-- Widget se carga después de la verificación DGMM -->
+                <!-- Widget se carga con protección anti-interferencia -->
             </div>
         </div>
 
@@ -2520,8 +2520,36 @@ function ttv2_form_shortcode() {
             }
         };
 
+        // Protección DGMM contra interferencias externas
+        let ttv2DGMMProtected = false;
+        
+        // Función para proteger el estado DGMM
+        function ttv2ProtectDGMM() {
+            if (ttv2DGMMProtected) return;
+            ttv2DGMMProtected = true;
+            
+            // Crear una copia de seguridad del estado
+            const warningStep = document.getElementById('ttv2-dgmm-warning-step');
+            if (warningStep && warningStep.classList.contains('active')) {
+                // Forzar que permanezca activo hasta confirmación manual
+                Object.defineProperty(warningStep, 'className', {
+                    get() { return this._className || 'ttv2-step active'; },
+                    set(value) { 
+                        if (ttv2DGMMProtected && !sessionStorage.getItem('ttv2_dgmm_confirmed')) {
+                            this._className = 'ttv2-step active';
+                        } else {
+                            this._className = value;
+                        }
+                    }
+                });
+            }
+        }
+
         // Inicialización
         document.addEventListener('DOMContentLoaded', function() {
+            // Activar protección inmediatamente
+            ttv2ProtectDGMM();
+            
             // ============================================
             // DGMM WARNING PAGE HANDLING
             // ============================================
@@ -2557,8 +2585,11 @@ function ttv2_form_shortcode() {
                         const progressStep1 = document.querySelector('.ttv2-progress-step[data-step="1"]');
                         if (progressStep1) progressStep1.classList.add('active');
                         
+                        // Desproteger DGMM después de confirmación exitosa
+                        ttv2DGMMProtected = false;
+                        
                         // Load reviews widget after DGMM confirmation
-                        ttv2LoadReviewsWidget();
+                        setTimeout(() => ttv2LoadReviewsWidget(), 500);
                     }
                 });
             }
@@ -2595,8 +2626,11 @@ function ttv2_form_shortcode() {
                 const progressStep = document.querySelector('.ttv2-progress-step[data-step="1"]');
                 if (progressStep) progressStep.classList.add('active');
                 
+                // Desproteger DGMM si ya está confirmado
+                ttv2DGMMProtected = false;
+                
                 // Load reviews widget if already confirmed
-                ttv2LoadReviewsWidget();
+                setTimeout(() => ttv2LoadReviewsWidget(), 500);
             } else {
                 // Ensure warning step is visible
                 const warningStep = document.getElementById('ttv2-dgmm-warning-step');
@@ -2604,6 +2638,13 @@ function ttv2_form_shortcode() {
                     warningStep.classList.add('active');
                 }
             }
+            
+            // Cargar widget de reseñas de forma segura al final del proceso
+            setTimeout(() => {
+                if (!document.querySelector('#ttv2-reviews-container script')) {
+                    ttv2LoadReviewsWidget();
+                }
+            }, 2000);
             
             // Event listener para el checkbox de términos
             const termsCheckbox = document.getElementById('ttv2-terms-accept-pago');
