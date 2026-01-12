@@ -1777,6 +1777,7 @@ function navigation_permit_renewal_form_shortcode() {
             // 🛡️ PROTECCIÓN ANTI-DUPLICADOS
             let isSubmitting = false;
             let submitController = null;
+            let paymentSucceeded = false; // 🔒 Trackea si el pago ya fue exitoso
             let currentPrice = <?php echo NAVIGATION_PERMIT_SERVICE_PRICE; ?>;
             const basePrice = <?php echo NAVIGATION_PERMIT_SERVICE_PRICE; ?>;
 
@@ -2305,15 +2306,32 @@ function navigation_permit_renewal_form_shortcode() {
 
                 // Ocultar todos los popups antes de mostrar el modal
                 hideAllPopups();
-                
+
                 // Mostrar el modal
                 document.getElementById('npn-payment-modal').classList.add('show');
 
-                // SIEMPRE reinicializar Stripe para obtener un nuevo Payment Intent
-                console.log('🔄 Reinicializando Stripe para nuevo intento de pago...');
-                setTimeout(() => {
-                    initializeStripe();
-                }, 300);
+                // 🔒 FIX DOBLE COBRO: Si ya hay un pago exitoso, NO crear nuevo Payment Intent
+                if (paymentSucceeded && window.paymentIntentId) {
+                    console.log('✅ Pago ya confirmado (PI: ' + window.paymentIntentId + '). Reintentando envío de datos...');
+                    const paymentMessage = document.getElementById('npn-payment-message');
+                    paymentMessage.textContent = 'Su pago ya fue procesado. Pulse el botón para reintentar el envío.';
+                    paymentMessage.className = 'processing';
+                    // Ocultar el formulario de Stripe y mostrar solo el botón
+                    const stripeContainer = document.getElementById('payment-element');
+                    const loadingIndicator = document.getElementById('npn-stripe-loading');
+                    if (stripeContainer) stripeContainer.style.display = 'none';
+                    if (loadingIndicator) loadingIndicator.style.display = 'none';
+                    // Cambiar texto del botón
+                    const confirmBtn = document.getElementById('npn-confirm-payment-btn');
+                    confirmBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Reintentar Envío';
+                    confirmBtn.disabled = false;
+                } else {
+                    // Solo crear nuevo Payment Intent si NO hay pago previo exitoso
+                    console.log('🔄 Inicializando Stripe para nuevo pago...');
+                    setTimeout(() => {
+                        initializeStripe();
+                    }, 300);
+                }
             });
 
             // Cerrar modal de pago
@@ -2338,19 +2356,19 @@ function navigation_permit_renewal_form_shortcode() {
                     console.warn('⚠️ Envío ya en proceso, ignorando clic adicional');
                     return;
                 }
-                
+
                 // Marcar como procesando inmediatamente
                 isSubmitting = true;
-                
+
                 // Cancelar cualquier envío anterior si existe
                 if (submitController) {
                     submitController.abort();
                     console.log('🚫 Cancelando envío anterior');
                 }
-                
+
                 // Crear nuevo controller para este envío
                 submitController = new AbortController();
-                
+
                 const paymentMessage = document.getElementById('npn-payment-message');
                 paymentMessage.className = 'hidden';
                 paymentMessage.textContent = '';
@@ -2363,7 +2381,17 @@ function navigation_permit_renewal_form_shortcode() {
                 loadingOverlay.classList.add('active');
 
                 try {
-                    // Verificar que Stripe esté inicializado
+                    // 🔒 FIX DOBLE COBRO: Si ya hay pago exitoso, solo reintentar envío
+                    if (paymentSucceeded && window.paymentIntentId) {
+                        console.log('✅ Pago ya exitoso (PI: ' + window.paymentIntentId + '). Reintentando solo envío de datos...');
+                        paymentMessage.textContent = 'Reenviando datos del trámite...';
+                        paymentMessage.className = 'processing';
+                        // Ir directo a submitFormData sin cobrar de nuevo
+                        await submitFormData();
+                        return; // Salir aquí, submitFormData maneja el resto
+                    }
+
+                    // Verificar que Stripe esté inicializado (solo si es pago nuevo)
                     if (!stripe || !elements) {
                         throw new Error('El sistema de pago no está inicializado correctamente.');
                     }
@@ -2391,8 +2419,10 @@ function navigation_permit_renewal_form_shortcode() {
                         throw new Error(error.message);
                     }
 
-                    // Guardar payment intent ID
+                    // Guardar payment intent ID y marcar pago como exitoso
                     window.paymentIntentId = paymentIntent.id;
+                    paymentSucceeded = true; // 🔒 Marcar que el pago ya fue exitoso
+                    console.log('💳 Pago confirmado exitosamente. PI: ' + paymentIntent.id);
 
                     // Pago exitoso, enviar formulario
                     await submitFormData();
@@ -2847,7 +2877,12 @@ function navigation_permit_renewal_form_shortcode() {
                     document.getElementById('loading-overlay').classList.remove('active');
                     const submitBtn = document.getElementById('npn-confirm-payment-btn');
                     submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="fa-solid fa-check-circle"></i> Confirmar Pago';
+                    // 🔒 FIX DOBLE COBRO: Mostrar texto correcto según estado del pago
+                    if (paymentSucceeded) {
+                        submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Reintentar Envío';
+                    } else {
+                        submitBtn.innerHTML = '<i class="fa-solid fa-check-circle"></i> Confirmar Pago';
+                    }
                 }
             }
 
