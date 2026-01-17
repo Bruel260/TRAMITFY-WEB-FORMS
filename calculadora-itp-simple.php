@@ -6,7 +6,51 @@
  * Layout: Información en tiempo real (izquierda) + Formulario (derecha)
  */
 
+/**
+ * Carga datos desde archivo CSV - IGUAL QUE TBV2
+ * NOTA: data.csv tiene header, MOTO.csv NO tiene header
+ */
+function calc_itp_cargar_datos_csv($tipo = 'barco') {
+    $ruta_csv = get_template_directory() . '/' . ($tipo === 'moto' ? 'MOTO.csv' : 'data.csv');
+    $data = [];
+
+    // data.csv tiene header, MOTO.csv no
+    $tiene_header = ($tipo !== 'moto');
+
+    if (file_exists($ruta_csv) && ($handle = fopen($ruta_csv, 'r')) !== false) {
+        $first_line = true;
+        while (($row = fgetcsv($handle, 1000, ',')) !== false) {
+            // Solo saltar primera línea si tiene header
+            if ($first_line && $tiene_header) {
+                $first_line = false;
+                continue;
+            }
+            $first_line = false;
+
+            if (count($row) >= 3) {
+                $fabricante = trim($row[0]);
+                $modelo = trim($row[1]);
+                $precio = floatval(str_replace(',', '.', trim($row[2])));
+
+                if (!empty($fabricante) && !empty($modelo)) {
+                    $data[$fabricante][] = [
+                        'modelo' => $modelo,
+                        'precio' => $precio
+                    ];
+                }
+            }
+        }
+        fclose($handle);
+    }
+
+    return $data;
+}
+
 function calc_itp_v2_shortcode() {
+    // Cargar datos CSV para ambos tipos de vehículo
+    $datos_csv_barco = calc_itp_cargar_datos_csv('barco');
+    $datos_csv_moto = calc_itp_cargar_datos_csv('moto');
+
     // Datos esenciales en formato JSON
     $itp_rates = json_encode([
         "Andalucía" => 0.04, "Aragón" => 0.04, "Asturias" => 0.04, "Islas Baleares" => 0.04,
@@ -687,6 +731,11 @@ function calc_itp_v2_shortcode() {
         // Variables globales
         const itpRates = <?php echo $itp_rates; ?>;
         const depreciationRates = <?php echo $depreciation_rates; ?>;
+
+        // Datos CSV cargados desde PHP (igual que TBV2)
+        const datosCsvBarco = <?php echo json_encode($datos_csv_barco); ?>;
+        const datosCsvMoto = <?php echo json_encode($datos_csv_moto); ?>;
+
         let currentStep = 1;
         let currentVehicleType = 'barco';
         let calculationData = {};
@@ -938,70 +987,36 @@ function calc_itp_v2_shortcode() {
             });
         }
 
-        // Carga de datos
+        // Carga de datos - USANDO DATOS PHP (igual que TBV2)
         function loadManufacturers() {
             const manufacturerSelect = document.getElementById('manufacturer');
             manufacturerSelect.innerHTML = '<option value="">Cargando fabricantes...</option>';
             manufacturerSelect.disabled = true;
 
-            // Determinar qué archivo CSV cargar según el tipo de vehículo
-            const csvFile = (currentVehicleType === 'moto') ? 'MOTO.csv' : 'data.csv';
+            // Seleccionar datos según tipo de vehículo
+            const datosCsv = (currentVehicleType === 'moto') ? datosCsvMoto : datosCsvBarco;
 
-            // Ruta relativa que funciona independientemente del tema
-            const themeUrl = "<?php echo get_template_directory_uri(); ?>";
-            const csvUrl = `${themeUrl}/${csvFile}`;
+            console.log(`Cargando fabricantes para: ${currentVehicleType}`);
 
-            console.log(`Cargando datos desde: ${csvUrl}`);
+            // Obtener fabricantes del objeto PHP
+            const manufacturerList = Object.keys(datosCsv).sort();
 
-            // Usar fetch para cargar los datos del CSV
-            fetch(csvUrl)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Error HTTP: ${response.status}`);
-                    }
-                    return response.text();
-                })
-                .then(csvText => {
-                    console.log('CSV cargado correctamente');
+            // Actualizar el select
+            manufacturerSelect.innerHTML = '<option value="">Selecciona un fabricante</option>';
+            manufacturerList.forEach(manufacturer => {
+                const option = document.createElement('option');
+                option.value = manufacturer;
+                const modelCount = datosCsv[manufacturer].length;
+                option.textContent = `${manufacturer} (${modelCount} modelos)`;
+                manufacturerSelect.appendChild(option);
+            });
 
-                    // Parsear CSV y extraer fabricantes únicos
-                    const lines = csvText.split('\n').filter(line => line.trim() !== '');
-                    const manufacturers = new Set();
+            manufacturerSelect.disabled = false;
 
-                    // Saltar la primera línea (headers) si existe
-                    for (let i = 1; i < lines.length; i++) {
-                        const columns = lines[i].split(',');
-                        if (columns.length >= 2 && columns[0].trim()) {
-                            manufacturers.add(columns[0].trim().replace(/"/g, ''));
-                        }
-                    }
-
-                    // Convertir Set a Array y ordenar
-                    const manufacturerList = Array.from(manufacturers).sort();
-
-                    // Actualizar el select
-                    manufacturerSelect.innerHTML = '<option value="">Selecciona un fabricante</option>';
-                    manufacturerList.forEach(manufacturer => {
-                        const option = document.createElement('option');
-                        option.value = manufacturer;
-                        option.textContent = manufacturer;
-                        manufacturerSelect.appendChild(option);
-                    });
-
-                    manufacturerSelect.disabled = false;
-
-                    // Guardar los datos completos para usar en loadModels
-                    window.vehicleData = lines;
-
-                    console.log(`${manufacturerList.length} fabricantes cargados`);
-                })
-                .catch(error => {
-                    console.error('Error cargando fabricantes:', error);
-                    manufacturerSelect.innerHTML = '<option value="">Error cargando datos</option>';
-                    manufacturerSelect.disabled = false;
-                });
+            console.log(`${manufacturerList.length} fabricantes cargados`);
         }
 
+        // Carga de modelos - USANDO DATOS PHP CON PRECIOS (igual que TBV2)
         function loadModels() {
             const manufacturer = document.getElementById('manufacturer').value;
             const modelSelect = document.getElementById('model');
@@ -1012,46 +1027,37 @@ function calc_itp_v2_shortcode() {
                 return;
             }
 
-            if (!window.vehicleData) {
-                modelSelect.innerHTML = '<option value="">Error: datos no disponibles</option>';
+            // Seleccionar datos según tipo de vehículo
+            const datosCsv = (currentVehicleType === 'moto') ? datosCsvMoto : datosCsvBarco;
+
+            if (!datosCsv[manufacturer]) {
+                modelSelect.innerHTML = '<option value="">Error: fabricante no encontrado</option>';
                 return;
             }
 
             modelSelect.innerHTML = '<option value="">Cargando modelos...</option>';
             modelSelect.disabled = true;
 
-            // Buscar modelos del fabricante seleccionado
-            const models = new Set();
+            // Obtener modelos del fabricante
+            const models = datosCsv[manufacturer];
 
-            window.vehicleData.forEach((line, index) => {
-                if (index === 0) return; // Saltar headers
+            // Ordenar modelos alfabéticamente
+            models.sort((a, b) => a.modelo.localeCompare(b.modelo));
 
-                const columns = line.split(',');
-                if (columns.length >= 2) {
-                    const csvManufacturer = columns[0].trim().replace(/"/g, '');
-                    const csvModel = columns[1].trim().replace(/"/g, '');
-
-                    if (csvManufacturer === manufacturer && csvModel) {
-                        models.add(csvModel);
-                    }
-                }
-            });
-
-            // Convertir Set a Array y ordenar
-            const modelList = Array.from(models).sort();
-
-            // Actualizar el select
+            // Actualizar el select CON PRECIO EN DATASET (igual que TBV2)
             modelSelect.innerHTML = '<option value="">Selecciona un modelo</option>';
-            modelList.forEach(model => {
+            models.forEach(modelData => {
                 const option = document.createElement('option');
-                option.value = model;
-                option.textContent = model;
+                option.value = modelData.modelo;
+                option.textContent = modelData.modelo;
+                // ✅ GUARDAR PRECIO EN DATASET - CLAVE PARA EL CÁLCULO
+                option.dataset.price = modelData.precio;
                 modelSelect.appendChild(option);
             });
 
             modelSelect.disabled = false;
 
-            console.log(`${modelList.length} modelos cargados para ${manufacturer}`);
+            console.log(`${models.length} modelos cargados para ${manufacturer} (con precios)`);
         }
 
         // Actualización en tiempo real
@@ -1095,20 +1101,69 @@ function calc_itp_v2_shortcode() {
 
         // Los cálculos se realizan internamente y se envían por email
 
-        // Cálculo final
+        // Cálculo final - CON PRECIO DEL CSV (igual que TBV2)
         function calculateITP() {
             if (validateCurrentStep()) {
-                // Recopilar datos para el cálculo
                 const noModelFound = document.getElementById('no-model-found').checked;
+                const modelSelect = document.getElementById('model');
+                const purchasePrice = parseFloat(document.getElementById('purchase-price').value);
+                const matriculationDate = document.getElementById('matriculation-date').value;
+
+                // ✅ OBTENER PRECIO DEL MODELO DEL CSV (igual que TBV2)
+                let modelPrice = 0;
+                if (!noModelFound && modelSelect && modelSelect.value) {
+                    const selectedOption = modelSelect.options[modelSelect.selectedIndex];
+                    modelPrice = parseFloat(selectedOption.dataset.price || 0);
+                    console.log('💰 Precio del modelo CSV:', modelPrice.toFixed(2), '€');
+                }
+
+                // ✅ CALCULAR DEPRECIACIÓN (igual que TBV2)
+                let depreciationRate = 100;
+                if (!noModelFound && matriculationDate && modelPrice > 0) {
+                    const matriculationDateObj = new Date(matriculationDate);
+                    const today = new Date();
+                    let yearsDifference = today.getFullYear() - matriculationDateObj.getFullYear();
+                    const monthsDifference = today.getMonth() - matriculationDateObj.getMonth();
+
+                    if (monthsDifference < 0 || (monthsDifference === 0 && today.getDate() < matriculationDateObj.getDate())) {
+                        yearsDifference--;
+                    }
+
+                    // Buscar factor de depreciación en tabla BOE
+                    for (const rate of depreciationRates) {
+                        if (yearsDifference < rate.years) {
+                            depreciationRate = rate.rate;
+                            break;
+                        }
+                        depreciationRate = rate.rate; // Último valor para >14 años
+                    }
+                    console.log('📉 Depreciación aplicada:', depreciationRate + '%', '(', yearsDifference, 'años)');
+                }
+
+                // ✅ CALCULAR VALOR FISCAL (precio CSV con depreciación)
+                const fiscalValue = modelPrice * (depreciationRate / 100);
+                console.log('📊 Valor fiscal (precio CSV × depreciación):', fiscalValue.toFixed(2), '€');
+
+                // ✅ BASE IMPONIBLE = MAX(precio compra, valor fiscal) - igual que TBV2
+                const baseImponible = Math.max(purchasePrice, fiscalValue);
+                console.log('📋 Base imponible (MAX):', baseImponible.toFixed(2), '€');
+
+                // Recopilar datos para el cálculo
                 calculationData = {
                     vehicleType: currentVehicleType,
                     manufacturer: document.getElementById('manufacturer').value,
                     model: document.getElementById('model').value,
-                    purchasePrice: parseFloat(document.getElementById('purchase-price').value),
-                    matriculationDate: document.getElementById('matriculation-date').value,
+                    purchasePrice: purchasePrice,
+                    modelPrice: modelPrice, // ✅ NUEVO: Precio del CSV
+                    fiscalValue: fiscalValue, // ✅ NUEVO: Valor fiscal calculado
+                    depreciationRate: depreciationRate, // ✅ NUEVO: Tasa de depreciación
+                    baseImponible: baseImponible, // ✅ NUEVO: Base imponible calculada
+                    matriculationDate: matriculationDate,
                     region: document.getElementById('region').value,
                     noModelFound: noModelFound
                 };
+
+                console.log('✅ Datos de cálculo completos:', calculationData);
 
                 // Actualizar la información del vehículo en el paso 3
                 updateRealTimeDisplay();
@@ -1140,7 +1195,7 @@ function calc_itp_v2_shortcode() {
             submitBtn.innerHTML = '📧 Enviando...';
             submitBtn.style.background = '#cccccc';
 
-            // Preparar datos para envio
+            // Preparar datos para envio - INCLUYE DATOS DEL CSV (igual que TBV2)
             const formData = new FormData();
             formData.append('action', 'enviar_email_itp_v2');
             formData.append('email', email);
@@ -1148,6 +1203,10 @@ function calc_itp_v2_shortcode() {
             formData.append('manufacturer', calculationData.manufacturer);
             formData.append('model', calculationData.model);
             formData.append('purchasePrice', calculationData.purchasePrice);
+            formData.append('modelPrice', calculationData.modelPrice || 0); // ✅ NUEVO: Precio CSV
+            formData.append('fiscalValue', calculationData.fiscalValue || 0); // ✅ NUEVO: Valor fiscal
+            formData.append('depreciationRate', calculationData.depreciationRate || 100); // ✅ NUEVO: Depreciación
+            formData.append('baseImponible', calculationData.baseImponible || calculationData.purchasePrice); // ✅ NUEVO: Base imponible
             formData.append('matriculationDate', calculationData.matriculationDate);
             formData.append('region', calculationData.region);
             formData.append('noModelFound', calculationData.noModelFound ? '1' : '0');
@@ -1253,6 +1312,12 @@ function enviar_email_itp_v2() {
     $region = sanitize_text_field($_POST['region']);
     $no_model_found = isset($_POST['noModelFound']) && $_POST['noModelFound'] === '1';
 
+    // ✅ NUEVOS DATOS DEL CSV (calculados en frontend igual que TBV2)
+    $model_price = floatval($_POST['modelPrice'] ?? 0);
+    $fiscal_value_from_js = floatval($_POST['fiscalValue'] ?? 0);
+    $depreciation_rate_from_js = floatval($_POST['depreciationRate'] ?? 100);
+    $base_imponible_from_js = floatval($_POST['baseImponible'] ?? $purchase_price);
+
     if (!is_email($email)) {
         wp_send_json_error('Email inválido');
         return;
@@ -1267,52 +1332,35 @@ function enviar_email_itp_v2() {
         "La Rioja" => 0.04, "Ceuta" => 0.02, "Melilla" => 0.04
     ];
 
-    // Tabla oficial BOE 2024 - Columna "A motor y MN" (Motores y Motos Náuticas)
-    $depreciation_rates = [
-        ["years" => 1, "rate" => 100],  // Hasta 1 año
-        ["years" => 2, "rate" => 85],   // Más de 1, hasta 2
-        ["years" => 3, "rate" => 72],   // Más de 2, hasta 3
-        ["years" => 4, "rate" => 61],   // Más de 3, hasta 4
-        ["years" => 5, "rate" => 52],   // Más de 4, hasta 5
-        ["years" => 6, "rate" => 44],   // Más de 5, hasta 6
-        ["years" => 7, "rate" => 37],   // Más de 6, hasta 7
-        ["years" => 8, "rate" => 32],   // Más de 7, hasta 8
-        ["years" => 9, "rate" => 27],   // Más de 8, hasta 9
-        ["years" => 10, "rate" => 23],  // Más de 9, hasta 10
-        ["years" => 11, "rate" => 19],  // Más de 10, hasta 11
-        ["years" => 12, "rate" => 16],  // Más de 11, hasta 12
-        ["years" => 13, "rate" => 14],  // Más de 12, hasta 13
-        ["years" => 14, "rate" => 12],  // Más de 13, hasta 14
-        ["years" => 15, "rate" => 10]   // Más de 14 años
-    ];
-
-    // Calcular antigüedad y depreciación
+    // Calcular antigüedad
     $matriculation_year = date('Y', strtotime($matriculation_date));
     $current_year = date('Y');
     $vehicle_age = $current_year - $matriculation_year;
 
-    if ($no_model_found) {
-        // Sin modelo específico: no aplicar depreciación
-        $depreciation_rate = 100;
-        $fiscal_value = $purchase_price; // Precio completo sin depreciación
+    // ✅ USAR DATOS DEL FRONTEND SI ESTÁN DISPONIBLES (igual que TBV2)
+    if ($model_price > 0 && !$no_model_found) {
+        // Usar cálculos del frontend (basados en precio CSV)
+        $depreciation_rate = $depreciation_rate_from_js;
+        $fiscal_value = $fiscal_value_from_js;
+        $base_imponible = $base_imponible_from_js;
+        error_log("ITP CALC: Usando datos CSV - modelPrice: {$model_price}, fiscalValue: {$fiscal_value}, baseImponible: {$base_imponible}");
     } else {
-        // Con modelo específico: aplicar depreciación por antigüedad
+        // Fallback: modo manual o sin precio CSV
         $depreciation_rate = 100;
-        foreach ($depreciation_rates as $rate_data) {
-            if ($vehicle_age >= $rate_data['years']) {
-                $depreciation_rate = $rate_data['rate'];
-            }
-        }
-        $fiscal_value = $purchase_price * ($depreciation_rate / 100);
+        $fiscal_value = $purchase_price;
+        $base_imponible = $purchase_price;
+        error_log("ITP CALC: Modo manual - usando purchasePrice directamente: {$purchase_price}");
     }
 
-    // Calcular ITP - usar el MAYOR valor entre precio de compra y valor fiscal
+    // Calcular ITP - BASE IMPONIBLE YA CALCULADA CORRECTAMENTE
     $itp_rate = isset($itp_rates[$region]) ? $itp_rates[$region] : 0.04;
-    $base_imponible = max($purchase_price, $fiscal_value); // Usar el MAYOR valor
     $itp_amount = $base_imponible * $itp_rate;
+
+    error_log("ITP CALC FINAL: baseImponible={$base_imponible}, itpRate={$itp_rate}, itpAmount={$itp_amount}");
 
     // Formatear moneda
     $purchase_price_formatted = number_format($purchase_price, 0, ',', '.') . ' €';
+    $model_price_formatted = number_format($model_price, 0, ',', '.') . ' €'; // ✅ NUEVO: Precio CSV
     $fiscal_value_formatted = number_format($fiscal_value, 0, ',', '.') . ' €';
     $base_imponible_formatted = number_format($base_imponible, 0, ',', '.') . ' €';
     $itp_amount_formatted = number_format($itp_amount, 0, ',', '.') . ' €';
@@ -1620,24 +1668,33 @@ function enviar_email_itp_v2() {
                                         <td style='width: 48%; vertical-align: top;'>
                                             <h3 style='color: #016d86; font-size: 14px; font-weight: bold; margin: 0 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #dddddd;'>Desglose del cálculo</h3>
                                             <table style='width: 100%; font-size: 12px;' role='presentation'>
+                                                " . ($model_price > 0 ? "
+                                                <tr style='background-color: #e8f5e9;'>
+                                                    <td style='color: #2e7d32; padding: 4px 0; width: 50%;'>Valor modelo (CSV):</td>
+                                                    <td style='color: #2e7d32; font-weight: bold; padding: 4px 0;'>$model_price_formatted</td>
+                                                </tr>
+                                                " : "") . "
                                                 <tr>
                                                     <td style='color: #666666; padding: 4px 0; width: 50%;'>Antigüedad:</td>
                                                     <td style='color: #333333; font-weight: bold; padding: 4px 0;'>$vehicle_age años</td>
                                                 </tr>
                                                 <tr>
-                                                    <td style='color: #666666; padding: 4px 0;'>Depreciación:</td>
+                                                    <td style='color: #666666; padding: 4px 0;'>Depreciación BOE:</td>
                                                     <td style='color: #333333; font-weight: bold; padding: 4px 0;'>" . ($no_model_found ? 'Sin aplicar (manual)' : "{$depreciation_rate}%") . "</td>
                                                 </tr>
                                                 <tr>
                                                     <td style='color: #666666; padding: 4px 0;'>Valor fiscal:</td>
                                                     <td style='color: #333333; font-weight: bold; padding: 4px 0;'>$fiscal_value_formatted</td>
                                                 </tr>
+                                                <tr>
+                                                    <td style='color: #666666; padding: 4px 0; font-size: 10px; font-style: italic;' colspan='2'>" . ($model_price > 0 ? "(Valor modelo × Depreciación)" : "(Precio compra sin depreciación)") . "</td>
+                                                </tr>
                                                 <tr style='background-color: #f0f9ff;'>
                                                     <td style='color: #016d86; padding: 8px 4px; font-weight: bold;'>Base imponible ITP:</td>
                                                     <td style='color: #016d86; font-weight: bold; padding: 8px 4px; font-size: 15px;'>$base_imponible_formatted</td>
                                                 </tr>
                                                 <tr>
-                                                    <td style='color: #666666; padding: 4px 0; font-size: 11px; font-style: italic;' colspan='2'>(Se usa el mayor entre precio de compra y valor fiscal)</td>
+                                                    <td style='color: #666666; padding: 4px 0; font-size: 10px; font-style: italic;' colspan='2'>(Se usa el mayor entre precio compra y valor fiscal)</td>
                                                 </tr>
                                                 <tr>
                                                     <td style='color: #666666; padding: 4px 0;'>Tipo ITP:</td>
@@ -1985,10 +2042,12 @@ function enviar_email_itp_v2() {
             'manufacturer' => $manufacturer,
             'model' => $model,
             'purchasePrice' => floatval($purchase_price),
+            'modelPrice' => floatval($model_price), // ✅ NUEVO: Precio del CSV
             'region' => $region,
             'email' => $email,
             'itpAmount' => floatval($itp_amount),
             'fiscalValue' => floatval($fiscal_value),
+            'baseImponible' => floatval($base_imponible), // ✅ NUEVO: Base imponible
             'noModelFound' => $no_model_found,
             'depreciationRate' => $depreciation_rate
         );
