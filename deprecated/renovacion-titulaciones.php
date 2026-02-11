@@ -880,7 +880,7 @@ add_action('wp_ajax_create_payment_intent_renovacion_titulaciones', 'create_paym
 add_action('wp_ajax_nopriv_create_payment_intent_renovacion_titulaciones', 'create_payment_intent_renovacion_titulaciones');
 function create_payment_intent_renovacion_titulaciones() {
     require_once __DIR__ . '/vendor/stripe/stripe-php/init.php';
-    \Stripe\Stripe::setApiKey('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');
+    \Stripe\Stripe::setApiKey('sk_live_REMOVED_FOR_SECURITY');
     $amount = isset($_POST['amount']) ? intval($_POST['amount']) : 0;
     try {
         $paymentIntent = \Stripe\PaymentIntent::create([

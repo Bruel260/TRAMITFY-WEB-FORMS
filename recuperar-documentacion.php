@@ -9,81 +9,97 @@ defined('ABSPATH') || exit;
 
 error_log("=== RDOC FILE START ===");
 
-// ✅ CONFIGURACIÓN STRIPE CON PREFIJO ÚNICO (CLAUDE.MD)
-define('RDOC_STRIPE_MODE', 'live'); // test o live
+// =====================================================
+// CONFIGURACIÓN REDSYS - RECUPERAR DOCUMENTACIÓN
+// =====================================================
+if (!defined('RDOC_REDSYS_MODE')) define('RDOC_REDSYS_MODE', 'live');
+if (!defined('RDOC_REDSYS_MERCHANT_CODE')) define('RDOC_REDSYS_MERCHANT_CODE', '363391103');
+if (!defined('RDOC_REDSYS_TERMINAL')) define('RDOC_REDSYS_TERMINAL', '1');
+if (!defined('RDOC_REDSYS_CURRENCY')) define('RDOC_REDSYS_CURRENCY', '978');
 
-define('RDOC_STRIPE_TEST_PUBLIC_KEY', 'YOUR_STRIPE_TEST_PUBLIC_KEY_HERE');
-define('RDOC_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
-
-define('RDOC_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
-define('RDOC_STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
-
-if (RDOC_STRIPE_MODE === 'test') {
-    $stripe_public_key = RDOC_STRIPE_TEST_PUBLIC_KEY;
-    $stripe_secret_key = RDOC_STRIPE_TEST_SECRET_KEY;
-} else {
-    $stripe_public_key = RDOC_STRIPE_LIVE_PUBLIC_KEY;
-    $stripe_secret_key = RDOC_STRIPE_LIVE_SECRET_KEY;
+if (!defined('RDOC_REDSYS_SECRET_KEY')) {
+    if (RDOC_REDSYS_MODE === 'test') {
+        define('RDOC_REDSYS_SECRET_KEY', 'sq7HjrUOBfKmC576ILgskD5srU870gJ7');
+    } else {
+        define('RDOC_REDSYS_SECRET_KEY', 'ERDGGMADKbhFIngyRLnW6KrxEuKnjq9p');
+    }
 }
 
-// ✅ CONFIGURACIÓN DEL SERVICIO CON PREFIJO ÚNICO (CLAUDE.MD)
+if (!defined('RDOC_REDSYS_SIGNATURE_VERSION')) define('RDOC_REDSYS_SIGNATURE_VERSION', 'HMAC_SHA256_V1');
+if (!defined('RDOC_REDSYS_URL_TEST')) define('RDOC_REDSYS_URL_TEST', 'https://sis-t.redsys.es:25443/sis/realizarPago');
+if (!defined('RDOC_REDSYS_URL_LIVE')) define('RDOC_REDSYS_URL_LIVE', 'https://sis.redsys.es/sis/realizarPago');
+if (!defined('RDOC_REDSYS_URL_OK')) define('RDOC_REDSYS_URL_OK', 'https://tramitfy.es/pago-completado-documentacion/');
+if (!defined('RDOC_REDSYS_URL_KO')) define('RDOC_REDSYS_URL_KO', 'https://tramitfy.es/recuperar-documentacion/');
+if (!defined('RDOC_REDSYS_URL_NOTIFICATION')) define('RDOC_REDSYS_URL_NOTIFICATION', 'https://tramitfy.org/api/temporal/confirm');
+
+// ✅ CONFIGURACIÓN DEL SERVICIO CON PREFIJO ÚNICO
 define('RDOC_PRECIO_TOTAL', 94.95);
 define('RDOC_TASA_1', 19.03);
 define('RDOC_TASA_2', 7.62);
 define('RDOC_TRAMITFY_API_URL', 'https://tramitfy.org/api/herramientas/documentacion/webhook');
 
-// Cargar Stripe library ANTES de las funciones
-require_once(__DIR__ . '/vendor/autoload.php');
+// =====================================================
+// FUNCIONES CORE REDSYS RDOC
+// =====================================================
+function rdoc_redsys_generate_signature($data) {
+    $password_decoded = base64_decode(RDOC_REDSYS_SECRET_KEY);
+    $order_id = $data['Ds_Order'] ?? $data['Ds_Merchant_Order'] ?? '';
+    $l = ceil(strlen($order_id) / 8) * 8;
+    $padded_order_id = $order_id . str_repeat("\0", $l - strlen($order_id));
+    $encryption_key = substr(
+        openssl_encrypt($padded_order_id, 'des-ede3-cbc', $password_decoded, OPENSSL_RAW_DATA, "\0\0\0\0\0\0\0\0"),
+        0, $l
+    );
+    $string_to_sign = base64_encode(json_encode($data));
+    $signature = hash_hmac('sha256', $string_to_sign, $encryption_key, true);
+    return base64_encode($signature);
+}
 
-function rdoc_create_payment_intent() {
-    global $stripe_secret_key;
+function rdoc_redsys_create_payment_form($order_data) {
+    $redsys_url = (RDOC_REDSYS_MODE === 'test') ? RDOC_REDSYS_URL_TEST : RDOC_REDSYS_URL_LIVE;
+    $params = [
+        'Ds_Merchant_MerchantCode' => RDOC_REDSYS_MERCHANT_CODE,
+        'Ds_Merchant_Terminal' => RDOC_REDSYS_TERMINAL,
+        'Ds_Merchant_Order' => $order_data['order_id'],
+        'Ds_Merchant_Amount' => $order_data['amount_cents'],
+        'Ds_Merchant_Currency' => RDOC_REDSYS_CURRENCY,
+        'Ds_Merchant_TransactionType' => '0',
+        'Ds_Merchant_MerchantURL' => RDOC_REDSYS_URL_NOTIFICATION,
+        'Ds_Merchant_UrlOK' => RDOC_REDSYS_URL_OK,
+        'Ds_Merchant_UrlKO' => RDOC_REDSYS_URL_KO,
+        'Ds_Merchant_MerchantName' => 'Tramitfy',
+        'Ds_Merchant_ProductDescription' => 'Recuperar Documentacion Extraviada',
+        'Ds_Merchant_ConsumerLanguage' => '001'
+    ];
+    $signature = rdoc_redsys_generate_signature($params);
+    $merchant_parameters = base64_encode(json_encode($params));
+    return [
+        'url' => $redsys_url,
+        'Ds_MerchantParameters' => $merchant_parameters,
+        'Ds_SignatureVersion' => RDOC_REDSYS_SIGNATURE_VERSION,
+        'Ds_Signature' => $signature
+    ];
+}
 
-    header('Content-Type: application/json');
-
+function rdoc_create_redsys_payment() {
     try {
-        error_log('=== RECUPERAR DOCUMENTACION PAYMENT INTENT ===');
-        error_log('STRIPE MODE: ' . STRIPE_MODE);
-        error_log('Using Stripe key starting with: ' . substr($stripe_secret_key, 0, 25));
+        $order_id = !empty($_POST['orderId']) ? $_POST['orderId'] : str_pad(time(), 12, '0', STR_PAD_LEFT);
+        $amount = floatval($_POST['amount'] ?? RDOC_PRECIO_TOTAL);
+        $amount_cents = strval(intval($amount * 100));
 
-        \Stripe\Stripe::setApiKey($stripe_secret_key);
-
-        $currentKey = \Stripe\Stripe::getApiKey();
-        error_log('Stripe API Key confirmed: ' . substr($currentKey, 0, 25));
-
-        $amount = RDOC_PRECIO_TOTAL * 100;
-
-        $paymentIntent = \Stripe\PaymentIntent::create([
-            'amount' => $amount,
-            'currency' => 'eur',
-            'automatic_payment_methods' => [
-                'enabled' => true,
-            ],
-            'description' => 'Recuperación de Documentación Extraviada',
-            'metadata' => [
-                'service' => 'Recuperar Documentación',
-                'source' => 'tramitfy_web',
-                'form' => 'recuperar_documentacion',
-                'mode' => STRIPE_MODE
-            ]
+        $payment_data = rdoc_redsys_create_payment_form([
+            'order_id' => $order_id,
+            'amount_cents' => $amount_cents
         ]);
 
-        error_log('Payment Intent created: ' . $paymentIntent->id);
-
-        echo json_encode([
-            'clientSecret' => $paymentIntent->client_secret,
-            'debug' => [
-                'mode' => STRIPE_MODE,
-                'keyUsed' => substr($stripe_secret_key, 0, 25) . '...',
-                'keyConfirmed' => substr($currentKey, 0, 25) . '...',
-                'paymentIntentId' => $paymentIntent->id
-            ]
+        wp_send_json_success([
+            'orderId' => $order_id,
+            'paymentData' => $payment_data
         ]);
+
     } catch (Exception $e) {
-        error_log('Error creating payment intent: ' . $e->getMessage());
-        echo json_encode(['error' => $e->getMessage()]);
+        wp_send_json_error(['message' => $e->getMessage()]);
     }
-
-    wp_die();
 }
 
 function rdoc_send_to_tramitfy() {
@@ -593,15 +609,15 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
 
                 <!-- Información de Pago -->
                 <div style='margin-bottom: 25px;'>
-                    <h3 style='margin: 0 0 15px; color: #333; font-size: 16px;'>💳 PAGO STRIPE</h3>
+                    <h3 style='margin: 0 0 15px; color: #333; font-size: 16px;'>💳 PAGO REDSYS</h3>
                     <table width='100%' cellpadding='5' cellspacing='0' style='font-size: 13px; background-color: #f9f9f9; padding: 12px; border-radius: 4px;'>
                         <tr>
-                            <td style='color: #666;'>Payment Intent ID:</td>
+                            <td style='color: #666;'>Redsys Order ID:</td>
                             <td style='color: #333; font-family: monospace; font-size: 12px;'>{$formData['paymentIntentId']}</td>
                         </tr>
                         <tr>
-                            <td style='color: #666;'>Modo Stripe:</td>
-                            <td style='color: #333; font-weight: 600;'>" . STRIPE_MODE . "</td>
+                            <td style='color: #666;'>Modo Pago:</td>
+                            <td style='color: #333; font-weight: 600;'>" . RDOC_REDSYS_MODE . "</td>
                         </tr>
                     </table>
                 </div>
@@ -650,23 +666,20 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
 }
 
 // Registrar handlers de WordPress AJAX (CRÍTICO)
-add_action('wp_ajax_rdoc_create_payment_intent', 'rdoc_create_payment_intent');
-add_action('wp_ajax_nopriv_rdoc_create_payment_intent', 'rdoc_create_payment_intent');
+add_action('wp_ajax_rdoc_create_redsys_payment', 'rdoc_create_redsys_payment');
+add_action('wp_ajax_nopriv_rdoc_create_redsys_payment', 'rdoc_create_redsys_payment');
 
 add_action('wp_ajax_rdoc_send_to_tramitfy', 'rdoc_send_to_tramitfy');
 add_action('wp_ajax_nopriv_rdoc_send_to_tramitfy', 'rdoc_send_to_tramitfy');
 
 // Fallback directo (mantener compatibilidad)
 if (isset($_POST['action'])) {
-    if ($_POST['action'] === 'rdoc_create_payment_intent') {
-        rdoc_create_payment_intent();
-    } elseif ($_POST['action'] === 'rdoc_send_to_tramitfy') {
+    if ($_POST['action'] === 'rdoc_send_to_tramitfy') {
         rdoc_send_to_tramitfy();
     }
 }
 
 function recuperar_documentacion_form_shortcode() {
-    global $stripe_public_key;
 
     $current_user = wp_get_current_user();
     $is_admin = in_array('administrator', $current_user->roles);
@@ -2283,19 +2296,6 @@ function recuperar_documentacion_form_shortcode() {
 
                     <!-- PAGO -->
                     <div class="rdoc-section">
-                        <div class="rdoc-payment-wrapper">
-                            <div class="rdoc-payment-header">
-                                <i class="fas fa-lock"></i>
-                                <span>Datos de Pago</span>
-                            </div>
-                            <div id="rdoc-stripe-loading" class="rdoc-stripe-loading" style="display: none;">
-                                <i class="fas fa-spinner fa-spin"></i>
-                                <span>Cargando sistema de pago seguro...</span>
-                            </div>
-                            <div id="rdoc-stripe-card" class="rdoc-stripe-wrapper"></div>
-                            <div id="rdoc-card-errors" class="rdoc-card-errors"></div>
-                        </div>
-
                         <div class="rdoc-terms-wrapper">
                             <div class="rdoc-checkbox-wrapper">
                                 <input type="checkbox" id="rdoc-consent-terms" class="rdoc-checkbox" required />
@@ -2311,10 +2311,12 @@ function recuperar_documentacion_form_shortcode() {
                             <span>Confirmar y Pagar <?php echo RDOC_PRECIO_TOTAL; ?>€</span>
                         </button>
 
+                        <div id="rdoc-payment-message" style="display:none; padding:10px; margin:10px 0; border-radius:8px; text-align:center;"></div>
+
                         <div class="rdoc-security-badges">
                             <div class="rdoc-security-badge">
                                 <i class="fas fa-lock"></i>
-                                <span>Pago 100% Seguro · Cifrado SSL · Stripe</span>
+                                <span>Pago 100% Seguro · Cifrado SSL · CaixaBank</span>
                             </div>
                         </div>
                     </div>
@@ -2362,13 +2364,15 @@ function recuperar_documentacion_form_shortcode() {
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Stripe JS -->
-    <script src="https://js.stripe.com/v3/"></script>
+    <!-- Formulario oculto para Redsys -->
+    <form id="rdoc-redsys-form" action="" method="POST" style="display:none;">
+        <input type="hidden" name="Ds_SignatureVersion" id="rdoc-Ds_SignatureVersion">
+        <input type="hidden" name="Ds_MerchantParameters" id="rdoc-Ds_MerchantParameters">
+        <input type="hidden" name="Ds_Signature" id="rdoc-Ds_Signature">
+    </form>
 
     <script>
-        let rdocStripe = null;
-        let rdocElements, rdocCardElement;
-        let rdocClientSecret = null;
+        let rdocIsSubmitting = false;
         // Sistema de almacenamiento de archivos unificado (como hoja-asiento)
         const fileStorage = {
             'upload-dni-documento': []
@@ -2421,62 +2425,16 @@ function recuperar_documentacion_form_shortcode() {
             }
         });
 
-        // ====== INICIALIZAR STRIPE LIBRARY ======
-        function rdocEnsureStripeLoaded() {
-            return new Promise((resolve, reject) => {
-                let attempts = 0;
-                const maxAttempts = 20; // 2 segundos máximo (20 * 100ms)
-
-                const checkStripe = () => {
-                    attempts++;
-                    console.log(`🔍 Verificando Stripe... (intento ${attempts}/${maxAttempts})`);
-
-                    if (typeof Stripe !== 'undefined') {
-                        try {
-                            rdocStripe = Stripe('<?php echo $stripe_public_key; ?>');
-                            console.log('✅ Stripe library cargada e inicializada correctamente');
-                            console.log('✅ Stripe object:', rdocStripe);
-                            resolve(rdocStripe);
-                        } catch (error) {
-                            console.error('❌ Error al inicializar Stripe:', error);
-                            reject(error);
-                        }
-                    } else if (attempts >= maxAttempts) {
-                        const error = new Error('Stripe no se pudo cargar después de ' + maxAttempts + ' intentos');
-                        console.error('❌', error.message);
-                        reject(error);
-                    } else {
-                        setTimeout(checkStripe, 100);
-                    }
-                };
-
-                checkStripe();
-            });
-        }
-
         // ====== INICIALIZACIÓN ======
         document.addEventListener('DOMContentLoaded', async function() {
-            console.log('🚀 DOMContentLoaded - Iniciando formulario recuperar documentación');
+            console.log('🚀 DOMContentLoaded - Iniciando formulario recuperar documentación (Redsys)');
 
-            // Esperar un momento para asegurar que todo esté cargado
-            setTimeout(async function() {
+            setTimeout(function() {
                 console.log('Inicializando componentes...');
-
-                try {
-                    await rdocEnsureStripeLoaded();
-                } catch (error) {
-                    console.error('❌ No se pudo cargar Stripe:', error);
-                    rdocShowNotification(
-                        'No se pudo cargar el sistema de pagos.<br><br>Por favor, <strong>recarga la página</strong> e inténtalo de nuevo.<br><br>Si el problema persiste, verifica tu conexión a internet.',
-                        'error',
-                        'Error de Carga'
-                    );
-                }
-
                 rdocInitializeFileUpload();
                 rdocSetupNavigation();
                 rdocSetupPaymentButton();
-                console.log('✅ Inicialización completa');
+                console.log('✅ Inicialización completa (Redsys mode)');
             }, 300);
         });
 
@@ -2527,18 +2485,7 @@ function recuperar_documentacion_form_shortcode() {
             }
 
             if (pageNumber === 3) {
-                setTimeout(async () => {
-                    console.log('📄 Navegando a página 3 (Pago)');
-                    console.log('💳 rdocClientSecret:', rdocClientSecret ? 'Existe' : 'No existe');
-                    console.log('💳 rdocElements:', rdocElements ? 'Existe' : 'No existe');
-
-                    if (!rdocClientSecret || !rdocElements) {
-                        console.log('💳 Inicializando Stripe por primera vez...');
-                        await rdocInitializeStripe();
-                    } else {
-                        console.log('✅ Stripe ya está inicializado');
-                    }
-                }, 100);
+                console.log('📄 Navegando a página 3 (Pago Redsys)');
             }
 
             // Solo scroll en desktop
@@ -3091,93 +3038,14 @@ function recuperar_documentacion_form_shortcode() {
         }
 
         // ====== STRIPE PAYMENT ======
-        async function rdocInitializeStripe() {
-            console.log('💳 Inicializando Stripe...');
-
-            const loadingIndicator = document.getElementById('rdoc-stripe-loading');
-            const stripeContainer = document.getElementById('rdoc-stripe-card');
-
-            // Mostrar loading
-            if (loadingIndicator) loadingIndicator.style.display = 'flex';
-            if (stripeContainer) stripeContainer.style.display = 'none';
-
-            if (!rdocStripe) {
-                console.error('❌ rdocStripe no está disponible');
-                if (loadingIndicator) loadingIndicator.style.display = 'none';
-
-                rdocShowNotification(
-                    'Error al cargar el sistema de pagos. Por favor, <strong>recarga la página</strong> e inténtalo de nuevo.<br><br>Si el problema persiste, contacta con soporte.',
-                    'error',
-                    'Error de Pago'
-                );
-                return false;
-            }
-
-            try {
-                console.log('💳 Creando Payment Intent...');
-                const response = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({ action: 'rdoc_create_payment_intent' })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Error en la conexión con el servidor');
-                }
-
-                const result = await response.json();
-                console.log('💳 Respuesta del servidor:', result);
-
-                if (result.error) throw new Error(result.error);
-                if (!result.clientSecret) throw new Error('No se recibió el client secret del servidor');
-
-                rdocClientSecret = result.clientSecret;
-                console.log('💳 Client Secret recibido:', rdocClientSecret.substring(0, 20) + '...');
-
-                if (!stripeContainer) {
-                    throw new Error('Contenedor de Stripe no encontrado');
-                }
-
-                rdocElements = rdocStripe.elements({ clientSecret: rdocClientSecret });
-                rdocCardElement = rdocElements.create('payment', {
-                    layout: { type: 'tabs', defaultCollapsed: false }
-                });
-
-                console.log('💳 Montando Stripe Elements en DOM...');
-                await rdocCardElement.mount('#rdoc-stripe-card');
-                console.log('✅ Stripe Elements montado correctamente');
-
-                rdocCardElement.on('change', function(event) {
-                    const displayError = document.getElementById('rdoc-card-errors');
-                    if (event.error) {
-                        displayError.textContent = event.error.message;
-                    } else {
-                        displayError.textContent = '';
-                    }
-                });
-
-                // Ocultar loading y mostrar Stripe
-                if (loadingIndicator) loadingIndicator.style.display = 'none';
-                if (stripeContainer) stripeContainer.style.display = 'block';
-
-                console.log('✅ Stripe inicializado completamente');
-                return true;
-
-            } catch (error) {
-                console.error('❌ Error inicializando Stripe:', error);
-                console.error('❌ Error stack:', error.stack);
-
-                // Ocultar loading
-                if (loadingIndicator) loadingIndicator.style.display = 'none';
-
-                rdocShowNotification(
-                    'Error al inicializar el sistema de pagos:<br><br><strong>' + error.message + '</strong><br><br>Por favor, recarga la página e inténtalo de nuevo.',
-                    'error',
-                    'Error de Pago'
-                );
-
-                return false;
-            }
+        // Helper: Convertir File a base64
+        function rdocFileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
         }
 
         // ====== VALIDACIÓN PÁGINA 3 (PAGO) ======
@@ -3198,7 +3066,7 @@ function recuperar_documentacion_form_shortcode() {
             return true;
         }
 
-        // ====== SETUP PAYMENT BUTTON ======
+        // ====== SETUP PAYMENT BUTTON (REDSYS) ======
         function rdocSetupPaymentButton() {
             const paymentBtn = document.getElementById('rdoc-submit-payment');
             if (!paymentBtn) {
@@ -3208,75 +3076,132 @@ function recuperar_documentacion_form_shortcode() {
 
             paymentBtn.addEventListener('click', async function(e) {
                 e.preventDefault();
-                console.log('💳 Botón de pago clickeado');
+                console.log('💳 RDOC: Botón de pago clickeado - Flujo Redsys');
 
                 if (!rdocValidatePage3()) return;
+
+                if (rdocIsSubmitting) {
+                    console.warn('⚠️ Envío ya en proceso');
+                    return;
+                }
+                rdocIsSubmitting = true;
 
                 const submitButton = this;
                 const originalHTML = submitButton.innerHTML;
                 submitButton.disabled = true;
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Procesando pago...</span>';
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Conectando con pasarela de pago...</span>';
 
                 try {
-                    // Intentar cargar Stripe si no está disponible
-                    if (!rdocStripe) {
-                        console.log('⚠️ Stripe no disponible, intentando cargar...');
-                        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Cargando sistema de pago...</span>';
+                    // 1. Generar OrderID
+                    const timestamp = Math.floor(Date.now() / 10000) * 10;
+                    const generatedOrderId = '00' + timestamp.toString().padStart(10, '0');
+                    console.log('RDOC: OrderID generado:', generatedOrderId);
 
-                        try {
-                            await rdocEnsureStripeLoaded();
-                        } catch (stripeError) {
-                            throw new Error('No se pudo cargar el sistema de pagos. Por favor, recarga la página e inténtalo de nuevo.');
+                    // 2. Recopilar archivos en base64
+                    const filesArray = [];
+                    const fileCategories = Object.keys(fileStorage);
+                    for (const category of fileCategories) {
+                        const files = fileStorage[category] || [];
+                        for (const file of files) {
+                            const base64 = await rdocFileToBase64(file);
+                            filesArray.push({
+                                fieldName: category,
+                                fileName: file.name,
+                                mimeType: file.type,
+                                data: base64
+                            });
                         }
                     }
 
-                    if (!rdocElements) {
-                        throw new Error('El formulario de pago no está listo. Por favor, espera unos segundos e inténtalo de nuevo.');
+                    // Añadir firma
+                    const signatureData = rdocGetSignatureDataURL ? rdocGetSignatureDataURL() : null;
+                    if (signatureData) {
+                        filesArray.push({
+                            fieldName: 'firma',
+                            fileName: 'firma.png',
+                            mimeType: 'image/png',
+                            data: signatureData
+                        });
                     }
 
-                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Procesando pago...</span>';
-                    console.log('💳 Confirmando pago con Stripe...');
-                    const { error: submitError } = await rdocStripe.confirmPayment({
-                        elements: rdocElements,
-                        confirmParams: { return_url: window.location.href },
-                        redirect: 'if_required'
+                    console.log('RDOC: Archivos preparados:', filesArray.length);
+
+                    // 3. Enviar datos al API temporal
+                    const captureData = {
+                        orderId: generatedOrderId,
+                        tramiteType: 'recuperar-documentacion',
+                        files: filesArray,
+                        customerData: {
+                            name: document.getElementById('rdoc-name').value.trim(),
+                            dni: document.getElementById('rdoc-dni').value.trim(),
+                            email: document.getElementById('rdoc-email').value.trim(),
+                            phone: document.getElementById('rdoc-phone').value.trim()
+                        },
+                        serviceData: {
+                            vesselName: document.getElementById('rdoc-vessel-name')?.value?.trim() || '',
+                            vesselRegistration: document.getElementById('rdoc-vessel-registration')?.value?.trim() || ''
+                        },
+                        pricing: {
+                            amount: <?php echo RDOC_PRECIO_TOTAL; ?>,
+                            basePrice: <?php echo RDOC_PRECIO_TOTAL; ?>,
+                            tasa1: <?php echo RDOC_TASA_1; ?>,
+                            tasa2: <?php echo RDOC_TASA_2; ?>
+                        },
+                        metadata: {
+                            timestamp: Date.now(),
+                            formId: 'rdoc'
+                        }
+                    };
+
+                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Almacenando datos...</span>';
+
+                    const captureResponse = await fetch('https://tramitfy.org/api/temporal/capture', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(captureData)
                     });
 
-                    if (submitError) {
-                        throw new Error(submitError.message);
+                    const captureResult = await captureResponse.json();
+                    console.log('RDOC: Respuesta temporal:', captureResult);
+
+                    if (!captureResult.success) {
+                        throw new Error(captureResult.error || 'Error capturando datos temporales');
                     }
 
-                    console.log('✅ Pago confirmado, enviando a Tramitfy...');
-                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Guardando datos...</span>';
+                    // 4. Crear pago Redsys
+                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Redirigiendo a pasarela segura...</span>';
 
-                    const tramiteResult = await rdocSendToTramitfy();
-                    console.log('✅ Datos guardados, tramiteId:', tramiteResult.tramiteId);
+                    const paymentData = new FormData();
+                    paymentData.append('action', 'rdoc_create_redsys_payment');
+                    paymentData.append('amount', <?php echo RDOC_PRECIO_TOTAL; ?>);
+                    paymentData.append('orderId', generatedOrderId);
 
-                    // Esperar 2 segundos antes de enviar emails para evitar conflictos
-                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    const ajaxUrl = '<?php echo admin_url("admin-ajax.php"); ?>';
+                    const response = await fetch(ajaxUrl, {
+                        method: 'POST',
+                        body: paymentData
+                    });
 
-                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Enviando emails de confirmación...</span>';
-                    await rdocSendEmails(tramiteResult.tramiteId);
-                    console.log('✅ Emails enviados');
+                    const result = await response.json();
 
-                    document.getElementById('rdoc-form').style.display = 'none';
-                    document.getElementById('rdoc-success').style.display = 'block';
+                    if (result.success) {
+                        console.log('RDOC: Pago Redsys creado, redirigiendo a pasarela...');
 
-                    // Redirigir a la página de éxito después de 3 segundos
-                    setTimeout(() => {
-                        window.location.href = 'https://tramitfy.es/pago-realizado-con-exito/';
-                    }, 3000);
+                        const form = document.getElementById('rdoc-redsys-form');
+                        form.action = result.data.paymentData.url;
+                        document.getElementById('rdoc-Ds_SignatureVersion').value = result.data.paymentData.Ds_SignatureVersion;
+                        document.getElementById('rdoc-Ds_MerchantParameters').value = result.data.paymentData.Ds_MerchantParameters;
+                        document.getElementById('rdoc-Ds_Signature').value = result.data.paymentData.Ds_Signature;
 
-                    // Solo scroll en desktop
-                    if (window.innerWidth > 768) {
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        setTimeout(() => {
+                            form.submit();
+                        }, 1500);
+                    } else {
+                        throw new Error(result.data?.message || 'Error al crear el pago');
                     }
 
                 } catch (error) {
-                    console.error('❌ Error en el pago:', error);
-
-                    const errorContainer = document.getElementById('rdoc-card-errors');
-                    errorContainer.textContent = error.message;
+                    console.error('RDOC Error:', error);
 
                     rdocShowNotification(
                         'Error al procesar el pago:<br><br><strong>' + error.message + '</strong>',
@@ -3286,10 +3211,11 @@ function recuperar_documentacion_form_shortcode() {
 
                     submitButton.disabled = false;
                     submitButton.innerHTML = originalHTML;
+                    rdocIsSubmitting = false;
                 }
             });
 
-            console.log('✅ Event listener de pago configurado');
+            console.log('✅ Event listener de pago Redsys configurado');
         }
 
         // ====== ENVIAR A TRAMITFY ======
@@ -3305,7 +3231,7 @@ function recuperar_documentacion_form_shortcode() {
                 vesselRegistration: document.getElementById('rdoc-vessel-registration').value,
                 consentTerms: document.getElementById('rdoc-consent-terms').checked,
                 signatureData: rdocGetSignatureDataURL(),
-                paymentIntentId: rdocClientSecret
+                paymentIntentId: 'redsys_pending'
             };
 
             formData.append('action', 'rdoc_send_to_tramitfy');
@@ -3797,9 +3723,8 @@ function rdoc_send_emails() {
 
 add_shortcode('recuperar_documentacion_form', 'recuperar_documentacion_form_shortcode');
 
-add_action('wp_ajax_rdoc_create_payment_intent', 'rdoc_create_payment_intent');
-add_action('wp_ajax_nopriv_rdoc_create_payment_intent', 'rdoc_create_payment_intent');
+add_action('wp_ajax_rdoc_create_redsys_payment', 'rdoc_create_redsys_payment');
+add_action('wp_ajax_nopriv_rdoc_create_redsys_payment', 'rdoc_create_redsys_payment');
 
 add_action('wp_ajax_rdoc_send_emails', 'rdoc_send_emails');
 add_action('wp_ajax_nopriv_rdoc_send_emails', 'rdoc_send_emails');
-?>

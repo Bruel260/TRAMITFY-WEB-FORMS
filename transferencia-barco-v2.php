@@ -42,14 +42,14 @@ function tbv2_is_authorized_page() {
         }
     }
     
-    // Admin siempre autorizado (solo para non-AJAX)
-    if (!defined('DOING_AJAX') && is_admin()) return true;
+    // Admin NO autorizado para evitar inyectar scripts en wp-admin
+    if (!defined('DOING_AJAX') && is_admin()) return false;
     
     // Verificar por URL
     $request_uri = $_SERVER['REQUEST_URI'] ?? '';
     $authorized_pages = [
         'testingfy',
-        'cambio-titularidad-embarcacion', 
+        'transferencia-propiedad-v2', 
         'transferencia-barco-v2'
     ];
     
@@ -59,10 +59,20 @@ function tbv2_is_authorized_page() {
         }
     }
     
-    // Verificar por post object
+    // Verificar por post object y shortcodes
     if (is_object($post)) {
         if (in_array($post->post_name, $authorized_pages) || 
+            strpos($post->post_content, '[transferencia_barco_v2]') !== false ||
             strpos($post->post_content, '[transferencia_barco_v2_form]') !== false) {
+            return true;
+        }
+    }
+    
+    // IMPORTANTE: Si estamos renderizando el shortcode, autorizar
+    if (function_exists('has_shortcode')) {
+        $content = get_post() ? get_post()->post_content : '';
+        if (has_shortcode($content, 'transferencia_barco_v2') || 
+            has_shortcode($content, 'transferencia_barco_v2_form')) {
             return true;
         }
     }
@@ -82,7 +92,13 @@ if (!defined('TBV2_REDSYS_TERMINAL')) define('TBV2_REDSYS_TERMINAL', '1');
 if (!defined('TBV2_REDSYS_CURRENCY')) define('TBV2_REDSYS_CURRENCY', '978'); // EUR
 
 // Claves de cifrado
-if (!defined('TBV2_REDSYS_SECRET_KEY')) define('TBV2_REDSYS_SECRET_KEY', 'ERDGGMADKbhFIngyRLnW6KrxEuKnjq9p');
+if (!defined('TBV2_REDSYS_SECRET_KEY')) {
+    if (TBV2_REDSYS_MODE === 'test') {
+        define('TBV2_REDSYS_SECRET_KEY', 'sq7HjrUOBfKmC576ILgskD5srU870gJ7');
+    } else {
+        define('TBV2_REDSYS_SECRET_KEY', 'ERDGGMADKbhFIngyRLnW6KrxEuKnjq9p');
+    }
+}
 if (!defined('TBV2_REDSYS_SIGNATURE_VERSION')) define('TBV2_REDSYS_SIGNATURE_VERSION', 'HMAC_SHA256_V1');
 
 // URLs según entorno
@@ -97,8 +113,7 @@ if (!defined('TBV2_REDSYS_URL_OK')) define('TBV2_REDSYS_URL_OK', 'https://tramit
 if (!defined('TBV2_REDSYS_URL_KO')) define('TBV2_REDSYS_URL_KO', 'https://tramitfy.es/transferencia-propiedad-v2/');
 if (!defined('TBV2_REDSYS_URL_NOTIFICATION')) define('TBV2_REDSYS_URL_NOTIFICATION', 'https://tramitfy.org/api/temporal/confirm');
 
-// Asignar URL según modo
-$tbv2_redsys_url = (TBV2_REDSYS_MODE === 'test') ? TBV2_REDSYS_URL_TEST : TBV2_REDSYS_URL_LIVE;
+// MOVIDO DENTRO DE FUNCIÓN - NO ejecutar globalmente
 
 /**
  * Carga datos desde archivo CSV (función simplificada)
@@ -195,7 +210,8 @@ function tbv2_redsys_generate_signature($data) {
  * Crea formulario de pago Redsys
  */
 function tbv2_redsys_create_payment_form($order_data) {
- global $tbv2_redsys_url;
+ // Asignar URL según modo - movido dentro de la función
+ $tbv2_redsys_url = (TBV2_REDSYS_MODE === 'test') ? TBV2_REDSYS_URL_TEST : TBV2_REDSYS_URL_LIVE;
  
  // CRITICAL FIX V2: Usar valores exactos sin modificación
  // Basado en documentación oficial y formato que funciona
@@ -210,8 +226,8 @@ function tbv2_redsys_create_payment_form($order_data) {
  'Ds_Merchant_MerchantURL' => TBV2_REDSYS_URL_NOTIFICATION,
  'Ds_Merchant_UrlOK' => TBV2_REDSYS_URL_OK,
  'Ds_Merchant_UrlKO' => TBV2_REDSYS_URL_KO,
- 'Ds_Merchant_MerchantName' => 'Tramitfy',
- 'Ds_Merchant_ProductDescription' => 'Transferencia Embarcación',
+ 'Ds_Merchant_MerchantName' => 'Tramitfy Test',
+ 'Ds_Merchant_ProductDescription' => 'Test TPV', // EXACTO como test dummy
  'Ds_Merchant_ConsumerLanguage' => '001' // Español
  ];
  
@@ -644,6 +660,7 @@ function tbv2_render_form() {
   return '<!-- TBV2 Form: No autorizado en esta página -->'; // Return silencioso sin scripts
  }
  
+ global $tbv2_stripe_public_key;
  $datos_csv = tbv2_cargar_datos_csv();
  
  ob_start();
@@ -860,14 +877,14 @@ function tbv2_render_form() {
  <div class="form-compact-row">
  <div class="form-group">
  <label for="customer_email">Correo Electrónico</label>
- <input type="text" id="customer_email" name="customer_email" required />
+ <input type="email" id="customer_email" name="customer_email" required />
  <span class="input-hint">Recibirás notificaciones del trámite</span>
  </div>
 
  <div class="form-group">
  <label for="customer_phone">Teléfono</label>
- <input type="text" id="customer_phone" name="customer_phone" required />
- <span class="input-hint">Te contactaremos por WhatsApp</span>
+ <input type="tel" id="customer_phone" name="customer_phone" required />
+ <span class="input-hint">Para contactarte si es necesario</span>
  </div>
  </div>
 
@@ -1017,13 +1034,13 @@ function tbv2_render_form() {
  <div class="upload-item">
  <label for="upload-hoja-asiento" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
  <div>
- <strong> Registro Barco</strong>
- <small style="display: block;">Registro Marítimo, Permiso de Navegación o Certificado de Inscripción (uno de estos)</small>
+ <strong> Registro Marítimo</strong>
+ <small style="display: block;">Documento que acredita la propiedad de la embarcación</small>
  </div>
  <span class="view-example" data-doc="registro-maritimo" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
  </label>
  <div class="upload-wrapper">
- <input type="file" id="upload-hoja-asiento" name="upload_hoja_asiento[]" multiple required accept=".pdf,.jpg,.jpeg,.png" onchange="debugMobileFileUpload(this, 'hoja-asiento')">
+ <input type="file" id="upload-hoja-asiento" name="upload_hoja_asiento[]" multiple required accept="image/*,.pdf">
  <div class="upload-button upload-button-responsive">
  <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivo</span>
  <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
@@ -1043,7 +1060,7 @@ function tbv2_render_form() {
  <span class="view-example" data-doc="dni-comprador" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
  </label>
  <div class="upload-wrapper">
- <input type="file" id="upload-dni-comprador" name="upload_dni_comprador[]" multiple required accept=".pdf,.jpg,.jpeg,.png" onchange="debugMobileFileUpload(this, 'dni-comprador')">
+ <input type="file" id="upload-dni-comprador" name="upload_dni_comprador[]" multiple required accept="image/*,.pdf">
  <div class="upload-button upload-button-responsive">
  <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivo</span>
  <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
@@ -1063,7 +1080,7 @@ function tbv2_render_form() {
  <span class="view-example" data-doc="dni-vendedor" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
  </label>
  <div class="upload-wrapper">
- <input type="file" id="upload-dni-vendedor" name="upload_dni_vendedor[]" multiple required accept=".pdf,.jpg,.jpeg,.png" onchange="debugMobileFileUpload(this, 'dni-vendedor')">
+ <input type="file" id="upload-dni-vendedor" name="upload_dni_vendedor[]" multiple required accept="image/*,.pdf">
  <div class="upload-button upload-button-responsive">
  <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivo</span>
  <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
@@ -1086,7 +1103,7 @@ function tbv2_render_form() {
  <span class="view-example" data-doc="contrato-compraventa" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
  </label>
  <div class="upload-wrapper">
- <input type="file" id="upload-contrato-compraventa" name="upload_contrato_compraventa[]" multiple required accept=".pdf,.jpg,.jpeg,.png" onchange="debugMobileFileUpload(this, 'contrato-compraventa')">
+ <input type="file" id="upload-contrato-compraventa" name="upload_contrato_compraventa[]" multiple required accept="image/*,.pdf">
  <div class="upload-button upload-button-responsive">
  <span class="desktop-text"><i class="fa-solid fa-upload"></i> Seleccionar archivo</span>
  <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
@@ -1107,7 +1124,7 @@ function tbv2_render_form() {
  <span class="view-example" data-doc="modelo-620" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
  </label>
  <div class="upload-wrapper">
- <input type="file" id="upload-modelo-620" name="upload_modelo_620[]" multiple accept=".pdf,.jpg,.jpeg,.png" onchange="debugMobileFileUpload(this, 'modelo-620')">
+ <input type="file" id="upload-modelo-620" name="upload_modelo_620[]" multiple accept="image/*,.pdf">
  <div class="upload-button upload-button-responsive">
  <span class="desktop-text"><i class="fa-solid fa-upload"></i> Adjuntar Modelo 620</span>
  <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
@@ -1273,6 +1290,7 @@ function tbv2_render_form() {
  <script>
  // Datos CSV para JavaScript
  const tbv2DatosCsv = <?php echo json_encode($datos_csv); ?>;
+ const tbv2StripePublicKey = '<?php echo esc_js($tbv2_stripe_public_key); ?>';
  </script>
  <?php tbv2_render_scripts(); ?>
  
@@ -3253,6 +3271,14 @@ function tbv2_render_styles() {
  /* ============================
  PAYMENT PAGE STYLES
  ============================ */
+ .stripe-spinner {
+ border: 4px solid #f3f3f3;
+ border-top: 4px solid #016d86;
+ border-radius: 50%;
+ width: 40px;
+ height: 40px;
+ display: inline-block;
+ }
 
 
  #submit-payment {
@@ -3367,7 +3393,7 @@ function tbv2_render_styles() {
  box-shadow: 0 2px 4px rgba(1, 109, 134, 0.1);
  }
 
- /* Payment Elements Styling */
+ /* Stripe Elements Styling */
  #payment-element {
  border-radius: 8px;
  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
@@ -3846,7 +3872,7 @@ function tbv2_render_scripts() {
  case 'page-precio':
  content = `
  <div style="text-align: center;">
- <h3 style="color: white; font-size: 20px; font-weight: 600; margin-bottom: 15px;">
+ <h3 style="color: white; font-size: 18px; font-weight: 600; margin-bottom: 15px;">
  Información del ITP
  </h3>
  <p style="color: rgba(255,255,255,0.95); font-size: 14px; line-height: 1.5; margin-bottom: 20px;">
@@ -3880,7 +3906,7 @@ function tbv2_render_scripts() {
  ¿Qué incluimos?
  </div>
  <p style="color: rgba(255,255,255,0.85); font-size: 13px; line-height: 1.4; margin: 0;">
- Gestión completa en DGMM, tasas Capitanía Marítima, IVA y Gestión del ITP
+ Gestión completa en DGMM, tasas oficiales e IVA
  </p>
  </div>
  
@@ -3890,7 +3916,7 @@ function tbv2_render_scripts() {
  Cálculo Automático
  </div>
  <p style="color: rgba(255,255,255,0.85); font-size: 13px; line-height: 1.4; margin: 0;">
- ITP calculado automáticamente según precio, vehículo y comunidad autónoma
+ ITP calculado automáticamente según precio y región
  </p>
  </div>
  </div>
@@ -4065,7 +4091,7 @@ function tbv2_render_scripts() {
  
  return `
  <div style="background: rgba(255,255,255,0.1); padding: 18px; border-radius: 8px;">
- <h3 style="color: white; font-size: 20px; margin: 0 0 16px 0; font-weight: 600; line-height: 1.3;">
+ <h3 style="color: white; font-size: 16px; margin: 0 0 16px 0; font-weight: 600; line-height: 1.3;">
  Información Personal<br>y de Contacto
  </h3>
  
@@ -4075,10 +4101,10 @@ function tbv2_render_scripts() {
  <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Datos protegidos según RGPD</span>
  </div>
  <div style="display: flex; align-items: center; margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; border-left: 3px solid rgba(255,255,255,0.6);">
- <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Uso exclusivo para su presentación ante Capitanía Marítima y Haciendas Autonómicas</span>
+ <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Uso exclusivo para el trámite</span>
  </div>
  <div style="display: flex; align-items: center; margin-bottom: 8px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; border-left: 3px solid rgba(255,255,255,0.6);">
- <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Comunicación vía email/WhatsApp</span>
+ <span style="color: rgba(255,255,255,0.9); font-size: 12px;">Comunicación vía email/teléfono</span>
  </div>
  </div>
  
@@ -4090,7 +4116,7 @@ function tbv2_render_scripts() {
  
  return `
  <div style="padding: 0;">
- <h3 style="color: white; font-size: 20px; margin: 0 0 16px 0; font-weight: 600; line-height: 1.2;">
+ <h3 style="color: white; font-size: 24px; margin: 0 0 16px 0; font-weight: 600; line-height: 1.2;">
  Documentación Necesaria
  </h3>
  
@@ -4116,12 +4142,12 @@ function tbv2_render_scripts() {
  
  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
  <i class="fas fa-file-alt" style="color: #10b981; font-size: 14px;"></i>
- <span style="color: rgba(255,255,255,0.85); font-size: 12px;">Registro Marítimo, Permiso de Navegación o Certificado de Inscripción (uno de estos)</span>
+ <span style="color: rgba(255,255,255,0.85); font-size: 12px;">Registro marítimo</span>
  </div>
  
  <div style="display: flex; align-items: center; gap: 10px;">
  <i class="fas fa-file-alt" style="color: #10b981; font-size: 14px;"></i>
- <span style="color: rgba(255,255,255,0.85); font-size: 12px;">Contrato Compraventa</span>
+ <span style="color: rgba(255,255,255,0.85); font-size: 12px;">Hoja de asiento o tarjeta náutica</span>
  </div>
  </div>
  
@@ -4185,8 +4211,8 @@ function tbv2_render_scripts() {
  
  return `
  <div style="text-align: center;">
- <h3 style="color: white; font-size: 22px; font-weight: 600; margin-bottom: 15px;">
- Resumen de pago
+ <h3 style="color: white; font-size: 18px; font-weight: 600; margin-bottom: 15px;">
+ Tramitación para: Tramitfy S.L.
  </h3>
  
  <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 16px; margin-bottom: 20px; text-align: left;">
@@ -5151,10 +5177,19 @@ function tbv2_render_scripts() {
  this.showPaymentElements();
  },
 
- // Payment system: Redsys only
+ initializeStripe() {
+ const stripe = Stripe(tbv2StripePublicKey);
+ 
+ // Show loading state
+ const stripeLoading = document.getElementById('stripe-loading');
+ const paymentElement = document.getElementById('payment-element');
+ const termsContainer = document.querySelector('.payment-terms');
+ const securityBadges = document.querySelector('.payment-security');
+ const submitButton = document.getElementById('submit-payment');
  
  // Simulate loading for better UX
  setTimeout(() => {
+ if (stripeLoading) stripeLoading.style.display = 'none';
  this.showPaymentElements();
  }, 1500);
  },
@@ -5185,13 +5220,13 @@ function tbv2_render_scripts() {
  }
  });
  
- // Show payment placeholder
+ // Show a placeholder for Stripe Elements
  const paymentElement = document.getElementById('payment-element');
  if (paymentElement) {
  paymentElement.innerHTML = `
  <div style="padding: 20px; border: 2px dashed #e5e7eb; border-radius: 8px; text-align: center; background: #f9fafb;">
- <i class="fa-solid fa-credit-card" style="font-size: 24px; color: #016d86; margin-bottom: 8px;"></i>
- <div style="color: #6b7280; font-size: 14px;">Sistema de pago seguro</div>
+ <i class="fa-brands fa-stripe" style="font-size: 24px; color: #635bff; margin-bottom: 8px;"></i>
+ <div style="color: #6b7280; font-size: 14px;">Elementos de pago Stripe</div>
  <div style="color: #9ca3af; font-size: 12px; margin-top: 4px;">
  En producción: Formulario de tarjeta de crédito
  </div>
@@ -5222,10 +5257,8 @@ function tbv2_render_scripts() {
  console.log(' Datos del formulario:', formData);
  
  // Order ID se genera en frontend compatible con Redsys - FIX CRÍTICO
- // Formato: timestamp en segundos (10 dígitos) + 2 dígitos aleatorios = 12 total
- const timestamp = Math.floor(Date.now() / 1000);
- const random = Math.floor(Math.random() * 100).toString().padStart(2, '0');
- const orderId = timestamp.toString() + random;
+ // SINCRONIZADO: Usar timestamp completo para coincidir con sistema temporal
+ const orderId = Date.now().toString();
  
  // VALIDACIÓN CRÍTICA: Verificar OrderID cumple reglas Redsys
  console.log(`🆔 OrderID generado: ${orderId} (${orderId.length} caracteres)`);
@@ -5610,8 +5643,8 @@ function tbv2_render_scripts() {
  }
  
  // Verificar que el base64 es válido
- if (!base64) {
- throw new Error('Base64 resultado vacío');
+ if (!base64.startsWith('data:')) {
+ throw new Error('Base64 no tiene formato correcto');
  }
  
  console.log(` Procesando ${category}: ${file.name} (${(file.size/1024).toFixed(1)} KB)`);
@@ -5778,27 +5811,6 @@ function tbv2_render_scripts() {
  size: file?.size,
  constructor: file?.constructor?.name
  });
-
- // VALIDACIÓN FORMATOS MÓVILES PROBLEMÁTICOS
- const fileName = file?.name || '';
- const fileType = file?.type || '';
- const fileExtension = fileName.toLowerCase().split('.').pop();
- 
- // Rechazar formatos problemáticos en móviles
- const problematicFormats = ['heic', 'heif', 'avif', 'webp'];
- if (problematicFormats.includes(fileExtension)) {
- console.error(` ❌ Formato ${fileExtension} no soportado en móviles`);
- reject(new Error(`Formato .${fileExtension} no compatible. Use .jpg, .png o .pdf`));
- return;
- }
- 
- // Validar MIME types problemáticos
- const problematicMimes = ['image/heic', 'image/heif', 'image/avif', 'image/webp'];
- if (problematicMimes.includes(fileType)) {
- console.error(` ❌ MIME type ${fileType} no soportado en móviles`);
- reject(new Error('Formato de imagen no compatible. Use JPG, PNG o PDF'));
- return;
- }
  
  // Validar que el archivo es válido
  if (!file || typeof file.size === 'undefined') {
@@ -5816,24 +5828,7 @@ function tbv2_render_scripts() {
  return;
  }
  
- // AUTO-COMPRESIÓN PARA FOTOS MÓVILES GRANDES
- if (file.type.startsWith('image/') && file.size > 1024 * 1024) { // Más de 1MB
- console.log(` 🔧 FOTO GRANDE: ${file.name} (${(file.size/1024/1024).toFixed(1)}MB) - Comprimiendo...`);
- 
- // Usar función global de compresión (definida más abajo)
- if (typeof compressImageForMobile === 'function') {
- compressImageForMobile(file).then(compressedFile => {
- console.log(` ✅ COMPRIMIDA: ${(file.size/1024/1024).toFixed(1)}MB → ${(compressedFile.size/1024/1024).toFixed(1)}MB`);
- // Procesar archivo comprimido 
- TramitfyFiles.fileToBase64(compressedFile).then(resolve).catch(reject);
- }).catch(error => {
- console.error(' ❌ Error comprimiendo:', error);
- reject(new Error('Error comprimiendo: ' + error.message));
- });
- return; // Salir, la recursión maneja el resto
- }
- }
- 
+ // SIN LÍMITE DE TAMAÑO - permitir archivos grandes para PDFs móviles
  console.log(` Archivo aceptado: ${file.name} (${(file.size/1024/1024).toFixed(1)}MB)`);
  
  // DEBUG SIMPLE DEL ARCHIVO
@@ -5870,19 +5865,12 @@ function tbv2_render_scripts() {
  return;
  }
  
- // VALIDACIÓN MÓVIL ROBUSTA - Permisiva para múltiples formatos
+ // Verificar formato Data URL pero ser permisivo con PDFs
  if (!result.startsWith('data:')) {
- // En móviles algunos archivos pueden no seguir el patrón exacto
- console.warn(` ⚠️ Formato no estándar detectado para: ${file.name}`);
- console.warn(` Inicio del resultado: ${result.substring(0, 100)}`);
- 
- // Intentar recuperar si parece un Data URL válido
- if (result.includes(',') && (result.includes('base64,') || result.includes('data:'))) {
- console.log(` ✅ Recuperando formato no estándar para: ${file.name}`);
- } else {
- reject(new Error('Formato de archivo no compatible con este dispositivo'));
+ console.error(` Resultado no es Data URL válido para: ${file.name}`);
+ console.error(` Inicio del resultado: ${result.substring(0, 100)}`);
+ reject(new Error('Resultado no es Data URL válido'));
  return;
- }
  }
  
  // LOG ÉXITO CON DETALLES
@@ -6154,7 +6142,7 @@ function tbv2_render_scripts() {
  action: 'tbv2_create_redsys_payment',
  nonce: '<?php echo wp_create_nonce('tbv2_nonce'); ?>',
  formData: JSON.stringify(formData),
- orderId: 'TBV2-' + Date.now()
+ orderId: Date.now().toString() // SINCRONIZADO: Sin prefijo para coincidir
  })
  });
  
@@ -7112,6 +7100,11 @@ function tbv2_bypass_wp_security_filters() {
 
 // Configurar al cargar el plugin - PROTEGIDO
 add_action('init', function() {
+ // SKIP EN WP-ADMIN PARA EVITAR CONFLICTOS
+ if (is_admin() && !defined('DOING_AJAX')) {
+  return; // No ejecutar en wp-admin directo
+ }
+ 
  // 🛡️ PROTECCIÓN NUCLEAR: Solo en páginas autorizadas
  if (!tbv2_is_authorized_page()) {
   return; // Bloquear configuración en páginas no autorizadas
@@ -7316,22 +7309,17 @@ function tbv2_handle_create_redsys_payment() {
  'attachments' => [] // Se llenará después con las URLs de archivos
  ];
  
- // GENERAR Order ID ÚNICO para Redsys (máximo 12 caracteres, solo números/letras)
- // Usar timestamp + random para garantizar unicidad
- $timestamp = time();
- $random = rand(100, 999);
- $orderIdFinal = substr($timestamp . $random, -12); // Tomar últimos 12 caracteres
+ // USAR EL ORDER ID QUE VIENE DESDE JAVASCRIPT (ya sincronizado con temporal)
+ // El OrderID viene en $_POST['orderId'] desde JavaScript
+ $orderIdFinal = isset($_POST['orderId']) ? sanitize_text_field($_POST['orderId']) : time() . rand(100, 999);
  
- // Asegurarse de que es único verificando si ya existe el transient
- $maxAttempts = 10;
- $attempts = 0;
- while (get_transient('tbv2_transfer_' . $orderIdFinal) !== false && $attempts < $maxAttempts) {
- $random = rand(100, 999);
- $orderIdFinal = substr($timestamp . $random, -12);
- $attempts++;
+ // Truncar a 12 caracteres si es necesario para Redsys (pero mantener consistencia)
+ if (strlen($orderIdFinal) > 12) {
+ // Tomar los últimos 12 dígitos para mantener unicidad
+ $orderIdFinal = substr($orderIdFinal, -12);
  }
  
- error_log('TBV2: Order ID generado: ' . $orderIdFinal);
+ error_log('TBV2: Order ID recibido/usado: ' . $orderIdFinal);
  
  // Guardar datos por 1 hora (86400 segundos) - usar el Order ID real
  set_transient('tbv2_transfer_' . $orderIdFinal, $transientData, 86400);
@@ -9057,13 +9045,11 @@ const TBV2_TEMPORAL = {
  },
  
  generateOrderId() {
- // Generar OrderID compatible con Redsys 
- // Formato: timestamp en segundos (10 dígitos) + 2 dígitos aleatorios = 12 total
- const timestamp = Math.floor(Date.now() / 1000); // Segundos desde epoch
- const random = Math.floor(Math.random() * 100).toString().padStart(2, '0');
- const orderId = timestamp.toString() + random;
+ // USAR EL MISMO FORMATO QUE EL SISTEMA PRINCIPAL
+ // Formato: timestamp completo en milisegundos (compatible con Date.now())
+ const orderId = Date.now().toString();
  
- console.log('🆔 OrderID generado para Redsys:', orderId, '(', orderId.length, 'caracteres)');
+ console.log('🆔 OrderID generado (sincronizado con sistema principal):', orderId);
  return orderId;
  },
  
@@ -9300,96 +9286,12 @@ const TBV2_TEMPORAL = {
  return extractedFiles;
  },
  
- // Convertir archivo a base64 - VERSIÓN ROBUSTA MÓVIL
+ // Convertir archivo a base64
  fileToBase64(file) {
  return new Promise((resolve, reject) => {
- // VALIDACIÓN FORMATOS MÓVILES PROBLEMÁTICOS
- const fileName = file?.name || '';
- const fileType = file?.type || '';
- const fileExtension = fileName.toLowerCase().split('.').pop();
- 
- // Rechazar formatos problemáticos
- const problematicFormats = ['heic', 'heif', 'avif', 'webp'];
- if (problematicFormats.includes(fileExtension)) {
- console.error(`❌ Formato ${fileExtension} no soportado`);
- reject(new Error(`Formato .${fileExtension} no compatible. Use .jpg, .png o .pdf`));
- return;
- }
- 
- // Validar MIME types problemáticos
- const problematicMimes = ['image/heic', 'image/heif', 'image/avif', 'image/webp'];
- if (problematicMimes.includes(fileType)) {
- console.error(`❌ MIME type ${fileType} no soportado`);
- reject(new Error('Formato no compatible. Use JPG, PNG o PDF'));
- return;
- }
-
- // Validar archivo válido
- if (!file || typeof file.size === 'undefined') {
- reject(new Error('Archivo inválido'));
- return;
- }
-
- if (file.size === 0) {
- reject(new Error('Archivo vacío'));
- return;
- }
-
- // AUTO-COMPRESIÓN PARA FOTOS MÓVILES GRANDES
- if (file.type.startsWith('image/') && file.size > 1024 * 1024) { // Más de 1MB
- console.log(`🔧 SEGUNDA FUNCIÓN - Foto grande: ${file.name} (${(file.size/1024/1024).toFixed(1)}MB)`);
- 
- if (typeof compressImageForMobile === 'function') {
- compressImageForMobile(file).then(compressedFile => {
- console.log(`✅ SEGUNDA FUNCIÓN - Comprimida: ${(compressedFile.size/1024/1024).toFixed(1)}MB`);
- // Procesar recursivamente
- TBV2_TEMPORAL.fileToBase64(compressedFile).then(resolve).catch(reject);
- }).catch(error => {
- reject(new Error('Error comprimiendo: ' + error.message));
- });
- return;
- }
- }
-
  const reader = new FileReader();
- 
- const timeout = setTimeout(() => {
- reader.abort();
- reject(new Error('Timeout leyendo archivo'));
- }, 30000);
-
- reader.onload = (event) => {
- clearTimeout(timeout);
- const result = event.target.result;
-
- if (!result || typeof result !== 'string' || result.length === 0) {
- reject(new Error('Resultado FileReader vacío'));
- return;
- }
-
- // VALIDACIÓN MÓVIL PERMISIVA
- if (!result.startsWith('data:')) {
- if (result.includes(',') && (result.includes('base64,') || result.includes('data:'))) {
- console.log('✅ Recuperando formato no estándar');
- } else {
- reject(new Error('Formato no compatible con este dispositivo'));
- return;
- }
- }
-
- resolve(result);
- };
-
- reader.onerror = () => {
- clearTimeout(timeout);
- reject(new Error('Error leyendo archivo'));
- };
-
- reader.onabort = () => {
- clearTimeout(timeout);
- reject(new Error('Lectura abortada'));
- };
-
+ reader.onload = () => resolve(reader.result);
+ reader.onerror = error => reject(error);
  reader.readAsDataURL(file);
  });
  },
@@ -9517,216 +9419,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 window.TBV2_TEMPORAL_SYSTEM = TBV2_TEMPORAL;
-
-// =====================================================
-// FUNCIÓN DEBUG ESPECÍFICA PARA CHROME MÓVIL
-// =====================================================
-
-function debugMobileFileUpload(input, fieldName) {
-	console.log('🔍 DEBUG MÓVIL - Inicio upload:', fieldName);
-	
-	if (!input || !input.files || input.files.length === 0) {
-		console.warn('⚠️ DEBUG MÓVIL - No files selected');
-		return;
-	}
-	
-	Array.from(input.files).forEach((file, index) => {
-		console.log(`📁 DEBUG MÓVIL - Archivo ${index + 1}/${input.files.length}:`, {
-			name: file.name,
-			size: file.size,
-			type: file.type,
-			lastModified: file.lastModified,
-			constructor: file.constructor.name
-		});
-		
-		// Detectar formatos problemáticos INMEDIATAMENTE
-		const fileName = file.name.toLowerCase();
-		const problematicExtensions = ['heic', 'heif', 'avif', 'webp'];
-		const fileExtension = fileName.split('.').pop();
-		
-		if (problematicExtensions.includes(fileExtension)) {
-			console.error('❌ DEBUG MÓVIL - Formato problemático detectado:', fileExtension);
-			alert(`Error: Formato .${fileExtension} no compatible.\nUse .jpg, .png o .pdf`);
-			input.value = ''; // Limpiar input
-			return;
-		}
-		
-		// AUTO-COMPRESIÓN PARA FOTOS MÓVILES
-		if (file.type.startsWith('image/') && file.size > 1024 * 1024) { // Más de 1MB
-			console.log(`🔧 DEBUG MÓVIL - Foto grande detectada (${(file.size/1024/1024).toFixed(1)}MB), comprimiendo...`);
-			
-			// Comprimir imagen automáticamente
-			compressImageForMobile(file).then(compressedFile => {
-				console.log(`✅ DEBUG MÓVIL - Foto comprimida: ${file.name}`);
-				console.log(`📊 Tamaño original: ${(file.size/1024/1024).toFixed(1)}MB → Comprimido: ${(compressedFile.size/1024/1024).toFixed(1)}MB`);
-				
-				// Test FileReader con archivo comprimido
-				testFileReader(compressedFile, file.name + ' (comprimido)');
-				
-			}).catch(error => {
-				console.error('❌ DEBUG MÓVIL - Error comprimiendo:', error);
-				alert(`Error procesando imagen: ${error.message}`);
-			});
-		} else {
-			// Test FileReader normal para archivos pequeños
-			testFileReader(file, file.name);
-		}
-	});
-}
-
-// Función para testear FileReader
-function testFileReader(file, fileName) {
-	const reader = new FileReader();
-	
-	reader.onerror = (e) => {
-		console.error('❌ DEBUG MÓVIL - Error FileReader:', e);
-		alert(`Error leyendo archivo: ${fileName}`);
-	};
-	
-	reader.onload = (e) => {
-		const result = e.target.result;
-		console.log(`✅ DEBUG MÓVIL - FileReader OK para ${fileName}:`, {
-			resultLength: result?.length || 0,
-			startsWithData: result?.startsWith('data:'),
-			firstChars: result?.substring(0, 50)
-		});
-		
-		// Validación específica para Chrome móvil
-		if (!result) {
-			console.error('❌ DEBUG MÓVIL - Resultado vacío');
-			alert(`Error: ${fileName} no se pudo leer correctamente`);
-			return;
-		}
-		
-		if (!result.startsWith('data:')) {
-			console.error('❌ DEBUG MÓVIL - Formato Data URL inválido');
-			console.error('Inicio del resultado:', result.substring(0, 100));
-			alert(`Error: ${fileName} - formato no válido para este navegador`);
-			return;
-		}
-		
-		console.log(`🎉 DEBUG MÓVIL - ${fileName} procesado exitosamente!`);
-	};
-	
-	// Ejecutar test
-	try {
-		reader.readAsDataURL(file);
-	} catch (error) {
-		console.error('❌ DEBUG MÓVIL - Exception en readAsDataURL:', error);
-		alert(`Error al leer ${fileName}: ${error.message}`);
-	}
-}
-
-// FUNCIÓN DE COMPRESIÓN AUTOMÁTICA PARA FOTOS MÓVILES
-function compressImageForMobile(file) {
-	return new Promise((resolve, reject) => {
-		// Límites móviles seguros
-		const MAX_WIDTH = 1200;
-		const MAX_HEIGHT = 1200; 
-		const MAX_SIZE_MB = 0.8; // 800KB máximo
-		const QUALITY = 0.8; // 80% calidad
-		
-		// Crear canvas para redimensionar
-		const canvas = document.createElement('canvas');
-		const ctx = canvas.getContext('2d');
-		const img = new Image();
-		
-		img.onload = function() {
-			// Calcular nuevas dimensiones
-			let { width, height } = img;
-			
-			if (width > MAX_WIDTH) {
-				height = (height * MAX_WIDTH) / width;
-				width = MAX_WIDTH;
-			}
-			
-			if (height > MAX_HEIGHT) {
-				width = (width * MAX_HEIGHT) / height;
-				height = MAX_HEIGHT;
-			}
-			
-			// Configurar canvas
-			canvas.width = width;
-			canvas.height = height;
-			
-			// Dibujar imagen redimensionada
-			ctx.drawImage(img, 0, 0, width, height);
-			
-			// Convertir a blob comprimido
-			canvas.toBlob((blob) => {
-				if (!blob) {
-					reject(new Error('Error generando imagen comprimida'));
-					return;
-				}
-				
-				// Crear File object desde blob
-				const compressedFile = new File([blob], file.name, {
-					type: 'image/jpeg', // Forzar JPEG para compatibilidad
-					lastModified: Date.now()
-				});
-				
-				resolve(compressedFile);
-				
-			}, 'image/jpeg', QUALITY);
-		};
-		
-		img.onerror = () => {
-			reject(new Error('Error cargando imagen para comprimir'));
-		};
-		
-		// Cargar imagen original
-		const reader = new FileReader();
-		reader.onload = (e) => img.src = e.target.result;
-		reader.onerror = () => reject(new Error('Error leyendo imagen original'));
-		reader.readAsDataURL(file);
-	});
-}
-
-// Hacer funciones globales
-window.debugMobileFileUpload = debugMobileFileUpload;
-window.compressImageForMobile = compressImageForMobile;
-
-// =====================================================
-// INTERCEPTOR DE ERRORES ESPECÍFICO PARA CHROME MÓVIL
-// =====================================================
-
-// Interceptar errores de JavaScript
-window.addEventListener('error', function(e) {
-	const errorMsg = e.message || '';
-	if (errorMsg.includes('string did not match') || errorMsg.includes('expected pattern')) {
-		console.error('🚨 INTERCEPTED ERROR - Chrome Móvil Pattern Error:', {
-			message: e.message,
-			filename: e.filename,
-			lineno: e.lineno,
-			colno: e.colno,
-			error: e.error,
-			stack: e.error?.stack,
-			timestamp: new Date().toISOString(),
-			userAgent: navigator.userAgent
-		});
-		
-		// Alerta para debugging en vivo
-		alert(`ERROR INTERCEPTADO:\n${e.message}\nLínea: ${e.lineno}\nRevisa consola para detalles`);
-	}
-});
-
-// Interceptar rechazos de Promise no manejados
-window.addEventListener('unhandledrejection', function(e) {
-	const reason = e.reason || '';
-	const reasonStr = typeof reason === 'string' ? reason : (reason.message || reason.toString());
-	
-	if (reasonStr.includes('string did not match') || reasonStr.includes('expected pattern')) {
-		console.error('🚨 INTERCEPTED PROMISE REJECTION - Chrome Móvil Pattern Error:', {
-			reason: e.reason,
-			promise: e.promise,
-			timestamp: new Date().toISOString(),
-			userAgent: navigator.userAgent
-		});
-		
-		// Alerta para debugging en vivo
-		alert(`PROMISE ERROR INTERCEPTADO:\n${reasonStr}\nRevisa consola para detalles`);
-	}
-});
 
 console.log(' TBV2 TEMPORAL - Sistema de interceptor cargado');
 </script>

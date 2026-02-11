@@ -64,7 +64,7 @@ function ttv2_is_authorized_page() {
 // CONSTANTES DE CONFIGURACIÓN REDSYS TTV2
 // =====================================================
 
-if (!defined('TTV2_REDSYS_MODE')) define('TTV2_REDSYS_MODE', 'test');
+if (!defined('TTV2_REDSYS_MODE')) define('TTV2_REDSYS_MODE', 'live');
 if (!defined('TTV2_REDSYS_MERCHANT_CODE')) define('TTV2_REDSYS_MERCHANT_CODE', '363391103');
 if (!defined('TTV2_REDSYS_TERMINAL')) define('TTV2_REDSYS_TERMINAL', '1');
 if (!defined('TTV2_REDSYS_CURRENCY')) define('TTV2_REDSYS_CURRENCY', '978');

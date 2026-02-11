@@ -2,29 +2,74 @@
 // Asegurarse de que el archivo no sea accedido directamente
 defined('ABSPATH') || exit;
 
-// Cargar Stripe library ANTES de las funciones (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
-require_once(get_template_directory() . '/vendor/autoload.php');
+// =====================================================
+// CONFIGURACIÓN REDSYS - RENOVACIÓN PERMISO NAVEGACIÓN
+// =====================================================
+if (!defined('NPN_REDSYS_MODE')) define('NPN_REDSYS_MODE', 'live');
+if (!defined('NPN_REDSYS_MERCHANT_CODE')) define('NPN_REDSYS_MERCHANT_CODE', '363391103');
+if (!defined('NPN_REDSYS_TERMINAL')) define('NPN_REDSYS_TERMINAL', '1');
+if (!defined('NPN_REDSYS_CURRENCY')) define('NPN_REDSYS_CURRENCY', '978');
 
-// Configuración de Stripe AL NIVEL GLOBAL (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
-define('NAVIGATION_PERMIT_STRIPE_MODE', 'live'); // 'test' o 'live' - MODO TEST MIENTRAS SE CONFIGURAN CLAVES
+if (!defined('NPN_REDSYS_SECRET_KEY')) {
+    if (NPN_REDSYS_MODE === 'test') {
+        define('NPN_REDSYS_SECRET_KEY', 'sq7HjrUOBfKmC576ILgskD5srU870gJ7');
+    } else {
+        define('NPN_REDSYS_SECRET_KEY', 'ERDGGMADKbhFIngyRLnW6KrxEuKnjq9p');
+    }
+}
 
-define('NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY', 'pk_test_51SBOq2GXJ2PkUN8kmrKUUjCLbvY3v8sAsgr6rNtg8zHyUZjB6pFrB7Vz3Gm0l2Wm7y5xVoMap2NY8utwgdJOogNQ000qBYIX5V');
-define('NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY', 'sk_test_51SBOq2GXJ2PkUN8kFlbLBQU3pd1kTVpWsSooQzdPMcqC8jKFSykeptf5XKOtbBzwMT4yjVHM0AbHUFoncbWIe4V600wkzJwpXC');
-
-define('NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY', 'pk_live_51QHhtNGXGHYLV5CXu3P7PrAFezBnDuf0JsZzb2AxjSsV0okn4y19VOMIjW0NUOLpaFdI3CCRhiC4fvNBDDbPhiW100KkF6Uo2x');
-define('NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY', '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');
+if (!defined('NPN_REDSYS_SIGNATURE_VERSION')) define('NPN_REDSYS_SIGNATURE_VERSION', 'HMAC_SHA256_V1');
+if (!defined('NPN_REDSYS_URL_TEST')) define('NPN_REDSYS_URL_TEST', 'https://sis-t.redsys.es:25443/sis/realizarPago');
+if (!defined('NPN_REDSYS_URL_LIVE')) define('NPN_REDSYS_URL_LIVE', 'https://sis.redsys.es/sis/realizarPago');
+if (!defined('NPN_REDSYS_URL_OK')) define('NPN_REDSYS_URL_OK', 'https://tramitfy.es/pago-completado-renovacion/');
+if (!defined('NPN_REDSYS_URL_KO')) define('NPN_REDSYS_URL_KO', 'https://tramitfy.es/renovacion-permiso-navegacion/');
+if (!defined('NPN_REDSYS_URL_NOTIFICATION')) define('NPN_REDSYS_URL_NOTIFICATION', 'https://tramitfy.org/api/temporal/confirm');
 
 define('NAVIGATION_PERMIT_SERVICE_PRICE', 65.00);
 define('NAVIGATION_PERMIT_TASA_CERTIFICADO', 15.00);
 define('NAVIGATION_PERMIT_TASA_EMISION', 8.00);
 
-// Seleccionar las claves según el modo (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
-if (NAVIGATION_PERMIT_STRIPE_MODE === 'test') {
-    $stripe_public_key = NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY;
-    $stripe_secret_key = NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY;
-} else {
-    $stripe_public_key = NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY;
-    $stripe_secret_key = NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY;
+// =====================================================
+// FUNCIONES CORE REDSYS
+// =====================================================
+function npn_redsys_generate_signature($data) {
+    $password_decoded = base64_decode(NPN_REDSYS_SECRET_KEY);
+    $order_id = $data['Ds_Order'] ?? $data['Ds_Merchant_Order'] ?? '';
+    $l = ceil(strlen($order_id) / 8) * 8;
+    $padded_order_id = $order_id . str_repeat("\0", $l - strlen($order_id));
+    $encryption_key = substr(
+        openssl_encrypt($padded_order_id, 'des-ede3-cbc', $password_decoded, OPENSSL_RAW_DATA, "\0\0\0\0\0\0\0\0"),
+        0, $l
+    );
+    $string_to_sign = base64_encode(json_encode($data));
+    $signature = hash_hmac('sha256', $string_to_sign, $encryption_key, true);
+    return base64_encode($signature);
+}
+
+function npn_redsys_create_payment_form($order_data) {
+    $redsys_url = (NPN_REDSYS_MODE === 'test') ? NPN_REDSYS_URL_TEST : NPN_REDSYS_URL_LIVE;
+    $params = [
+        'Ds_Merchant_MerchantCode' => NPN_REDSYS_MERCHANT_CODE,
+        'Ds_Merchant_Terminal' => NPN_REDSYS_TERMINAL,
+        'Ds_Merchant_Order' => $order_data['order_id'],
+        'Ds_Merchant_Amount' => $order_data['amount_cents'],
+        'Ds_Merchant_Currency' => NPN_REDSYS_CURRENCY,
+        'Ds_Merchant_TransactionType' => '0',
+        'Ds_Merchant_MerchantURL' => NPN_REDSYS_URL_NOTIFICATION,
+        'Ds_Merchant_UrlOK' => NPN_REDSYS_URL_OK,
+        'Ds_Merchant_UrlKO' => NPN_REDSYS_URL_KO,
+        'Ds_Merchant_MerchantName' => 'Tramitfy',
+        'Ds_Merchant_ProductDescription' => 'Renovacion Permiso Navegacion',
+        'Ds_Merchant_ConsumerLanguage' => '001'
+    ];
+    $signature = npn_redsys_generate_signature($params);
+    $merchant_parameters = base64_encode(json_encode($params));
+    return [
+        'url' => $redsys_url,
+        'Ds_MerchantParameters' => $merchant_parameters,
+        'Ds_SignatureVersion' => NPN_REDSYS_SIGNATURE_VERSION,
+        'Ds_Signature' => $signature
+    ];
 }
 
 // ==========================================
@@ -35,14 +80,13 @@ add_action('wp_ajax_send_navigation_permit_to_tramitfy', 'send_navigation_permit
 add_action('wp_ajax_nopriv_send_navigation_permit_to_tramitfy', 'send_navigation_permit_to_tramitfy');
 add_action('wp_ajax_send_navigation_permit_emails', 'send_navigation_permit_emails');
 add_action('wp_ajax_nopriv_send_navigation_permit_emails', 'send_navigation_permit_emails');
-add_action('wp_ajax_create_payment_intent_navigation_permit_renewal', 'create_payment_intent_navigation_permit_renewal');
-add_action('wp_ajax_nopriv_create_payment_intent_navigation_permit_renewal', 'create_payment_intent_navigation_permit_renewal');
+add_action('wp_ajax_npn_create_redsys_payment', 'npn_create_redsys_payment');
+add_action('wp_ajax_nopriv_npn_create_redsys_payment', 'npn_create_redsys_payment');
 
 /**
  * Shortcode para el formulario de renovación de permiso de navegación
  */
 function navigation_permit_renewal_form_shortcode() {
-    global $stripe_public_key, $stripe_secret_key;
 
     // Si estamos en el editor de Elementor, devolver un placeholder
     if (defined('ELEMENTOR_VERSION') &&
@@ -57,7 +101,6 @@ function navigation_permit_renewal_form_shortcode() {
     
     // Encolar los scripts y estilos necesarios
     wp_enqueue_style('navigation-permit-renewal-form-style', get_template_directory_uri() . '/style.css', array(), filemtime(get_template_directory() . '/style.css'));
-    wp_enqueue_script('stripe', 'https://js.stripe.com/v3/', array(), null, false);
     wp_enqueue_script('signature-pad', 'https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js', array(), null, false);
 
     // Iniciar el buffering de salida
@@ -1701,28 +1744,22 @@ function navigation_permit_renewal_form_shortcode() {
         </div>
     </div>
 
-    <!-- Modal de pago -->
+    <!-- Formulario oculto para Redsys -->
+    <form id="npn-redsys-form" action="" method="POST" style="display:none;">
+        <input type="hidden" name="Ds_SignatureVersion" id="npn-Ds_SignatureVersion">
+        <input type="hidden" name="Ds_MerchantParameters" id="npn-Ds_MerchantParameters">
+        <input type="hidden" name="Ds_Signature" id="npn-Ds_Signature">
+    </form>
+
+    <!-- Modal de pago (procesando) -->
     <div id="npn-payment-modal" class="npn-payment-modal">
         <div class="npn-payment-modal-content">
-            <span class="npn-close-payment-modal">&times;</span>
-
-            <div id="npn-stripe-container">
-                <!-- Spinner de carga mientras se inicializa -->
-                <div id="npn-stripe-loading">
-                    <div class="npn-stripe-spinner"></div>
-                    <p>Cargando sistema de pago...</p>
-                </div>
-
-                <!-- Contenedor donde se montará el elemento de pago -->
-                <div id="payment-element" class="payment-element-container"></div>
-
-                <!-- Mensajes de estado del pago -->
+            <div id="npn-payment-processing" style="text-align:center; padding:40px;">
+                <div class="npn-stripe-spinner"></div>
+                <p style="margin-top:15px; font-size:16px; color:#333;">Conectando con la pasarela de pago...</p>
+                <p style="margin-top:8px; font-size:13px; color:#666;">Serás redirigido a CaixaBank para completar el pago de forma segura.</p>
                 <div id="npn-payment-message" class="hidden"></div>
             </div>
-
-            <button type="button" id="npn-confirm-payment-btn" class="npn-confirm-payment-btn">
-                <i class="fa-solid fa-check-circle"></i> Confirmar Pago
-            </button>
         </div>
     </div>
 
@@ -1772,12 +1809,11 @@ function navigation_permit_renewal_form_shortcode() {
 
         document.addEventListener('DOMContentLoaded', function() {
             // Variables globales
-            let stripe, elements, clientSecret, signaturePad;
-            
+            let signaturePad;
+
             // 🛡️ PROTECCIÓN ANTI-DUPLICADOS
             let isSubmitting = false;
             let submitController = null;
-            let paymentSucceeded = false; // 🔒 Trackea si el pago ya fue exitoso
             let currentPrice = <?php echo NAVIGATION_PERMIT_SERVICE_PRICE; ?>;
             const basePrice = <?php echo NAVIGATION_PERMIT_SERVICE_PRICE; ?>;
 
@@ -1975,113 +2011,14 @@ function navigation_permit_renewal_form_shortcode() {
                 document.getElementById('sidebar-auth-dni').textContent = dni;
             }
 
-            // Inicializar Stripe en el modal
-            async function initializeStripe() {
-                console.log('💳 Inicializando Stripe...');
-
-                const loadingIndicator = document.getElementById('npn-stripe-loading');
-                const stripeContainer = document.getElementById('payment-element');
-                const paymentMessage = document.getElementById('npn-payment-message');
-
-                // Limpiar elementos anteriores
-                if (stripeContainer) stripeContainer.innerHTML = '';
-                if (paymentMessage) {
-                    paymentMessage.className = 'hidden';
-                    paymentMessage.textContent = '';
-                }
-
-                // Mostrar loading
-                if (loadingIndicator) loadingIndicator.style.display = 'flex';
-                if (stripeContainer) stripeContainer.style.display = 'none';
-
-                // Verificar que Stripe esté cargado
-                if (typeof Stripe === 'undefined') {
-                    console.error('❌ Stripe library no está cargada');
-                    if (loadingIndicator) loadingIndicator.style.display = 'none';
-                    if (paymentMessage) {
-                        paymentMessage.textContent = 'Error: Sistema de pagos no disponible. Recarga la página.';
-                        paymentMessage.className = 'error';
-                        paymentMessage.style.display = 'block';
-                    }
-                    return false;
-                }
-
-                // Inicializar Stripe con la clave pública
-                console.log('💳 Inicializando Stripe con clave pública...');
-                const stripePublicKey = '<?php echo (NAVIGATION_PERMIT_STRIPE_MODE === "test") ? NAVIGATION_PERMIT_STRIPE_TEST_PUBLIC_KEY : NAVIGATION_PERMIT_STRIPE_LIVE_PUBLIC_KEY; ?>';
-                console.log('💳 Usando clave:', stripePublicKey.substring(0, 15) + '...');
-                console.log('💳 Modo:', '<?php echo NAVIGATION_PERMIT_STRIPE_MODE; ?>');
-                stripe = Stripe(stripePublicKey);
-                console.log('✅ Stripe object creado:', stripe);
-
-                try {
-                    console.log('💳 Creando Payment Intent...');
-                    const totalAmountCents = Math.round(currentPrice * 100);
-
-                    const response = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: `action=create_payment_intent_navigation_permit_renewal&amount=${totalAmountCents}`
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Error en la conexión con el servidor');
-                    }
-
-                    const result = await response.json();
-                    console.log('💳 Respuesta del servidor:', result);
-
-                    if (result.error) throw new Error(result.error);
-                    if (!result.clientSecret) throw new Error('No se recibió el client secret del servidor');
-
-                    clientSecret = result.clientSecret;
-                    console.log('💳 Client Secret recibido:', clientSecret.substring(0, 20) + '...');
-
-                    if (!stripeContainer) {
-                        throw new Error('Contenedor de Stripe no encontrado');
-                    }
-
-                    const appearance = {
-                        theme: 'stripe',
-                        variables: {
-                            colorPrimary: '#016d86',
-                            colorBackground: '#ffffff',
-                            colorText: '#333333',
-                            borderRadius: '8px'
-                        }
-                    };
-
-                    elements = stripe.elements({ appearance, clientSecret });
-                    const paymentElement = elements.create('payment', {
-                        layout: { type: 'tabs', defaultCollapsed: false }
-                    });
-
-                    console.log('💳 Montando Stripe Elements en DOM...');
-                    await paymentElement.mount('#payment-element');
-                    console.log('✅ Stripe Elements montado correctamente');
-
-                    // Ocultar loading y mostrar payment element
-                    if (loadingIndicator) loadingIndicator.style.display = 'none';
-                    if (stripeContainer) stripeContainer.style.display = 'block';
-
-                    console.log('✅ Stripe inicializado completamente');
-                    return true;
-
-                } catch (error) {
-                    console.error('❌ Error inicializando Stripe:', error);
-                    console.error('❌ Error stack:', error.stack);
-
-                    // Ocultar loading
-                    if (loadingIndicator) loadingIndicator.style.display = 'none';
-
-                    if (paymentMessage) {
-                        paymentMessage.textContent = 'Error al cargar el sistema de pago: ' + error.message;
-                        paymentMessage.className = 'error';
-                        paymentMessage.style.display = 'block';
-                    }
-
-                    return false;
-                }
+            // Helper: Convertir File a base64
+            function fileToBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
             }
 
             // Inicializar firma con opciones mejoradas
@@ -2281,8 +2218,8 @@ function navigation_permit_renewal_form_shortcode() {
                 mainSignatureData = null;
             });
 
-            // Abrir modal de pago
-            document.getElementById('show-payment-modal').addEventListener('click', function() {
+            // Abrir modal de pago → Flujo Redsys Temporal
+            document.getElementById('show-payment-modal').addEventListener('click', async function() {
                 // Validar términos y condiciones
                 if (!document.querySelector('input[name="terms_accept"]').checked) {
                     alert('Debe aceptar la Política de Privacidad y los Términos y Condiciones.');
@@ -2307,132 +2244,136 @@ function navigation_permit_renewal_form_shortcode() {
                 // Ocultar todos los popups antes de mostrar el modal
                 hideAllPopups();
 
-                // Mostrar el modal
+                // Mostrar el modal de procesamiento
                 document.getElementById('npn-payment-modal').classList.add('show');
 
-                // 🔒 FIX DOBLE COBRO: Si ya hay un pago exitoso, NO crear nuevo Payment Intent
-                if (paymentSucceeded && window.paymentIntentId) {
-                    console.log('✅ Pago ya confirmado (PI: ' + window.paymentIntentId + '). Reintentando envío de datos...');
-                    const paymentMessage = document.getElementById('npn-payment-message');
-                    paymentMessage.textContent = 'Su pago ya fue procesado. Pulse el botón para reintentar el envío.';
-                    paymentMessage.className = 'processing';
-                    // Ocultar el formulario de Stripe y mostrar solo el botón
-                    const stripeContainer = document.getElementById('payment-element');
-                    const loadingIndicator = document.getElementById('npn-stripe-loading');
-                    if (stripeContainer) stripeContainer.style.display = 'none';
-                    if (loadingIndicator) loadingIndicator.style.display = 'none';
-                    // Cambiar texto del botón
-                    const confirmBtn = document.getElementById('npn-confirm-payment-btn');
-                    confirmBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Reintentar Envío';
-                    confirmBtn.disabled = false;
-                } else {
-                    // Solo crear nuevo Payment Intent si NO hay pago previo exitoso
-                    console.log('🔄 Inicializando Stripe para nuevo pago...');
-                    setTimeout(() => {
-                        initializeStripe();
-                    }, 300);
-                }
-            });
-
-            // Cerrar modal de pago
-            document.querySelector('.npn-close-payment-modal').addEventListener('click', function() {
-                document.getElementById('npn-payment-modal').classList.remove('show');
-                // Restaurar popups al cerrar
-                restoreAllPopups();
-            });
-
-            document.getElementById('npn-payment-modal').addEventListener('click', function(event) {
-                if (event.target === this) {
-                    this.classList.remove('show');
-                    // Restaurar popups al cerrar
-                    restoreAllPopups();
-                }
-            });
-
-            // Confirmar pago desde el modal
-            document.getElementById('npn-confirm-payment-btn').addEventListener('click', async function() {
-                // 🛡️ PROTECCIÓN ANTI-DUPLICADOS - Verificar si ya está procesando
+                // 🛡️ PROTECCIÓN ANTI-DUPLICADOS
                 if (isSubmitting) {
                     console.warn('⚠️ Envío ya en proceso, ignorando clic adicional');
                     return;
                 }
-
-                // Marcar como procesando inmediatamente
                 isSubmitting = true;
 
-                // Cancelar cualquier envío anterior si existe
-                if (submitController) {
-                    submitController.abort();
-                    console.log('🚫 Cancelando envío anterior');
-                }
-
-                // Crear nuevo controller para este envío
-                submitController = new AbortController();
-
-                const paymentMessage = document.getElementById('npn-payment-message');
-                paymentMessage.className = 'hidden';
-                paymentMessage.textContent = '';
-
-                // Deshabilitar botón
-                this.disabled = true;
-
-                // Mostrar overlay de carga
-                const loadingOverlay = document.getElementById('loading-overlay');
-                loadingOverlay.classList.add('active');
-
                 try {
-                    // 🔒 FIX DOBLE COBRO: Si ya hay pago exitoso, solo reintentar envío
-                    if (paymentSucceeded && window.paymentIntentId) {
-                        console.log('✅ Pago ya exitoso (PI: ' + window.paymentIntentId + '). Reintentando solo envío de datos...');
-                        paymentMessage.textContent = 'Reenviando datos del trámite...';
-                        paymentMessage.className = 'processing';
-                        // Ir directo a submitFormData sin cobrar de nuevo
-                        await submitFormData();
-                        return; // Salir aquí, submitFormData maneja el resto
+                    console.log('🔄 NPN: Iniciando flujo Redsys temporal...');
+
+                    // 1. Generar OrderID
+                    const timestamp = Math.floor(Date.now() / 10000) * 10;
+                    const generatedOrderId = '00' + timestamp.toString().padStart(10, '0');
+                    console.log('NPN: OrderID generado:', generatedOrderId);
+
+                    // 2. Recopilar archivos en base64
+                    const filesArray = [];
+                    const fileCategories = ['upload-dni-propietario', 'upload-documento-barco'];
+                    for (const category of fileCategories) {
+                        const files = fileStorage[category] || [];
+                        for (const file of files) {
+                            const base64 = await fileToBase64(file);
+                            filesArray.push({
+                                fieldName: category,
+                                fileName: file.name,
+                                mimeType: file.type,
+                                data: base64
+                            });
+                        }
                     }
 
-                    // Verificar que Stripe esté inicializado (solo si es pago nuevo)
-                    if (!stripe || !elements) {
-                        throw new Error('El sistema de pago no está inicializado correctamente.');
+                    // Añadir firma como archivo
+                    const signatureData = mainSignatureData || signaturePad.toDataURL();
+                    if (signatureData) {
+                        filesArray.push({
+                            fieldName: 'firma',
+                            fileName: 'firma.png',
+                            mimeType: 'image/png',
+                            data: signatureData
+                        });
                     }
 
-                    paymentMessage.textContent = 'Procesando su pago...';
-                    paymentMessage.className = 'processing';
+                    console.log('NPN: Archivos preparados:', filesArray.length);
 
-                    // Confirmar pago con Stripe
-                    const { error, paymentIntent } = await stripe.confirmPayment({
-                        elements,
-                        confirmParams: {
-                            payment_method_data: {
-                                billing_details: {
-                                    name: document.getElementById('customer_name').value,
-                                    email: document.getElementById('customer_email').value,
-                                    phone: document.getElementById('customer_phone').value
-                                }
-                            },
-                            return_url: window.location.href
+                    // 3. Enviar datos al API temporal
+                    const captureData = {
+                        orderId: generatedOrderId,
+                        tramiteType: 'renovacion-permiso',
+                        files: filesArray,
+                        customerData: {
+                            name: document.getElementById('customer_name').value.trim(),
+                            dni: document.getElementById('customer_dni').value.trim(),
+                            email: document.getElementById('customer_email').value.trim(),
+                            phone: document.getElementById('customer_phone').value.trim()
                         },
-                        redirect: 'if_required'
+                        serviceData: {
+                            vesselName: document.getElementById('vessel_name')?.value?.trim() || '',
+                            vesselRegistration: document.getElementById('vessel_registration')?.value?.trim() || '',
+                            permitNumber: document.getElementById('permit_number')?.value?.trim() || ''
+                        },
+                        pricing: {
+                            amount: currentPrice,
+                            basePrice: <?php echo NAVIGATION_PERMIT_SERVICE_PRICE; ?>,
+                            tasaCertificado: <?php echo NAVIGATION_PERMIT_TASA_CERTIFICADO; ?>,
+                            tasaEmision: <?php echo NAVIGATION_PERMIT_TASA_EMISION; ?>
+                        },
+                        metadata: {
+                            timestamp: Date.now(),
+                            formId: 'npn'
+                        }
+                    };
+
+                    const captureResponse = await fetch('https://tramitfy.org/api/temporal/capture', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(captureData)
                     });
 
-                    if (error) {
-                        throw new Error(error.message);
+                    const captureResult = await captureResponse.json();
+                    console.log('NPN: Respuesta temporal:', captureResult);
+
+                    if (!captureResult.success) {
+                        throw new Error(captureResult.error || 'Error capturando datos temporales');
                     }
 
-                    // Guardar payment intent ID y marcar pago como exitoso
-                    window.paymentIntentId = paymentIntent.id;
-                    paymentSucceeded = true; // 🔒 Marcar que el pago ya fue exitoso
-                    console.log('💳 Pago confirmado exitosamente. PI: ' + paymentIntent.id);
+                    // 4. Crear pago Redsys
+                    const totalAmountCents = Math.round(currentPrice * 100);
+                    const paymentData = new FormData();
+                    paymentData.append('action', 'npn_create_redsys_payment');
+                    paymentData.append('amount', currentPrice);
+                    paymentData.append('orderId', generatedOrderId);
 
-                    // Pago exitoso, enviar formulario
-                    await submitFormData();
+                    const ajaxUrl = '<?php echo admin_url("admin-ajax.php"); ?>';
+                    const response = await fetch(ajaxUrl, {
+                        method: 'POST',
+                        body: paymentData
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        console.log('NPN: Pago Redsys creado, redirigiendo a pasarela...');
+
+                        // Rellenar formulario oculto Redsys
+                        const form = document.getElementById('npn-redsys-form');
+                        form.action = result.data.paymentData.url;
+                        document.getElementById('npn-Ds_SignatureVersion').value = result.data.paymentData.Ds_SignatureVersion;
+                        document.getElementById('npn-Ds_MerchantParameters').value = result.data.paymentData.Ds_MerchantParameters;
+                        document.getElementById('npn-Ds_Signature').value = result.data.paymentData.Ds_Signature;
+
+                        // Enviar a Redsys
+                        setTimeout(() => {
+                            form.submit();
+                        }, 1500);
+                    } else {
+                        throw new Error(result.data?.message || 'Error al crear el pago');
+                    }
 
                 } catch (error) {
-                    console.error('Error:', error);
+                    console.error('NPN Error:', error);
+                    const paymentMessage = document.getElementById('npn-payment-message');
                     paymentMessage.textContent = 'Error al procesar el pago: ' + error.message;
                     paymentMessage.className = 'error';
-                    loadingOverlay.classList.remove('active');
-                    this.disabled = false;
+                    paymentMessage.style.display = 'block';
+                    document.getElementById('npn-payment-modal').classList.remove('show');
+                    isSubmitting = false;
+                    alert('Error al procesar el pago: ' + error.message);
                 }
             });
 
@@ -2754,7 +2695,7 @@ function navigation_permit_renewal_form_shortcode() {
                 formData.append('renewal_type', 'renovacion');
                 formData.append('coupon_code', document.getElementById('coupon_code').value || '');
                 formData.append('terms_accept', 'true');
-                formData.append('payment_intent_id', paymentIntentId || '');
+                formData.append('payment_intent_id', 'redsys_pending');
                 formData.append('action', 'send_navigation_permit_to_tramitfy');
 
                 // Ya no necesitamos deshabilitar inputs porque creamos FormData manual
@@ -2824,7 +2765,7 @@ function navigation_permit_renewal_form_shortcode() {
                     emailFormData.append('customerPhone', document.getElementById('customer_phone').value);
                     emailFormData.append('renewalType', 'renovacion');
                     emailFormData.append('finalAmount', currentPrice);
-                    emailFormData.append('paymentIntentId', paymentIntentId || '');
+                    emailFormData.append('paymentIntentId', 'redsys_pending');
                     emailFormData.append('tramiteId', result.tramiteId);
                     emailFormData.append('tramiteDbId', result.id);
 
@@ -2851,8 +2792,10 @@ function navigation_permit_renewal_form_shortcode() {
                     
                     // Redirección directa sin alert - la página de seguimiento ya confirma el éxito
                     console.log(`✅ Formulario enviado con éxito. ID del trámite: ${result.tramiteId}`);
-                    
-                    // 🛡️ NO resetear isSubmitting aquí - el usuario va a ser redirigido
+
+                    // 🔒 Limpiar sessionStorage - trámite completado
+                    sessionStorage.removeItem('npn_payment_id');
+
                     window.location.href = result.trackingUrl;
 
                 } catch (error) {
@@ -2875,14 +2818,7 @@ function navigation_permit_renewal_form_shortcode() {
                     
                     paymentMessage.className = 'error';
                     document.getElementById('loading-overlay').classList.remove('active');
-                    const submitBtn = document.getElementById('npn-confirm-payment-btn');
-                    submitBtn.disabled = false;
-                    // 🔒 FIX DOBLE COBRO: Mostrar texto correcto según estado del pago
-                    if (paymentSucceeded) {
-                        submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Reintentar Envío';
-                    } else {
-                        submitBtn.innerHTML = '<i class="fa-solid fa-check-circle"></i> Confirmar Pago';
-                    }
+                    isSubmitting = false;
                 }
             }
 
@@ -3710,15 +3646,15 @@ function send_navigation_permit_emails() {
                 </div>
 
                 <div style='margin-bottom: 25px;'>
-                    <h3 style='margin: 0 0 15px; color: #333; font-size: 16px;'>PAGO STRIPE</h3>
+                    <h3 style='margin: 0 0 15px; color: #333; font-size: 16px;'>PAGO REDSYS</h3>
                     <table width='100%' cellpadding='5' cellspacing='0' style='font-size: 13px; background-color: #f9f9f9; padding: 12px; border-radius: 4px;'>
                         <tr>
-                            <td style='color: #666;'>Payment Intent ID:</td>
+                            <td style='color: #666;'>Redsys Order ID:</td>
                             <td style='color: #333; font-family: monospace; font-size: 12px;'>{$paymentIntentId}</td>
                         </tr>
                         <tr>
-                            <td style='color: #666;'>Modo Stripe:</td>
-                            <td style='color: #333; font-weight: 600;'>" . NAVIGATION_PERMIT_STRIPE_MODE . "</td>
+                            <td style='color: #666;'>Modo Pago:</td>
+                            <td style='color: #333; font-weight: 600;'>Redsys " . NPN_REDSYS_MODE . "</td>
                         </tr>
                     </table>
                 </div>
@@ -3775,60 +3711,24 @@ function send_navigation_permit_emails() {
 }
 
 // Función para crear Payment Intent de Stripe - IGUAL QUE RECUPERAR DOCUMENTACIÓN
-function create_payment_intent_navigation_permit_renewal() {
-    // Configurar Stripe dentro de la función (IGUAL QUE RECUPERAR DOCUMENTACIÓN)
-    if (NAVIGATION_PERMIT_STRIPE_MODE === 'test') {
-        $stripe_secret_key = NAVIGATION_PERMIT_STRIPE_TEST_SECRET_KEY;
-    } else {
-        $stripe_secret_key = NAVIGATION_PERMIT_STRIPE_LIVE_SECRET_KEY;
-    }
-
-    header('Content-Type: application/json');
-
-    require_once get_template_directory() . '/vendor/autoload.php';
-
+function npn_create_redsys_payment() {
     try {
-        error_log('=== NAVIGATION PERMIT PAYMENT INTENT ===');
-        error_log('STRIPE MODE: ' . NAVIGATION_PERMIT_STRIPE_MODE);
-        error_log('Using Stripe key starting with: ' . substr($stripe_secret_key, 0, 25));
+        $order_id = !empty($_POST['orderId']) ? $_POST['orderId'] : str_pad(time(), 12, '0', STR_PAD_LEFT);
+        $amount = floatval($_POST['amount'] ?? NAVIGATION_PERMIT_SERVICE_PRICE);
+        $amount_cents = strval(intval($amount * 100));
 
-        \Stripe\Stripe::setApiKey($stripe_secret_key);
-
-        $currentKey = \Stripe\Stripe::getApiKey();
-        error_log('Stripe API Key confirmed: ' . substr($currentKey, 0, 25));
-
-        $amount = NAVIGATION_PERMIT_SERVICE_PRICE * 100; // 65.00 EUR = 6500 cents
-
-        $paymentIntent = \Stripe\PaymentIntent::create([
-            'amount' => $amount,
-            'currency' => 'eur',
-            'automatic_payment_methods' => [
-                'enabled' => true,
-            ],
-            'description' => 'Renovar Permiso de Navegación',
-            'metadata' => [
-                'service' => 'Permiso Navegación',
-                'source' => 'tramitfy_web',
-                'form' => 'renovacion_permiso',
-                'mode' => NAVIGATION_PERMIT_STRIPE_MODE
-            ]
+        $payment_data = npn_redsys_create_payment_form([
+            'order_id' => $order_id,
+            'amount_cents' => $amount_cents
         ]);
 
-        error_log('Payment Intent created: ' . $paymentIntent->id);
+        wp_send_json_success([
+            'orderId' => $order_id,
+            'paymentData' => $payment_data
+        ]);
 
-        // Devolver formato que espera el JavaScript (directo, no en 'data')
-        wp_die(json_encode([
-            'clientSecret' => $paymentIntent->client_secret,
-            'debug' => [
-                'mode' => NAVIGATION_PERMIT_STRIPE_MODE,
-                'keyUsed' => substr($stripe_secret_key, 0, 25) . '...',
-                'keyConfirmed' => substr($currentKey, 0, 25) . '...',
-                'paymentIntentId' => $paymentIntent->id
-            ]
-        ]), 200, ['Content-Type' => 'application/json']);
     } catch (Exception $e) {
-        error_log('Error creating payment intent: ' . $e->getMessage());
-        wp_die(json_encode(['error' => $e->getMessage()]), 500, ['Content-Type' => 'application/json']);
+        wp_send_json_error(['message' => $e->getMessage()]);
     }
 }
 

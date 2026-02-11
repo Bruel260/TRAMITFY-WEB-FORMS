@@ -177,13 +177,97 @@ function generate_invoice_pdf($customer_name, $customer_dni, $customer_email, $c
     return $invoice_pdf_path;
 }
 
+// =====================================================
+// CONFIGURACIÓN REDSYS - BAJA EMBARCACIÓN
+// =====================================================
+if (!defined('BAJA_REDSYS_MODE')) define('BAJA_REDSYS_MODE', 'live');
+if (!defined('BAJA_REDSYS_MERCHANT_CODE')) define('BAJA_REDSYS_MERCHANT_CODE', '363391103');
+if (!defined('BAJA_REDSYS_TERMINAL')) define('BAJA_REDSYS_TERMINAL', '1');
+if (!defined('BAJA_REDSYS_CURRENCY')) define('BAJA_REDSYS_CURRENCY', '978');
+
+if (!defined('BAJA_REDSYS_SECRET_KEY')) {
+    if (BAJA_REDSYS_MODE === 'test') {
+        define('BAJA_REDSYS_SECRET_KEY', 'sq7HjrUOBfKmC576ILgskD5srU870gJ7');
+    } else {
+        define('BAJA_REDSYS_SECRET_KEY', 'ERDGGMADKbhFIngyRLnW6KrxEuKnjq9p');
+    }
+}
+
+if (!defined('BAJA_REDSYS_SIGNATURE_VERSION')) define('BAJA_REDSYS_SIGNATURE_VERSION', 'HMAC_SHA256_V1');
+if (!defined('BAJA_REDSYS_URL_TEST')) define('BAJA_REDSYS_URL_TEST', 'https://sis-t.redsys.es:25443/sis/realizarPago');
+if (!defined('BAJA_REDSYS_URL_LIVE')) define('BAJA_REDSYS_URL_LIVE', 'https://sis.redsys.es/sis/realizarPago');
+if (!defined('BAJA_REDSYS_URL_OK')) define('BAJA_REDSYS_URL_OK', 'https://tramitfy.es/pago-completado-baja/');
+if (!defined('BAJA_REDSYS_URL_KO')) define('BAJA_REDSYS_URL_KO', 'https://tramitfy.es/baja-embarcacion/');
+if (!defined('BAJA_REDSYS_URL_NOTIFICATION')) define('BAJA_REDSYS_URL_NOTIFICATION', 'https://tramitfy.org/api/temporal/confirm');
+if (!defined('BAJA_SERVICE_PRICE')) define('BAJA_SERVICE_PRICE', 95.00);
+
+function baja_redsys_generate_signature($data) {
+    $password_decoded = base64_decode(BAJA_REDSYS_SECRET_KEY);
+    $order_id = $data['Ds_Order'] ?? $data['Ds_Merchant_Order'] ?? '';
+    $l = ceil(strlen($order_id) / 8) * 8;
+    $padded_order_id = $order_id . str_repeat("\0", $l - strlen($order_id));
+    $encryption_key = substr(
+        openssl_encrypt($padded_order_id, 'des-ede3-cbc', $password_decoded, OPENSSL_RAW_DATA, "\0\0\0\0\0\0\0\0"),
+        0, $l
+    );
+    $string_to_sign = base64_encode(json_encode($data));
+    $signature = hash_hmac('sha256', $string_to_sign, $encryption_key, true);
+    return base64_encode($signature);
+}
+
+function baja_redsys_create_payment_form($order_data) {
+    $redsys_url = (BAJA_REDSYS_MODE === 'test') ? BAJA_REDSYS_URL_TEST : BAJA_REDSYS_URL_LIVE;
+    $params = [
+        'Ds_Merchant_MerchantCode' => BAJA_REDSYS_MERCHANT_CODE,
+        'Ds_Merchant_Terminal' => BAJA_REDSYS_TERMINAL,
+        'Ds_Merchant_Order' => $order_data['order_id'],
+        'Ds_Merchant_Amount' => $order_data['amount_cents'],
+        'Ds_Merchant_Currency' => BAJA_REDSYS_CURRENCY,
+        'Ds_Merchant_TransactionType' => '0',
+        'Ds_Merchant_MerchantURL' => BAJA_REDSYS_URL_NOTIFICATION,
+        'Ds_Merchant_UrlOK' => BAJA_REDSYS_URL_OK,
+        'Ds_Merchant_UrlKO' => BAJA_REDSYS_URL_KO,
+        'Ds_Merchant_MerchantName' => 'Tramitfy',
+        'Ds_Merchant_ProductDescription' => 'Baja Embarcacion',
+        'Ds_Merchant_ConsumerLanguage' => '001'
+    ];
+    $signature = baja_redsys_generate_signature($params);
+    $merchant_parameters = base64_encode(json_encode($params));
+    return [
+        'url' => $redsys_url,
+        'Ds_MerchantParameters' => $merchant_parameters,
+        'Ds_SignatureVersion' => BAJA_REDSYS_SIGNATURE_VERSION,
+        'Ds_Signature' => $signature
+    ];
+}
+
+function baja_create_redsys_payment() {
+    try {
+        $order_id = !empty($_POST['orderId']) ? $_POST['orderId'] : str_pad(time(), 12, '0', STR_PAD_LEFT);
+        $amount = floatval($_POST['amount'] ?? BAJA_SERVICE_PRICE);
+        $amount_cents = strval(intval($amount * 100));
+
+        $payment_data = baja_redsys_create_payment_form([
+            'order_id' => $order_id,
+            'amount_cents' => $amount_cents
+        ]);
+
+        wp_send_json_success([
+            'orderId' => $order_id,
+            'paymentData' => $payment_data
+        ]);
+
+    } catch (Exception $e) {
+        wp_send_json_error(['message' => $e->getMessage()]);
+    }
+}
+
 /**
  * Función principal para generar y mostrar el formulario en el frontend
  */
 function boat_deregistration_form_shortcode() {
     // Encolar los scripts y estilos necesarios
     wp_enqueue_style('boat-deregistration-form-style', get_template_directory_uri() . '/style.css', array(), filemtime(get_template_directory() . '/style.css'));
-    wp_enqueue_script('stripe', 'https://js.stripe.com/v3/', array(), null, false);
     wp_enqueue_script('signature-pad', 'https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js', array(), null, false);
 
     // Iniciar el buffering de salida
@@ -449,12 +533,12 @@ function boat_deregistration_form_shortcode() {
             color: #dc3545;
         }
 
-        /* Estilos para mensajes de error de Stripe Elements */
+        /* Estilos para mensajes de error de pago */
         .StripeElement--invalid {
             border-color: #dc3545;
         }
 
-        /* Personalización de Stripe Elements */
+        /* Personalización elementos de pago */
         .StripeElement {
             background-color: #ffffff;
             padding: 12px;
@@ -804,16 +888,23 @@ function boat_deregistration_form_shortcode() {
             <!-- [/NUEVO - CUPÓN] -->
 
             <div id="payment-form">
-                <div id="payment-element"></div>
                 <div id="payment-message" class="hidden"></div>
                 <div class="terms-container">
                     <label>
-                        <input type="checkbox" name="terms_accept_pago" required> 
+                        <input type="checkbox" name="terms_accept_pago" required>
                         Acepto los <a href="https://tramitfy.es/terminos-y-condiciones-de-uso/" target="_blank">términos y condiciones de pago</a>.
                     </label>
                 </div>
-                <button id="submit" class="button">Pagar</button>
+                <button id="submit" class="button">Pagar con CaixaBank</button>
+                <p style="text-align:center; margin-top:10px; font-size:13px; color:#666;">Serás redirigido a la pasarela de pago segura de CaixaBank.</p>
             </div>
+
+            <!-- Formulario oculto para Redsys -->
+            <form id="baja-redsys-form" action="" method="POST" style="display:none;">
+                <input type="hidden" name="Ds_SignatureVersion" id="baja-Ds_SignatureVersion">
+                <input type="hidden" name="Ds_MerchantParameters" id="baja-Ds_MerchantParameters">
+                <input type="hidden" name="Ds_Signature" id="baja-Ds_Signature">
+            </form>
         </div>
 
         <div class="button-container" id="main-button-container">
@@ -843,10 +934,7 @@ function boat_deregistration_form_shortcode() {
     <!-- JavaScript para manejar la lógica del formulario -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Variables para Stripe
-            let stripe;
-            let elements;
-            let clientSecret;
+            // Variables de pago (Redsys)
 
             // [NUEVO - CUPÓN] Manejo de precio base y descuento
             let basePrice = 95.00;         // Precio base (aumentado a 95€)
@@ -859,73 +947,16 @@ function boat_deregistration_form_shortcode() {
             const fees = 60.00;            // Honorarios
             const vatRate = 0.21;          // IVA 21%
 
-            /**
-             * Inicializar Stripe con un precio "customAmount" si se aplica descuento
-             */
-            async function initializeStripe(customAmount = null) {
-                const amountToCharge = (customAmount !== null) ? customAmount : currentPrice;
-                const totalAmountCents = Math.round(amountToCharge * 100);
-
-                // Configuración Stripe - cambiar 'test' a 'live' para producción
-                <?php
-                $baja_stripe_mode = 'test'; // 'test' o 'live'
-                $baja_stripe_key = ($baja_stripe_mode === 'test')
-                    ? 'pk_test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-                    : 'pk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
-                ?>
-                stripe = Stripe('<?php echo $baja_stripe_key; ?>');
-
-                const response = await fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `action=create_payment_intent_boat_deregistration&amount=${totalAmountCents}`
+            // Helper: Convertir File a base64
+            function fileToBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
                 });
-                const result = await response.json();
-
-                if (result.error) {
-                    throw new Error(result.error);
-                }
-
-                clientSecret = result.clientSecret;
-
-                const appearance = {
-                    theme: 'flat',
-                    variables: {
-                        colorPrimary: '#016d86',
-                        colorBackground: '#ffffff',
-                        colorText: '#333333',
-                        colorDanger: '#dc3545',
-                        fontFamily: 'Arial, sans-serif',
-                        spacingUnit: '4px',
-                        borderRadius: '4px',
-                    },
-                    rules: {
-                        '.Label': {
-                            color: '#555555',
-                            fontSize: '14px',
-                            marginBottom: '4px',
-                        },
-                        '.Input': {
-                            padding: '12px',
-                            border: '1px solid #cccccc',
-                            borderRadius: '4px',
-                        },
-                        '.Input:focus': {
-                            borderColor: '#016d86',
-                        },
-                        '.Input--invalid': {
-                            borderColor: '#dc3545',
-                        },
-                    }
-                };
-
-                elements = stripe.elements({ appearance, clientSecret });
-                const paymentElementOptions = {
-                    paymentMethodOrder: ['card'],
-                };
-                const paymentElement = elements.create('payment', paymentElementOptions);
-                paymentElement.mount('#payment-element');
             }
+            let bajaIsSubmitting = false;
 
             // Navegación entre páginas
             const formPages = document.querySelectorAll('.form-page');
@@ -961,11 +992,8 @@ function boat_deregistration_form_shortcode() {
                     nextButton.style.display = 'inline-block';
                 }
 
-                // Iniciar Stripe en la página de pago
-                if (formPages[currentPage].id === 'page-payment' && !stripe) {
-                    initializeStripe().catch(error => {
-                        alert('Error al inicializar el pago: ' + error.message);
-                    });
+                // Setup payment button on payment page
+                if (formPages[currentPage].id === 'page-payment') {
                     handlePayment();
                 }
 
@@ -1008,6 +1036,9 @@ function boat_deregistration_form_shortcode() {
 
             function handlePayment() {
                 const submitButton = document.getElementById('submit');
+                if (submitButton._redsysBound) return;
+                submitButton._redsysBound = true;
+
                 submitButton.addEventListener('click', async (e) => {
                     e.preventDefault();
 
@@ -1016,78 +1047,136 @@ function boat_deregistration_form_shortcode() {
                         return;
                     }
 
+                    if (bajaIsSubmitting) {
+                        console.warn('⚠️ Envío ya en proceso');
+                        return;
+                    }
+                    bajaIsSubmitting = true;
+
                     submitButton.disabled = true;
+                    submitButton.textContent = 'Procesando...';
                     document.getElementById('loading-overlay').style.display = 'flex';
 
                     try {
-                        const { error } = await stripe.confirmPayment({
-                            elements,
-                            confirmParams: {
-                                payment_method_data: {
-                                    billing_details: {
-                                        name: document.getElementById('customer_name').value,
-                                        email: document.getElementById('customer_email').value,
-                                        phone: document.getElementById('customer_phone').value
-                                    }
-                                },
-                                return_url: window.location.href
+                        console.log('🔄 BAJA: Iniciando flujo Redsys temporal...');
+
+                        // 1. Generar OrderID
+                        const timestamp = Math.floor(Date.now() / 10000) * 10;
+                        const generatedOrderId = '00' + timestamp.toString().padStart(10, '0');
+                        console.log('BAJA: OrderID generado:', generatedOrderId);
+
+                        // 2. Recopilar archivos en base64
+                        const filesArray = [];
+                        const form = document.getElementById('boat-deregistration-form');
+                        const fileInputs = form.querySelectorAll('input[type="file"]');
+                        for (const input of fileInputs) {
+                            if (input.files) {
+                                for (const file of input.files) {
+                                    const base64 = await fileToBase64(file);
+                                    filesArray.push({
+                                        fieldName: input.name || input.id,
+                                        fileName: file.name,
+                                        mimeType: file.type,
+                                        data: base64
+                                    });
+                                }
+                            }
+                        }
+
+                        // Añadir firma
+                        const signaturePad = window.signaturePad;
+                        if (signaturePad && !signaturePad.isEmpty()) {
+                            filesArray.push({
+                                fieldName: 'firma',
+                                fileName: 'firma.png',
+                                mimeType: 'image/png',
+                                data: signaturePad.toDataURL()
+                            });
+                        }
+
+                        console.log('BAJA: Archivos preparados:', filesArray.length);
+
+                        // 3. Enviar datos al API temporal
+                        const captureData = {
+                            orderId: generatedOrderId,
+                            tramiteType: 'baja-embarcacion',
+                            files: filesArray,
+                            customerData: {
+                                name: document.getElementById('customer_name').value.trim(),
+                                dni: document.getElementById('customer_dni').value.trim(),
+                                email: document.getElementById('customer_email').value.trim(),
+                                phone: document.getElementById('customer_phone').value.trim()
                             },
-                            redirect: 'if_required'
+                            serviceData: {
+                                deregistrationType: document.getElementById('deregistration_type')?.value || '',
+                                workshopData: document.getElementById('workshop_data')?.value || '',
+                                couponCode: document.getElementById('coupon_code')?.value?.trim() || ''
+                            },
+                            pricing: {
+                                amount: currentPrice,
+                                basePrice: <?php echo BAJA_SERVICE_PRICE; ?>,
+                                taxes: 21.15,
+                                fees: 60.00
+                            },
+                            metadata: {
+                                timestamp: Date.now(),
+                                formId: 'baja'
+                            }
+                        };
+
+                        const captureResponse = await fetch('https://tramitfy.org/api/temporal/capture', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(captureData)
                         });
 
-                        if (error) {
-                            throw new Error(error.message);
-                        } else {
-                            document.getElementById('payment-message').textContent = 'Pago realizado con éxito.';
-                            document.getElementById('payment-message').classList.add('success');
-                            document.getElementById('payment-message').classList.remove('hidden');
-                            handleFinalSubmission();
+                        const captureResult = await captureResponse.json();
+                        console.log('BAJA: Respuesta temporal:', captureResult);
+
+                        if (!captureResult.success) {
+                            throw new Error(captureResult.error || 'Error capturando datos temporales');
                         }
+
+                        // 4. Crear pago Redsys
+                        const paymentData = new FormData();
+                        paymentData.append('action', 'baja_create_redsys_payment');
+                        paymentData.append('amount', currentPrice);
+                        paymentData.append('orderId', generatedOrderId);
+
+                        const ajaxUrl = '<?php echo admin_url("admin-ajax.php"); ?>';
+                        const response = await fetch(ajaxUrl, {
+                            method: 'POST',
+                            body: paymentData
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            console.log('BAJA: Pago Redsys creado, redirigiendo a pasarela...');
+
+                            const redsysForm = document.getElementById('baja-redsys-form');
+                            redsysForm.action = result.data.paymentData.url;
+                            document.getElementById('baja-Ds_SignatureVersion').value = result.data.paymentData.Ds_SignatureVersion;
+                            document.getElementById('baja-Ds_MerchantParameters').value = result.data.paymentData.Ds_MerchantParameters;
+                            document.getElementById('baja-Ds_Signature').value = result.data.paymentData.Ds_Signature;
+
+                            setTimeout(() => {
+                                redsysForm.submit();
+                            }, 1500);
+                        } else {
+                            throw new Error(result.data?.message || 'Error al crear el pago');
+                        }
+
                     } catch (error) {
+                        console.error('BAJA Error:', error);
                         document.getElementById('payment-message').textContent = 'Error al procesar el pago: ' + error.message;
                         document.getElementById('payment-message').classList.add('error');
                         document.getElementById('payment-message').classList.remove('hidden');
                         submitButton.disabled = false;
+                        submitButton.textContent = 'Pagar con CaixaBank';
                         document.getElementById('loading-overlay').style.display = 'none';
+                        bajaIsSubmitting = false;
                     }
-                });
-            }
-
-            function handleFinalSubmission() {
-                const signaturePad = window.signaturePad;
-                if (signaturePad && signaturePad.isEmpty()) {
-                    alert('Por favor, firme antes de enviar el formulario.');
-                    document.getElementById('loading-overlay').style.display = 'none';
-                    return;
-                }
-
-                let formData = new FormData(document.getElementById('boat-deregistration-form'));
-                formData.append('action', 'submit_form_boat_deregistration');
-
-                // Añadir la firma
-                formData.append('signature', signaturePad.toDataURL());
-
-                // [NUEVO - CUPÓN] Enviar el cupón
-                formData.append('coupon_used', document.getElementById('coupon_code').value.trim());
-
-                fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('loading-overlay').style.display = 'none';
-                    if (data.success) {
-                        alert('Formulario enviado con éxito.');
-                        window.location.href = '<?php echo site_url('/pago-realizado-con-exito'); ?>';
-                    } else {
-                        alert('Error al enviar el formulario: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    document.getElementById('loading-overlay').style.display = 'none';
-                    alert('Hubo un error al enviar el formulario.');
                 });
             }
 
@@ -1245,13 +1334,6 @@ function boat_deregistration_form_shortcode() {
                 discountSpan.textContent = '';
                 currentPrice = basePrice;
                 finalAmountSpan.textContent = basePrice.toFixed(2) + ' €';
-                if (stripe) {
-                    stripe = null;
-                    document.getElementById('payment-element').innerHTML = '';
-                    initializeStripe(basePrice).catch(error => {
-                        console.error(error);
-                    });
-                }
             }
 
             // Función para calcular el precio con IVA aplicado correctamente
@@ -1307,12 +1389,6 @@ function boat_deregistration_form_shortcode() {
                         discountLine.style.display = 'block';
                         discountSpan.textContent = '- ' + discountAmount.toFixed(2) + ' €';
                         finalAmountSpan.textContent = currentPrice.toFixed(2) + ' €';
-
-                        if (stripe) {
-                            stripe = null;
-                            document.getElementById('payment-element').innerHTML = '';
-                        }
-                        await initializeStripe(currentPrice);
                     } else {
                         couponMessage.textContent = 'Cupón inválido';
                         couponMessage.classList.remove('hidden', 'success');
@@ -1325,12 +1401,6 @@ function boat_deregistration_form_shortcode() {
                         discountSpan.textContent = '';
                         currentPrice = basePrice;
                         finalAmountSpan.textContent = basePrice.toFixed(2) + ' €';
-
-                        if (stripe) {
-                            stripe = null;
-                            document.getElementById('payment-element').innerHTML = '';
-                        }
-                        await initializeStripe(basePrice);
                     }
                 } catch (error) {
                     console.error('Error al validar el cupón:', error);
@@ -1345,12 +1415,6 @@ function boat_deregistration_form_shortcode() {
                     discountSpan.textContent = '';
                     currentPrice = basePrice;
                     finalAmountSpan.textContent = basePrice.toFixed(2) + ' €';
-
-                    if (stripe) {
-                        stripe = null;
-                        document.getElementById('payment-element').innerHTML = '';
-                    }
-                    await initializeStripe(basePrice);
                 }
             }
             // [/NUEVO - CUPÓN]
@@ -1410,43 +1474,10 @@ function boat_deregistration_form_shortcode() {
 add_shortcode('boat_deregistration_form', 'boat_deregistration_form_shortcode');
 
 /**
- * Endpoint para crear el Payment Intent
+ * Endpoint para crear pago Redsys
  */
-add_action('wp_ajax_create_payment_intent_boat_deregistration', 'create_payment_intent_boat_deregistration');
-add_action('wp_ajax_nopriv_create_payment_intent_boat_deregistration', 'create_payment_intent_boat_deregistration');
-
-function create_payment_intent_boat_deregistration() {
-    // Incluir la librería de Stripe
-    require_once __DIR__ . '/vendor/stripe/stripe-php/init.php';
-
-    // Configuración de claves secretas Stripe - debe coincidir con el modo del frontend
-    $baja_stripe_mode = 'test'; // 'test' o 'live' - DEBE coincidir con el modo del frontend
-    $baja_secret_key = ($baja_stripe_mode === 'test')
-        ? 'sk_test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-        : 'sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
-
-    \Stripe\Stripe::setApiKey($baja_secret_key);
-
-    $amount = isset($_POST['amount']) ? intval($_POST['amount']) : 0;
-
-    try {
-        $paymentIntent = \Stripe\PaymentIntent::create([
-            'amount' => $amount,
-            'currency' => 'eur',
-            'payment_method_types' => ['card'], // Solo aceptar pagos con tarjeta
-        ]);
-
-        echo json_encode([
-            'clientSecret' => $paymentIntent->client_secret,
-        ]);
-    } catch (Exception $e) {
-        echo json_encode([
-            'error' => $e->getMessage(),
-        ]);
-    }
-
-    wp_die();
-}
+add_action('wp_ajax_baja_create_redsys_payment', 'baja_create_redsys_payment');
+add_action('wp_ajax_nopriv_baja_create_redsys_payment', 'baja_create_redsys_payment');
 
 /**
  * [NUEVO - CUPÓN] Endpoint para validar el cupón
@@ -1936,7 +1967,7 @@ function send_to_tramitfy_app($customer_name, $customer_dni, $customer_email, $c
 
     // URL del endpoint de la API de Tramitfy
     // Webhook para sincronizar con React Dashboard
-    $tramitfy_api_url = 'https://46-202-128-35.sslip.io/api/herramientas/forms/baja-embarcacion';
+    $tramitfy_api_url = 'https://tramitfy.org/api/herramientas/baja/webhook';
 
     // Preparar los datos en el formato que espera Tramitfy
     $tramitfy_data = array(

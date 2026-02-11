@@ -13,7 +13,7 @@ defined('ABSPATH') || exit;
 function polaca_is_authorized_page() {
     global $post;
     
-    // PROTECCIÓN AJAX: Solo permitir acciones específicas
+    // PATRÓN TTV2 EXACTO - AJAX siempre permitido si action está en lista
     if (defined('DOING_AJAX') && DOING_AJAX) {
         $action = $_POST['action'] ?? $_GET['action'] ?? '';
         $polaca_ajax_actions = [
@@ -22,22 +22,24 @@ function polaca_is_authorized_page() {
             'polaca_process_callback',
             'polaca_send_confirmation_emails',
             'create_polish_payment_intent', // Mantener para compatibilidad temporal
-            'handle_polish_registration_webhook' // Mantener para compatibilidad temporal
+            'handle_polish_registration_webhook', // Mantener para compatibilidad temporal
+            'test_ajax_basic', // Testing AJAX
+            'generate_polaca_redsys_params' // Generación parámetros Redsys
         ];
         
-        if (!in_array($action, $polaca_ajax_actions)) {
-            return false; // Bloquear en AJAX de otros formularios
-        }
+        return in_array($action, $polaca_ajax_actions);
     }
     
     // Admin siempre autorizado (solo para non-AJAX)
     if (!defined('DOING_AJAX') && is_admin()) return true;
     
-    // Verificar por URL
+    // Verificar por URL - MÁS PERMISIVO
     $request_uri = $_SERVER['REQUEST_URI'] ?? '';
     $authorized_pages = [
         'bandera-polaca',
         'registro-polaco',
+        'polaca',
+        'polish',
         'testingfy' // Para pruebas
     ];
     
@@ -49,8 +51,9 @@ function polaca_is_authorized_page() {
     
     // Verificar por post object
     if (is_object($post)) {
-        if (in_array($post->post_name, $authorized_pages) || 
-            strpos($post->post_content, '[polish_registration_form]') !== false) {
+        if (strpos($post->post_content ?? '', '[polish_registration_form]') !== false ||
+            strpos($post->post_content ?? '', '[registro_polaca') !== false ||
+            in_array($post->post_name ?? '', $authorized_pages)) {
             return true;
         }
     }
@@ -68,7 +71,7 @@ if (!polaca_is_authorized_page()) {
 // =====================================================
 
 // Modo de operación
-if (!defined('POLACA_REDSYS_MODE')) define('POLACA_REDSYS_MODE', 'test'); // test o live
+if (!defined('POLACA_REDSYS_MODE')) define('POLACA_REDSYS_MODE', 'live'); // test o live
 
 // Datos del comercio Redsys
 if (!defined('POLACA_REDSYS_MERCHANT_CODE')) define('POLACA_REDSYS_MERCHANT_CODE', '363391103');
@@ -96,6 +99,62 @@ if (!defined('POLACA_REDSYS_URL_NOTIFICATION')) define('POLACA_REDSYS_URL_NOTIFI
 
 // Webhook URL para el sistema definitivo
 if (!defined('POLACA_WEBHOOK_URL')) define('POLACA_WEBHOOK_URL', 'https://tramitfy.org/api/herramientas/polaca/webhook');
+
+// =====================================================
+// FUNCIONES AJAX (REGISTRO CONDICIONAL COMO TTV2)
+// =====================================================
+
+// FUNCIÓN TEST AJAX BÁSICA (DIAGNÓSTICO)
+function test_ajax_basic() {
+    error_log('🧪 TEST AJAX BASIC - CALLED');
+    
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => true,
+        'message' => 'AJAX sistema WordPress funciona',
+        'timestamp' => date('Y-m-d H:i:s')
+    ]);
+    exit;
+}
+
+// FUNCIÓN AJAX PARA GENERAR PARÁMETROS REDSYS
+function generate_polaca_redsys_params() {
+    try {
+        // LOG PARÁMETROS RECIBIDOS
+        error_log('🔍 POLACA REDSYS PARAMS: ' . print_r($_POST, true));
+        
+        // Obtener datos del POST
+        $order_id = !empty($_POST['order_id']) ? $_POST['order_id'] : str_pad(time(), 12, '0', STR_PAD_LEFT);
+        $amount = floatval($_POST['amount'] ?? 0);
+        $amount_cents = strval(intval($amount * 100));
+        $description = sanitize_text_field($_POST['description'] ?? 'Registro Bandera Polaca');
+        
+        // Log de datos calculados
+        error_log('🔍 ORDER ID: ' . $order_id);
+        error_log('🔍 AMOUNT: ' . $amount . ' → CENTS: ' . $amount_cents);
+        
+        // Crear parámetros Redsys
+        $payment_data = polaca_redsys_create_payment_form([
+            'order_id' => $order_id,
+            'amount_cents' => $amount_cents,
+            'description' => $description
+        ]);
+        
+        wp_send_json_success($payment_data);
+        
+    } catch (Exception $e) {
+        error_log('❌ ERROR GENERATE POLACA REDSYS: ' . $e->getMessage());
+        wp_send_json_error(['message' => $e->getMessage()]);
+    }
+}
+
+// REGISTRO CONDICIONAL DE ACCIONES AJAX (PATRÓN TTV2)
+if (polaca_is_authorized_page()) {
+    add_action('wp_ajax_test_ajax_basic', 'test_ajax_basic');
+    add_action('wp_ajax_nopriv_test_ajax_basic', 'test_ajax_basic');
+    add_action('wp_ajax_generate_polaca_redsys_params', 'generate_polaca_redsys_params');
+    add_action('wp_ajax_nopriv_generate_polaca_redsys_params', 'generate_polaca_redsys_params');
+}
 
 // =====================================================
 // FUNCIONES REDSYS INTEGRADAS
@@ -132,6 +191,41 @@ function polaca_encrypt_3DES($message, $key) {
     }
     
     return $encrypted;
+}
+
+/**
+ * Crear formulario de pago Redsys para registro polaco
+ */
+function polaca_redsys_create_payment_form($order_data) {
+    $redsys_url = (POLACA_REDSYS_MODE === 'test') ? POLACA_REDSYS_URL_TEST : POLACA_REDSYS_URL_LIVE;
+    
+    $params = [
+        'Ds_Merchant_MerchantCode' => POLACA_REDSYS_MERCHANT_CODE,
+        'Ds_Merchant_Terminal' => POLACA_REDSYS_TERMINAL,
+        'Ds_Merchant_Order' => $order_data['order_id'],
+        'Ds_Merchant_Amount' => $order_data['amount_cents'],
+        'Ds_Merchant_Currency' => POLACA_REDSYS_CURRENCY,
+        'Ds_Merchant_TransactionType' => '0',
+        'Ds_Merchant_MerchantURL' => POLACA_REDSYS_URL_NOTIFICATION,
+        'Ds_Merchant_UrlOK' => POLACA_REDSYS_URL_OK,
+        'Ds_Merchant_UrlKO' => POLACA_REDSYS_URL_KO,
+        'Ds_Merchant_MerchantName' => 'Tramitfy',
+        'Ds_Merchant_ProductDescription' => $order_data['description'] ?? 'Registro Bandera Polaca',
+        'Ds_Merchant_ConsumerLanguage' => '001'
+    ];
+    
+    // Log parámetros antes de firma
+    error_log('🔍 POLACA REDSYS PARAMS: ' . print_r($params, true));
+    
+    $merchant_parameters = base64_encode(json_encode($params));
+    $signature = polaca_generate_redsys_signature($merchant_parameters, $order_data['order_id']);
+    
+    return [
+        'url' => $redsys_url,
+        'params' => $merchant_parameters,
+        'signature' => $signature,
+        'signatureVersion' => POLACA_REDSYS_SIGNATURE_VERSION
+    ];
 }
 
 /**
@@ -383,7 +477,7 @@ function polish_registration_form_shortcode() {
         define('POLISH_REGISTRATION_STRIPE_TEST_SECRET_KEY', 'YOUR_STRIPE_TEST_SECRET_KEY_HERE');
         define('POLISH_REGISTRATION_STRIPE_LIVE_PUBLIC_KEY', 'YOUR_STRIPE_LIVE_PUBLIC_KEY_HERE');
         define('POLISH_REGISTRATION_STRIPE_LIVE_SECRET_KEY', 'YOUR_STRIPE_LIVE_SECRET_KEY_HERE');
-        define('POLISH_REGISTRATION_TRAMITFY_API_URL', 'https://46-202-128-35.sslip.io/api/herramientas/polaca/webhook');
+        define('POLISH_REGISTRATION_TRAMITFY_API_URL', 'https://tramitfy.org/api/herramientas/polaca/webhook');
     }
 
     // Seleccionar las claves según el modo
@@ -3641,10 +3735,6 @@ Auto-rellenar Formulario Completo (Modo TEST)
                         <div class="pr-payment-value" id="payment-additional-amount">€ 0.00</div>
                     </div>
 
-                    <div class="pr-payment-item">
-                        <div class="pr-payment-label">Tasas oficiales</div>
-                        <div class="pr-payment-value" id="payment-taxes">€ 0.00</div>
-                    </div>
 
                     <div class="pr-payment-separator"></div>
 
@@ -4196,19 +4286,23 @@ Auto-rellenar Formulario Completo (Modo TEST)
                             <div class="pr-compact-uploads">
                                 <div class="pr-upload-compact">
                                     <label>DNI / Pasaporte *</label>
-                                    <input type="file" name="dni_documento[]" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                                    <input type="file" name="dni_pasaporte[]" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                                    <small>Puede subir múltiples archivos (ambas caras, etc.)</small>
                                 </div>
                                 <div class="pr-upload-compact">
                                     <label>Registro Marítimo *</label>
                                     <input type="file" name="registro_maritimo[]" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                                    <small>Documentos oficiales del registro marítimo</small>
                                 </div>
                                 <div class="pr-upload-compact">
-                                    <label>Seguro de Embarcación</label>
-                                    <input type="file" name="seguro_embarcacion[]" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                                    <label>Documentación de la Embarcación Completa *</label>
+                                    <input type="file" name="documentacion_embarcacion[]" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                                    <small>Ficha técnica, certificados, permisos, etc.</small>
                                 </div>
                                 <div class="pr-upload-compact">
                                     <label>Documentos Adicionales</label>
                                     <input type="file" name="documentos_adicionales[]" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                                    <small>Cualquier otra documentación relevante</small>
                                 </div>
                             </div>
                         </div>
@@ -4283,9 +4377,7 @@ Auto-rellenar Formulario Completo (Modo TEST)
                         <button type="button" class="pr-btn pr-btn-secondary" onclick="showPage('page-documents')">
                             <i class="fas fa-arrow-left"></i> Volver a Documentos
                         </button>
-                        <button type="button" class="pr-btn pr-btn-primary" id="signature-continue-btn" onclick="showPage('page-payment')" disabled>
-                            Continuar <i class="fas fa-arrow-right"></i>
-                        </button>
+                        <!-- Botón Continuar removido - auto-retorno tras firmar -->
                     </div>
                 </div>
 
@@ -4436,26 +4528,10 @@ Auto-rellenar Formulario Completo (Modo TEST)
         
         console.log('🚀 SCRIPT POLACO INICIADO');
         
-        // Función alternativa de logging
+        // Función de logging deshabilitada temporalmente
         function logToServer(message) {
             console.log('📝 LOG:', message);
-            
-            // Método 1: Fetch tradicional
-            fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
-                method: 'POST',
-                body: new URLSearchParams({
-                    action: 'log_polaca_debug',
-                    message: message
-                })
-            }).then(response => {
-                console.log('✅ Log enviado correctamente:', response.status);
-            }).catch(error => {
-                console.error('❌ Error enviando log:', error);
-                
-                // Método 2: Imagen pixel fallback
-                const img = new Image();
-                img.src = '<?php echo admin_url("admin-ajax.php"); ?>?action=log_polaca_debug&message=' + encodeURIComponent(message) + '&t=' + Date.now();
-            });
+            // AJAX deshabilitado para evitar error 400
         }
         
         // Variables globales
@@ -4464,8 +4540,20 @@ Auto-rellenar Formulario Completo (Modo TEST)
         let currentTramiteType = 'registro'; // Inicializar con registro por defecto
         let basePrice = 429.99; // Precio base de registro
         let additionalCosts = 0;
-        let taxes = 45.00; // Tasas oficiales de registro
+        // Tasas oficiales eliminadas (incluidas en precio base)
         let signatureConfirmed = false; // Estado de firma confirmada
+        let globalSignatureData = null; // Variable global para almacenar datos de firma
+        
+        // Objeto global POLACA_REDSYS para almacenar datos de pago
+        let POLACA_REDSYS = {
+            temporal_id: null,
+            order_id: null,
+            amount: null,
+            merchant_code: '<?php echo POLACA_REDSYS_MERCHANT_CODE; ?>',
+            terminal: '<?php echo POLACA_REDSYS_TERMINAL; ?>',
+            currency: '<?php echo POLACA_REDSYS_CURRENCY; ?>',
+            mode: '<?php echo POLACA_REDSYS_MODE; ?>'
+        };
         
         // Inicializar sistema progresivo por defecto
         let progressiveSelection = {
@@ -4481,7 +4569,6 @@ Auto-rellenar Formulario Completo (Modo TEST)
             'registro': {
                 title: 'Registro bajo Bandera Polaca',
                 price: 429.99,
-                taxes: 75.00,
                 fees: 293.38,
                 documents: [
                     { id: 'dni_propietario', label: 'Copia del DNI o pasaporte del propietario', example: 'dni-propietario', required: true },
@@ -4521,8 +4608,7 @@ Auto-rellenar Formulario Completo (Modo TEST)
             },
             'cambio_titularidad': {
                 title: 'Cambio de Titularidad - Bandera Polaca',
-                price: 429.99,
-                taxes: 50.00,
+                price: 499.99,
                 fees: 314.04,
                 documents: [
                     { id: 'dni_nuevo_propietario', label: 'Copia del DNI del nuevo propietario', example: 'dni-propietario', required: true },
@@ -5057,7 +5143,7 @@ Auto-rellenar Formulario Completo (Modo TEST)
             });
 
             // Event listeners para archivos
-            const fileFields = ['dni_documento[]', 'registro_maritimo[]'];
+            const fileFields = ['dni_pasaporte[]', 'registro_maritimo[]', 'documentacion_embarcacion[]', 'documentos_adicionales[]'];
             fileFields.forEach(fieldName => {
                 const field = document.querySelector(`input[name="${fieldName}"]`);
                 if (field) {
@@ -5294,8 +5380,10 @@ Auto-rellenar Formulario Completo (Modo TEST)
 
             // Documentación
             const docFields = [
-                { name: 'dni_documento[]', item: 'item-dni-doc' },
-                { name: 'registro_maritimo[]', item: 'item-registro' }
+                { name: 'dni_pasaporte[]', item: 'item-dni-doc' },
+                { name: 'registro_maritimo[]', item: 'item-registro' },
+                { name: 'documentacion_embarcacion[]', item: 'item-documentacion' },
+                { name: 'documentos_adicionales[]', item: 'item-adicionales' }
             ];
 
             let docsCompleted = 0;
@@ -5415,14 +5503,18 @@ Auto-rellenar Formulario Completo (Modo TEST)
         function clearSignatureMain() {
             if (signaturePadMain) {
                 signaturePadMain.clear();
+                globalSignatureData = null; // Limpiar variable global
                 document.getElementById('confirm-signature-main-btn').disabled = true;
-                document.getElementById('signature-continue-btn').disabled = true;
+                // signature-continue-btn removido - auto-retorno implementado
             }
         }
 
         function confirmSignatureMain() {
             if (signaturePadMain && !signaturePadMain.isEmpty()) {
                 signatureConfirmed = true; // Marcar firma como confirmada
+                
+                // ✅ ALMACENAR EN VARIABLE GLOBAL
+                globalSignatureData = signaturePadMain.toDataURL();
                 
                 // ✅ TRANSFERIR FIRMA AL SIGNATUREPAD PRINCIPAL
                 if (signaturePad) {
@@ -5439,7 +5531,12 @@ Auto-rellenar Formulario Completo (Modo TEST)
                 }
                 
                 document.getElementById('confirm-signature-main-btn').disabled = true;
-                document.getElementById('signature-continue-btn').disabled = false;
+                
+                // 🎯 FEEDBACK VISUAL CLARO
+                const confirmBtn = document.getElementById('confirm-signature-main-btn');
+                confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> ¡Firmado!';
+                confirmBtn.style.backgroundColor = '#28a745';
+                confirmBtn.style.borderColor = '#28a745';
                 
                 // Actualizar estado en sidebar de progreso
                 document.getElementById('status-signature').textContent = 'Firmado';
@@ -5449,6 +5546,11 @@ Auto-rellenar Formulario Completo (Modo TEST)
                 document.getElementById('signature-status').style.display = 'flex';
                 
                 console.log('✅ Firma confirmada correctamente desde signaturePadMain');
+                
+                // 🎯 AUTO-RETORNO A DOCUMENTOS CON DELAY PARA VER FEEDBACK
+                setTimeout(() => {
+                    showPage('page-documents');
+                }, 1500); // 1.5 segundos para ver el feedback
             }
         }
 
@@ -5491,6 +5593,10 @@ Auto-rellenar Formulario Completo (Modo TEST)
         function confirmSignature() {
             if (signaturePad && !signaturePad.isEmpty()) {
                 signatureConfirmed = true; // Marcar firma como confirmada
+                
+                // ✅ ALMACENAR EN VARIABLE GLOBAL
+                globalSignatureData = signaturePad.toDataURL();
+                
                 document.getElementById('confirm-signature-btn').disabled = true;
                 document.getElementById('confirm-signature-btn').classList.add('confirmed');
                 
@@ -5682,23 +5788,10 @@ Auto-rellenar Formulario Completo (Modo TEST)
                 additionalTotal += progressiveSelection.delivery.price;
             }
 
-            // Obtener tasas oficiales
-            const tramiteConfig = tramitesConfig[progressiveSelection.tramite.id];
-            const tasasOficiales = tramiteConfig ? tramiteConfig.taxes : 0;
-
-            if (tasasOficiales > 0) {
-                html += `
-                    <div class="pr-payment-item">
-                        <div class="pr-payment-label">Tasas oficiales</div>
-                        <div class="pr-payment-value">€ ${tasasOficiales.toFixed(2)}</div>
-                    </div>
-                `;
-            }
-
-            // Separador y total
+            // Separador y total (sin tasas oficiales)
             html += '<div class="pr-payment-separator"></div>';
 
-            const finalTotal = basePrice + additionalTotal + tasasOficiales;
+            const finalTotal = basePrice + additionalTotal;
             html += `
                 <div class="pr-payment-item pr-payment-total">
                     <div class="pr-payment-label">Total a pagar</div>
@@ -5708,10 +5801,9 @@ Auto-rellenar Formulario Completo (Modo TEST)
 
             paymentBreakdown.innerHTML = html;
 
-            // Actualizar variables globales para Stripe
+            // Actualizar variables globales
             window.basePrice = getBasePrice(progressiveSelection.tramite.id);
             window.additionalCosts = additionalTotal;
-            window.taxes = tasasOficiales;
         }
 
         // Funciones de firma
@@ -5789,6 +5881,7 @@ Auto-rellenar Formulario Completo (Modo TEST)
         function clearSignature() {
             if (signaturePad) {
                 signaturePad.clear();
+                globalSignatureData = null; // Limpiar variable global
                 document.getElementById('confirm-signature-btn').disabled = true;
             }
         }
@@ -5796,6 +5889,7 @@ Auto-rellenar Formulario Completo (Modo TEST)
         function clearFullscreenSignature() {
             if (signaturePadFullscreen) {
                 signaturePadFullscreen.clear();
+                globalSignatureData = null; // Limpiar variable global
                 document.getElementById('confirm-fullscreen-signature-btn').disabled = true;
             }
         }
@@ -5809,6 +5903,10 @@ Auto-rellenar Formulario Completo (Modo TEST)
         function confirmFullscreenSignature() {
             if (signaturePadFullscreen && !signaturePadFullscreen.isEmpty()) {
                 signatureConfirmed = true; // Marcar firma como confirmada
+                
+                // ✅ ALMACENAR EN VARIABLE GLOBAL
+                globalSignatureData = signaturePadFullscreen.toDataURL();
+                
                 // Transferir firma al canvas principal
                 if (signaturePad) {
                     const fullscreenData = signaturePadFullscreen.toDataURL();
@@ -5823,9 +5921,26 @@ Auto-rellenar Formulario Completo (Modo TEST)
                     img.src = fullscreenData;
                 }
 
-                closeSignatureModal();
-                document.getElementById('confirm-signature-btn').disabled = false;
+                // 🎯 FEEDBACK VISUAL CLARO
+                const confirmBtn = document.getElementById('confirm-fullscreen-signature-btn');
+                confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> ¡Firmado!';
+                confirmBtn.style.backgroundColor = '#28a745';
+                confirmBtn.style.borderColor = '#28a745';
+                
+                // Actualizar estado en sidebar de progreso
+                document.getElementById('status-signature').textContent = 'Firmado';
+                document.getElementById('status-signature').style.background = 'rgba(0, 255, 0, 0.3)';
+                
+                // Mostrar estado de firma completada en la página principal
+                document.getElementById('signature-status').style.display = 'flex';
+                
                 console.log('✅ Firma confirmada correctamente desde signaturePadFullscreen');
+                
+                // 🎯 AUTO-RETORNO CON DELAY PARA VER FEEDBACK
+                setTimeout(() => {
+                    closeSignatureModal();
+                    showPage('page-documents');
+                }, 1500); // 1.5 segundos para ver el feedback
             }
         }
 
@@ -5952,35 +6067,81 @@ Auto-rellenar Formulario Completo (Modo TEST)
             errorElement.style.display = 'block';
         }
 
+        // Función para calcular el total final
+        function calculateTotal() {
+            // USAR MISMA LÓGICA QUE SIDEBAR (updateSummaryPriceBreakdown)
+            let total = 0;
+            
+            // Calcular total idéntico al sidebar
+            if (progressiveSelection.tramite) {
+                total += getBasePrice(progressiveSelection.tramite.id);
+            }
+            
+            if (progressiveSelection.boatSize) total += progressiveSelection.boatSize.price || 0;
+            if (progressiveSelection.mmsi) total += progressiveSelection.mmsi.price || 0;
+            if (progressiveSelection.delivery) total += progressiveSelection.delivery.price || 0;
+            
+            if (progressiveSelection.extras) {
+                progressiveSelection.extras.forEach(extra => {
+                    total += extra.price || 0;
+                });
+            }
+            
+            // Usar getBasePrice actualizada (línea 7198) - misma función que sidebar
+            return parseFloat(total.toFixed(2));
+        }
+
+        function getBasePrice(tramiteId) {
+            const prices = {
+                'registro': 429.99,
+                'cambio_titularidad': 429.99,
+                'mmsi': 190.00
+            };
+            return prices[tramiteId] || 0;
+        }
+
+
         // Función para preparar datos temporales antes del pago
         async function prepareTemporalData() {
             console.log('📦 Preparando datos temporales para sistema polaco...');
+            console.log('🖊️ globalSignatureData disponible:', !!globalSignatureData);
             
             // Generar OrderID único con timestamp
             const orderIdBase = Date.now();
             const orderId = orderIdBase.toString().padStart(12, '0').slice(0, 12);
             
-            // Capturar todos los datos del formulario
+            // Capturar todos los datos del formulario en formato correcto para API temporal
             const formData = {
-                // Datos del cliente
-                customer_name: document.getElementById('customer_name').value,
-                customer_dni: document.getElementById('customer_dni').value,
-                customer_email: document.getElementById('customer_email').value,
-                customer_phone: document.getElementById('customer_phone').value,
+                orderId: orderId,
+                tramiteType: 'registro-polaca',
                 
-                // Tipo de trámite seleccionado
-                tramite_type: progressiveSelection.tramite.id,
-                tramite_title: progressiveSelection.tramite.title,
+                // Datos del cliente (formato esperado por API)
+                customerData: {
+                    name: document.getElementById('customer_name').value,
+                    dni: document.getElementById('customer_dni').value,
+                    email: document.getElementById('customer_email').value,
+                    phone: document.getElementById('customer_phone').value
+                },
                 
-                // Precio calculado
-                final_amount: calculateTotal(),
+                // Datos del servicio
+                serviceData: {
+                    tipoServicio: 'registro-polaca',
+                    tramiteType: progressiveSelection.tramite.id,
+                    tramiteTitle: progressiveSelection.tramite.title
+                },
                 
-                // Datos de pago
-                order_id: orderId,
-                payment_method: 'redsys_tpv',
+                // Pricing (formato esperado por API)
+                pricing: {
+                    basePrice: getBasePrice(progressiveSelection.tramite.id),
+                    finalAmount: calculateTotal(),
+                    currency: 'EUR'
+                },
                 
                 // Firma digital si existe
-                signature_data: globalSignatureData || null,
+                signatureData: globalSignatureData || null,
+                
+                // Files vacío por ahora
+                files: [],
                 
                 // Timestamp
                 timestamp: new Date().toISOString()
@@ -5989,14 +6150,14 @@ Auto-rellenar Formulario Completo (Modo TEST)
             // Capturar archivos si existen
             const attachments = await polacaCaptureFiles();
             if (attachments && attachments.length > 0) {
-                formData.attachments = attachments;
+                formData.files = attachments;
             }
             
             console.log('📦 Datos temporales preparados:', {
-                orderId: formData.order_id,
-                tramite: formData.tramite_type,
-                amount: formData.final_amount,
-                hasSignature: !!formData.signature_data,
+                orderId: formData.orderId,
+                tramite: formData.serviceData.tramiteType,
+                amount: formData.pricing.finalAmount,
+                hasSignature: !!formData.signatureData,
                 filesCount: attachments ? attachments.length : 0
             });
             
@@ -6062,6 +6223,7 @@ Auto-rellenar Formulario Completo (Modo TEST)
                 // Paso 1: Preparar datos temporales
                 console.log('📦 Preparando datos temporales...');
                 const temporalData = await prepareTemporalData();
+                const orderId = temporalData.orderId; // Extraer orderId para uso posterior
                 
                 // Paso 2: Enviar al servidor para captura temporal
                 console.log('💾 Enviando datos al sistema temporal...');
@@ -6083,6 +6245,33 @@ Auto-rellenar Formulario Completo (Modo TEST)
                 POLACA_REDSYS.temporal_id = captureResult.temporal_id;
                 POLACA_REDSYS.order_id = captureResult.order_id;
                 
+                // DIAGNÓSTICO: Test AJAX básico
+                console.log('🧪 Ejecutando test AJAX básico...');
+                try {
+                    const testResponse = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams({
+                            action: 'test_ajax_basic'
+                        })
+                    });
+                    
+                    console.log('🧪 Test response status:', testResponse.status);
+                    
+                    if (testResponse.ok) {
+                        const testData = await testResponse.json();
+                        console.log('🧪 Test AJAX básico EXITOSO:', testData);
+                    } else {
+                        console.error('❌ Test AJAX básico FALLÓ - Status:', testResponse.status);
+                        const errorText = await testResponse.text();
+                        console.error('❌ Error text:', errorText);
+                    }
+                } catch (testError) {
+                    console.error('❌ Error en test AJAX básico:', testError);
+                }
+                
                 // Paso 3: Generar parámetros Redsys
                 console.log('🔐 Generando parámetros de pago Redsys...');
                 const redsysResponse = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
@@ -6092,10 +6281,10 @@ Auto-rellenar Formulario Completo (Modo TEST)
                     },
                     body: new URLSearchParams({
                         action: 'generate_polaca_redsys_params',
-                        amount: temporalData.amount,
-                        order_id: POLACA_REDSYS.order_id,
-                        description: `Registro Polaca - ${temporalData.customer_name}`,
-                        customer_email: temporalData.customer_email
+                        amount: temporalData.pricing.finalAmount,
+                        order_id: orderId,
+                        description: `Registro Polaca - ${temporalData.customerData.name}`,
+                        customer_email: temporalData.customerData.email
                     })
                 });
                 
@@ -6172,8 +6361,7 @@ Auto-rellenar Formulario Completo (Modo TEST)
                 total += progressiveSelection.delivery.price;
             }
             
-            // Añadir tasas oficiales
-            total += getTasasOficiales();
+            // Tasas oficiales ya incluidas en el precio base
             
             return total;
         }
@@ -6422,7 +6610,7 @@ Auto-rellenar Formulario Completo (Modo TEST)
                             // Callback: redirigir DESPUÉS de enviar emails CON DELAY
                             console.log('🔄 Redirigiendo después de enviar emails en 3 segundos...');
                             setTimeout(() => {
-                                window.location.href = `https://46-202-128-35.sslip.io/seguimiento/${data.id}`;
+                                window.location.href = `https://tramitfy.org/seguimiento/${data.id}`;
                             }, 3000);
                         });
                         console.log('📧 POST-CALL: sendPolishRegistrationEmails ejecutada sin errores');
@@ -7149,18 +7337,8 @@ Auto-rellenar Formulario Completo (Modo TEST)
         }
         
         function getTasasOficiales(tramiteId) {
-            // Si no se especifica tramiteId, usar el actual
-            if (!tramiteId && progressiveSelection && progressiveSelection.tramite) {
-                tramiteId = progressiveSelection.tramite.id;
-            }
-            if (!tramiteId) tramiteId = 'registro'; // Fallback
-            
-            const tasas = {
-                'registro': 45.00,
-                'cambio_titularidad': 45.00,
-                'mmsi': 25.00
-            };
-            return tasas[tramiteId] || 0;
+            // Tasas oficiales eliminadas - ahora incluidas en el precio base
+            return 0;
         }
         
         
@@ -7656,7 +7834,7 @@ function send_polish_registration_emails_handler() {
     log_polaca_email("✅ EMAIL VÁLIDO - Procediendo con envío");
 
     try {
-        $tracking_url = "https://46-202-128-35.sslip.io/seguimiento/{$transfer_id}";
+        $tracking_url = "https://tramitfy.org/seguimiento/{$transfer_id}";
         log_polaca_email("🔗 TRACKING URL: {$tracking_url}");
         
         // Email al cliente
@@ -7876,7 +8054,7 @@ function send_polish_registration_emails_handler() {
                         <div style='text-align: center;'>
                             <p style='margin: 0 0 20px 0; color: #1e40af; font-size: 14px;'>Accede a las herramientas de gestión del trámite:</p>
                             <div style='margin: 15px 0;'>
-                                <a href='https://46-202-128-35.sslip.io/tramites/{$transfer_id}' style='display: inline-block; padding: 12px 24px; background: #dc2626; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 5px;'>🔧 Gestionar en Dashboard</a>
+                                <a href='https://tramitfy.org/tramites/{$transfer_id}' style='display: inline-block; padding: 12px 24px; background: #dc2626; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 5px;'>🔧 Gestionar en Dashboard</a>
                                 <a href='{$tracking_url}' style='display: inline-block; padding: 12px 24px; background: #016d86; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 5px;'>🔍 Ver Seguimiento Público</a>
                             </div>
                         </div>
@@ -7962,3 +8140,15 @@ function send_polish_registration_emails_handler() {
         wp_send_json_error('Error interno: ' . $e->getMessage());
     }
 }
+
+// =====================================================
+// FUNCIONES AJAX MOVIDAS A ARCHIVO SEPARADO
+// =====================================================
+// 
+// Las funciones AJAX test_ajax_basic() y generate_polaca_redsys_params()
+// han sido movidas a polaca-ajax-functions.php para ser incluidas 
+// correctamente en functions.php del tema WordPress.
+//
+// Esto resuelve el problema de 400 Bad Request ya que WordPress
+// requiere que las funciones AJAX estén registradas desde functions.php
+// =====================================================

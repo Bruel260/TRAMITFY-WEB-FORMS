@@ -112,12 +112,11 @@ if (!defined('TMV2_REDSYS_URL_LIVE')) define('TMV2_REDSYS_URL_LIVE', 'https://si
 if (!defined('TMV2_WEBHOOK_URL')) define('TMV2_WEBHOOK_URL', 'https://tramitfy.org/api/temporal/confirm');
 
 // URLs de retorno - OK a página éxito, KO a formulario
-if (!defined('TMV2_REDSYS_URL_OK')) define('TMV2_REDSYS_URL_OK', 'https://tramitfy.es/pago-realizado-con-exito/');
+if (!defined('TMV2_REDSYS_URL_OK')) define('TMV2_REDSYS_URL_OK', 'https://tramitfy.es/pago-completado-tm/');
 if (!defined('TMV2_REDSYS_URL_KO')) define('TMV2_REDSYS_URL_KO', 'https://tramitfy.es/transferencia-propiedad-v2/');
 if (!defined('TMV2_REDSYS_URL_NOTIFICATION')) define('TMV2_REDSYS_URL_NOTIFICATION', 'https://tramitfy.org/api/temporal/confirm');
 
-// Asignar URL según modo
-$tmv2_redsys_url = (TMV2_REDSYS_MODE === 'test') ? TMV2_REDSYS_URL_TEST : TMV2_REDSYS_URL_LIVE;
+// MOVIDO DENTRO DE FUNCIÓN - NO ejecutar globalmente
 
 /**
  * Carga datos desde archivo CSV (función simplificada)
@@ -214,7 +213,8 @@ function tmv2_redsys_generate_signature($data) {
  * Crea formulario de pago Redsys
  */
 function tmv2_redsys_create_payment_form($order_data) {
- global $tmv2_redsys_url;
+ // Asignar URL según modo - movido dentro de la función
+ $tmv2_redsys_url = (TMV2_REDSYS_MODE === 'test') ? TMV2_REDSYS_URL_TEST : TMV2_REDSYS_URL_LIVE;
  
  // CRITICAL FIX V2: Usar valores exactos sin modificación
  // Basado en documentación oficial y formato que funciona
@@ -5765,10 +5765,10 @@ function tmv2_render_scripts() {
  console.log(` Enviando ${Object.keys(files).length} categorías de archivos`);
  
  // Enviar al webhook
- const webhookUrl = 'https://tramitfy.org/api/herramientas/barcos/webhook';
+ const webhookUrl = 'https://tramitfy.org/api/herramientas/motos/webhook';
  const payload = {
  tramiteId: tramiteId,
- tramiteType: 'transferencia-barco-v2',
+ tramiteType: 'transferencia-moto-v2',
  files: files,
  isFileUpload: true
  };
@@ -6027,7 +6027,7 @@ function tmv2_render_scripts() {
  
  // Compilar datos CON archivos incluidos para webhook directo
  const compiledData = {
- tramiteType: 'transferencia-barco',
+ tramiteType: 'transferencia-moto-v2',
  vehicle: vehicleData,
  personal: personalData,
  pricing: pricingData,
@@ -6972,7 +6972,7 @@ de la moto de agua <strong>${cleanManufacturer} ${model}</strong>.
  console.log(' Enviando datos completos al webhook...');
  
  // Enviar al webhook (API Node.js en puerto 4000)
- const response = await fetch('https://46-202-128-35.sslip.io/api/herramientas/barcos/webhook', {
+ const response = await fetch('https://tramitfy.org/api/herramientas/motos/webhook', {
  method: 'POST',
  headers: {
  'Content-Type': 'application/json',
@@ -7124,6 +7124,11 @@ function tmv2_bypass_wp_security_filters() {
 
 // Configurar al cargar el plugin - PROTEGIDO
 add_action('init', function() {
+ // SKIP EN WP-ADMIN PARA EVITAR CONFLICTOS
+ if (is_admin() && !defined('DOING_AJAX')) {
+  return; // No ejecutar en wp-admin directo
+ }
+ 
  // 🛡️ PROTECCIÓN NUCLEAR: Solo en páginas autorizadas
  if (!tmv2_is_authorized_page()) {
   return; // Bloquear configuración en páginas no autorizadas
@@ -7136,7 +7141,7 @@ add_action('init', function() {
  * Shortcode registration
  */
 function tmv2_register_shortcode() {
- add_shortcode('transferencia_barco_v2', 'tmv2_render_form');
+ add_shortcode('transferencia_moto_v2', 'tmv2_render_form');
 }
 add_action('init', 'tmv2_register_shortcode');
 
@@ -7149,7 +7154,7 @@ function tmv2_enqueue_scripts() {
   return; // Bloquear enqueue en páginas no autorizadas
  }
  
- if (has_shortcode(get_post()->post_content ?? '', 'transferencia_barco_v2')) {
+ if (has_shortcode(get_post()->post_content ?? '', 'transferencia_moto_v2')) {
  // Font Awesome para iconos
  wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
  
@@ -7323,7 +7328,7 @@ function tmv2_handle_create_redsys_payment() {
  'debug_files_count' => is_array($formData['files']) ? count($formData['files']) : 0,
  
  // Metadata
- 'tramiteType' => $formData['tramiteType'] ?? 'transferencia-barco',
+ 'tramiteType' => $formData['tramiteType'] ?? 'transferencia-moto-v2',
  'timestamp' => $formData['timestamp'] ?? date('Y-m-d H:i:s'),
  'attachments' => [] // Se llenará después con las URLs de archivos
  ];
@@ -8278,8 +8283,8 @@ function tmv2_process_successful_payment($orderId, $paymentData) {
  $webhookData = [
  // Identificación
  'tramiteId' => $orderId,
- 'tramiteType' => 'transferencia-barco',
- 
+ 'tramiteType' => 'transferencia-moto-v2',
+
  // Datos personales del comprador
  'customerName' => $formData['customerName'],
  'customerEmail' => $formData['customerEmail'],
@@ -8328,7 +8333,7 @@ function tmv2_process_successful_payment($orderId, $paymentData) {
  error_log('TMV2: Emails enviados');
  
  // 6. ENVÍO UNIFICADO AL WEBHOOK - NUEVA ESTRATEGIA JSON 
- $webhookUrl = 'https://tramitfy.org/api/herramientas/barcos/webhook';
+ $webhookUrl = 'https://tramitfy.org/api/herramientas/motos/webhook';
  
  error_log('TMV2: Preparando envío UNIFICADO al webhook con todos los datos y archivos');
  
@@ -8813,8 +8818,8 @@ function tmv2_process_failed_payment($orderId, $paymentData) {
 }
 
 // Registro del shortcode
-if (!shortcode_exists('transferencia_barco_v2')) {
- add_shortcode('transferencia_barco_v2', 'tmv2_render_form');
+if (!shortcode_exists('transferencia_moto_v2')) {
+ add_shortcode('transferencia_moto_v2', 'tmv2_render_form');
 }
 
 // Registro alternativo del shortcode con _form
@@ -8948,7 +8953,7 @@ function tmv2_save_file_category($file_data, $category, $orderId) {
  */
 function tmv2_send_to_api_with_files($formData) {
  try {
- $webhook_url = 'https://46-202-128-35.sslip.io/api/herramientas/barcos/webhook';
+ $webhook_url = 'https://tramitfy.org/api/herramientas/motos/webhook';
  
  // Preparar payload completo
  $payload = [
@@ -9113,13 +9118,14 @@ const TMV2_TEMPORAL = {
  
  return {
  orderId,
+ tramiteType: 'transferencia-moto-v2',
  customerData,
  boatData,
  files,
  pricing
  };
  },
- 
+
  async processFiles(filesData) {
  if (!filesData) return [];
  
