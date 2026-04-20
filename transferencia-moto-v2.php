@@ -100,8 +100,14 @@ if (!defined('TMV2_REDSYS_MERCHANT_CODE')) define('TMV2_REDSYS_MERCHANT_CODE', '
 if (!defined('TMV2_REDSYS_TERMINAL')) define('TMV2_REDSYS_TERMINAL', '1');
 if (!defined('TMV2_REDSYS_CURRENCY')) define('TMV2_REDSYS_CURRENCY', '978'); // EUR
 
-// Claves de cifrado
-if (!defined('TMV2_REDSYS_SECRET_KEY')) define('TMV2_REDSYS_SECRET_KEY', 'ERDGGMADKbhFIngyRLnW6KrxEuKnjq9p');
+// Claves de cifrado - condicional según modo test/live
+if (!defined('TMV2_REDSYS_SECRET_KEY')) {
+    if (TMV2_REDSYS_MODE === 'test') {
+        define('TMV2_REDSYS_SECRET_KEY', 'sq7HjrUOBfKmC576ILgskD5srU870gJ7');
+    } else {
+        define('TMV2_REDSYS_SECRET_KEY', 'ERDGGMADKbhFIngyRLnW6KrxEuKnjq9p');
+    }
+}
 if (!defined('TMV2_REDSYS_SIGNATURE_VERSION')) define('TMV2_REDSYS_SIGNATURE_VERSION', 'HMAC_SHA256_V1');
 
 // URLs según entorno
@@ -230,7 +236,7 @@ function tmv2_redsys_create_payment_form($order_data) {
  'Ds_Merchant_UrlOK' => TMV2_REDSYS_URL_OK,
  'Ds_Merchant_UrlKO' => TMV2_REDSYS_URL_KO,
  'Ds_Merchant_MerchantName' => 'Tramitfy',
- 'Ds_Merchant_ProductDescription' => 'Transferencia Moto Náutica',
+ 'Ds_Merchant_ProductDescription' => 'Transferencia Moto Nautica',
  'Ds_Merchant_ConsumerLanguage' => '001' // Español
  ];
  
@@ -505,8 +511,8 @@ function tmv2_trigger_webhook($redsys_params) {
  $tramiteId = 'TMV2-' . $orderId;
  
  // Datos del cliente - usar valores reales conocidos del pago 342009
- $customerEmail = 'joanpinyol@hotmail.es'; // Email real del cliente del pago 342009
- $customerName = 'Joan Pinyol'; // Nombre real del cliente
+ $customerEmail = ''; // Se obtiene de temporal_data
+ $customerName = 'Cliente'; // Se obtiene de temporal_data
  
  // TODO: Extraer datos reales desde temporal_data cuando el endpoint funcione
  if (!is_wp_error($temporal_response)) {
@@ -1039,13 +1045,13 @@ function tmv2_render_form() {
  <div class="upload-row">
  <!-- Registro marítimo -->
  <div class="upload-item">
- <label for="upload-hoja-asiento" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
- <div>
+ <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+ <label for="upload-hoja-asiento">
  <strong> Tarjeta de la Moto</strong>
  <small style="display: block;">Documento que acredita la propiedad de la moto de agua</small>
- </div>
- <span class="view-example" data-doc="registro-maritimo" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
  </label>
+ <span class="view-example" data-doc="registro-maritimo" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
+ </div>
  <div class="upload-wrapper">
  <input type="file" id="upload-hoja-asiento" name="upload_hoja_asiento[]" multiple required accept=".pdf,.jpg,.jpeg,.png" onchange="debugMobileFileUploadTMV2(this, 'hoja-asiento')">
  <div class="upload-button upload-button-responsive">
@@ -1059,13 +1065,13 @@ function tmv2_render_form() {
 
  <!-- DNI Comprador -->
  <div class="upload-item">
- <label for="upload-dni-comprador" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
- <div>
+ <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+ <label for="upload-dni-comprador">
  <strong>DNI Comprador</strong>
  <small style="display: block;">Documento Nacional de Identidad (ambas caras)</small>
- </div>
- <span class="view-example" data-doc="dni-comprador" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
  </label>
+ <span class="view-example" data-doc="dni-comprador" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
+ </div>
  <div class="upload-wrapper">
  <input type="file" id="upload-dni-comprador" name="upload_dni_comprador[]" multiple required accept=".pdf,.jpg,.jpeg,.png" onchange="debugMobileFileUploadTMV2(this, 'dni-comprador')">
  <div class="upload-button upload-button-responsive">
@@ -1079,13 +1085,13 @@ function tmv2_render_form() {
 
  <!-- DNI Vendedor -->
  <div class="upload-item">
- <label for="upload-dni-vendedor" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
- <div>
+ <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+ <label for="upload-dni-vendedor">
  <strong>DNI Vendedor</strong>
  <small style="display: block;">Documento Nacional de Identidad (ambas caras)</small>
- </div>
- <span class="view-example" data-doc="dni-vendedor" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
  </label>
+ <span class="view-example" data-doc="dni-vendedor" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
+ </div>
  <div class="upload-wrapper">
  <input type="file" id="upload-dni-vendedor" name="upload_dni_vendedor[]" multiple required accept=".pdf,.jpg,.jpeg,.png" onchange="debugMobileFileUploadTMV2(this, 'dni-vendedor')">
  <div class="upload-button upload-button-responsive">
@@ -1102,13 +1108,13 @@ function tmv2_render_form() {
  <div class="upload-row">
  <!-- Contrato compraventa -->
  <div class="upload-item">
- <label for="upload-contrato-compraventa" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
- <div>
+ <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+ <label for="upload-contrato-compraventa">
  <strong> Contrato Compraventa</strong>
  <small style="display: block;">Contrato firmado entre comprador y vendedor</small>
- </div>
- <span class="view-example" data-doc="contrato-compraventa" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
  </label>
+ <span class="view-example" data-doc="contrato-compraventa" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
+ </div>
  <div class="upload-wrapper">
  <input type="file" id="upload-contrato-compraventa" name="upload_contrato_compraventa[]" multiple required accept=".pdf,.jpg,.jpeg,.png" onchange="debugMobileFileUploadTMV2(this, 'contrato-compraventa')">
  <div class="upload-button upload-button-responsive">
@@ -1123,17 +1129,17 @@ function tmv2_render_form() {
  <!-- Modelo 620 (condicional) -->
  <div class="upload-item" id="modelo-620-container" style="display: none; flex-direction: column; justify-content: center;">
  <div style="background: #f0f9ff; border: 2px solid #3b82f6; border-radius: 8px; padding: 16px;">
- <label for="upload-modelo-620" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
- <div>
- <strong style="display: block; font-size: 14px; color: #1e40af; margin-bottom: 4px;"> Modelo 620 - Comprobante ITP</strong>
- <small style="color: #1e40af;">El ITP ya está pagado, adjunta el comprobante</small>
- </div>
- <span class="view-example" data-doc="modelo-620" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
+ <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+ <label for="upload-modelo-620">
+ <strong style="display: block; font-size: 14px; color: #1e40af; margin-bottom: 4px;"> Justificante de Pago ITP</strong>
+ <small style="color: #1e40af;">Obligatorio - Adjunta el justificante de pago del ITP</small>
  </label>
+ <span class="view-example" data-doc="modelo-620" style="color: #016d86; text-decoration: underline; font-size: 12px; cursor: pointer; font-weight: 500; padding: 4px 8px; background: #f0f9ff; border-radius: 4px; transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">Ver ejemplo</span>
+ </div>
  <div class="upload-wrapper">
  <input type="file" id="upload-modelo-620" name="upload_modelo_620[]" multiple accept=".pdf,.jpg,.jpeg,.png" onchange="debugMobileFileUploadTMV2(this, 'modelo-620')">
  <div class="upload-button upload-button-responsive">
- <span class="desktop-text"><i class="fa-solid fa-upload"></i> Adjuntar Modelo 620</span>
+ <span class="desktop-text"><i class="fa-solid fa-upload"></i> Adjuntar justificante ITP</span>
  <span class="mobile-text"><i class="fa-solid fa-camera"></i></span>
  </div>
  <div class="file-count" data-input="upload-modelo-620">Sin archivos</div>
@@ -4022,7 +4028,7 @@ function tmv2_render_scripts() {
  <div style="margin-bottom: 20px;">
  <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px;">
  <i class="fas fa-check" style="background: rgba(255,255,255,0.9); color: #10b981; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; font-size: 11px;"></i>
- <span style="color: rgba(255,255,255,0.85); font-size: 12px; line-height: 1.4;">Te entregamos un provisional en menos de 24h para que puedas navegar de inmediato</span>
+ <span style="color: rgba(255,255,255,0.85); font-size: 12px; line-height: 1.4;">Se presenta a Capitanía Marítima en un plazo máximo de 24 h</span>
  </div>
  <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px;">
  <i class="fas fa-check" style="background: rgba(255,255,255,0.9); color: #10b981; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; font-size: 11px;"></i>
@@ -4742,14 +4748,16 @@ function tmv2_render_scripts() {
  this.itpPagado = true;
  this.selectITPOption('si');
  this.updateITPDisplay(); // Actualizar cálculo
- this.showStep2();
+ this.toggleModelo620Container();
+this.showStep2();
  });
 
  this.itpNoBtn.addEventListener('click', () => {
  this.itpPagado = false;
  this.selectITPOption('no');
  this.updateITPDisplay(); // Actualizar cálculo
- this.showStep2();
+ this.toggleModelo620Container();
+this.showStep2();
  });
  }
 
@@ -4778,6 +4786,31 @@ function tmv2_render_scripts() {
  console.log(` ITP seleccionado: ${option === 'si' ? 'YA PAGADO' : 'NO PAGADO'}`);
  },
 
+toggleModelo620Container() {
+const container = document.getElementById('modelo-620-container');
+const fileInput = document.getElementById('upload-modelo-620');
+if (!container) return;
+
+if (this.itpPagado === true) {
+container.style.display = 'flex';
+if (fileInput) fileInput.setAttribute('required', 'required');
+console.log(' Modelo 620 container visible (ITP pagado)');
+} else {
+container.style.display = 'none';
+if (fileInput) {
+fileInput.removeAttribute('required');
+fileInput.value = '';
+}
+// Limpiar previews
+const previewContainer = container.querySelector('.file-preview-container');
+if (previewContainer) previewContainer.innerHTML = '';
+const fileCount = container.querySelector('.file-count');
+if (fileCount) fileCount.textContent = 'Sin archivos';
+console.log(' Modelo 620 container oculto');
+}
+},
+
+
  showStep1() {
  if (this.precioStep1 && this.precioStep2) {
  this.precioStep1.style.display = 'block';
@@ -4786,6 +4819,7 @@ function tmv2_render_scripts() {
  
  // Limpiar selección
  this.itpPagado = null;
+this.toggleModelo620Container();
  document.querySelectorAll('.itp-choice-btn').forEach(btn => {
  btn.style.background = 'white';
  btn.style.color = '#016d86';
@@ -4993,7 +5027,7 @@ function tmv2_render_scripts() {
  "Castilla y León": 0.05, // 5%
  "Cataluña": 0.05, // 5%
  "Comunidad Valenciana": 0.08, // 8%
- "Galicia": 0.03, // 3%
+ "Galicia": 0.01, // 1%
  "Madrid": 0.04, // 4%
  "Murcia": 0.04, // 4%
  "Navarra": 0.04, // 4%
@@ -5233,6 +5267,15 @@ function tmv2_render_scripts() {
  async submitForm() {
  console.log(' Procesando pago con Redsys...');
  
+// Validate ITP justificante if user said ITP already paid
+if (this.itpPagado === true) {
+const itpInput = document.getElementById('upload-modelo-620');
+if (!itpInput || itpInput.files.length === 0) {
+alert('Debe adjuntar el justificante de pago del ITP antes de continuar.');
+return;
+}
+}
+
  // Validate terms acceptance
  const termsCheckbox = document.getElementById('terms_accept_pago');
  if (!termsCheckbox || !termsCheckbox.checked) {
@@ -5462,28 +5505,10 @@ function tmv2_render_scripts() {
  }
  });
  
- // DEBUG SYSTEM - Mostrar todos los datos y preguntar si continuar
- const debugMessage = ` DEBUG AJAX EXITOSO:\n\n` +
- ` AJAX Response: SUCCESS\n` +
- ` Parámetros Redsys generados: ${Object.keys(redsysData).length}\n` +
- ` URL destino: ${form.action}\n` +
- ` Campos formulario: ${form.children.length}\n\n` +
- `DATOS CRÍTICOS:\n` +
- `- ${JSON.stringify(data.data, null, 2)}\n\n` +
- `¿Continuar a Redsys TPV?`;
- 
- const continueToRedsys = confirm(debugMessage);
- 
- if (continueToRedsys) {
- // Submit form to Redsys
- document.body.appendChild(form);
- console.log(' Formulario completo, enviando a:', form.action);
- console.log(' Campos del formulario:', form.children.length);
- form.submit();
- } else {
- console.log(' Redirección cancelada por el usuario');
- this.resetPaymentButton();
- }
+                // Submit form to Redsys
+                document.body.appendChild(form);
+                console.log(' Formulario completo, enviando a:', form.action);
+                form.submit();
  } else {
  console.error(' Error creando pago Redsys:', data);
  alert(`Error PHP: ${JSON.stringify(data, null, 2)}`);
@@ -5586,7 +5611,7 @@ function tmv2_render_scripts() {
  'upload-dni-comprador': 'dniComprador', 
  'upload-dni-vendedor': 'dniVendedor',
  'upload-contrato-compraventa': 'contratoCompraventa',
- 'upload-modelo-620': 'otros'
+ 'upload-modelo-620': 'itpComprobante'
  };
  
  // Procesar cada campo de archivo
@@ -5717,7 +5742,7 @@ function tmv2_render_scripts() {
  'upload-dni-comprador': 'dniComprador', 
  'upload-dni-vendedor': 'dniVendedor',
  'upload-contrato-compraventa': 'contratoCompraventa',
- 'upload-modelo-620': 'otros'
+ 'upload-modelo-620': 'itpComprobante'
  };
  
  // Procesar cada campo de archivo
@@ -5925,41 +5950,7 @@ function tmv2_render_scripts() {
  });
  }
  
- // Procesar pago al hacer click
- if (submitPaymentBtn) {
- submitPaymentBtn.addEventListener('click', async function(e) {
- e.preventDefault();
- console.log(' INICIANDO PROCESO DE PAGO REDSYS...');
- 
- // Deshabilitar botón y mostrar loading
- submitPaymentBtn.disabled = true;
- submitPaymentBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...';
- 
- try {
- // FASE 1: Recopilar TODOS los datos del formulario
- const completeFormData = await captureAllFormData();
- console.log(' Datos capturados:', completeFormData);
- 
- // NUEVA ESTRATEGIA: Almacenar datos completos para proceso unificado
- console.log(' ALMACENANDO DATOS COMPLETOS PARA PROCESO UNIFICADO');
- 
- // Almacenar en sessionStorage para acceso inmediato
- // QUOTA FIX: No almacenar archivos grandes en sessionStorage
- // Los archivos se procesarán directamente en el callback de Redsys
- console.log(' Datos completos almacenados en sessionStorage');
- 
- // Los archivos se enviarán al webhook DESPUÉS del pago exitoso
- 
- } catch (error) {
- console.error(' Error en proceso de pago:', error);
- alert('Error al procesar el pago: ' + error.message);
- 
- // Restaurar botón
- submitPaymentBtn.disabled = false;
- submitPaymentBtn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Proceder al Pago';
- }
- });
- }
+// ELIMINADO: Code Path A - click handler sin temporal capture
  }
  
  // Función para capturar TODOS los datos del formulario
@@ -6600,6 +6591,15 @@ de la moto de agua <strong>${cleanManufacturer} ${model}</strong>.
  
  function initDocumentExamples() {
  console.log('Inicializando sistema de ejemplos de documentos...');
+
+// Precargar imagenes de ejemplo para carga instantanea
+var examples = getDocumentExamples();
+Object.keys(examples).forEach(function(key) {
+  var img = new Image();
+  img.src = examples[key].image;
+});
+console.log('Imagenes de ejemplo precargadas');
+
  
  // Event listeners para "Ver ejemplo" (ahora spans, no enlaces)
  document.querySelectorAll('.view-example').forEach(span => {
@@ -6664,157 +6664,86 @@ de la moto de agua <strong>${cleanManufacturer} ${model}</strong>.
  });
  }
  
- function showDocumentExample(docType) {
- console.log(` TMV2 - Mostrando ejemplo de documento: ${docType}`);
- 
- // SEGURIDAD: Prevenir ejecución durante flujos de pago ACTIVOS (no en preparación)
- if (window.location.href.includes('redsys') ||
- (document.querySelector('#submit-payment:disabled') && 
- document.querySelector('#submit-payment').textContent.includes('Redirigiendo'))) {
- console.warn(' Bloqueando modal durante flujo de pago ACTIVO');
- return;
- }
- 
- // Obtener datos del documento inmediatamente
- const examples = getDocumentExamples();
- const example = examples[docType];
- 
- if (!example) {
- console.error(`No se encontró ejemplo para: ${docType}`);
- return;
- }
- 
- console.log(` CREANDO MODAL BYPASS DIRECTO para: ${example.title} (SEGURO)`);
- 
- // Crear modal completamente nuevo DIRECTAMENTE (sin eliminar nada más)
- const newModal = document.createElement('div');
- newModal.id = 'tmv2-example-modal-bypass';
- newModal.innerHTML = `
- <div style="
- position: fixed !important;
- top: 0 !important;
- left: 0 !important;
- width: 100% !important;
- height: 100% !important;
- background: rgba(0, 0, 0, 0.8) !important;
- display: flex !important;
- align-items: center !important;
- justify-content: center !important;
- z-index: 999999 !important;
- visibility: visible !important;
- opacity: 1 !important;
- ">
- <div class="modal-content-mobile" style="
- background: white !important;
- max-width: 900px !important;
- width: 85% !important;
- max-height: 90vh !important;
- border-radius: 16px !important;
- box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4) !important;
- overflow-y: auto !important;
- display: block !important;
- visibility: visible !important;
- opacity: 1 !important;
- position: relative !important;
- margin: 0 auto !important;
- ">
- <div style="
- position: absolute !important;
- top: 10px !important;
- right: 10px !important;
- z-index: 1000 !important;
- ">
- <button onclick="document.getElementById('tmv2-example-modal-bypass').remove(); document.body.style.overflow = '';" style="
- background: rgba(0, 0, 0, 0.5) !important;
- border: none !important;
- font-size: 20px !important;
- color: white !important;
- cursor: pointer !important;
- padding: 8px !important;
- width: 36px !important;
- height: 36px !important;
- display: flex !important;
- align-items: center !important;
- justify-content: center !important;
- border-radius: 50% !important;
- box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
- ">×</button>
- </div>
- 
- <div style="
- padding: 10px !important; 
- display: flex !important; 
- align-items: center !important; 
- justify-content: center !important;
- min-height: 200px !important;
- visibility: visible !important;
- ">
- <img class="modal-image-mobile" src="${example.image}" alt="${example.title}" style="
- max-width: 800px !important;
- max-height: 75vh !important;
- width: auto !important;
- height: auto !important;
- border-radius: 8px !important;
- box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
- display: block !important;
- object-fit: contain !important;
- " 
- onload="console.log(' Imagen cargada en modal limpio');"
- onerror="this.parentElement.innerHTML='<div style=\\'padding: 30px; background: #f0f9ff; border: 2px dashed #0ea5e9; border-radius: 8px; color: #0369a1; text-align: center;\\><div style=\\'font-size: 48px; margin-bottom: 10px;\\'></div><p style=\\'margin: 0; font-size: 14px;\\'>Imagen de ejemplo no disponible</p></div>';">
- </div>
- </div>
- </div>
- `;
- 
- // 6. Insertar modal en body y mostrarlo
- document.body.appendChild(newModal);
- document.body.style.overflow = 'hidden';
- 
- console.log(' MODAL IMAGEN LIMPIO CREADO EXITOSAMENTE');
- console.log(` Imagen mostrada: ${example.image}`);
- console.log(` Modal simplificado - Solo imagen y botón cerrar`);
- 
- // Verificación específica SOLO en elementos modales - NO DOM estructural
- setTimeout(() => {
- const modalSelectors = [
- '.modal', '[class*="modal"]', '[id*="modal"]',
- '.popup', '[class*="popup"]', '[id*="popup"]',
- '.overlay', '[class*="overlay"]',
- '.lightbox', '[class*="lightbox"]',
- '[role="dialog"]', '[aria-modal="true"]'
- ];
- 
- let problemElements = [];
- modalSelectors.forEach(selector => {
- try {
- const elements = document.querySelectorAll(selector);
- elements.forEach(el => {
- if (el.textContent && 
- el.textContent.includes('Este es un ejemplo de cómo debe ser el documento') &&
- el.id !== 'tmv2-example-modal-bypass' &&
- !el.closest('#tmv2-example-modal-bypass')) {
- problemElements.push(el);
- }
- });
- } catch (e) {
- console.log(` Selector ${selector} failed:`, e);
- }
- });
- 
- problemElements.forEach(el => {
- console.log(` Ocultando modal problemático: ${el.tagName} ${el.id || el.className}`);
- el.style.display = 'none';
- el.style.visibility = 'hidden';
- el.style.opacity = '0';
- el.style.zIndex = '-9999';
- });
- 
- if (problemElements.length > 0) {
- console.log(` ${problemElements.length} modales problemáticos ocultados`);
- }
- }, 500);
- 
- }
+ function handleExampleImgError(img) {
+var container = img.parentElement;
+var d = document.createElement('div');
+d.style.padding = '30px';
+d.style.background = '#f0f9ff';
+d.style.border = '2px dashed #0ea5e9';
+d.style.borderRadius = '8px';
+d.style.color = '#0369a1';
+d.style.textAlign = 'center';
+var icon = document.createElement('div');
+icon.style.fontSize = '48px';
+icon.style.marginBottom = '10px';
+icon.textContent = '\u{1F4C4}';
+d.appendChild(icon);
+var p = document.createElement('p');
+p.style.margin = '0';
+p.style.fontSize = '14px';
+p.textContent = 'Imagen de ejemplo no disponible';
+d.appendChild(p);
+container.innerHTML = '';
+container.appendChild(d);
+}
+
+function showDocumentExample(docType) {
+console.log('Mostrando ejemplo de documento:', docType);
+
+if (window.location.href.includes('redsys')) return;
+
+var examples = getDocumentExamples();
+var example = examples[docType];
+if (!example) { console.error('No se encontro ejemplo para:', docType); return; }
+
+// Remove existing modal if any
+var existing = document.getElementById('tmv2-example-modal-bypass');
+if (existing) existing.remove();
+
+// Create overlay
+var overlay = document.createElement('div');
+overlay.id = 'tmv2-example-modal-bypass';
+overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:999999;';
+
+// Close on overlay click
+overlay.addEventListener('click', function(e) {
+  if (e.target === overlay) { overlay.remove(); document.body.style.overflow = ''; }
+});
+
+// Create content box
+var box = document.createElement('div');
+box.style.cssText = 'background:white;max-width:900px;width:85%;max-height:90vh;border-radius:16px;box-shadow:0 25px 50px rgba(0,0,0,0.4);overflow-y:auto;position:relative;';
+
+// Close button
+var closeBtn = document.createElement('button');
+closeBtn.textContent = String.fromCharCode(215);
+closeBtn.style.cssText = 'position:absolute;top:10px;right:10px;z-index:1000;background:rgba(0,0,0,0.5);border:none;font-size:20px;color:white;cursor:pointer;padding:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
+closeBtn.addEventListener('click', function() { overlay.remove(); document.body.style.overflow = ''; });
+box.appendChild(closeBtn);
+
+// Image container
+var imgContainer = document.createElement('div');
+imgContainer.style.cssText = 'padding:10px;display:flex;align-items:center;justify-content:center;min-height:200px;';
+
+// Create image element programmatically
+var img = document.createElement('img');
+img.alt = example.title;
+img.style.cssText = 'max-width:800px;max-height:75vh;width:auto;height:auto;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);display:block;object-fit:contain;';
+
+img.onload = function() { console.log('Imagen cargada:', example.title); };
+img.onerror = function() { handleExampleImgError(img); };
+
+// Set src AFTER adding event listeners
+img.src = example.image;
+
+imgContainer.appendChild(img);
+box.appendChild(imgContainer);
+overlay.appendChild(box);
+document.body.appendChild(overlay);
+document.body.style.overflow = 'hidden';
+
+console.log('Modal creado para:', example.title, '- URL:', example.image);
+}
  
  function closeExampleModal() {
  const modal = document.getElementById('tmv2-example-modal-bypass');
@@ -6830,7 +6759,7 @@ de la moto de agua <strong>${cleanManufacturer} ${model}</strong>.
  icon: 'fa-solid fa-file-text',
  title: 'Registro Marítimo',
  description: 'Documento oficial que acredita la propiedad de la moto de agua. Equivale a la "hoja de asiento" o "permiso de circulación" de los vehículos terrestres.',
- image: 'https://tramitfy.es/wp-content/uploads/exampledocs/tarjeta-moto.jpg',
+ image: '/wp-content/uploads/exampledocs/tarjeta-moto.jpg',
  tips: [
  'Debe estar vigente y sin tachaduras',
  'Incluye datos del propietario actual y de la moto de agua',
@@ -6842,7 +6771,7 @@ de la moto de agua <strong>${cleanManufacturer} ${model}</strong>.
  icon: 'fa-solid fa-file-text',
  title: 'DNI del Comprador',
  description: 'Documento Nacional de Identidad del nuevo propietario. Debe incluir ambas caras del documento para verificar todos los datos.',
- image: 'https://tramitfy.es/wp-content/uploads/exampledocs/dni-comprador.jpg',
+ image: '/wp-content/uploads/exampledocs/dni-comprador.jpg',
  tips: [
  'Subir AMBAS caras del DNI (anverso y reverso)',
  'DNI debe estar vigente (no caducado)',
@@ -6854,7 +6783,7 @@ de la moto de agua <strong>${cleanManufacturer} ${model}</strong>.
  icon: 'fa-solid fa-file-text',
  title: 'DNI del Vendedor',
  description: 'Documento Nacional de Identidad del propietario actual que vende la moto de agua. También requiere ambas caras.',
- image: 'https://tramitfy.es/wp-content/uploads/exampledocs/dni-comprador.jpg',
+ image: '/wp-content/uploads/exampledocs/dni-comprador.jpg',
  tips: [
  'Subir AMBAS caras del DNI (anverso y reverso)',
  'Debe coincidir con el propietario del registro marítimo',
@@ -6866,7 +6795,7 @@ de la moto de agua <strong>${cleanManufacturer} ${model}</strong>.
  icon: 'fa-solid fa-file-text',
  title: 'Contrato de Compraventa',
  description: 'Documento privado firmado entre comprador y vendedor donde se especifica el precio y condiciones de la venta.',
- image: 'https://tramitfy.es/wp-content/uploads/exampledocs/contrato-compraventa.jpg',
+ image: '/wp-content/uploads/exampledocs/contrato-compraventa.jpg',
  tips: [
  'Debe estar firmado por ambas partes',
  'Incluir precio de venta, datos de la moto de agua y fechas',
@@ -6878,7 +6807,7 @@ de la moto de agua <strong>${cleanManufacturer} ${model}</strong>.
  icon: 'fa-solid fa-file-text',
  title: 'Modelo 620 - Comprobante ITP',
  description: 'Comprobante de pago del Impuesto de Transmisiones Patrimoniales (ITP) ya abonado. Solo necesario si el ITP ya fue pagado previamente.',
- image: 'https://tramitfy.es/wp-content/uploads/exampledocs/modelo-620.jpg',
+ image: '/wp-content/uploads/exampledocs/modelo-620.jpg',
  tips: [
  'Solo si YA pagaste el ITP por tu cuenta',
  'Debe coincidir con la moto de agua y el precio',
@@ -6915,16 +6844,7 @@ de la moto de agua <strong>${cleanManufacturer} ${model}</strong>.
  }
  }
 
- // Payment button event listener
- document.addEventListener('DOMContentLoaded', () => {
- const submitPaymentBtn = document.getElementById('submit-payment');
- if (submitPaymentBtn) {
- submitPaymentBtn.addEventListener('click', (e) => {
- e.preventDefault();
- TMV2_Form.submitForm();
- });
- }
- });
+// ELIMINADO: Code Path B - TMV2_Form.submitForm() sin temporal capture
 
  // Inicializar sistemas cuando DOM esté listo
  document.addEventListener('DOMContentLoaded', () => {
@@ -7192,33 +7112,15 @@ function tmv2_handle_create_redsys_payment() {
  $nonce_provided = $_POST['nonce'] ?? 'NO_NONCE';
  $nonce_valid = wp_verify_nonce($nonce_provided, 'tmv2_nonce');
  
- error_log("=== TMV2 NONCE DEBUG ===");
- error_log("Nonce provided: " . $nonce_provided);
- error_log("Nonce valid: " . ($nonce_valid ? 'YES' : 'NO'));
- error_log("WordPress doing Ajax: " . (wp_doing_ajax() ? 'YES' : 'NO'));
- error_log("User logged in: " . (is_user_logged_in() ? 'YES' : 'NO'));
- error_log("Current user ID: " . get_current_user_id());
- error_log("========================");
  
- // TEMPORAL: Bypass nonce for debugging (REMOVER EN PRODUCCIÓN) 
- if (!$nonce_valid && false) { // Keep disabled - testing different approach
- error_log("TMV2: Nonce verification failed");
- wp_send_json_error([
- 'message' => 'Error de seguridad - nonce inválido',
- 'debug' => [
- 'nonce_provided' => $nonce_provided,
- 'expected_action' => 'tmv2_nonce',
- 'wp_doing_ajax' => wp_doing_ajax(),
- 'is_user_logged_in' => is_user_logged_in()
- ]
- ]);
- return;
- }
- 
- // Log de bypass temporal
- if (!$nonce_valid) {
- error_log("TMV2: BYPASS NONCE FOR DEBUG - SECURITY RISK IN PRODUCTION!");
- }
+    // Verificación de nonce
+    if (!$nonce_valid) {
+        error_log("TMV2: Nonce verification failed");
+        wp_send_json_error([
+            'message' => 'Error de seguridad - nonce inválido'
+        ]);
+        return;
+    }
  
  try {
  // DEBUG: Verificar el tamaño de datos recibidos
@@ -9022,16 +8924,17 @@ error_log(" TMV2 ENHANCED: Sistema de archivos compatible cargado - NO intercept
 // TMV2 TEMPORAL INTEGRATION SYSTEM
 // =====================================================
 
-// 🛡️ PROTECCIÓN QUIRÚRGICA - Usar función unificada tmv2_is_authorized_page()
-
-// ✅ PROTECCIÓN AJAX AVANZADA - SOLO PÁGINAS AUTORIZADAS
-// Solo ejecutar en páginas autorizadas Y NO durante AJAX
-if (tmv2_is_authorized_page() && !(defined('DOING_AJAX') && DOING_AJAX)) { // REACTIVADO CON PROTECCIÓN AJAX
+// Renderizar script temporal via wp_footer para correcta carga
+function tmv2_render_temporal_script() {
+    if (!tmv2_is_authorized_page() || (defined('DOING_AJAX') && DOING_AJAX)) { return; }
     // Solo output si está autorizado y no es AJAX
 ?>
 <script>
 // TMV2 TEMPORAL INTEGRATION - SISTEMA INDEPENDIENTE
 console.log(' TMV2 TEMPORAL - Cargando sistema independiente...');
+
+// Guardar gclid en sessionStorage para no perderlo durante la navegación del formulario
+(function() { var g = new URLSearchParams(window.location.search).get('gclid'); if (g) sessionStorage.setItem('gclid', g); })();
 
 const TMV2_TEMPORAL = {
  API_BASE: 'https://tramitfy.org/api/temporal',
@@ -9116,13 +9019,23 @@ const TMV2_TEMPORAL = {
  
  console.log(` Payload preparado: ${files.length} archivo(s) procesado(s)`);
  
+ // GA4 tracking para conversiones server-side
+ const gaMatch = document.cookie.match(/_ga=GA\d+\.\d+\.(.+)/);
+ const gaClientId = gaMatch ? gaMatch[1] : '';
+ const gclid = new URLSearchParams(window.location.search).get('gclid') || sessionStorage.getItem('gclid') || '';
+ const gaSessionMatch = document.cookie.match(/_ga_[A-Z0-9]+=GS\d+\.\d+\.(.+?)(?:\.|$)/);
+ const gaSessionId = gaSessionMatch ? gaSessionMatch[1] : '';
+
  return {
  orderId,
  tramiteType: 'transferencia-moto-v2',
  customerData,
  boatData,
  files,
- pricing
+ pricing,
+ ga_client_id: gaClientId,
+ gclid: gclid,
+ ga_session_id: gaSessionId
  };
  },
 
@@ -9147,18 +9060,31 @@ const TMV2_TEMPORAL = {
  },
  
  async sendToCapture(payload) {
- const response = await fetch(this.API_BASE + '/capture', {
+ const controller = new AbortController();
+ const timeoutId = setTimeout(() => controller.abort(), 15000);
+ let response;
+ try {
+ response = await fetch(this.API_BASE + '/capture', {
  method: 'POST',
  headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify(payload)
+ body: JSON.stringify(payload),
+ signal: controller.signal
  });
- 
+ } catch (fetchError) {
+ clearTimeout(timeoutId);
+ if (fetchError.name === 'AbortError') {
+ throw new Error('El servidor tardó demasiado en responder. Comprueba tu conexión e inténtalo de nuevo.');
+ }
+ throw new Error('No se pudo conectar con el servidor. Comprueba tu conexión a internet.');
+ }
+ clearTimeout(timeoutId);
+
  const result = await response.json();
- 
+
  if (!response.ok) {
  throw new Error(result.error || 'Error en captura temporal');
  }
- 
+
  return result;
  },
  
@@ -9440,28 +9366,41 @@ const TMV2_TEMPORAL = {
  
  console.log(' Enviando datos para crear formulario Redsys...');
  
- const response = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
+ const ajaxController = new AbortController();
+ const ajaxTimeoutId = setTimeout(() => ajaxController.abort(), 20000);
+ let response;
+ try {
+ response = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
  method: 'POST',
  headers: {
  'Content-Type': 'application/x-www-form-urlencoded'
  },
- body: new URLSearchParams(redsysData)
+ body: new URLSearchParams(redsysData),
+ signal: ajaxController.signal
  });
- 
+ } catch (fetchError) {
+ clearTimeout(ajaxTimeoutId);
+ if (fetchError.name === 'AbortError') {
+ throw new Error('El servidor tardó demasiado. Comprueba tu conexión e inténtalo de nuevo.');
+ }
+ throw new Error('No se pudo conectar. Comprueba tu conexión a internet.');
+ }
+ clearTimeout(ajaxTimeoutId);
+
  const result = await response.text();
  console.log(' Respuesta Redsys backend:', result);
- 
+
  if (response.ok) {
  // Si recibimos HTML del formulario, insertarlo y enviarlo
  if (result.includes('<form')) {
  console.log(' Formulario Redsys recibido, enviando...');
- 
+
  // Crear contenedor temporal para el formulario
  const container = document.createElement('div');
  container.innerHTML = result;
  container.style.display = 'none';
  document.body.appendChild(container);
- 
+
  // Buscar y enviar el formulario
  const redsysForm = container.querySelector('form');
  if (redsysForm) {
@@ -9471,10 +9410,14 @@ const TMV2_TEMPORAL = {
  throw new Error('Formulario Redsys no encontrado en respuesta');
  }
  } else {
- throw new Error('Respuesta inválida del servidor Redsys');
+ throw new Error('Respuesta inválida del servidor de pago. Recarga la página e inténtalo de nuevo.');
  }
  } else {
- throw new Error(`Error HTTP ${response.status}: ${result}`);
+ // Detectar nonce expirado (sesión caducada tras 24h)
+ if (result.includes('Nonce') || result.includes('nonce') || response.status === 403) {
+ throw new Error('La sesión ha expirado. Recarga la página e inténtalo de nuevo.');
+ }
+ throw new Error('Error al preparar el pago. Recarga la página e inténtalo de nuevo.');
  }
  
  } catch (error) {
@@ -9483,55 +9426,45 @@ const TMV2_TEMPORAL = {
  }
  }
 };
-
-// PATCH DEL SISTEMA EXISTENTE
+// TEMPORAL INTERCEPTOR - Directo sin setTimeout ni cloneNode
 document.addEventListener('DOMContentLoaded', function() {
- console.log(' TMV2 TEMPORAL - Aplicando patch al sistema existente');
- 
- setTimeout(function() {
- const submitBtn = document.getElementById('submit-payment');
- 
+ console.log(' TMV2 TEMPORAL - Aplicando interceptor directo');
+
+ var submitBtn = document.getElementById('submit-payment');
+
  if (submitBtn) {
- console.log(' Botón de pago encontrado, aplicando interceptor');
- 
- const newBtn = submitBtn.cloneNode(true);
- submitBtn.parentNode.replaceChild(newBtn, submitBtn);
- 
- newBtn.addEventListener('click', async function(e) {
+ submitBtn.addEventListener('click', async function(e) {
  e.preventDefault();
  console.log(' TMV2 TEMPORAL - Pago interceptado');
- 
- newBtn.disabled = true;
- newBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparando datos...';
- 
+
+ submitBtn.disabled = true;
+ submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparando datos...'; 
+
  try {
- const originalData = await captureAllFormData();
+ var originalData = await captureAllFormData();
  console.log(' Datos originales capturados:', originalData);
- 
- const modifiedData = await TMV2_TEMPORAL.interceptPayment(originalData);
+
+ var modifiedData = await TMV2_TEMPORAL.interceptPayment(originalData);
  console.log(' Datos enviados al sistema temporal');
- 
- // Continuar con el flujo de pago Redsys usando el OrderID temporal
+
  console.log(' Continuando con pago Redsys...');
- newBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Redirigiendo al TPV...';
- 
- // Crear formulario de pago Redsys con el OrderID temporal
+ submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Redirigiendo al TPV...'; 
+
  await TMV2_TEMPORAL.continueWithRedsys(modifiedData);
- 
+
  } catch (error) {
  console.error(' Error en pago temporal:', error);
  alert('Error procesando el pago: ' + error.message);
- 
- newBtn.disabled = false;
- newBtn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Proceder al Pago';
+
+ submitBtn.disabled = false;
+ submitBtn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Proceder al Pago'; 
  }
  });
- 
+
  console.log(' Interceptor temporal instalado');
  } else {
  console.warn(' Botón de pago no encontrado');
  }
- }, 1000);
 });
 
 window.TMV2_TEMPORAL_SYSTEM = TMV2_TEMPORAL;
@@ -9749,7 +9682,8 @@ window.addEventListener('unhandledrejection', function(e) {
 console.log(' TMV2 TEMPORAL - Sistema de interceptor cargado');
 </script>
 <?php
-} // Cierre de la condición tmv2_is_authorized_page()
+} // Cierre de tmv2_render_temporal_script()
+add_action('wp_footer', 'tmv2_render_temporal_script', 99);
 
 // =====================================================
 // AJAX HANDLER PARA CREAR FORMULARIO REDSYS TEMPORAL
@@ -9776,8 +9710,8 @@ function tmv2_create_redsys_payment_handler() {
  
  // Validación específica OrderID para Redsys
  if (strlen($orderId) > 12) {
- error_log(" OrderID demasiado largo: " . strlen($orderId) . " caracteres");
- throw new Exception("OrderID inválido: máximo 12 caracteres");
+ error_log("TMV2 REDSYS - OrderID truncado de " . strlen($orderId) . " a 12 caracteres");
+ $orderId = substr($orderId, -12);
  }
  
  if (!ctype_alnum($orderId)) {
