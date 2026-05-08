@@ -1499,7 +1499,7 @@ function enviar_email_itp_v2() {
     <!-- CTA -->
     <tr>
       <td style='padding:8px 32px 32px 32px;text-align:center;'>
-        <p style='font-size:15px;font-weight:bold;color:#1a2e44;margin:0 0 16px 0;'>¿Quieres que nos encarguemos de todo el proceso?</p>
+        <p style='font-size:15px;font-weight:bold;color:#1a2e44;margin:0 0 16px 0;'>¿Quieres ahorrarte el papeleo y los dolores de cabeza con Capitanía Marítima y Hacienda?</p>
         <table role='presentation' cellpadding='0' cellspacing='0' style='margin:0 auto;'>
           <tr><td style='background:#016d86;padding:14px 32px;'>
             <a href='https://tramitfy.es/cambio-titularidad-embarcacion/' style='color:#ffffff;font-weight:bold;font-size:14px;text-decoration:none;letter-spacing:0.5px;display:block;'>CONTRATAR TRAMITACIÓN COMPLETA</a>
