@@ -138,7 +138,7 @@ function ttv2_redsys_create_payment_form($order_data) {
         'Ds_Merchant_UrlOK' => TTV2_REDSYS_URL_OK,
         'Ds_Merchant_UrlKO' => TTV2_REDSYS_URL_KO,
         'Ds_Merchant_MerchantName' => 'Tramitfy',
-        'Ds_Merchant_ProductDescription' => 'Renovación Titulación Náutica',
+        'Ds_Merchant_ProductDescription' => 'Renovacion Titulacion Nautica',
         'Ds_Merchant_ConsumerLanguage' => '001'
     ];
     
@@ -172,6 +172,7 @@ function ttv2_create_redsys_payment() {
     try {
         // Usar el OrderID recibido del frontend (ya padeado) o generar uno nuevo si no viene
         $order_id = !empty($_POST['orderId']) ? $_POST['orderId'] : str_pad(time(), 12, '0', STR_PAD_LEFT);
+        if (strlen($order_id) > 12) { $order_id = substr($order_id, -12); }
         $amount = floatval($_POST['amount'] ?? TTV2_PRECIO_RENOVACION);
         $amount_cents = strval(intval($amount * 100));
         
@@ -2091,7 +2092,7 @@ function ttv2_form_shortcode() {
                     <div style="margin-top: 20px;">
                         <div style="display: flex; align-items: center; margin-bottom: 10px;">
                             <span style="color: #4ade80; margin-right: 8px;">✓</span>
-                            <span style="font-size: 14px;">Provisional en menos de 24h</span>
+                            <span style="font-size: 14px;">Se presenta a Capitanía Marítima en un plazo máximo de 24 h</span>
                         </div>
                         <div style="display: flex; align-items: center; margin-bottom: 10px;">
                             <span style="color: #4ade80; margin-right: 8px;">✓</span>
@@ -2156,55 +2157,8 @@ function ttv2_form_shortcode() {
             <!-- Formulario -->
             <form id="ttv2-form">
                 <!-- PASO 0: Verificación de Elegibilidad -->
-                <div class="ttv2-step active" data-step="0" id="ttv2-dgmm-warning-step">
-                    <div class="ttv2-eligibility-page">
-                        <div class="ttv2-eligibility-content">
-                            <div class="ttv2-main-messages">
-                                <div class="ttv2-requirement">
-                                    <h3>Solo Titulaciones DGMM</h3>
-                                    <p>Este servicio está disponible <strong>únicamente</strong> para titulaciones expedidas por la <strong>Dirección General de la Marina Mercante (DGMM)</strong> o entidades estatales dependientes del Ministerio de Transportes.</p>
-                                </div>
-                                
-                                <div class="ttv2-restriction">
-                                    <h3>Titulaciones Autonómicas No Válidas</h3>
-                                    <p><strong>No podemos tramitar</strong> la renovación de titulaciones expedidas por administraciones autonómicas como Cataluña, País Vasco, Islas Baleares, Comunidad Valenciana, Canarias o cualquier otra comunidad autónoma.</p>
-                                </div>
-                            </div>
-                            
-                            <div class="ttv2-guidance">
-                                <h3>¿Cómo verificar el organismo emisor?</h3>
-                                <p>Revise el sello o logo en su titulación. Si aparece el escudo de una comunidad autónoma o referencias a organismos autonómicos, no podemos procesar su renovación.</p>
-                            </div>
-                            
-                            <div class="ttv2-confirmation-section">
-                                <label class="ttv2-confirmation-label">
-                                    <input type="checkbox" id="ttv2-dgmm-confirm" name="dgmm_confirm" required>
-                                    <span class="ttv2-confirmation-text">
-                                        Confirmo que mi titulación náutica fue expedida por la Dirección General de la Marina Mercante (DGMM) y entiendo que las titulaciones autonómicas no pueden tramitarse a través de este servicio.
-                                    </span>
-                                </label>
-                            </div>
-                            
-                            <!-- Mensaje de advertencia cuando no está marcado el checkbox -->
-                            <div id="ttv2-dgmm-warning" class="ttv2-alert ttv2-alert-warning" style="display: none; margin-top: 20px;">
-                                <span>⚠️ <strong>Verificación Requerida</strong><br>
-                                Debe aceptar la verificación de elegibilidad DGMM antes de continuar con el formulario.</span>
-                            </div>
-                            
-                            <div class="ttv2-navigation-buttons">
-                                <button type="button" class="ttv2-btn-back" onclick="window.location.href='https://tramitfy.es'">
-                                    Volver al Inicio
-                                </button>
-                                <button type="button" class="ttv2-btn-continue" id="ttv2-dgmm-continue" disabled>
-                                    Continuar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
                 <!-- PASO 1: Selector de Tipo de Servicio -->
-                <div class="ttv2-step" data-step="1">
+                <div class="ttv2-step active" data-step="1">
                     <h2>Elige tu titulación a renovar</h2>
                     <p>Selecciona el tipo de titulación náutica que deseas renovar.</p>
 
@@ -2502,7 +2456,7 @@ function ttv2_form_shortcode() {
 
     <script>
         // Variables globales TTV2
-        let ttv2CurrentStep = 0; // Empezar en 0 (DGMM verification)
+        let ttv2CurrentStep = 1;
         let ttv2SelectedService = null;
         let ttv2SelectedPrice = 0;
         let ttv2SelectedTitulacion = null;
@@ -2533,95 +2487,8 @@ function ttv2_form_shortcode() {
             },
         };
 
-        // Inicialización SIMPLIFICADA
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('TTV2: DOM loaded, starting DGMM check...');
-            
-            // LÓGICA DGMM SIMPLIFICADA
-            const dgmmCheckbox = document.getElementById('ttv2-dgmm-confirm');
-            const dgmmContinueBtn = document.getElementById('ttv2-dgmm-continue');
-            const warningStep = document.getElementById('ttv2-dgmm-warning-step');
-            
-            console.log('Elements found:', {
-                checkbox: !!dgmmCheckbox,
-                button: !!dgmmContinueBtn, 
-                warningStep: !!warningStep
-            });
-            
-            // Limpiar sessionStorage para testing
-            sessionStorage.removeItem('ttv2_dgmm_confirmed');
-            console.log('Session storage cleared for testing');
-            
-            // Asegurar que warning step esté activo
-            if (warningStep) {
-                warningStep.classList.add('active');
-                console.log('Warning step activated');
-            }
-            
-            // Ocultar step 1 explícitamente
-            const step1 = document.querySelector('.ttv2-step[data-step="1"]');
-            if (step1) {
-                step1.classList.remove('active');
-                console.log('Step 1 hidden');
-            }
-            
-            // Manejar checkbox
-            if (dgmmCheckbox && dgmmContinueBtn) {
-                console.log('Setting up checkbox handler...');
-                
-                dgmmCheckbox.addEventListener('change', function() {
-                    console.log('Checkbox changed to:', this.checked);
-                    dgmmContinueBtn.disabled = !this.checked;
-                    
-                    // Si se marca el checkbox, solo habilitar el botón y ocultar advertencia
-                    if (this.checked) {
-                        console.log('DGMM confirmed, continue button enabled');
-                        // Guardar confirmación
-                        sessionStorage.setItem('ttv2_dgmm_confirmed', 'true');
-                        // Ocultar mensaje de advertencia si estaba visible
-                        const warningMsg = document.getElementById('ttv2-dgmm-warning');
-                        if (warningMsg) {
-                            warningMsg.style.display = 'none';
-                        }
-                    }
-                });
-                
-                dgmmContinueBtn.addEventListener('click', function() {
-                    console.log('Continue button clicked, checkbox status:', dgmmCheckbox.checked);
-                    
-                    if (!dgmmCheckbox.checked) {
-                        // Mostrar mensaje de advertencia
-                        const warningMsg = document.getElementById('ttv2-dgmm-warning');
-                        if (warningMsg) {
-                            warningMsg.style.display = 'block';
-                            // Hacer scroll suave al mensaje
-                            warningMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                        }
-                        return; // No continuar
-                    }
-                    
-                    // Si está marcado, proceder normalmente
-                    console.log('Proceeding to step 1 using navigation system...');
-                    
-                    // Ocultar mensaje de advertencia si estaba visible
-                    const warningMsg = document.getElementById('ttv2-dgmm-warning');
-                    if (warningMsg) {
-                        warningMsg.style.display = 'none';
-                    }
-                    
-                    // Guardar confirmación
-                    sessionStorage.setItem('ttv2_dgmm_confirmed', 'true');
-                    
-                    // Usar el sistema de navegación estándar
-                    ttv2GoToStep(1);
-                    
-                    console.log('Transition complete via ttv2GoToStep(1)');
-                });
-            } else {
-                console.error('DGMM elements not found!');
-            }
-            
-            // Cargar widget de reseñas después de inicialización DGMM
+            // Cargar widget de reseñas
             setTimeout(function() {
                 ttv2LoadReviewsWidget();
             }, 1000);
@@ -3124,14 +2991,7 @@ function ttv2_form_shortcode() {
 
         // Navegación entre pasos
         function ttv2NextStep() {
-            // Solo validar DGMM (step 0), el resto navegación libre
-            if (ttv2CurrentStep === 0) {
-                if (ttv2ValidateCurrentStep()) {
-                    ttv2GoToStep(ttv2CurrentStep + 1);
-                }
-            } else {
-                ttv2GoToStep(ttv2CurrentStep + 1);
-            }
+            ttv2GoToStep(ttv2CurrentStep + 1);
         }
 
         function ttv2PrevStep() {
@@ -3140,7 +3000,7 @@ function ttv2_form_shortcode() {
 
         function ttv2GoToStep(step) {
             console.log(`TTV2: Navigating from step ${ttv2CurrentStep} to step ${step}`);
-            if (step < 0 || step > 4) return;
+            if (step < 1 || step > 4) return;
 
             // Ocultar paso actual
             const currentStepElement = document.querySelector(`.ttv2-step[data-step="${ttv2CurrentStep}"]`);
@@ -3218,16 +3078,6 @@ function ttv2_form_shortcode() {
         // Validación de pasos
         function ttv2ValidateCurrentStep() {
             const step = ttv2CurrentStep;
-
-            if (step === 0) {
-                // Validar DGMM confirmation
-                const dgmmCheckbox = document.getElementById('ttv2-dgmm-confirm');
-                if (!dgmmCheckbox || !dgmmCheckbox.checked) {
-                    alert('Debe confirmar que su titulación fue expedida por la DGMM para continuar.');
-                    return false;
-                }
-                return true;
-            }
 
             if (step === 1) {
                 // Validar servicio seleccionado
@@ -3655,6 +3505,13 @@ function ttv2_form_shortcode() {
                 });
                 
                 // Completar datos de captura con información del formulario
+                // GA4 tracking
+                const gaMatch = document.cookie.match(/_ga=GA\d+\.\d+\.(.+)/);
+                const gaClientId = gaMatch ? gaMatch[1] : '';
+                const gclidVal = new URLSearchParams(window.location.search).get('gclid') || sessionStorage.getItem('gclid') || '';
+                const gaSessionMatch = document.cookie.match(/_ga_[A-Z0-9]+=GS\d+\.\d+\.(.+?)(?:\.|$)/);
+                const gaSessionIdVal = gaSessionMatch ? gaSessionMatch[1] : '';
+
                 const captureData = {
                     ...baseCaptureData,
                     customerData: {
@@ -3678,7 +3535,10 @@ function ttv2_form_shortcode() {
                         basePrice: 55,
                         tasas: 35,
                         honorarios: 20
-                    }
+                    },
+                    ga_client_id: gaClientId,
+                    gclid: gclidVal,
+                    ga_session_id: gaSessionIdVal
                 };
                 
                 console.log('TTV2: Enviando al API temporal con datos completos...');
@@ -3841,9 +3701,15 @@ function ttv2_handle_create_redsys_payment() {
     ob_start();
     
     try {
-        // Generar OrderID único
-        $orderId = str_pad(time(), 12, '0', STR_PAD_LEFT);
-        
+        // Usar OrderID del frontend (sincronizado con temporal capture)
+        $orderId = sanitize_text_field($_POST['orderId'] ?? '');
+        if (empty($orderId) || !preg_match('/^[0-9]{1,12}$/', $orderId)) {
+            // Fallback: generar uno nuevo (no debería pasar)
+            $orderId = str_pad(time(), 12, '0', STR_PAD_LEFT);
+            if (strlen($orderId) > 12) { $orderId = substr($orderId, -12); }
+            error_log("TTV2: WARNING - OrderID no recibido del frontend, generando nuevo: $orderId");
+        }
+
         // Obtener monto del formulario
         $amount = floatval($_POST['amount'] ?? 55);
         $amount_cents = strval(intval($amount * 100));
