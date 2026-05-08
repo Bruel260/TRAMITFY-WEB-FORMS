@@ -1516,19 +1516,8 @@ function enviar_email_itp_v2() {
           <tr>
             <td style='padding:18px 20px;'>
               <div style='font-size:11px;color:#016d86;font-weight:bold;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;'>Cupón de descuento</div>
-              <table role='presentation' width='100%' cellpadding='0' cellspacing='0'>
-                <tr>
-                  <td style='vertical-align:middle;'>
-                    <div style='display:inline-block;background:#ffffff;border:1px dashed #016d86;padding:6px 16px;font-size:20px;font-weight:bold;color:#016d86;letter-spacing:2px;'>NAUTICA5</div>
-                    <div style='font-size:12px;color:#4a5568;margin-top:6px;'>5&#8364; de descuento en la tramitación</div>
-                  </td>
-                  <td style='text-align:right;vertical-align:middle;white-space:nowrap;padding-left:12px;'>
-                    <div style='font-size:11px;color:#6b7c93;'>Total con cupón</div>
-                    <div style='font-size:22px;font-weight:bold;color:#016d86;'>$total_con_cupon_formatted</div>
-                    <div style='font-size:11px;color:#27ae60;'>Ahorro: 5,00 &#8364;</div>
-                  </td>
-                </tr>
-              </table>
+              <div style='display:inline-block;background:#ffffff;border:1px dashed #016d86;padding:6px 16px;font-size:20px;font-weight:bold;color:#016d86;letter-spacing:2px;'>NAUTICA5</div>
+              <div style='font-size:12px;color:#4a5568;margin-top:8px;'>5&#8364; de descuento en la tramitación</div>
               <div style='font-size:11px;color:#9aa8b8;margin-top:10px;border-top:1px solid #d9e8ec;padding-top:8px;'>Introduce el código en el formulario al contratar</div>
             </td>
           </tr>
