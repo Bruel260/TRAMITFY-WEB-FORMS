@@ -841,7 +841,6 @@ function tmv2_render_form() {
  <option value="Cantabria">Cantabria</option>
  <option value="Castilla-La Mancha">Castilla-La Mancha</option>
  <option value="Castilla y León">Castilla y León</option>
- <option value="Cataluña">Cataluña</option>
  <option value="Comunidad Valenciana">Comunidad Valenciana</option>
  <option value="Galicia">Galicia</option>
  <option value="La Rioja">La Rioja</option>
@@ -852,6 +851,7 @@ function tmv2_render_form() {
  <option value="Ceuta">Ceuta</option>
  <option value="Melilla">Melilla</option>
  </select>
+ <p style="color: #dc2626; font-size: 13px; margin-top: 6px; font-weight: 500;">⚠️ Si eres de Cataluña, contáctanos por WhatsApp para calcular el ITP y proceder con el trámite.</p>
  </div>
  </div>
 
@@ -1012,6 +1012,21 @@ function tmv2_render_form() {
  </div>
  </div>
 
+ <!-- Cupón de descuento -->
+ <div style="background: #f0fafb; border: 1px solid #b3dde5; border-radius: 10px; padding: 16px; margin-bottom: 16px;">
+ <div style="font-size: 13px; font-weight: 700; color: #016d86; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">¿Tienes un cupón de descuento?</div>
+ <div style="display: flex; gap: 8px; align-items: center;">
+ <input type="text" id="tmv2-coupon-input" placeholder="Introduce tu código" maxlength="30"
+ style="flex: 1; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; text-transform: uppercase; outline: none; transition: border 0.2s;"
+ oninput="this.value = this.value.toUpperCase()">
+ <button type="button" id="tmv2-coupon-btn"
+ style="padding: 10px 18px; background: #016d86; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+ Aplicar
+ </button>
+ </div>
+ <div id="tmv2-coupon-msg" style="margin-top: 8px; font-size: 13px; display: none;"></div>
+ </div>
+
  <!-- Botón para modificar -->
  <div style="text-align: center; margin-bottom: 20px;">
  <button type="button" id="modificar-itp" style="background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 12px 24px; border-radius: 8px; font-size: 14px; cursor: pointer;">
@@ -1019,6 +1034,10 @@ function tmv2_render_form() {
  </button>
  </div>
  </div>
+
+ <!-- Campos ocultos cupón -->
+ <input type="hidden" id="tmv2-coupon-code" name="coupon_code" value="">
+ <input type="hidden" id="tmv2-coupon-discount" name="coupon_discount" value="0">
 
  <!-- Campo oculto para comunidad autónoma -->
  <select id="autonomous_community" name="autonomous_community" style="display: none;">
@@ -5025,7 +5044,6 @@ this.toggleModelo620Container();
  "Cantabria": 0.06, // 6%
  "Castilla-La Mancha": 0.06, // 6%
  "Castilla y León": 0.05, // 5%
- "Cataluña": 0.05, // 5%
  "Comunidad Valenciana": 0.08, // 8%
  "Galicia": 0.01, // 1%
  "Madrid": 0.04, // 4%
@@ -9033,6 +9051,8 @@ const TMV2_TEMPORAL = {
  boatData,
  files,
  pricing,
+ couponCode: document.getElementById('tmv2-coupon-code')?.value || '',
+ couponDiscount: parseFloat(document.getElementById('tmv2-coupon-discount')?.value || 0),
  ga_client_id: gaClientId,
  gclid: gclid,
  ga_session_id: gaSessionId
@@ -9680,6 +9700,78 @@ window.addEventListener('unhandledrejection', function(e) {
 });
 
 console.log(' TMV2 TEMPORAL - Sistema de interceptor cargado');
+
+// ── Cupón de descuento ──
+(function() {
+ let baseFinalPrice = 134.99;
+
+ function updatePriceWithCoupon(discount) {
+ const desgloseTram = document.getElementById('desglose-tramitacion');
+ if (desgloseTram) {
+ if (discount > 0) {
+ desgloseTram.innerHTML = '<span style="text-decoration:line-through;color:#9ca3af;font-size:14px;">' + baseFinalPrice.toFixed(2) + ' €</span> <span style="color:#16a34a;">' + (baseFinalPrice - discount).toFixed(2) + ' €</span>';
+ } else {
+ desgloseTram.textContent = baseFinalPrice.toFixed(2) + ' €';
+ }
+ }
+ const precioFinal = document.getElementById('precio-final');
+ if (precioFinal) {
+ if (!precioFinal.getAttribute('data-original')) precioFinal.setAttribute('data-original', precioFinal.textContent);
+ const originalVal = parseFloat(precioFinal.getAttribute('data-original').replace(' €','').replace(',','.')) || baseFinalPrice;
+ precioFinal.textContent = (discount > 0 ? (originalVal - discount) : originalVal).toFixed(2) + ' €';
+ }
+ }
+
+ document.addEventListener('DOMContentLoaded', function() {
+ const btn = document.getElementById('tmv2-coupon-btn');
+ const input = document.getElementById('tmv2-coupon-input');
+ const msg = document.getElementById('tmv2-coupon-msg');
+ const hiddenCode = document.getElementById('tmv2-coupon-code');
+ const hiddenDiscount = document.getElementById('tmv2-coupon-discount');
+
+ if (!btn) return;
+
+ btn.addEventListener('click', async function() {
+ const code = (input?.value || '').trim().toUpperCase();
+ if (!code) return;
+
+ btn.disabled = true;
+ btn.textContent = '...';
+ msg.style.display = 'none';
+
+ try {
+ const r = await fetch('https://tramitfy.org/api/coupons/validate', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ code })
+ });
+ const data = await r.json();
+
+ if (data.valid) {
+ hiddenCode.value = data.code;
+ hiddenDiscount.value = data.clientDiscount;
+ updatePriceWithCoupon(data.clientDiscount);
+ msg.style.cssText = 'display:block; color:#16a34a; font-weight:600;';
+ msg.textContent = '✓ ' + data.message;
+ btn.textContent = '✓';
+ btn.style.background = '#16a34a';
+ input.disabled = true;
+ btn.disabled = true;
+ } else {
+ msg.style.cssText = 'display:block; color:#dc2626;';
+ msg.textContent = '✗ ' + (data.error || 'Cupón no válido');
+ btn.disabled = false;
+ btn.textContent = 'Aplicar';
+ }
+ } catch(e) {
+ msg.style.cssText = 'display:block; color:#dc2626;';
+ msg.textContent = 'Error de conexión. Inténtalo de nuevo.';
+ btn.disabled = false;
+ btn.textContent = 'Aplicar';
+ }
+ });
+ });
+})();
 </script>
 <?php
 } // Cierre de tmv2_render_temporal_script()
