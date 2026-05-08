@@ -1379,12 +1379,9 @@ function enviar_email_itp_v2() {
     $iva_servicio_formatted = number_format($iva_servicio, 2, ',', '.') . ' €';
     $comision_bancaria_formatted = number_format($comision_bancaria, 2, ',', '.') . ' €';
 
-    // Calcular precio con descuento - SOLO sobre la gestión (134,99€), NO sobre el ITP
-    $discount_amount = $service_fee * 0.05; // 5% de descuento solo sobre la gestión
+    // Cupón NAUTICA5: 5€ fijo sobre la gestión
+    $discount_amount = 5.00;
     $discounted_service_fee = $service_fee - $discount_amount;
-    $total_with_discount = $itp_amount + $discounted_service_fee + $comision_bancaria; // ITP + gestión con descuento + comisión
-    $total_with_discount_formatted = number_format($total_with_discount, 2, ',', '.') . ' €';
-    $discount_amount_formatted = number_format($discount_amount, 2, ',', '.') . ' €';
     $discounted_service_fee_formatted = number_format($discounted_service_fee, 2, ',', '.') . ' €';
 
     // Preparar contenido del email
@@ -1402,8 +1399,8 @@ function enviar_email_itp_v2() {
 
     $subject = "Tu cálculo de ITP - $vehicle_type_text $manufacturer $model";
 
-    $total_with_discount_clean = $itp_amount + $discounted_service_fee;
-    $total_with_discount_clean_formatted = number_format($total_with_discount_clean, 2, ',', '.') . ' €';
+    $total_con_cupon = $itp_amount + $discounted_service_fee;
+    $total_con_cupon_formatted = number_format($total_con_cupon, 2, ',', '.') . ' €';
 
     $message = "
     <!DOCTYPE html>
@@ -1512,28 +1509,29 @@ function enviar_email_itp_v2() {
       </td>
     </tr>
 
-    <!-- SEPARADOR -->
-    <tr><td style='padding:0 32px;'><div style='height:1px;background:#e2ecf0;'></div></td></tr>
-
     <!-- CUPÓN -->
     <tr>
-      <td style='padding:24px 32px;'>
-        <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border:2px dashed #016d86;background:#f0fafb;'>
-          <tr><td style='padding:20px;text-align:center;'>
-            <div style='font-size:11px;font-weight:bold;color:#016d86;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;'>Oferta especial para ti</div>
-            <table role='presentation' cellpadding='0' cellspacing='0' style='margin:0 auto 12px auto;border:2px dashed #016d86;background:#ffffff;'>
-              <tr><td style='padding:8px 24px;font-size:24px;font-weight:bold;color:#016d86;letter-spacing:3px;'>NAUTICA5</td></tr>
-            </table>
-            <div style='font-size:13px;color:#4a5568;margin-bottom:14px;'>5% de descuento en la tramitación</div>
-            <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='max-width:280px;margin:0 auto;font-size:12px;'>
-              <tr><td style='color:#6b7c93;padding:4px 0;'>ITP (impuesto):</td><td style='color:#1a2e44;font-weight:bold;text-align:right;padding:4px 0;'>$itp_amount_formatted</td></tr>
-              <tr><td style='color:#6b7c93;padding:4px 0;border-top:1px solid #e2ecf0;'>Cambio titularidad normal:</td><td style='color:#999;text-decoration:line-through;text-align:right;padding:4px 0;border-top:1px solid #e2ecf0;'>$service_fee_formatted</td></tr>
-              <tr><td style='color:#6b7c93;padding:4px 0;border-top:1px solid #e2ecf0;'>Con NAUTICA5:</td><td style='color:#27ae60;font-weight:bold;text-align:right;padding:4px 0;border-top:1px solid #e2ecf0;'>$discounted_service_fee_formatted</td></tr>
-              <tr><td style='color:#27ae60;font-size:11px;padding:4px 0;border-top:1px solid #e2ecf0;'>Ahorro:</td><td style='color:#27ae60;font-weight:bold;font-size:11px;text-align:right;padding:4px 0;border-top:1px solid #e2ecf0;'>-$discount_amount_formatted</td></tr>
-              <tr style='background:#016d86;'><td style='color:#ffffff;font-weight:bold;padding:8px 4px;font-size:13px;'>TOTAL CON CUPÓN:</td><td style='color:#ffffff;font-weight:bold;font-size:16px;text-align:right;padding:8px 4px;'>$total_with_discount_clean_formatted</td></tr>
-            </table>
-            <div style='font-size:11px;color:#9aa8b8;margin-top:10px;'>Introduce el código al contratar en el formulario</div>
-          </td></tr>
+      <td style='padding:16px 32px 24px 32px;'>
+        <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f0fafb;border-left:4px solid #016d86;'>
+          <tr>
+            <td style='padding:18px 20px;'>
+              <div style='font-size:11px;color:#016d86;font-weight:bold;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;'>Cupón de descuento</div>
+              <table role='presentation' width='100%' cellpadding='0' cellspacing='0'>
+                <tr>
+                  <td style='vertical-align:middle;'>
+                    <div style='display:inline-block;background:#ffffff;border:1px dashed #016d86;padding:6px 16px;font-size:20px;font-weight:bold;color:#016d86;letter-spacing:2px;'>NAUTICA5</div>
+                    <div style='font-size:12px;color:#4a5568;margin-top:6px;'>5&#8364; de descuento en la tramitación</div>
+                  </td>
+                  <td style='text-align:right;vertical-align:middle;white-space:nowrap;padding-left:12px;'>
+                    <div style='font-size:11px;color:#6b7c93;'>Total con cupón</div>
+                    <div style='font-size:22px;font-weight:bold;color:#016d86;'>$total_con_cupon_formatted</div>
+                    <div style='font-size:11px;color:#27ae60;'>Ahorro: 5,00 &#8364;</div>
+                  </td>
+                </tr>
+              </table>
+              <div style='font-size:11px;color:#9aa8b8;margin-top:10px;border-top:1px solid #d9e8ec;padding-top:8px;'>Introduce el código en el formulario al contratar</div>
+            </td>
+          </tr>
         </table>
       </td>
     </tr>
