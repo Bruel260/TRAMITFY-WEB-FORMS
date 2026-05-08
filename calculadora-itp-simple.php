@@ -519,8 +519,6 @@ function calc_itp_v2_shortcode() {
         }
     </style>
 
-    <h1 class="main-title">Calculadora de ITP para Embarcaciones y Motos de Agua</h1>
-
     <div class="itp-calc-v2">
         <div class="itp-layout">
             <!-- COLUMNA IZQUIERDA - INFORMACIÓN -->
@@ -1404,460 +1402,234 @@ function enviar_email_itp_v2() {
 
     $subject = "Tu cálculo de ITP - $vehicle_type_text $manufacturer $model";
 
+    $total_with_discount_clean = $itp_amount + $discounted_service_fee;
+    $total_with_discount_clean_formatted = number_format($total_with_discount_clean, 2, ',', '.') . ' €';
+
     $message = "
     <!DOCTYPE html>
-    <html>
+    <html lang='es'>
     <head>
         <meta charset='UTF-8'>
         <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-        <!--[if !mso]><!-->
         <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-        <!--<![endif]-->
-        <style>
-            body {
-                margin: 0;
-                padding: 0;
-                font-family: Arial, Helvetica, sans-serif;
-                line-height: 1.5;
-                color: #333333;
-                background-color: #f4f4f4;
-            }
-            table {
-                border-spacing: 0;
-                mso-table-lspace: 0pt;
-                mso-table-rspace: 0pt;
-            }
-            td {
-                padding: 0;
-            }
-            img {
-                border: 0;
-            }
-            .email-wrapper {
-                width: 100%;
-                table-layout: fixed;
-                background-color: #f4f4f4;
-                padding: 20px 0;
-            }
-            .email-container {
-                max-width: 550px;
-                margin: 0 auto;
-                background-color: #ffffff;
-                border: 1px solid #dddddd;
-            }
-            .header {
-                background-color: #016d86;
-                padding: 25px 20px;
-                text-align: center;
-            }
-            .header h1 {
-                color: #ffffff;
-                font-size: 24px;
-                font-weight: bold;
-                margin: 0;
-                padding: 0;
-            }
-            .header p {
-                color: #ffffff;
-                font-size: 13px;
-                margin: 5px 0 0 0;
-                padding: 0;
-            }
-            .content {
-                padding: 25px 20px;
-                background-color: #ffffff;
-            }
-
-            /* Cupón discreto */
-            .discount-box {
-                background-color: #f0f8fa;
-                border: 1px solid #b3e5f4;
-                padding: 15px;
-                margin: 20px 0;
-                text-align: center;
-            }
-            .discount-title {
-                color: #016d86;
-                font-size: 14px;
-                font-weight: bold;
-                margin: 0 0 8px 0;
-            }
-            .discount-code {
-                background-color: #ffffff;
-                color: #016d86;
-                display: inline-block;
-                padding: 8px 20px;
-                font-size: 18px;
-                font-weight: bold;
-                letter-spacing: 1px;
-                border: 1px dashed #016d86;
-                margin: 5px 0;
-            }
-            .discount-text {
-                color: #555555;
-                font-size: 12px;
-                margin: 5px 0 0 0;
-            }
-
-            /* Tabla de datos compacta */
-            .data-table {
-                width: 100%;
-                margin: 15px 0;
-            }
-            .data-table td {
-                padding: 6px 8px;
-                border-bottom: 1px solid #eeeeee;
-                font-size: 13px;
-            }
-            .data-table .label {
-                color: #666666;
-                width: 40%;
-            }
-            .data-table .value {
-                color: #333333;
-                font-weight: bold;
-            }
-            .section-title {
-                color: #016d86;
-                font-size: 15px;
-                font-weight: bold;
-                margin: 20px 0 10px 0;
-                padding-bottom: 5px;
-                border-bottom: 1px solid #dddddd;
-            }
-
-            /* Resultado del cálculo */
-            .result-box {
-                background-color: #016d86;
-                color: #ffffff;
-                padding: 15px;
-                margin: 20px 0;
-                text-align: center;
-            }
-            .result-label {
-                font-size: 12px;
-                margin: 0;
-                padding: 0;
-            }
-            .result-amount {
-                font-size: 24px;
-                font-weight: bold;
-                margin: 5px 0;
-                padding: 0;
-            }
-
-            /* Lista de servicios */
-            .services-list {
-                margin: 15px 0;
-                padding: 0;
-            }
-            .service-item {
-                color: #555555;
-                font-size: 13px;
-                padding: 4px 0;
-                margin: 0;
-            }
-
-            /* Botón CTA */
-            .cta-section {
-                text-align: center;
-                margin: 25px 0;
-            }
-            .cta-button {
-                display: inline-block;
-                background-color: #016d86;
-                color: #ffffff !important;
-                padding: 12px 30px;
-                text-decoration: none;
-                font-weight: bold;
-                font-size: 14px;
-            }
-            .cta-hint {
-                font-size: 11px;
-                color: #666666;
-                margin: 8px 0 0 0;
-            }
-
-            /* Footer */
-            .footer {
-                background-color: #f4f4f4;
-                padding: 20px;
-                text-align: center;
-                border-top: 1px solid #dddddd;
-            }
-            .footer-text {
-                font-size: 11px;
-                color: #666666;
-                line-height: 1.5;
-                margin: 0;
-                padding: 0;
-            }
-            .footer-links {
-                margin: 10px 0 0 0;
-            }
-            .footer-links a {
-                color: #016d86;
-                text-decoration: none;
-                font-size: 11px;
-                margin: 0 5px;
-            }
-            .warning-box {
-                background-color: #fff3cd;
-                border: 1px solid #ffc107;
-                padding: 10px;
-                margin: 15px 0;
-                font-size: 11px;
-                color: #666666;
-            }
-        </style>
     </head>
-    <body>
-        <table class='email-wrapper' role='presentation'>
-            <tr>
-                <td align='center'>
-                    <table class='email-container' role='presentation'>
-                        <!-- Header -->
-                        <tr>
-                            <td class='header'>
-                                <h1>TRAMITFY</h1>
-                                <p>Cálculo de ITP para embarcaciones</p>
-                            </td>
-                        </tr>
+    <body style='margin:0;padding:0;background:#f0f4f8;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;'>
+    <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f0f4f8;'>
+    <tr><td align='center' style='padding:24px 12px;'>
+    <table role='presentation' width='560' cellpadding='0' cellspacing='0' style='max-width:560px;width:100%;background:#ffffff;border:1px solid #d9e2ec;'>
 
-                        <!-- Contenido -->
-                        <tr>
-                            <td class='content'>
-                                <!-- Título -->
-                                <h2 style='color: #016d86; font-size: 18px; margin: 0 0 15px 0;'>Cálculo completado</h2>
+    <!-- CABECERA -->
+    <tr>
+      <td style='background:#016d86;padding:28px 32px;text-align:center;'>
+        <div style='font-size:22px;font-weight:bold;color:#ffffff;letter-spacing:2px;'>TRAMITFY</div>
+        <div style='font-size:12px;color:#b3dfe8;margin-top:4px;letter-spacing:1px;'>ESPECIALISTAS EN TRAMITACIÓN NÁUTICA</div>
+      </td>
+    </tr>
 
-                                <!-- Datos comprimidos en dos columnas -->
-                                <table role='presentation' width='100%' style='border-spacing: 10px; margin: 15px 0;'>
-                                    <tr>
-                                        <!-- Columna izquierda: Datos del vehículo -->
-                                        <td style='width: 48%; vertical-align: top;'>
-                                            <h3 style='color: #016d86; font-size: 14px; font-weight: bold; margin: 0 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #dddddd;'>Datos del vehículo</h3>
-                                            <table style='width: 100%; font-size: 12px;' role='presentation'>
-                                                <tr>
-                                                    <td style='color: #666666; padding: 4px 0; width: 45%;'>Tipo:</td>
-                                                    <td style='color: #333333; font-weight: bold; padding: 4px 0;'>$vehicle_type_text</td>
-                                                </tr>
-                                                <tr>
-                                                    <td style='color: #666666; padding: 4px 0;'>Fabricante:</td>
-                                                    <td style='color: #333333; font-weight: bold; padding: 4px 0;'>$manufacturer</td>
-                                                </tr>
-                                                <tr>
-                                                    <td style='color: #666666; padding: 4px 0;'>Modelo:</td>
-                                                    <td style='color: #333333; font-weight: bold; padding: 4px 0;'>$model</td>
-                                                </tr>
-                                                <tr>
-                                                    <td style='color: #666666; padding: 4px 0;'>Año:</td>
-                                                    <td style='color: #333333; font-weight: bold; padding: 4px 0;'>$matriculation_year</td>
-                                                </tr>
-                                                <tr>
-                                                    <td style='color: #666666; padding: 4px 0;'>Precio:</td>
-                                                    <td style='color: #333333; font-weight: bold; padding: 4px 0;'>$purchase_price_formatted</td>
-                                                </tr>
-                                                <tr>
-                                                    <td style='color: #666666; padding: 4px 0;'>Comunidad:</td>
-                                                    <td style='color: #333333; font-weight: bold; padding: 4px 0;'>$region</td>
-                                                </tr>
-                                            </table>
-                                        </td>
+    <!-- INTRO -->
+    <tr>
+      <td style='padding:28px 32px 0 32px;'>
+        <p style='margin:0 0 4px 0;font-size:13px;color:#6b7c93;'>Tu cálculo de ITP para la " . strtolower($vehicle_type_text) . ":</p>
+        <p style='margin:0;font-size:19px;font-weight:bold;color:#1a2e44;'>$manufacturer $model &middot; $matriculation_year</p>
+      </td>
+    </tr>
 
-                                        <!-- Columna derecha: Desglose del cálculo -->
-                                        <td style='width: 48%; vertical-align: top;'>
-                                            <h3 style='color: #016d86; font-size: 14px; font-weight: bold; margin: 0 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #dddddd;'>Desglose del cálculo</h3>
-                                            <table style='width: 100%; font-size: 12px;' role='presentation'>
-                                                " . ($model_price > 0 ? "
-                                                <tr style='background-color: #e8f5e9;'>
-                                                    <td style='color: #2e7d32; padding: 4px 0; width: 50%;'>Valor modelo (CSV):</td>
-                                                    <td style='color: #2e7d32; font-weight: bold; padding: 4px 0;'>$model_price_formatted</td>
-                                                </tr>
-                                                " : "") . "
-                                                <tr>
-                                                    <td style='color: #666666; padding: 4px 0; width: 50%;'>Antigüedad:</td>
-                                                    <td style='color: #333333; font-weight: bold; padding: 4px 0;'>$vehicle_age años</td>
-                                                </tr>
-                                                <tr>
-                                                    <td style='color: #666666; padding: 4px 0;'>Depreciación BOE:</td>
-                                                    <td style='color: #333333; font-weight: bold; padding: 4px 0;'>" . ($no_model_found ? 'Sin aplicar (manual)' : "{$depreciation_rate}%") . "</td>
-                                                </tr>
-                                                <tr>
-                                                    <td style='color: #666666; padding: 4px 0;'>Valor fiscal:</td>
-                                                    <td style='color: #333333; font-weight: bold; padding: 4px 0;'>$fiscal_value_formatted</td>
-                                                </tr>
-                                                <tr>
-                                                    <td style='color: #666666; padding: 4px 0; font-size: 10px; font-style: italic;' colspan='2'>" . ($model_price > 0 ? "(Valor modelo × Depreciación)" : "(Precio compra sin depreciación)") . "</td>
-                                                </tr>
-                                                <tr style='background-color: #f0f9ff;'>
-                                                    <td style='color: #016d86; padding: 8px 4px; font-weight: bold;'>Base imponible ITP:</td>
-                                                    <td style='color: #016d86; font-weight: bold; padding: 8px 4px; font-size: 15px;'>$base_imponible_formatted</td>
-                                                </tr>
-                                                <tr>
-                                                    <td style='color: #666666; padding: 4px 0; font-size: 10px; font-style: italic;' colspan='2'>(Se usa el mayor entre precio compra y valor fiscal)</td>
-                                                </tr>
-                                                <tr>
-                                                    <td style='color: #666666; padding: 4px 0;'>Tipo ITP:</td>
-                                                    <td style='color: #333333; font-weight: bold; padding: 4px 0;'>" . ($itp_rate * 100) . "%</td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
-
-                                <!-- Resultado -->
-                                <table class='result-box' role='presentation' width='100%'>
-                                    <tr>
-                                        <td>
-                                            <p class='result-label'>ITP A PAGAR</p>
-                                            <p class='result-amount'>$itp_amount_formatted</p>
-                                        </td>
-                                    </tr>
-                                </table>
-
-                                <!-- Comparativa de precios -->
-                                <div style='margin: 25px 0; background-color: #f8f9fa; border: 1px solid #e9ecef; padding: 20px;'>
-                                    <h4 style='color: #016d86; font-size: 16px; margin: 0 0 15px 0; text-align: center; font-weight: bold;'>
-                                        Comparativa: Hacerlo tú vs. Gestión completa
-                                    </h4>
-                                    <table role='presentation' width='100%' style='border-spacing: 10px;'>
-                                        <tr>
-                                            <!-- Opción DIY -->
-                                            <td style='width: 48%; vertical-align: top;'>
-                                                <div style='background-color: #fff; border: 2px solid #dc3545; padding: 15px; text-align: center; border-radius: 8px;'>
-                                                    <h5 style='color: #dc3545; margin: 0 0 8px 0; font-size: 14px; font-weight: bold;'>Si lo haces TÚ</h5>
-                                                    <p style='font-size: 20px; font-weight: bold; color: #dc3545; margin: 8px 0;'>$total_diy_formatted</p>
-                                                    <p style='font-size: 11px; color: #666; margin: 5px 0; line-height: 1.3;'>+ Tu tiempo<br>+ Citas presenciales<br>+ Riesgo de errores<br>+ Estrés del papeleo<br>+ Presentar impuestos hacienda<br>+ Tasas de capitanía</p>
-                                                </div>
-                                            </td>
-                                            <!-- Separador -->
-                                            <td style='width: 4%; text-align: center; vertical-align: middle;'>
-                                                <span style='color: #016d86; font-size: 18px; font-weight: bold;'>VS</span>
-                                            </td>
-                                            <!-- Opción gestión completa -->
-                                            <td style='width: 48%; vertical-align: top;'>
-                                                <div style='background-color: #fff; border: 2px solid #27ae60; padding: 15px; text-align: center; border-radius: 8px; position: relative;'>
-                                                    <div style='background-color: #27ae60; color: white; font-size: 10px; padding: 3px 8px; position: absolute; top: -8px; right: 10px; border-radius: 10px;'>RECOMENDADO</div>
-                                                    <h5 style='color: #27ae60; margin: 0 0 8px 0; font-size: 14px; font-weight: bold;'>Si lo gestionamos nosotros</h5>
-                                                    <p style='font-size: 20px; font-weight: bold; color: #27ae60; margin: 8px 0;'>$total_gestion_nosotros_formatted</p>
-                                                    <p style='font-size: 11px; color: #666; margin: 5px 0; line-height: 1.3;'>✓ Sin colas ni esperas<br>✓ Sin errores ni rechazos<br>✓ Gestión 100% online<br>✓ Provisional en menos de 24h</p>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </div>
-
-                                <!-- Precio completo del servicio -->
-                                <h3 class='section-title'>Precio completo de nuestro servicio</h3>
-                                <table class='data-table' role='presentation'>
-                                    <tr>
-                                        <td class='label'>ITP (impuesto):</td>
-                                        <td class='value'>$itp_amount_formatted</td>
-                                    </tr>
-                                    <tr>
-                                        <td class='label'>Gestión del ITP:</td>
-                                        <td class='value'>0€</td>
-                                    </tr>
-                                    <tr>
-                                        <td class='label'>Cambio de Titularidad:</td>
-                                        <td class='value'>$service_fee_formatted</td>
-                                    </tr>
-                                    <tr>
-                                        <td class='label' style='padding-left: 15px; font-size: 12px; color: #666;'>• Tasas capitanía marítima + Gestión:</td>
-                                        <td class='value' style='font-size: 12px; color: #666;'>$tasas_gestion_formatted</td>
-                                    </tr>
-                                    <tr>
-                                        <td class='label' style='padding-left: 15px; font-size: 12px; color: #666;'>• IVA:</td>
-                                        <td class='value' style='font-size: 12px; color: #666;'>$iva_servicio_formatted</td>
-                                    </tr>
-                                    <tr style='background: #f0f8fa; font-weight: bold;'>
-                                        <td class='label'>TOTAL:</td>
-                                        <td class='value'>$total_gestion_nosotros_formatted</td>
-                                    </tr>
-                                </table>
-
-                                <!-- Pregunta punto de dolor -->
-                                <div style='text-align: center; margin: 20px 0 15px 0;'>
-                                    <p style='color: #016d86; font-size: 16px; font-weight: bold; margin: 0; line-height: 1.4;'>
-                                        <strong>¿Quieres evitar el lío de papeleo, formularios infinitos y citas presenciales que retrasan tu cambio de titularidad?</strong>
-                                    </p>
-                                </div>
-
-                                <!-- CTA -->
-                                <div class='cta-section'>
-                                    <a href='https://tramitfy.es/cambio-titularidad-embarcacion/' class='cta-button'>
-                                        CONTRATAR TRAMITACIÓN COMPLETA
-                                    </a>
-                                    <p style='font-size: 12px; color: #666; margin: 10px 0 0 0;'>Nosotros nos encargamos de todo el proceso</p>
-                                </div>
-
-                                <!-- Aviso -->
-                                <table class='warning-box' role='presentation' width='100%'>
-                                    <tr>
-                                        <td>
-                                            <em>Al trabajar solo online reducimos costes fijos, y eso nos permite ofrecerte la misma gestión al precio más competitivo.</em>
-                                        </td>
-                                    </tr>
-                                </table>
-
-                                <!-- Oferta especial al final -->
-                                <table class='discount-box' role='presentation' width='100%' style='margin-top: 25px;'>
-                                    <tr>
-                                        <td style='text-align: center;'>
-                                            <p class='discount-title'>🎁 OFERTA ESPECIAL</p>
-                                            <div class='discount-code' style='font-size: 22px; margin: 10px 0;'>NAUTICA5</div>
-                                            <p class='discount-text'>5% de descuento en tramitación</p>
-                                            <table role='presentation' width='100%' style='margin-top: 15px;'>
-                                                <tr>
-                                                    <td class='label' style='text-align: left; padding: 5px 8px;'>ITP (impuesto):</td>
-                                                    <td class='value' style='text-align: right; padding: 5px 8px;'>$itp_amount_formatted</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class='label' style='text-align: left; padding: 5px 8px;'>Cambio de Titularidad normal:</td>
-                                                    <td class='value' style='text-align: right; padding: 5px 8px; text-decoration: line-through; color: #999;'>$service_fee_formatted</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class='label' style='text-align: left; padding: 5px 8px;'>Cambio de Titularidad con NAUTICA5:</td>
-                                                    <td class='value' style='text-align: right; padding: 5px 8px; color: #16a085;'>$discounted_service_fee_formatted</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class='label' style='text-align: left; padding: 5px 8px;'><small>Ahorro:</small></td>
-                                                    <td class='value' style='text-align: right; padding: 5px 8px; color: #27ae60;'><small>-$discount_amount_formatted</small></td>
-                                                </tr>
-                                                <tr style='background: #e8f5e8; font-weight: bold; border-top: 2px solid #27ae60;'>
-                                                    <td class='label' style='text-align: left; padding: 8px; color: #27ae60;'>TOTAL CON CUPÓN:</td>
-                                                    <td class='value' style='text-align: right; padding: 8px; color: #27ae60; font-size: 16px;'>$total_with_discount_formatted</td>
-                                                </tr>
-                                            </table>
-                                            <p style='font-size: 11px; color: #666; margin: 10px 0 0 0;'>
-                                                Aplicar cupón al contratar en nuestro formulario
-                                            </p>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </td>
-                        </tr>
-
-                        <!-- Footer -->
-                        <tr>
-                            <td class='footer'>
-                                <p class='footer-text'>
-                                    © 2024 Tramitfy - Especialistas en tramitación náutica
-                                </p>
-                                <div class='footer-links'>
-                                    <a href='https://tramitfy.es'>Web</a> |
-                                    <a href='https://tramitfy.es/politica-de-privacidad/'>Privacidad</a> |
-                                    <a href='mailto:info@tramitfy.es'>Contacto</a>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
+    <!-- ITP RESULTADO -->
+    <tr>
+      <td style='padding:20px 32px;'>
+        <table role='presentation' width='100%' cellpadding='0' cellspacing='0'>
+          <tr>
+            <td style='background:#016d86;padding:24px;text-align:center;'>
+              <div style='font-size:11px;color:#b3dfe8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;'>ITP estimado a pagar</div>
+              <div style='font-size:40px;font-weight:bold;color:#ffffff;line-height:1;'>$itp_amount_formatted</div>
+              <div style='font-size:12px;color:#b3dfe8;margin-top:8px;'>$region &middot; tipo " . ($itp_rate * 100) . "%</div>
+            </td>
+          </tr>
         </table>
+      </td>
+    </tr>
+
+    <!-- VEHÍCULO + CÁLCULO -->
+    <tr>
+      <td style='padding:0 32px 24px 32px;'>
+        <table role='presentation' width='100%' cellpadding='0' cellspacing='0'>
+          <tr>
+            <!-- Columna izquierda -->
+            <td width='50%' style='vertical-align:top;padding-right:12px;'>
+              <div style='font-size:11px;font-weight:bold;color:#016d86;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #016d86;padding-bottom:6px;margin-bottom:10px;'>Tu $vehicle_type_text</div>
+              <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='font-size:12px;'>
+                <tr><td style='color:#6b7c93;padding:4px 0;'>Fabricante</td><td style='color:#1a2e44;font-weight:bold;text-align:right;'>$manufacturer</td></tr>
+                <tr><td style='color:#6b7c93;padding:4px 0;border-top:1px solid #eef2f7;'>Modelo</td><td style='color:#1a2e44;font-weight:bold;text-align:right;border-top:1px solid #eef2f7;'>$model</td></tr>
+                <tr><td style='color:#6b7c93;padding:4px 0;border-top:1px solid #eef2f7;'>Año</td><td style='color:#1a2e44;font-weight:bold;text-align:right;border-top:1px solid #eef2f7;'>$matriculation_year</td></tr>
+                <tr><td style='color:#6b7c93;padding:4px 0;border-top:1px solid #eef2f7;'>Precio compra</td><td style='color:#1a2e44;font-weight:bold;text-align:right;border-top:1px solid #eef2f7;'>$purchase_price_formatted</td></tr>
+                <tr><td style='color:#6b7c93;padding:4px 0;border-top:1px solid #eef2f7;'>Comunidad</td><td style='color:#1a2e44;font-weight:bold;text-align:right;border-top:1px solid #eef2f7;'>$region</td></tr>
+              </table>
+            </td>
+            <!-- Columna derecha -->
+            <td width='50%' style='vertical-align:top;padding-left:12px;'>
+              <div style='font-size:11px;font-weight:bold;color:#016d86;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #016d86;padding-bottom:6px;margin-bottom:10px;'>Cómo se calcula</div>
+              <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='font-size:12px;'>
+                " . ($model_price > 0 ? "
+                <tr><td style='color:#27ae60;padding:4px 0;'>Valor BOE (CSV)</td><td style='color:#27ae60;font-weight:bold;text-align:right;'>$model_price_formatted</td></tr>
+                " : "") . "
+                <tr><td style='color:#6b7c93;padding:4px 0;border-top:1px solid #eef2f7;'>Antigüedad</td><td style='color:#1a2e44;font-weight:bold;text-align:right;border-top:1px solid #eef2f7;'>$vehicle_age años</td></tr>
+                <tr><td style='color:#6b7c93;padding:4px 0;border-top:1px solid #eef2f7;'>Depreciación BOE</td><td style='color:#1a2e44;font-weight:bold;text-align:right;border-top:1px solid #eef2f7;'>" . ($no_model_found ? 'Sin aplicar' : "{$depreciation_rate}%") . "</td></tr>
+                <tr><td style='color:#6b7c93;padding:4px 0;border-top:1px solid #eef2f7;'>Valor fiscal</td><td style='color:#1a2e44;font-weight:bold;text-align:right;border-top:1px solid #eef2f7;'>$fiscal_value_formatted</td></tr>
+                <tr><td colspan='2' style='font-size:10px;color:#9aa8b8;padding:2px 0;font-style:italic;border-top:1px solid #eef2f7;'>" . ($model_price > 0 ? 'Valor modelo × depreciación' : 'Precio compra sin depreciación') . "</td></tr>
+                <tr><td style='color:#016d86;font-weight:bold;padding:6px 0;border-top:2px solid #e2ecf0;'>Base imponible</td><td style='color:#016d86;font-weight:bold;font-size:14px;text-align:right;border-top:2px solid #e2ecf0;'>$base_imponible_formatted</td></tr>
+                <tr><td colspan='2' style='font-size:10px;color:#9aa8b8;padding:2px 0;font-style:italic;'>Se usa el mayor entre compra y valor fiscal</td></tr>
+                <tr><td style='color:#6b7c93;padding:4px 0;border-top:1px solid #eef2f7;'>Tipo ITP</td><td style='color:#1a2e44;font-weight:bold;text-align:right;border-top:1px solid #eef2f7;'>" . ($itp_rate * 100) . "%</td></tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- SEPARADOR -->
+    <tr><td style='padding:0 32px;'><div style='height:1px;background:#e2ecf0;'></div></td></tr>
+
+    <!-- COMPARATIVA -->
+    <tr>
+      <td style='padding:24px 32px;'>
+        <div style='font-size:14px;font-weight:bold;color:#1a2e44;text-align:center;margin-bottom:16px;'>¿Lo gestionas tú o lo gestionamos nosotros?</div>
+        <table role='presentation' width='100%' cellpadding='0' cellspacing='0'>
+          <tr>
+            <!-- DIY -->
+            <td width='47%' style='vertical-align:top;'>
+              <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border:2px solid #e53e3e;'>
+                <tr><td style='background:#fff5f5;padding:12px 14px;text-align:center;'>
+                  <div style='font-size:12px;font-weight:bold;color:#e53e3e;margin-bottom:8px;'>SI LO HACES TÚ</div>
+                  <div style='font-size:26px;font-weight:bold;color:#e53e3e;'>$total_diy_formatted</div>
+                  <div style='font-size:10px;color:#c53030;margin-top:4px;'>+ tasas capitanía $tasas_capitania_formatted</div>
+                </td></tr>
+                <tr><td style='background:#ffffff;padding:10px 14px;'>
+                  <div style='font-size:11px;color:#718096;line-height:1.7;'>
+                    ✗ Colas y citas presenciales<br>
+                    ✗ Formularios complejos<br>
+                    ✗ Riesgo de errores y rechazos<br>
+                    ✗ Presentar impuestos a Hacienda<br>
+                    ✗ Tu tiempo y estrés
+                  </div>
+                </td></tr>
+              </table>
+            </td>
+            <!-- VS -->
+            <td width='6%' style='text-align:center;vertical-align:middle;'>
+              <div style='font-size:14px;font-weight:bold;color:#016d86;'>VS</div>
+            </td>
+            <!-- NOSOTROS -->
+            <td width='47%' style='vertical-align:top;'>
+              <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border:2px solid #016d86;'>
+                <tr><td style='background:#016d86;padding:4px 14px;text-align:center;'>
+                  <div style='font-size:10px;font-weight:bold;color:#ffffff;letter-spacing:1px;'>&#9733; RECOMENDADO</div>
+                </td></tr>
+                <tr><td style='background:#e6f5f7;padding:12px 14px;text-align:center;'>
+                  <div style='font-size:12px;font-weight:bold;color:#016d86;margin-bottom:8px;'>GESTIÓN COMPLETA</div>
+                  <div style='font-size:26px;font-weight:bold;color:#016d86;'>$total_gestion_nosotros_formatted</div>
+                  <div style='font-size:10px;color:#2c7a8f;margin-top:4px;'>ITP + cambio de titularidad</div>
+                </td></tr>
+                <tr><td style='background:#ffffff;padding:10px 14px;'>
+                  <div style='font-size:11px;color:#718096;line-height:1.7;'>
+                    ✓ 100% online, sin desplazamientos<br>
+                    ✓ Provisional en menos de 24h<br>
+                    ✓ Te avisamos en cada paso<br>
+                    ✓ Soporte personal incluido
+                  </div>
+                </td></tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- DESGLOSE PRECIO -->
+    <tr>
+      <td style='padding:0 32px 24px 32px;'>
+        <div style='font-size:13px;font-weight:bold;color:#1a2e44;margin-bottom:12px;'>Precio completo de nuestro servicio:</div>
+        <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='font-size:13px;border:1px solid #e2ecf0;'>
+          <tr style='background:#f7fafc;'><td style='padding:9px 12px;color:#6b7c93;'>ITP (impuesto a Hacienda):</td><td style='padding:9px 12px;color:#1a2e44;font-weight:bold;text-align:right;'>$itp_amount_formatted</td></tr>
+          <tr><td style='padding:9px 12px;color:#6b7c93;border-top:1px solid #e2ecf0;'>Gestión del ITP:</td><td style='padding:9px 12px;color:#27ae60;font-weight:bold;text-align:right;border-top:1px solid #e2ecf0;'>0,00 &#8364;</td></tr>
+          <tr style='background:#f7fafc;'><td style='padding:9px 12px;color:#6b7c93;border-top:1px solid #e2ecf0;'>Cambio de titularidad (tasas + gestión + IVA):</td><td style='padding:9px 12px;color:#1a2e44;font-weight:bold;text-align:right;border-top:1px solid #e2ecf0;'>$service_fee_formatted</td></tr>
+          <tr style='background:#016d86;'><td style='padding:11px 12px;color:#ffffff;font-weight:bold;font-size:14px;'>TOTAL</td><td style='padding:11px 12px;color:#ffffff;font-weight:bold;font-size:18px;text-align:right;'>$total_gestion_nosotros_formatted</td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- CTA -->
+    <tr>
+      <td style='padding:8px 32px 32px 32px;text-align:center;'>
+        <p style='font-size:15px;font-weight:bold;color:#1a2e44;margin:0 0 16px 0;'>¿Quieres que nos encarguemos de todo el proceso?</p>
+        <table role='presentation' cellpadding='0' cellspacing='0' style='margin:0 auto;'>
+          <tr><td style='background:#016d86;padding:14px 32px;'>
+            <a href='https://tramitfy.es/cambio-titularidad-embarcacion/' style='color:#ffffff;font-weight:bold;font-size:14px;text-decoration:none;letter-spacing:0.5px;display:block;'>CONTRATAR TRAMITACIÓN COMPLETA</a>
+          </td></tr>
+        </table>
+        <p style='font-size:12px;color:#9aa8b8;margin:10px 0 0 0;'>Sin colas &middot; 100% online &middot; Provisional en 24h</p>
+      </td>
+    </tr>
+
+    <!-- SEPARADOR -->
+    <tr><td style='padding:0 32px;'><div style='height:1px;background:#e2ecf0;'></div></td></tr>
+
+    <!-- CUPÓN -->
+    <tr>
+      <td style='padding:24px 32px;'>
+        <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border:2px dashed #016d86;background:#f0fafb;'>
+          <tr><td style='padding:20px;text-align:center;'>
+            <div style='font-size:11px;font-weight:bold;color:#016d86;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;'>Oferta especial para ti</div>
+            <table role='presentation' cellpadding='0' cellspacing='0' style='margin:0 auto 12px auto;border:2px dashed #016d86;background:#ffffff;'>
+              <tr><td style='padding:8px 24px;font-size:24px;font-weight:bold;color:#016d86;letter-spacing:3px;'>NAUTICA5</td></tr>
+            </table>
+            <div style='font-size:13px;color:#4a5568;margin-bottom:14px;'>5% de descuento en la tramitación</div>
+            <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='max-width:280px;margin:0 auto;font-size:12px;'>
+              <tr><td style='color:#6b7c93;padding:4px 0;'>ITP (impuesto):</td><td style='color:#1a2e44;font-weight:bold;text-align:right;padding:4px 0;'>$itp_amount_formatted</td></tr>
+              <tr><td style='color:#6b7c93;padding:4px 0;border-top:1px solid #e2ecf0;'>Cambio titularidad normal:</td><td style='color:#999;text-decoration:line-through;text-align:right;padding:4px 0;border-top:1px solid #e2ecf0;'>$service_fee_formatted</td></tr>
+              <tr><td style='color:#6b7c93;padding:4px 0;border-top:1px solid #e2ecf0;'>Con NAUTICA5:</td><td style='color:#27ae60;font-weight:bold;text-align:right;padding:4px 0;border-top:1px solid #e2ecf0;'>$discounted_service_fee_formatted</td></tr>
+              <tr><td style='color:#27ae60;font-size:11px;padding:4px 0;border-top:1px solid #e2ecf0;'>Ahorro:</td><td style='color:#27ae60;font-weight:bold;font-size:11px;text-align:right;padding:4px 0;border-top:1px solid #e2ecf0;'>-$discount_amount_formatted</td></tr>
+              <tr style='background:#016d86;'><td style='color:#ffffff;font-weight:bold;padding:8px 4px;font-size:13px;'>TOTAL CON CUPÓN:</td><td style='color:#ffffff;font-weight:bold;font-size:16px;text-align:right;padding:8px 4px;'>$total_with_discount_clean_formatted</td></tr>
+            </table>
+            <div style='font-size:11px;color:#9aa8b8;margin-top:10px;'>Introduce el código al contratar en el formulario</div>
+          </td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- AVISO LEGAL -->
+    <tr>
+      <td style='padding:0 32px 24px 32px;'>
+        <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#fffbf0;border:1px solid #fcd34d;'>
+          <tr><td style='padding:12px 16px;font-size:11px;color:#92400e;line-height:1.5;'>
+            <strong>Nota:</strong> Este cálculo es orientativo basado en la tabla BOE y el precio declarado. El importe definitivo lo determina Hacienda. Si la base imponible fiscal supera el precio de compra, se aplicará la primera.
+          </td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- FOOTER -->
+    <tr>
+      <td style='background:#1a2e44;padding:20px 32px;text-align:center;'>
+        <div style='font-size:13px;font-weight:bold;color:#ffffff;letter-spacing:1px;margin-bottom:4px;'>TRAMITFY</div>
+        <div style='font-size:11px;color:#6b8aaa;margin-bottom:12px;'>Especialistas en tramitación náutica &middot; España</div>
+        <div style='font-size:11px;'>
+          <a href='https://tramitfy.es' style='color:#b3dfe8;text-decoration:none;margin:0 8px;'>Web</a>
+          <span style='color:#3d5a7a;'>|</span>
+          <a href='https://tramitfy.es/politica-de-privacidad/' style='color:#b3dfe8;text-decoration:none;margin:0 8px;'>Privacidad</a>
+          <span style='color:#3d5a7a;'>|</span>
+          <a href='mailto:info@tramitfy.es' style='color:#b3dfe8;text-decoration:none;margin:0 8px;'>info@tramitfy.es</a>
+        </div>
+        <div style='font-size:10px;color:#3d5a7a;margin-top:10px;'>&#169; 2025 Tramitfy S.L. &middot; B55388557</div>
+      </td>
+    </tr>
+
+    </table>
+    </td></tr>
+    </table>
     </body>
     </html>
     ";
+
 
     // Headers para email HTML
     $headers = array(
