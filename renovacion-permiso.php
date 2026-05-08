@@ -1479,7 +1479,7 @@ function navigation_permit_renewal_form_shortcode() {
                     </div>
                     <div class="npn-benefit">
                         <i class="fa-solid fa-check"></i>
-                        <span>Envío de provisional en menos de 24h</span>
+                        <span>Se presenta a Capitanía Marítima en un plazo máximo de 24 h</span>
                     </div>
                     <div class="npn-benefit">
                         <i class="fa-solid fa-check"></i>
@@ -1510,9 +1510,7 @@ function navigation_permit_renewal_form_shortcode() {
                         <p style="font-size: 14px; line-height: 1.8; margin-bottom: 15px;">
                             Yo, <strong id="sidebar-auth-name" style="color: #fff; font-size: 16px;">[Nombre]</strong>, con DNI/NIE <strong id="sidebar-auth-dni" style="color: #fff;">[DNI]</strong>, autorizo a <strong>TRAMITFY</strong> para que, en mi nombre y representación, gestione ante las autoridades competentes la renovación de mi permiso de navegación.
                         </p>
-                        <p style="font-size: 14px; line-height: 1.8;">
-                            Me comprometo a aportar toda la documentación necesaria y a abonar las tasas correspondientes.
-                        </p>
+
                     </div>
 
                     <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; border-left: 4px solid rgba(255,255,255,0.5);" class="sidebar-instruction">
@@ -2316,7 +2314,10 @@ function navigation_permit_renewal_form_shortcode() {
                         metadata: {
                             timestamp: Date.now(),
                             formId: 'npn'
-                        }
+                        },
+                        ga_client_id: (function() { var m = document.cookie.match(/_ga=GA\d+\.\d+\.(.+)/); return m ? m[1] : ''; })(),
+                        gclid: new URLSearchParams(window.location.search).get('gclid') || sessionStorage.getItem('gclid') || '',
+                        ga_session_id: (function() { var c = document.cookie.match(/_ga_[A-Z0-9]+=GS\d+\.\d+\.(.+?)(?:\.|$)/); return c ? c[1] : ''; })()
                     };
 
                     const captureResponse = await fetch('https://tramitfy.org/api/temporal/capture', {
@@ -3654,7 +3655,7 @@ function send_navigation_permit_emails() {
                         </tr>
                         <tr>
                             <td style='color: #666;'>Modo Pago:</td>
-                            <td style='color: #333; font-weight: 600;'>Redsys " . NPN_REDSYS_MODE . "</td>
+                            <td style='color: #333; font-weight: 600;'>Redsys TPV</td>
                         </tr>
                     </table>
                 </div>
@@ -3714,6 +3715,7 @@ function send_navigation_permit_emails() {
 function npn_create_redsys_payment() {
     try {
         $order_id = !empty($_POST['orderId']) ? $_POST['orderId'] : str_pad(time(), 12, '0', STR_PAD_LEFT);
+        if (strlen($order_id) > 12) { $order_id = substr($order_id, -12); }
         $amount = floatval($_POST['amount'] ?? NAVIGATION_PERMIT_SERVICE_PRICE);
         $amount_cents = strval(intval($amount * 100));
 
