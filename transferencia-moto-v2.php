@@ -1012,21 +1012,6 @@ function tmv2_render_form() {
  </div>
  </div>
 
- <!-- Cupón de descuento -->
- <div style="background: #f0fafb; border: 1px solid #b3dde5; border-radius: 10px; padding: 16px; margin-bottom: 16px;">
- <div style="font-size: 13px; font-weight: 700; color: #016d86; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">¿Tienes un cupón de descuento?</div>
- <div style="display: flex; gap: 8px; align-items: center;">
- <input type="text" id="tmv2-coupon-input" placeholder="Introduce tu código" maxlength="30"
- style="flex: 1; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; text-transform: uppercase; outline: none; transition: border 0.2s;"
- oninput="this.value = this.value.toUpperCase()">
- <button type="button" id="tmv2-coupon-btn"
- style="padding: 10px 18px; background: #016d86; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;">
- Aplicar
- </button>
- </div>
- <div id="tmv2-coupon-msg" style="margin-top: 8px; font-size: 13px; display: none;"></div>
- </div>
-
  <!-- Botón para modificar -->
  <div style="text-align: center; margin-bottom: 20px;">
  <button type="button" id="modificar-itp" style="background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 12px 24px; border-radius: 8px; font-size: 14px; cursor: pointer;">
@@ -1223,6 +1208,21 @@ function tmv2_render_form() {
  </div>
  </div>
 
+
+ <!-- Cupón de descuento -->
+ <div style="background: #f0fafb; border: 1px solid #b3dde5; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+ <div style="font-size: 13px; font-weight: 700; color: #016d86; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">¿Tienes un cupón de descuento?</div>
+ <div style="display: flex; gap: 8px; align-items: center;">
+ <input type="text" id="tmv2-coupon-input" placeholder="Introduce tu código" maxlength="30"
+ style="flex: 1; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; text-transform: uppercase; outline: none;"
+ oninput="this.value = this.value.toUpperCase()">
+ <button type="button" id="tmv2-coupon-btn"
+ style="padding: 10px 18px; background: #016d86; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+ Aplicar
+ </button>
+ </div>
+ <div id="tmv2-coupon-msg" style="margin-top: 8px; font-size: 13px; display: none;"></div>
+ </div>
 
  <!-- Terms and Conditions Checkbox - Estilo discreto y profesional -->
  <div class="terms-container payment-terms" style="margin: 20px 0; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px; background-color: #f9fafb;">
@@ -4201,25 +4201,26 @@ function tmv2_render_scripts() {
  getPagoSidebarContent() {
  // Calculate total amount RESPETANDO selección ITP
  const basePrice = 134.99;
+ const couponDiscount = parseFloat(document.getElementById('tmv2-coupon-discount')?.value || 0);
+ const couponCode = document.getElementById('tmv2-coupon-code')?.value || '';
+ const effectiveBase = basePrice - couponDiscount;
  let itpAmount = 0;
- let totalAmount = basePrice;
- 
+ let totalAmount = effectiveBase;
+
  // DEBUG CRÍTICO
  console.log(' DEBUG SIDEBAR PAGO:');
  console.log(' this.itpPagado:', this.itpPagado);
- console.log(' basePrice:', basePrice);
- 
+ console.log(' basePrice:', basePrice, '| couponDiscount:', couponDiscount, '| effectiveBase:', effectiveBase);
+
  // Solo incluir ITP si el usuario NO lo ha pagado
  if (this.itpPagado === false) {
- // Usar método de cálculo directamente
  itpAmount = this.calculateCurrentITP();
- totalAmount = basePrice + itpAmount;
+ totalAmount = effectiveBase + itpAmount;
  console.log(' ITP calculado:', itpAmount);
  console.log(' Total con ITP:', totalAmount);
  } else {
- // ITP ya pagado - solo precio base
  itpAmount = 0;
- totalAmount = basePrice;
+ totalAmount = effectiveBase;
  console.log(' ITP ya pagado - solo precio base');
  }
  
@@ -4242,10 +4243,10 @@ function tmv2_render_scripts() {
  
  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 8px 0;">
  <div style="color: rgba(255,255,255,0.9); font-size: 13px;">
- <div style="font-weight: 600;">Tramitación Completa</div>
- <div style="font-size: 11px; opacity: 0.7;">Gestión, tasas DGMM + IVA</div>
+ <div style="font-weight: 600;">Tramitación Completa${couponCode ? ` <span style="font-size:10px;background:rgba(34,197,94,0.2);color:#86efac;padding:1px 6px;border-radius:4px;margin-left:4px;">${couponCode}</span>` : ''}</div>
+ <div style="font-size: 11px; opacity: 0.7;">Gestión, tasas DGMM + IVA${couponDiscount > 0 ? ` · <span style="text-decoration:line-through;opacity:0.6;">134.99 €</span>` : ''}</div>
  </div>
- <span style="color: white; font-weight: 600; font-size: 14px;">134.99 €</span>
+ <span style="color: white; font-weight: 600; font-size: 14px;">${effectiveBase.toFixed(2)} €</span>
  </div>
  
  ${itpAmount > 0 ? `
@@ -9371,6 +9372,12 @@ const TMV2_TEMPORAL = {
  console.log(' Order ID temporal:', formData.orderId);
  
  try {
+ // Aplicar descuento de cupón al importe final antes de enviar a Redsys
+ const rawAmount = parseFloat(formData.pricing?.total_amount) || 134.99;
+ const couponDiscount = parseFloat(formData.couponDiscount || document.getElementById('tmv2-coupon-discount')?.value || 0);
+ const finalAmountWithCoupon = Math.max(0, rawAmount - couponDiscount);
+ console.log(' CUPÓN Redsys: rawAmount=' + rawAmount + ' descuento=' + couponDiscount + ' finalAmount=' + finalAmountWithCoupon);
+
  // Crear formulario de pago Redsys usando AJAX al backend PHP
  const redsysData = {
  action: 'tmv2_create_redsys_payment_generic',
@@ -9378,7 +9385,7 @@ const TMV2_TEMPORAL = {
  orderId: formData.orderId,
  customerName: formData.personal?.customerName || this.extractValue('customer_name'),
  customerEmail: formData.personal?.customerEmail || this.extractValue('customer_email'),
- finalAmount: formData.pricing?.total_amount || 134.99,
+ finalAmount: finalAmountWithCoupon,
  personal: formData.personal,
  vehicle: formData.vehicle,
  pricing: formData.pricing
@@ -9488,6 +9495,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 window.TMV2_TEMPORAL_SYSTEM = TMV2_TEMPORAL;
+
+// Exponer función de refresh del sidebar para uso desde otros scripts
+window.TMV2_refreshPaymentSidebar = function() {
+ TMV2_Form.updateSidebarContent();
+};
 
 // =====================================================
 // FUNCIÓN DEBUG ESPECÍFICA PARA CHROME MÓVIL (TMV2)
@@ -9757,6 +9769,10 @@ console.log(' TMV2 TEMPORAL - Sistema de interceptor cargado');
  btn.style.background = '#16a34a';
  input.disabled = true;
  btn.disabled = true;
+ // Actualizar sidebar inmediatamente
+ if (typeof window.TMV2_refreshPaymentSidebar === 'function') {
+ window.TMV2_refreshPaymentSidebar();
+ }
  } else {
  msg.style.cssText = 'display:block; color:#dc2626;';
  msg.textContent = '✗ ' + (data.error || 'Cupón no válido');
