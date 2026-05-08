@@ -1486,64 +1486,6 @@ function enviar_email_itp_v2() {
       </td>
     </tr>
 
-    <!-- SEPARADOR -->
-    <tr><td style='padding:0 32px;'><div style='height:1px;background:#e2ecf0;'></div></td></tr>
-
-    <!-- COMPARATIVA -->
-    <tr>
-      <td style='padding:24px 32px;'>
-        <div style='font-size:14px;font-weight:bold;color:#1a2e44;text-align:center;margin-bottom:16px;'>¿Lo gestionas tú o lo gestionamos nosotros?</div>
-        <table role='presentation' width='100%' cellpadding='0' cellspacing='0'>
-          <tr>
-            <!-- DIY -->
-            <td width='47%' style='vertical-align:top;'>
-              <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border:2px solid #e53e3e;'>
-                <tr><td style='background:#fff5f5;padding:12px 14px;text-align:center;'>
-                  <div style='font-size:12px;font-weight:bold;color:#e53e3e;margin-bottom:8px;'>SI LO HACES TÚ</div>
-                  <div style='font-size:26px;font-weight:bold;color:#e53e3e;'>$total_diy_formatted</div>
-                  <div style='font-size:10px;color:#c53030;margin-top:4px;'>+ tasas capitanía $tasas_capitania_formatted</div>
-                </td></tr>
-                <tr><td style='background:#ffffff;padding:10px 14px;'>
-                  <div style='font-size:11px;color:#718096;line-height:1.7;'>
-                    ✗ Colas y citas presenciales<br>
-                    ✗ Formularios complejos<br>
-                    ✗ Riesgo de errores y rechazos<br>
-                    ✗ Presentar impuestos a Hacienda<br>
-                    ✗ Tu tiempo y estrés
-                  </div>
-                </td></tr>
-              </table>
-            </td>
-            <!-- VS -->
-            <td width='6%' style='text-align:center;vertical-align:middle;'>
-              <div style='font-size:14px;font-weight:bold;color:#016d86;'>VS</div>
-            </td>
-            <!-- NOSOTROS -->
-            <td width='47%' style='vertical-align:top;'>
-              <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border:2px solid #016d86;'>
-                <tr><td style='background:#016d86;padding:4px 14px;text-align:center;'>
-                  <div style='font-size:10px;font-weight:bold;color:#ffffff;letter-spacing:1px;'>&#9733; RECOMENDADO</div>
-                </td></tr>
-                <tr><td style='background:#e6f5f7;padding:12px 14px;text-align:center;'>
-                  <div style='font-size:12px;font-weight:bold;color:#016d86;margin-bottom:8px;'>GESTIÓN COMPLETA</div>
-                  <div style='font-size:26px;font-weight:bold;color:#016d86;'>$total_gestion_nosotros_formatted</div>
-                  <div style='font-size:10px;color:#2c7a8f;margin-top:4px;'>ITP + cambio de titularidad</div>
-                </td></tr>
-                <tr><td style='background:#ffffff;padding:10px 14px;'>
-                  <div style='font-size:11px;color:#718096;line-height:1.7;'>
-                    ✓ 100% online, sin desplazamientos<br>
-                    ✓ Provisional en menos de 24h<br>
-                    ✓ Te avisamos en cada paso<br>
-                    ✓ Soporte personal incluido
-                  </div>
-                </td></tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-
     <!-- DESGLOSE PRECIO -->
     <tr>
       <td style='padding:0 32px 24px 32px;'>
