@@ -993,6 +993,27 @@ function tbv2_render_form() {
  </div>
  </div>
 
+ <!-- Recargo por ITP alto (600-1500€) -->
+ <div id="incluye-recargo" style="display: none;">
+ <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
+ <div>
+ <div style="font-size: 15px; font-weight: 600; color: #7c3aed;">Gestión ITP alto valor</div>
+ <div style="font-size: 13px; color: #6b7280; margin-top: 2px;">2% sobre el ITP (embarcación de alto valor)</div>
+ </div>
+ <div style="font-size: 16px; font-weight: 700; color: #7c3aed;" id="desglose-recargo">0 €</div>
+ </div>
+ </div>
+
+ <!-- Bloqueo por ITP > 1500€ -->
+ <div id="itp-presupuesto-bloqueo" style="display: none; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 10px; padding: 20px; margin: 16px 0; text-align: center;">
+ <div style="font-size: 28px; margin-bottom: 10px;">📋</div>
+ <div style="font-size: 16px; font-weight: 700; color: #92400e; margin-bottom: 8px;">Embarcación de alto valor</div>
+ <div style="font-size: 14px; color: #78350f; margin-bottom: 16px; line-height: 1.6;">El ITP de tu embarcación supera los 1.500€. Por la complejidad de este tipo de operaciones, necesitamos valorar tu caso de forma personalizada.</div>
+ <a href="https://wa.me/34689170273?text=Hola%2C%20necesito%20presupuesto%20para%20transferencia%20de%20embarcaci%C3%B3n%20con%20ITP%20alto" target="_blank" style="display: inline-block; background: #25d366; color: white; font-weight: 700; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-size: 15px;">
+ 💬 Solicitar presupuesto personalizado
+ </a>
+ </div>
+
  <!-- Precio total -->
  <div style="display: flex; justify-content: space-between; padding: 20px 0 0 0; font-size: 20px; font-weight: 700; color: #1f2937; border-top: 2px solid #016d86; margin-top: 16px;">
  <div>Total a pagar</div>
@@ -4210,35 +4231,29 @@ function tbv2_render_scripts() {
  console.log(' this.itpPagado:', this.itpPagado);
  console.log(' basePrice:', basePrice);
  
- // Solo incluir ITP si el usuario NO lo ha pagado
+ let surcharge = 0;
  if (this.itpPagado === false) {
  itpAmount = this.calculateCurrentITP();
- totalAmount = effectiveBase + itpAmount;
- console.log(' ITP calculado:', itpAmount);
- console.log(' Total con ITP:', totalAmount);
+ surcharge = this.calculateITPSurcharge(itpAmount) || 0;
+ totalAmount = effectiveBase + itpAmount + surcharge;
  } else {
  itpAmount = 0;
  totalAmount = effectiveBase;
- console.log(' ITP ya pagado - solo precio base');
  }
- 
- // Get customer data
+
  const customerName = document.getElementById('customer_name')?.value || '';
  const vehicleBrand = document.getElementById('manufacturer')?.value || document.getElementById('manual_manufacturer')?.value || '';
  const vehicleModel = document.getElementById('model')?.value || document.getElementById('manual_model')?.value || '';
- 
- console.log(' Vehículo:', vehicleBrand, vehicleModel);
- console.log(' Cliente:', customerName);
- 
+
  return `
  <div style="text-align: center;">
  <h3 style="color: white; font-size: 22px; font-weight: 600; margin-bottom: 15px;">
  Resumen de Pago
  </h3>
- 
+
  <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 16px; margin-bottom: 20px; text-align: left;">
  <div style="color: rgba(255,255,255,0.8); font-size: 12px; margin-bottom: 12px; text-transform: uppercase; font-weight: 600;">Desglose de Servicios</div>
- 
+
  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 8px 0;">
  <div style="color: rgba(255,255,255,0.9); font-size: 13px;">
  <div style="font-weight: 600;">Tramitación Completa${couponCode ? ` <span style="font-size:10px;background:rgba(34,197,94,0.2);color:#86efac;padding:1px 6px;border-radius:4px;margin-left:4px;">${couponCode}</span>` : ''}</div>
@@ -4246,7 +4261,7 @@ function tbv2_render_scripts() {
  </div>
  <span style="color: white; font-weight: 600; font-size: 14px;">${effectiveBase.toFixed(2)} €</span>
  </div>
- 
+
  ${itpAmount > 0 ? `
  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.1);">
  <div style="color: rgba(255,255,255,0.9); font-size: 13px;">
@@ -4256,7 +4271,17 @@ function tbv2_render_scripts() {
  <span style="color: white; font-weight: 600; font-size: 14px;">${itpAmount.toFixed(2)} €</span>
  </div>
  ` : ''}
- 
+
+ ${surcharge > 0 ? `
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.1);">
+ <div style="color: rgba(255,255,255,0.9); font-size: 13px;">
+ <div style="font-weight: 600; color: #c4b5fd;">Gestión ITP alto valor</div>
+ <div style="font-size: 11px; opacity: 0.7;">2% sobre ITP</div>
+ </div>
+ <span style="color: #c4b5fd; font-weight: 600; font-size: 14px;">${surcharge.toFixed(2)} €</span>
+ </div>
+ ` : ''}
+
  <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-top: 2px solid rgba(255,255,255,0.3); margin-top: 8px;">
  <span style="color: white; font-weight: 700; font-size: 15px;">TOTAL</span>
  <span style="color: #22c55e; font-weight: 700; font-size: 18px;">${totalAmount.toFixed(2)} €</span>
@@ -4861,29 +4886,60 @@ this.toggleModelo620Container();
  }
  },
 
+ calculateITPSurcharge(itpAmount) {
+ if (itpAmount <= 600) return 0;
+ if (itpAmount <= 1500) return parseFloat((itpAmount * 0.02).toFixed(2));
+ return null; // null = bloquear
+ },
+
  updateStep2Content() {
  const incluyeItpSi = document.getElementById('incluye-itp-si');
  const incluyeItpNo = document.getElementById('incluye-itp-no');
+ const incluyeRecargo = document.getElementById('incluye-recargo');
+ const bloqueo = document.getElementById('itp-presupuesto-bloqueo');
  const precioFinal = document.getElementById('precio-final');
  const desgloseItp = document.getElementById('desglose-itp');
- 
- // Asegurar que el cálculo esté actualizado
+ const desgloseRecargo = document.getElementById('desglose-recargo');
+ const nextBtn = document.getElementById('tbv2-precio-nextButton');
+
  this.updateITPDisplay();
- 
+
  if (this.itpPagado === true) {
- // ITP ya pagado
  if (incluyeItpSi) incluyeItpSi.style.display = 'block';
  if (incluyeItpNo) incluyeItpNo.style.display = 'none';
+ if (incluyeRecargo) incluyeRecargo.style.display = 'none';
+ if (bloqueo) bloqueo.style.display = 'none';
  if (precioFinal) precioFinal.textContent = '134.99 €';
+ if (nextBtn) nextBtn.disabled = false;
  } else if (this.itpPagado === false) {
- // ITP no pagado - lo gestionamos nosotros
  if (incluyeItpSi) incluyeItpSi.style.display = 'none';
  if (incluyeItpNo) incluyeItpNo.style.display = 'block';
- 
- // Calcular ITP dinámicamente
+
  const itpAmount = this.calculateCurrentITP();
+ const surcharge = this.calculateITPSurcharge(itpAmount);
+
  if (desgloseItp) desgloseItp.textContent = itpAmount.toFixed(2) + ' €';
- if (precioFinal) precioFinal.textContent = (134.99 + itpAmount).toFixed(2) + ' €';
+
+ if (surcharge === null) {
+ // ITP > 1500 → bloquear
+ if (incluyeRecargo) incluyeRecargo.style.display = 'none';
+ if (bloqueo) bloqueo.style.display = 'block';
+ if (precioFinal) precioFinal.style.display = 'none';
+ if (nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; }
+ } else if (surcharge > 0) {
+ // ITP 600-1500 → mostrar recargo
+ if (incluyeRecargo) incluyeRecargo.style.display = 'block';
+ if (bloqueo) bloqueo.style.display = 'none';
+ if (desgloseRecargo) desgloseRecargo.textContent = surcharge.toFixed(2) + ' €';
+ if (precioFinal) { precioFinal.style.display = ''; precioFinal.textContent = (134.99 + itpAmount + surcharge).toFixed(2) + ' €'; }
+ if (nextBtn) { nextBtn.disabled = false; nextBtn.style.opacity = ''; }
+ } else {
+ // ITP ≤ 600 → sin recargo
+ if (incluyeRecargo) incluyeRecargo.style.display = 'none';
+ if (bloqueo) bloqueo.style.display = 'none';
+ if (precioFinal) { precioFinal.style.display = ''; precioFinal.textContent = (134.99 + itpAmount).toFixed(2) + ' €'; }
+ if (nextBtn) { nextBtn.disabled = false; nextBtn.style.opacity = ''; }
+ }
  }
  },
 
@@ -5588,20 +5644,15 @@ return;
  
  // Calculate ITP and total RESPETANDO selección del usuario
  const itpAmount = this.calculateCurrentITP();
- const shouldIncludeITP = this.itpPagado === false; // Solo incluir ITP si NO está pagado
- 
- // DEBUG CRÍTICO: Verificar estado del ITP
- console.log(' DEBUG PRECIO CRÍTICO:');
- console.log(' this.itpPagado:', this.itpPagado);
- console.log(' itpAmount calculado:', itpAmount.toFixed(2), '€');
- console.log(' shouldIncludeITP:', shouldIncludeITP);
- console.log(' Total calculado:', shouldIncludeITP ? (134.99 + itpAmount) : 134.99);
- 
+ const shouldIncludeITP = this.itpPagado === false;
+ const surcharge = shouldIncludeITP ? (this.calculateITPSurcharge(itpAmount) || 0) : 0;
+
  data.pricing = {
  base_price: 134.99,
  itp_amount: shouldIncludeITP ? itpAmount : 0,
- itp_user_selection: this.itpPagado, // true = ya pagado, false = lo gestionamos
- total_amount: shouldIncludeITP ? (134.99 + itpAmount) : 134.99
+ itp_surcharge: surcharge,
+ itp_user_selection: this.itpPagado,
+ total_amount: shouldIncludeITP ? (134.99 + itpAmount + surcharge) : 134.99
  };
  
  // Recolectar archivos subidos en base64
