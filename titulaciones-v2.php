@@ -2162,6 +2162,13 @@ function ttv2_form_shortcode() {
                     <h2>Elige tu titulación a renovar</h2>
                     <p>Selecciona el tipo de titulación náutica que deseas renovar.</p>
 
+                    <div style="background: #fef3c7; border: 1px solid #f59e0b; border-left: 4px solid #f59e0b; border-radius: 8px; padding: 14px 18px; margin-bottom: 24px; display: flex; align-items: flex-start; gap: 12px;">
+                        <span style="font-size: 20px; flex-shrink: 0;">⚠️</span>
+                        <p style="margin: 0; font-size: 14px; color: #92400e; line-height: 1.6;">
+                            <strong>Aviso importante:</strong> Este formulario es válido únicamente para titulaciones expedidas en la <strong>Comunidad de Madrid</strong> o <strong>Andalucía</strong>.
+                        </p>
+                    </div>
+
                     <div class="ttv2-services-wrapper">
                         <div class="ttv2-services-grid-2x2">
                             <div class="ttv2-service-box" data-service="PNB" data-price="55">
