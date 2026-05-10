@@ -6109,7 +6109,9 @@ return;
  pricing: pricingData,
  files: filesData, // INCLUIR archivos directamente
  signature: signatureData,
- timestamp: new Date().toISOString()
+ timestamp: new Date().toISOString(),
+ couponCode: document.getElementById('tmv2-coupon-code')?.value || '',
+ couponDiscount: parseFloat(document.getElementById('tmv2-coupon-discount')?.value || 0)
  };
  
  // VALIDACIÓN FINAL: Verificar que tenemos datos válidos

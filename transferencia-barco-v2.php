@@ -6078,7 +6078,9 @@ return;
  pricing: pricingData,
  files: filesData, // INCLUIR archivos directamente
  signature: signatureData,
- timestamp: new Date().toISOString()
+ timestamp: new Date().toISOString(),
+ couponCode: document.getElementById('tbv2-coupon-code')?.value || '',
+ couponDiscount: parseFloat(document.getElementById('tbv2-coupon-discount')?.value || 0)
  };
  
  // VALIDACIÓN FINAL: Verificar que tenemos datos válidos
@@ -9091,8 +9093,8 @@ const TBV2_TEMPORAL = {
  boatData,
  files,
  pricing,
- couponCode: document.getElementById('tbv2-coupon-code')?.value || '',
- couponDiscount: parseFloat(document.getElementById('tbv2-coupon-discount')?.value || 0),
+ couponCode: document.getElementById('tbv2-coupon-code')?.value || formData.couponCode || '',
+ couponDiscount: parseFloat(document.getElementById('tbv2-coupon-discount')?.value || formData.couponDiscount || 0),
  ga_client_id: gaClientId,
  gclid: gclid,
  ga_session_id: gaSessionId
