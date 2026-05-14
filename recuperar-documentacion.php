@@ -3370,45 +3370,49 @@ function recuperar_documentacion_form_shortcode() {
     }
 
     (function() {
-        document.addEventListener('DOMContentLoaded', function() {
+        function rdoc_initCoupon() {
             const btn = document.getElementById('rdoc-coupon-btn');
+            if (!btn || btn._couponInit) return;
+            btn._couponInit = true;
             const input = document.getElementById('rdoc-coupon-input');
             const msg = document.getElementById('rdoc-coupon-msg');
             const hiddenCode = document.getElementById('rdoc-coupon-code');
             const hiddenDiscount = document.getElementById('rdoc-coupon-discount');
-            if (!btn) return;
             btn.addEventListener('click', async function() {
                 const code = (input?.value || '').trim().toUpperCase();
                 if (!code) return;
                 btn.disabled = true; btn.textContent = '...';
-                msg.style.display = 'none';
+                if (msg) msg.style.display = 'none';
                 try {
+                    const price = 94.95;
                     const r = await fetch('https://tramitfy.org/api/coupons/validate', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ code })
+                        body: JSON.stringify({ code, price })
                     });
                     const data = await r.json();
                     if (data.valid) {
-                        hiddenCode.value = data.code;
-                        hiddenDiscount.value = data.clientDiscount;
-                        updatePriceWithCoupon_rdoc(data.clientDiscount);
-                        msg.style.cssText = 'display:block;color:#16a34a;font-weight:600;';
-                        msg.textContent = '✓ ' + data.message;
+                        if (hiddenCode) hiddenCode.value = data.code;
+                        if (hiddenDiscount) hiddenDiscount.value = data.clientDiscount;
+                        const newPrice = Math.max(0, price - data.clientDiscount); const el = document.querySelector('.rdoc-price-amount'); if (el) el.textContent = newPrice.toFixed(2).replace('.', ',') + '€';
+                        if (msg) { msg.style.cssText = 'display:block;color:#16a34a;font-weight:600;'; msg.textContent = '✓ ' + data.message; }
                         btn.textContent = '✓'; btn.style.background = '#16a34a';
-                        input.disabled = true; btn.disabled = true;
+                        if (input) input.disabled = true; btn.disabled = true;
                     } else {
-                        msg.style.cssText = 'display:block;color:#dc2626;';
-                        msg.textContent = '✗ ' + (data.error || 'Cupón no válido');
+                        if (msg) { msg.style.cssText = 'display:block;color:#dc2626;'; msg.textContent = '✗ ' + (data.error || 'Cupón no válido'); }
                         btn.disabled = false; btn.textContent = 'Aplicar';
                     }
                 } catch(e) {
-                    msg.style.cssText = 'display:block;color:#dc2626;';
-                    msg.textContent = 'Error de conexión.';
+                    if (msg) { msg.style.cssText = 'display:block;color:#dc2626;'; msg.textContent = 'Error de conexión.'; }
                     btn.disabled = false; btn.textContent = 'Aplicar';
                 }
             });
-        });
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', rdoc_initCoupon);
+        } else {
+            rdoc_initCoupon();
+        }
     })();
     </script>
 

@@ -3735,45 +3735,49 @@ function ttv2_form_shortcode() {
     }
 
     (function() {
-        document.addEventListener('DOMContentLoaded', function() {
+        function ttv2_initCoupon() {
             const btn = document.getElementById('ttv2-coupon-btn');
+            if (!btn || btn._couponInit) return;
+            btn._couponInit = true;
             const input = document.getElementById('ttv2-coupon-input');
             const msg = document.getElementById('ttv2-coupon-msg');
             const hiddenCode = document.getElementById('ttv2-coupon-code');
             const hiddenDiscount = document.getElementById('ttv2-coupon-discount');
-            if (!btn) return;
             btn.addEventListener('click', async function() {
                 const code = (input?.value || '').trim().toUpperCase();
                 if (!code) return;
                 btn.disabled = true; btn.textContent = '...';
-                msg.style.display = 'none';
+                if (msg) msg.style.display = 'none';
                 try {
+                    const price = (typeof ttv2FormData !== 'undefined' && ttv2FormData.amount) ? ttv2FormData.amount : (typeof ttv2SelectedPrice !== 'undefined' ? ttv2SelectedPrice : 55);
                     const r = await fetch('https://tramitfy.org/api/coupons/validate', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ code })
+                        body: JSON.stringify({ code, price })
                     });
                     const data = await r.json();
                     if (data.valid) {
-                        hiddenCode.value = data.code;
-                        hiddenDiscount.value = data.clientDiscount;
-                        updatePriceWithCoupon_ttv2(data.clientDiscount);
-                        msg.style.cssText = 'display:block;color:#16a34a;font-weight:600;';
-                        msg.textContent = '✓ ' + data.message;
+                        if (hiddenCode) hiddenCode.value = data.code;
+                        if (hiddenDiscount) hiddenDiscount.value = data.clientDiscount;
+                        const newPrice = Math.max(0, price - data.clientDiscount); if (typeof ttv2FormData !== 'undefined') ttv2FormData.amount = newPrice; const el = document.getElementById('ttv2-sidebar-price'); if (el) el.textContent = newPrice;
+                        if (msg) { msg.style.cssText = 'display:block;color:#16a34a;font-weight:600;'; msg.textContent = '✓ ' + data.message; }
                         btn.textContent = '✓'; btn.style.background = '#16a34a';
-                        input.disabled = true; btn.disabled = true;
+                        if (input) input.disabled = true; btn.disabled = true;
                     } else {
-                        msg.style.cssText = 'display:block;color:#dc2626;';
-                        msg.textContent = '✗ ' + (data.error || 'Cupón no válido');
+                        if (msg) { msg.style.cssText = 'display:block;color:#dc2626;'; msg.textContent = '✗ ' + (data.error || 'Cupón no válido'); }
                         btn.disabled = false; btn.textContent = 'Aplicar';
                     }
                 } catch(e) {
-                    msg.style.cssText = 'display:block;color:#dc2626;';
-                    msg.textContent = 'Error de conexión.';
+                    if (msg) { msg.style.cssText = 'display:block;color:#dc2626;'; msg.textContent = 'Error de conexión.'; }
                     btn.disabled = false; btn.textContent = 'Aplicar';
                 }
             });
-        });
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', ttv2_initCoupon);
+        } else {
+            ttv2_initCoupon();
+        }
     })();
     </script>
 
