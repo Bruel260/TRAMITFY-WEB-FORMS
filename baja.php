@@ -1365,7 +1365,7 @@ function boat_deregistration_form_shortcode() {
                             if (data.valid) {
                                 if (hiddenCode) hiddenCode.value = data.code;
                                 if (hiddenDiscount) hiddenDiscount.value = data.clientDiscount;
-                                const newPrice = Math.max(0, price - data.clientDiscount); const el = document.getElementById('final-amount'); if (el) el.textContent = newPrice.toFixed(2) + ' €';
+                                const newPrice = Math.max(0, price - data.clientDiscount); const el = document.getElementById('final-amount'); if (el) el.textContent = newPrice.toFixed(2) + ' €'; const dLine = document.getElementById('discount-line'); if (dLine) dLine.style.display = ''; const dAmt = document.getElementById('discount-amount'); if (dAmt) dAmt.textContent = '-' + data.clientDiscount.toFixed(2) + ' €';
                                 if (msg) { msg.style.cssText = 'display:block;color:#16a34a;font-weight:600;'; msg.textContent = '✓ ' + data.message; }
                                 btn.textContent = '✓'; btn.style.background = '#16a34a';
                                 if (input) input.disabled = true; btn.disabled = true;

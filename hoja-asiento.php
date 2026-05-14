@@ -1975,6 +1975,10 @@ function hoja_asiento_form_shortcode() {
                                 <span>Servicio de Hoja de Asiento:</span>
                                 <strong id="ha-price-service">18,99€</strong>
                             </div>
+                            <div id="ha-discount-row" style="display:none; justify-content: space-between; margin-bottom: 10px; color: #16a34a;">
+                                <span>Descuento cupón:</span>
+                                <strong id="ha-discount-display"></strong>
+                            </div>
                             <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-top: 10px; border-top: 1px solid #e0e6ed;">
                                 <strong>Total a pagar:</strong>
                                 <strong id="ha-price-total" style="color: rgb(var(--primary)); font-size: 18px;">18,99€</strong>
@@ -3047,7 +3051,7 @@ function hoja_asiento_form_shortcode() {
                     if (data.valid) {
                         if (hiddenCode) hiddenCode.value = data.code;
                         if (hiddenDiscount) hiddenDiscount.value = data.clientDiscount;
-                        const newPrice = Math.max(0, price - data.clientDiscount); const fmt = newPrice.toFixed(2).replace('.', ',') + '€'; const e1 = document.querySelector('.ha-price-amount'); const e2 = document.getElementById('ha-price-service'); const e3 = document.getElementById('ha-price-total'); if (e1) e1.textContent = fmt; if (e2) e2.textContent = fmt; if (e3) e3.textContent = fmt;
+                        const newPrice = Math.max(0, price - data.clientDiscount); const fmt = newPrice.toFixed(2).replace('.', ',') + '€'; const e1 = document.querySelector('.ha-price-amount'); const e3 = document.getElementById('ha-price-total'); if (e1) e1.textContent = fmt; if (e3) e3.textContent = fmt; const dRow = document.getElementById('ha-discount-row'); if (dRow) dRow.style.display = 'flex'; const dDisp = document.getElementById('ha-discount-display'); if (dDisp) dDisp.textContent = '-' + data.clientDiscount.toFixed(2).replace('.', ',') + '€';
                         if (msg) { msg.style.cssText = 'display:block;color:#16a34a;font-weight:600;'; msg.textContent = '✓ ' + data.message; }
                         btn.textContent = '✓'; btn.style.background = '#16a34a';
                         if (input) input.disabled = true; btn.disabled = true;

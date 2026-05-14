@@ -3759,7 +3759,7 @@ function ttv2_form_shortcode() {
                     if (data.valid) {
                         if (hiddenCode) hiddenCode.value = data.code;
                         if (hiddenDiscount) hiddenDiscount.value = data.clientDiscount;
-                        const newPrice = Math.max(0, price - data.clientDiscount); if (typeof ttv2FormData !== 'undefined') ttv2FormData.amount = newPrice; const el = document.getElementById('ttv2-sidebar-price'); if (el) el.textContent = newPrice;
+                        const newPrice = Math.max(0, price - data.clientDiscount); if (typeof ttv2FormData !== 'undefined') ttv2FormData.amount = newPrice; const el = document.getElementById('ttv2-sidebar-price'); if (el) el.textContent = newPrice % 1 === 0 ? newPrice : newPrice.toFixed(2).replace('.', ',');
                         if (msg) { msg.style.cssText = 'display:block;color:#16a34a;font-weight:600;'; msg.textContent = '✓ ' + data.message; }
                         btn.textContent = '✓'; btn.style.background = '#16a34a';
                         if (input) input.disabled = true; btn.disabled = true;

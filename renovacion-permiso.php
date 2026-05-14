@@ -1707,6 +1707,10 @@ function navigation_permit_renewal_form_shortcode() {
                             <span>IVA (21%)</span>
                             <span>9,65 €</span>
                         </div>
+                        <div class="npn-price-row" id="npn-discount-row" style="display:none;">
+                            <span style="color:#16a34a;">Descuento cupón</span>
+                            <span style="color:#16a34a;" id="npn-discount-display"></span>
+                        </div>
                         <div class="npn-price-row npn-price-total">
                             <strong>Total a pagar</strong>
                             <strong id="final-amount">65,00 €</strong>
@@ -2900,7 +2904,7 @@ function navigation_permit_renewal_form_shortcode() {
                     if (data.valid) {
                         if (hiddenCode) hiddenCode.value = data.code;
                         if (hiddenDiscount) hiddenDiscount.value = data.clientDiscount;
-                        const newPrice = Math.max(0, price - data.clientDiscount); const el = document.getElementById('final-amount'); if (el) el.textContent = newPrice.toFixed(2).replace('.', ',') + ' €';
+                        const newPrice = Math.max(0, price - data.clientDiscount); const el = document.getElementById('final-amount'); if (el) el.textContent = newPrice.toFixed(2).replace('.', ',') + ' €'; const dRow = document.getElementById('npn-discount-row'); if (dRow) dRow.style.display = ''; const dDisp = document.getElementById('npn-discount-display'); if (dDisp) dDisp.textContent = '-' + data.clientDiscount.toFixed(2).replace('.', ',') + ' €';
                         if (msg) { msg.style.cssText = 'display:block;color:#16a34a;font-weight:600;'; msg.textContent = '✓ ' + data.message; }
                         btn.textContent = '✓'; btn.style.background = '#16a34a';
                         if (input) input.disabled = true; btn.disabled = true;
