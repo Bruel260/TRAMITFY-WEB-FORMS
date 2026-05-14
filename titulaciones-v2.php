@@ -174,8 +174,23 @@ function ttv2_create_redsys_payment() {
         $order_id = !empty($_POST['orderId']) ? $_POST['orderId'] : str_pad(time(), 12, '0', STR_PAD_LEFT);
         if (strlen($order_id) > 12) { $order_id = substr($order_id, -12); }
         $amount = floatval($_POST['amount'] ?? TTV2_PRECIO_RENOVACION);
+        // Aplicar descuento cupón desde temporal (fuente de verdad)
+        $jsAppliedDiscount = floatval($_POST['couponDiscount'] ?? 0);
+        $rawAmount = $amount + $jsAppliedDiscount;
+        $apiCouponUrl = 'https://tramitfy.org/api/temporal/coupon-for-order?orderId=' . urlencode($order_id);
+        $apiResponse = @file_get_contents($apiCouponUrl);
+        if ($apiResponse) {
+            $couponData = json_decode($apiResponse, true);
+            $serverDiscount = floatval($couponData['couponDiscount'] ?? 0);
+            if ($serverDiscount > 0) {
+                $amount = max(0, $rawAmount - $serverDiscount);
+                error_log("TTV2 REDSYS - Cupón: " . $couponData['couponCode'] . " raw=" . $rawAmount . " -" . $serverDiscount . "€ → final=" . $amount . "€");
+            } else {
+                $amount = $rawAmount;
+            }
+        }
         $amount_cents = strval(intval($amount * 100));
-        
+
         $payment_data = ttv2_redsys_create_payment_form([
             'order_id' => $order_id,
             'amount_cents' => $amount_cents
@@ -2376,6 +2391,20 @@ function ttv2_form_shortcode() {
                             </div>
                         </div>
 
+                        <!-- Cupón TTV2 -->
+                        <div style="margin:16px 0;padding:14px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;">
+                            <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:8px;">Código de descuento (opcional)</label>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <input type="text" id="ttv2-coupon-input" placeholder="Introduce tu código" maxlength="30"
+                                       style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;text-transform:uppercase;">
+                                <button type="button" id="ttv2-coupon-btn"
+                                        style="padding:8px 16px;background:#016d86;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;white-space:nowrap;">
+                                    Aplicar
+                                </button>
+                            </div>
+                            <div id="ttv2-coupon-msg" style="display:none;font-size:13px;margin-top:6px;"></div>
+                        </div>
+
                         <!-- Terms and Conditions Checkbox -->
                         <div class="ttv2-terms-container ttv2-payment-terms" style="margin: 20px 0; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px; background-color: #f9fafb;">
                             <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.5; cursor: pointer; color: #374151;">
@@ -2406,6 +2435,10 @@ function ttv2_form_shortcode() {
             <p style="font-size: 14px; opacity: 0.7;">No cierre ni actualice esta página.</p>
         </div>
     </div>
+
+    <!-- Cupón hidden inputs -->
+    <input type="hidden" id="ttv2-coupon-code" name="coupon_code" value="">
+    <input type="hidden" id="ttv2-coupon-discount" name="coupon_discount" value="0">
 
     <!-- Formulario oculto para Redsys -->
     <form id="ttv2-redsys-form" action="" method="POST" style="display:none;">
@@ -3545,7 +3578,9 @@ function ttv2_form_shortcode() {
                     },
                     ga_client_id: gaClientId,
                     gclid: gclidVal,
-                    ga_session_id: gaSessionIdVal
+                    ga_session_id: gaSessionIdVal,
+                    couponCode: document.getElementById('ttv2-coupon-code')?.value || '',
+                    couponDiscount: parseFloat(document.getElementById('ttv2-coupon-discount')?.value || 0)
                 };
                 
                 console.log('TTV2: Enviando al API temporal con datos completos...');
@@ -3571,10 +3606,12 @@ function ttv2_form_shortcode() {
                 console.log('TTV2: OrderId para Redsys:', orderId);
                 
                 // Crear pago Redsys con el OrderId sincronizado
+                const ttv2CouponDiscount = parseFloat(document.getElementById('ttv2-coupon-discount')?.value || 0);
                 const paymentData = new FormData();
                 paymentData.append('action', 'ttv2_create_redsys_payment');
-                paymentData.append('amount', ttv2FormData.amount);
+                paymentData.append('amount', ttv2FormData.amount - ttv2CouponDiscount);
                 paymentData.append('orderId', orderId); // Usar el OrderId generado localmente
+                paymentData.append('couponDiscount', document.getElementById('ttv2-coupon-discount')?.value || '0');
                 
                 const ajaxUrl = '<?php echo admin_url("admin-ajax.php"); ?>';
                 const response = await fetch(ajaxUrl, {
@@ -3684,10 +3721,58 @@ function ttv2_form_shortcode() {
             if (termsCheckbox && !termsCheckbox.checked) {
                 errors.push('Debe aceptar los términos y condiciones');
             }
-            
+
             return errors;
         }
 
+    // Cupón TTV2
+    function updatePriceWithCoupon_ttv2(discount) {
+        if (ttv2FormData && ttv2FormData.amount) {
+            ttv2FormData.amount = Math.max(0, ttv2FormData.amount - discount);
+        }
+    }
+
+    (function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            const btn = document.getElementById('ttv2-coupon-btn');
+            const input = document.getElementById('ttv2-coupon-input');
+            const msg = document.getElementById('ttv2-coupon-msg');
+            const hiddenCode = document.getElementById('ttv2-coupon-code');
+            const hiddenDiscount = document.getElementById('ttv2-coupon-discount');
+            if (!btn) return;
+            btn.addEventListener('click', async function() {
+                const code = (input?.value || '').trim().toUpperCase();
+                if (!code) return;
+                btn.disabled = true; btn.textContent = '...';
+                msg.style.display = 'none';
+                try {
+                    const r = await fetch('https://tramitfy.org/api/coupons/validate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code })
+                    });
+                    const data = await r.json();
+                    if (data.valid) {
+                        hiddenCode.value = data.code;
+                        hiddenDiscount.value = data.clientDiscount;
+                        updatePriceWithCoupon_ttv2(data.clientDiscount);
+                        msg.style.cssText = 'display:block;color:#16a34a;font-weight:600;';
+                        msg.textContent = '✓ ' + data.message;
+                        btn.textContent = '✓'; btn.style.background = '#16a34a';
+                        input.disabled = true; btn.disabled = true;
+                    } else {
+                        msg.style.cssText = 'display:block;color:#dc2626;';
+                        msg.textContent = '✗ ' + (data.error || 'Cupón no válido');
+                        btn.disabled = false; btn.textContent = 'Aplicar';
+                    }
+                } catch(e) {
+                    msg.style.cssText = 'display:block;color:#dc2626;';
+                    msg.textContent = 'Error de conexión.';
+                    btn.disabled = false; btn.textContent = 'Aplicar';
+                }
+            });
+        });
+    })();
     </script>
 
     <?php

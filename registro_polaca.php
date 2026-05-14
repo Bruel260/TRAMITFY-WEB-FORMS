@@ -125,7 +125,26 @@ function generate_polaca_redsys_params() {
         
         // Obtener datos del POST
         $order_id = !empty($_POST['order_id']) ? $_POST['order_id'] : str_pad(time(), 12, '0', STR_PAD_LEFT);
+        if (strlen($order_id) > 12) {
+            error_log("POLACA REDSYS - OrderID truncado de " . strlen($order_id) . " a 12 caracteres");
+            $order_id = substr($order_id, -12);
+        }
         $amount = floatval($_POST['amount'] ?? 0);
+        // Aplicar descuento cupón desde temporal (fuente de verdad)
+        $jsAppliedDiscount = floatval($_POST['couponDiscount'] ?? 0);
+        $rawAmount = $amount + $jsAppliedDiscount;
+        $apiCouponUrl = 'https://tramitfy.org/api/temporal/coupon-for-order?orderId=' . urlencode($order_id);
+        $apiResponse = @file_get_contents($apiCouponUrl);
+        if ($apiResponse) {
+            $couponData = json_decode($apiResponse, true);
+            $serverDiscount = floatval($couponData['couponDiscount'] ?? 0);
+            if ($serverDiscount > 0) {
+                $amount = max(0, $rawAmount - $serverDiscount);
+                error_log("POL REDSYS - Cupón: " . $couponData['couponCode'] . " raw=" . $rawAmount . " -" . $serverDiscount . "€ → final=" . $amount . "€");
+            } else {
+                $amount = $rawAmount;
+            }
+        }
         $amount_cents = strval(intval($amount * 100));
         $description = sanitize_text_field($_POST['description'] ?? 'Registro Bandera Polaca');
         
@@ -448,7 +467,7 @@ function generate_polish_invoice_pdf($customer_name, $customer_dni, $customer_em
     // Información adicional
     $pdf->SetFont('Arial', '', 10);
     $pdf->SetTextColor($text_color[0], $text_color[1], $text_color[2]);
-    $pdf->Cell(0, 6, utf8_decode('Forma de pago: Stripe (Tarjeta de crédito/débito)'), 0, 1, 'L');
+    $pdf->Cell(0, 6, utf8_decode('Forma de pago: Redsys (Tarjeta de crédito/débito)'), 0, 1, 'L');
     $pdf->Cell(0, 6, utf8_decode('Estado: Pagado'), 0, 1, 'L');
 
     $pdf->Ln(10);
@@ -3986,6 +4005,10 @@ Auto-rellenar Formulario Completo (Modo TEST)
             </div>
 
             <!-- Formulario -->
+            <!-- Cupón POL hidden inputs -->
+            <input type="hidden" id="pol-coupon-code" name="coupon_code" value="">
+            <input type="hidden" id="pol-coupon-discount" name="coupon_discount" value="0">
+
             <form id="polish-registration-form" enctype="multipart/form-data">
                 <!-- PÁGINA 1: Selección de trámite -->
                 <div id="page-selection" class="pr-form-page">
@@ -4195,6 +4218,20 @@ Auto-rellenar Formulario Completo (Modo TEST)
                                         <span>Total a pagar:</span>
                                         <span id="summary-total-price" class="pr-total-amount">€ 0.00</span>
                                     </div>
+                                </div>
+
+                                <!-- Cupón POL -->
+                                <div style="margin:16px 0;padding:14px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;">
+                                    <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:8px;">Código de descuento (opcional)</label>
+                                    <div style="display:flex;gap:8px;align-items:center;">
+                                        <input type="text" id="pol-coupon-input" placeholder="Introduce tu código" maxlength="30"
+                                               style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;text-transform:uppercase;">
+                                        <button type="button" id="pol-coupon-btn"
+                                                style="padding:8px 16px;background:#016d86;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;white-space:nowrap;">
+                                            Aplicar
+                                        </button>
+                                    </div>
+                                    <div id="pol-coupon-msg" style="display:none;font-size:13px;margin-top:6px;"></div>
                                 </div>
 
                                 <div class="pr-summary-actions">
@@ -6144,9 +6181,18 @@ Auto-rellenar Formulario Completo (Modo TEST)
                 files: [],
                 
                 // Timestamp
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+
+                // GA4 tracking para conversiones server-side
+                ga_client_id: (function() { var m = document.cookie.match(/_ga=GA\d+\.\d+\.(.+)/); return m ? m[1] : ''; })(),
+                gclid: new URLSearchParams(window.location.search).get('gclid') || sessionStorage.getItem('gclid') || '',
+                ga_session_id: (function() { var c = document.cookie.match(/_ga_[A-Z0-9]+=GS\d+\.\d+\.(.+?)(?:\.|$)/); return c ? c[1] : ''; })(),
+
+                // Cupón
+                couponCode: document.getElementById('pol-coupon-code')?.value || '',
+                couponDiscount: parseFloat(document.getElementById('pol-coupon-discount')?.value || 0)
             };
-            
+
             // Capturar archivos si existen
             const attachments = await polacaCaptureFiles();
             if (attachments && attachments.length > 0) {
@@ -6245,32 +6291,6 @@ Auto-rellenar Formulario Completo (Modo TEST)
                 POLACA_REDSYS.temporal_id = captureResult.temporal_id;
                 POLACA_REDSYS.order_id = captureResult.order_id;
                 
-                // DIAGNÓSTICO: Test AJAX básico
-                console.log('🧪 Ejecutando test AJAX básico...');
-                try {
-                    const testResponse = await fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: new URLSearchParams({
-                            action: 'test_ajax_basic'
-                        })
-                    });
-                    
-                    console.log('🧪 Test response status:', testResponse.status);
-                    
-                    if (testResponse.ok) {
-                        const testData = await testResponse.json();
-                        console.log('🧪 Test AJAX básico EXITOSO:', testData);
-                    } else {
-                        console.error('❌ Test AJAX básico FALLÓ - Status:', testResponse.status);
-                        const errorText = await testResponse.text();
-                        console.error('❌ Error text:', errorText);
-                    }
-                } catch (testError) {
-                    console.error('❌ Error en test AJAX básico:', testError);
-                }
                 
                 // Paso 3: Generar parámetros Redsys
                 console.log('🔐 Generando parámetros de pago Redsys...');
@@ -6284,7 +6304,8 @@ Auto-rellenar Formulario Completo (Modo TEST)
                         amount: temporalData.pricing.finalAmount,
                         order_id: orderId,
                         description: `Registro Polaca - ${temporalData.customerData.name}`,
-                        customer_email: temporalData.customerData.email
+                        customer_email: temporalData.customerData.email,
+                        couponDiscount: document.getElementById('pol-coupon-discount')?.value || '0'
                     })
                 });
                 
@@ -6849,19 +6870,8 @@ Auto-rellenar Formulario Completo (Modo TEST)
 
                 console.log('AUTO-RELLENADO AVANZADO COMPLETADO');
                 console.log('El formulario está listo para proceder al pago');
-                console.log('Usa la tarjeta de prueba Stripe: 4242 4242 4242 4242');
 
-                alert('Formulario auto-rellenado con funcionalidades avanzadas!\n\n' +
-                      'Todo configurado según tramitesConfig\n' +
-                      'Precio calculado dinámicamente\n' +
-                      'Documentos opcionales (required removido)\n' +
-                      'Términos aceptados automáticamente\n' +
-                      'Firma simulada\n\n' +
-                      'Tarjeta de prueba Stripe:\n' +
-                      '    • Número: 4242 4242 4242 4242\n' +
-                      '    • Fecha: Cualquier fecha futura\n' +
-                      '    • CVC: Cualquier 3 dígitos\n\n' +
-                      'El formulario se enviará al webhook TRAMITFY');
+                alert('Formulario auto-rellenado para testing admin.');
             });
         }
         <?php endif; ?>
@@ -7528,6 +7538,59 @@ Auto-rellenar Formulario Completo (Modo TEST)
             initProgressiveSelection();
         });
 
+    // Cupón POL
+    function updatePriceWithCoupon_pol(discount) {
+        // El precio final se calcula dinámicamente en calculateTotal()
+        // El descuento se aplica al generar los parámetros Redsys via hidden input
+        const totalEl = document.getElementById('summary-total-price');
+        if (totalEl) {
+            const currentTotal = parseFloat(totalEl.textContent.replace('€', '').replace(',', '.').trim()) || 0;
+            const newTotal = Math.max(0, currentTotal - discount);
+            totalEl.textContent = '€ ' + newTotal.toFixed(2);
+        }
+    }
+
+    (function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            const btn = document.getElementById('pol-coupon-btn');
+            const input = document.getElementById('pol-coupon-input');
+            const msg = document.getElementById('pol-coupon-msg');
+            const hiddenCode = document.getElementById('pol-coupon-code');
+            const hiddenDiscount = document.getElementById('pol-coupon-discount');
+            if (!btn) return;
+            btn.addEventListener('click', async function() {
+                const code = (input?.value || '').trim().toUpperCase();
+                if (!code) return;
+                btn.disabled = true; btn.textContent = '...';
+                msg.style.display = 'none';
+                try {
+                    const r = await fetch('https://tramitfy.org/api/coupons/validate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code })
+                    });
+                    const data = await r.json();
+                    if (data.valid) {
+                        hiddenCode.value = data.code;
+                        hiddenDiscount.value = data.clientDiscount;
+                        updatePriceWithCoupon_pol(data.clientDiscount);
+                        msg.style.cssText = 'display:block;color:#16a34a;font-weight:600;';
+                        msg.textContent = '✓ ' + data.message;
+                        btn.textContent = '✓'; btn.style.background = '#16a34a';
+                        input.disabled = true; btn.disabled = true;
+                    } else {
+                        msg.style.cssText = 'display:block;color:#dc2626;';
+                        msg.textContent = '✗ ' + (data.error || 'Cupón no válido');
+                        btn.disabled = false; btn.textContent = 'Aplicar';
+                    }
+                } catch(e) {
+                    msg.style.cssText = 'display:block;color:#dc2626;';
+                    msg.textContent = 'Error de conexión.';
+                    btn.disabled = false; btn.textContent = 'Aplicar';
+                }
+            });
+        });
+    })();
     </script>
 
     <?php
@@ -7708,9 +7771,13 @@ function polaca_create_redsys_payment() {
         
         // Obtener datos del formulario
         $orderId = sanitize_text_field($_POST['orderId'] ?? '');
+        if (strlen($orderId) > 12) {
+            error_log("POLACA REDSYS - OrderID truncado de " . strlen($orderId) . " a 12 caracteres");
+            $orderId = substr($orderId, -12);
+        }
         $amount = floatval($_POST['amount'] ?? 0);
         $description = sanitize_text_field($_POST['description'] ?? 'Registro Bandera Polaca');
-        
+
         if (empty($orderId) || $amount <= 0) {
             throw new Exception('Datos de pago inválidos');
         }

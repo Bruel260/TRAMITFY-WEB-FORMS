@@ -84,7 +84,23 @@ function rdoc_redsys_create_payment_form($order_data) {
 function rdoc_create_redsys_payment() {
     try {
         $order_id = !empty($_POST['orderId']) ? $_POST['orderId'] : str_pad(time(), 12, '0', STR_PAD_LEFT);
+        if (strlen($order_id) > 12) { $order_id = substr($order_id, -12); }
         $amount = floatval($_POST['amount'] ?? RDOC_PRECIO_TOTAL);
+        // Aplicar descuento cupón desde temporal (fuente de verdad)
+        $jsAppliedDiscount = floatval($_POST['couponDiscount'] ?? 0);
+        $rawAmount = $amount + $jsAppliedDiscount;
+        $apiCouponUrl = 'https://tramitfy.org/api/temporal/coupon-for-order?orderId=' . urlencode($order_id);
+        $apiResponse = @file_get_contents($apiCouponUrl);
+        if ($apiResponse) {
+            $couponData = json_decode($apiResponse, true);
+            $serverDiscount = floatval($couponData['couponDiscount'] ?? 0);
+            if ($serverDiscount > 0) {
+                $amount = max(0, $rawAmount - $serverDiscount);
+                error_log("RDOC REDSYS - Cupón: " . $couponData['couponCode'] . " raw=" . $rawAmount . " -" . $serverDiscount . "€ → final=" . $amount . "€");
+            } else {
+                $amount = $rawAmount;
+            }
+        }
         $amount_cents = strval(intval($amount * 100));
 
         $payment_data = rdoc_redsys_create_payment_form([
@@ -617,7 +633,7 @@ function rdoc_send_confirmation_emails($formData, $uploadedFiles, $tramiteId = n
                         </tr>
                         <tr>
                             <td style='color: #666;'>Modo Pago:</td>
-                            <td style='color: #333; font-weight: 600;'>" . RDOC_REDSYS_MODE . "</td>
+                            <td style='color: #333; font-weight: 600;'>Redsys TPV</td>
                         </tr>
                     </table>
                 </div>
@@ -2065,7 +2081,7 @@ function recuperar_documentacion_form_shortcode() {
                 </div>
                 <div class="rdoc-benefit">
                     <i class="fas fa-check"></i>
-                    <span>Envío de provisional en menos de 24 h.</span>
+                    <span>Se presenta a Capitanía Marítima en un plazo máximo de 24 h</span>
                 </div>
                 <div class="rdoc-benefit">
                     <i class="fas fa-check"></i>
@@ -2306,6 +2322,19 @@ function recuperar_documentacion_form_shortcode() {
                             </div>
                         </div>
 
+                        <div style="margin:16px 0;padding:14px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;">
+                            <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:8px;">Código de descuento (opcional)</label>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <input type="text" id="rdoc-coupon-input" placeholder="Introduce tu código" maxlength="30"
+                                       style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;text-transform:uppercase;">
+                                <button type="button" id="rdoc-coupon-btn"
+                                        style="padding:8px 16px;background:#016d86;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;white-space:nowrap;">
+                                    Aplicar
+                                </button>
+                            </div>
+                            <div id="rdoc-coupon-msg" style="display:none;font-size:13px;margin-top:6px;"></div>
+                        </div>
+
                         <button type="button" id="rdoc-submit-payment" class="rdoc-submit-btn rdoc-btn-large">
                             <i class="fas fa-lock"></i>
                             <span>Confirmar y Pagar <?php echo RDOC_PRECIO_TOTAL; ?>€</span>
@@ -2364,6 +2393,10 @@ function recuperar_documentacion_form_shortcode() {
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Cupón hidden inputs -->
+    <input type="hidden" id="rdoc-coupon-code" name="coupon_code" value="">
+    <input type="hidden" id="rdoc-coupon-discount" name="coupon_discount" value="0">
+
     <!-- Formulario oculto para Redsys -->
     <form id="rdoc-redsys-form" action="" method="POST" style="display:none;">
         <input type="hidden" name="Ds_SignatureVersion" id="rdoc-Ds_SignatureVersion">
@@ -3150,7 +3183,12 @@ function recuperar_documentacion_form_shortcode() {
                         metadata: {
                             timestamp: Date.now(),
                             formId: 'rdoc'
-                        }
+                        },
+                        ga_client_id: (function() { var m = document.cookie.match(/_ga=GA\d+\.\d+\.(.+)/); return m ? m[1] : ''; })(),
+                        gclid: new URLSearchParams(window.location.search).get('gclid') || sessionStorage.getItem('gclid') || '',
+                        ga_session_id: (function() { var c = document.cookie.match(/_ga_[A-Z0-9]+=GS\d+\.\d+\.(.+?)(?:\.|$)/); return c ? c[1] : ''; })(),
+                        couponCode: document.getElementById('rdoc-coupon-code')?.value || '',
+                        couponDiscount: parseFloat(document.getElementById('rdoc-coupon-discount')?.value || 0)
                     };
 
                     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Almacenando datos...</span>';
@@ -3171,10 +3209,13 @@ function recuperar_documentacion_form_shortcode() {
                     // 4. Crear pago Redsys
                     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Redirigiendo a pasarela segura...</span>';
 
+                    const rdocCouponDiscount = parseFloat(document.getElementById('rdoc-coupon-discount')?.value || 0);
+                    const rdocFinalAmount = Math.max(0, <?php echo RDOC_PRECIO_TOTAL; ?> - rdocCouponDiscount);
                     const paymentData = new FormData();
                     paymentData.append('action', 'rdoc_create_redsys_payment');
-                    paymentData.append('amount', <?php echo RDOC_PRECIO_TOTAL; ?>);
+                    paymentData.append('amount', rdocFinalAmount);
                     paymentData.append('orderId', generatedOrderId);
+                    paymentData.append('couponDiscount', document.getElementById('rdoc-coupon-discount')?.value || '0');
 
                     const ajaxUrl = '<?php echo admin_url("admin-ajax.php"); ?>';
                     const response = await fetch(ajaxUrl, {
@@ -3319,6 +3360,56 @@ function recuperar_documentacion_form_shortcode() {
             );
         }
         <?php endif; ?>
+
+    // Cupón RDOC
+    function updatePriceWithCoupon_rdoc(discount) {
+        const basePrice = <?php echo RDOC_PRECIO_TOTAL; ?>;
+        const newPrice = Math.max(0, basePrice - discount);
+        const el = document.querySelector('.rdoc-price-amount');
+        if (el) el.textContent = newPrice.toFixed(2).replace('.', ',') + '€';
+    }
+
+    (function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            const btn = document.getElementById('rdoc-coupon-btn');
+            const input = document.getElementById('rdoc-coupon-input');
+            const msg = document.getElementById('rdoc-coupon-msg');
+            const hiddenCode = document.getElementById('rdoc-coupon-code');
+            const hiddenDiscount = document.getElementById('rdoc-coupon-discount');
+            if (!btn) return;
+            btn.addEventListener('click', async function() {
+                const code = (input?.value || '').trim().toUpperCase();
+                if (!code) return;
+                btn.disabled = true; btn.textContent = '...';
+                msg.style.display = 'none';
+                try {
+                    const r = await fetch('https://tramitfy.org/api/coupons/validate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code })
+                    });
+                    const data = await r.json();
+                    if (data.valid) {
+                        hiddenCode.value = data.code;
+                        hiddenDiscount.value = data.clientDiscount;
+                        updatePriceWithCoupon_rdoc(data.clientDiscount);
+                        msg.style.cssText = 'display:block;color:#16a34a;font-weight:600;';
+                        msg.textContent = '✓ ' + data.message;
+                        btn.textContent = '✓'; btn.style.background = '#16a34a';
+                        input.disabled = true; btn.disabled = true;
+                    } else {
+                        msg.style.cssText = 'display:block;color:#dc2626;';
+                        msg.textContent = '✗ ' + (data.error || 'Cupón no válido');
+                        btn.disabled = false; btn.textContent = 'Aplicar';
+                    }
+                } catch(e) {
+                    msg.style.cssText = 'display:block;color:#dc2626;';
+                    msg.textContent = 'Error de conexión.';
+                    btn.disabled = false; btn.textContent = 'Aplicar';
+                }
+            });
+        });
+    })();
     </script>
 
     <?php

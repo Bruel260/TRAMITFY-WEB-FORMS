@@ -21,12 +21,12 @@ if (!defined('HA_REDSYS_SECRET_KEY')) {
 if (!defined('HA_REDSYS_SIGNATURE_VERSION')) define('HA_REDSYS_SIGNATURE_VERSION', 'HMAC_SHA256_V1');
 if (!defined('HA_REDSYS_URL_TEST')) define('HA_REDSYS_URL_TEST', 'https://sis-t.redsys.es:25443/sis/realizarPago');
 if (!defined('HA_REDSYS_URL_LIVE')) define('HA_REDSYS_URL_LIVE', 'https://sis.redsys.es/sis/realizarPago');
-if (!defined('HA_REDSYS_URL_OK')) define('HA_REDSYS_URL_OK', 'https://tramitfy.es/pago-completado-hoja-asiento/');
+if (!defined('HA_REDSYS_URL_OK')) define('HA_REDSYS_URL_OK', 'https://tramitfy.es/pago-completado-ha/');
 if (!defined('HA_REDSYS_URL_KO')) define('HA_REDSYS_URL_KO', 'https://tramitfy.es/hoja-de-asiento/');
 if (!defined('HA_REDSYS_URL_NOTIFICATION')) define('HA_REDSYS_URL_NOTIFICATION', 'https://tramitfy.org/api/temporal/confirm');
 
 if (!defined('HOJA_ASIENTO_SERVICE_PRICE')) {
-    define('HOJA_ASIENTO_SERVICE_PRICE', 29.99);
+    define('HOJA_ASIENTO_SERVICE_PRICE', 18.99);
 }
 
 // =====================================================
@@ -75,7 +75,23 @@ function ha_redsys_create_payment_form($order_data) {
 function ha_create_redsys_payment() {
     try {
         $order_id = !empty($_POST['orderId']) ? $_POST['orderId'] : str_pad(time(), 12, '0', STR_PAD_LEFT);
+        if (strlen($order_id) > 12) { $order_id = substr($order_id, -12); }
         $amount = floatval($_POST['amount'] ?? HOJA_ASIENTO_SERVICE_PRICE);
+        // Aplicar descuento cupón desde temporal (fuente de verdad)
+        $jsAppliedDiscount = floatval($_POST['couponDiscount'] ?? 0);
+        $rawAmount = $amount + $jsAppliedDiscount;
+        $apiCouponUrl = 'https://tramitfy.org/api/temporal/coupon-for-order?orderId=' . urlencode($order_id);
+        $apiResponse = @file_get_contents($apiCouponUrl);
+        if ($apiResponse) {
+            $couponData = json_decode($apiResponse, true);
+            $serverDiscount = floatval($couponData['couponDiscount'] ?? 0);
+            if ($serverDiscount > 0) {
+                $amount = max(0, $rawAmount - $serverDiscount);
+                error_log("HA REDSYS - Cupón: " . $couponData['couponCode'] . " raw=" . $rawAmount . " -" . $serverDiscount . "€ → final=" . $amount . "€");
+            } else {
+                $amount = $rawAmount;
+            }
+        }
         $amount_cents = strval(intval($amount * 100));
 
         $payment_data = ha_redsys_create_payment_form([
@@ -461,6 +477,106 @@ function hoja_asiento_form_shortcode() {
         .ha-nav-item:hover:not(.active) {
             background: #e9ecef;
             border-color: rgb(var(--primary-light));
+        }
+
+        /* Selector propietario/no-propietario */
+        .ha-solicitante-selector {
+            margin: 25px 0 10px 0;
+        }
+
+        .ha-solicitante-selector h4 {
+            margin-bottom: 12px;
+            color: rgb(var(--neutral-700));
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .ha-solicitante-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .ha-solicitante-card {
+            position: relative;
+            cursor: pointer;
+            border: 2px solid #e0e6ed;
+            border-radius: 10px;
+            padding: 16px;
+            background: #fafbfc;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ha-solicitante-card:hover {
+            border-color: rgb(var(--primary-light));
+            background: #f0f9fb;
+        }
+
+        .ha-solicitante-card.selected {
+            border-color: rgb(var(--primary));
+            background: rgba(var(--primary), 0.06);
+            box-shadow: 0 2px 8px rgba(var(--primary), 0.15);
+        }
+
+        .ha-solicitante-card input[type="radio"] {
+            display: none;
+        }
+
+        .ha-solicitante-radio {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #ccc;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .ha-solicitante-card.selected .ha-solicitante-radio {
+            border-color: rgb(var(--primary));
+            background: rgb(var(--primary));
+        }
+
+        .ha-solicitante-card.selected .ha-solicitante-radio::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: white;
+        }
+
+        .ha-solicitante-card-content {
+            flex: 1;
+        }
+
+        .ha-solicitante-card-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: rgb(var(--neutral-800));
+            margin-bottom: 3px;
+        }
+
+        .ha-solicitante-card-desc {
+            font-size: 12px;
+            color: rgb(var(--neutral-600));
+            line-height: 1.3;
+        }
+
+        .ha-solicitante-card i.ha-solicitante-icon {
+            font-size: 22px;
+            color: rgb(var(--primary));
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 600px) {
+            .ha-solicitante-options {
+                grid-template-columns: 1fr;
+            }
         }
 
         /* Páginas del formulario */
@@ -1593,13 +1709,13 @@ function hoja_asiento_form_shortcode() {
                         Hoja de Asiento
                     </div>
                     <div class="ha-subheadline">
-                        Obtén tu hoja de asiento de forma rápida y segura. Gestión completa online sin desplazamientos.
+                        Obtén la hoja de asiento y registro marítimo de la embarcación. Descubre si la embarcación tiene cargas o deudas asociadas.
                     </div>
                 </div>
 
                 <div class="ha-price-box">
                     <div class="ha-price-label">Precio Total</div>
-                    <div class="ha-price-amount">29,99€</div>
+                    <div class="ha-price-amount">18,99€</div>
                     <div class="ha-price-detail">Sin tasas adicionales</div>
                 </div>
 
@@ -1610,7 +1726,7 @@ function hoja_asiento_form_shortcode() {
                     </div>
                     <div class="ha-benefit">
                         <i class="fa-solid fa-check"></i>
-                        <span>Envío de provisional en menos de 24h</span>
+                        <span>Conoce el historial completo de la embarcación</span>
                     </div>
                     <div class="ha-benefit">
                         <i class="fa-solid fa-check"></i>
@@ -1662,7 +1778,7 @@ function hoja_asiento_form_shortcode() {
             <form id="navigation-permit-renewal-form" action="" method="POST" enctype="multipart/form-data">
                 
                 <div class="ha-form-header">
-                    <div class="ha-form-title">Solicitud de Copia de Hoja de Asiento</div>
+                    <div class="ha-form-title">Solicitud de Copia de Hoja de Asiento y Registro Marítimo</div>
                     <p class="ha-form-subtitle">Complete el formulario para obtener una copia de su hoja de asiento</p>
                 </div>
 
@@ -1743,6 +1859,28 @@ function hoja_asiento_form_shortcode() {
                         <div class="ha-input-group">
                             <label for="boat_matricula">Matrícula *</label>
                             <input type="text" id="boat_matricula" name="boat_matricula" placeholder="MA-1234-AB" required />
+                        </div>
+                    </div>
+
+                    <div class="ha-solicitante-selector">
+                        <h4><i class="fa-solid fa-user-check"></i> ¿Es usted el propietario de la embarcación?</h4>
+                        <div class="ha-solicitante-options">
+                            <label class="ha-solicitante-card selected" data-value="propietario" onclick="selectSolicitanteType('propietario')">
+                                <input type="radio" name="solicitante_type" value="propietario" checked>
+                                <span class="ha-solicitante-radio"></span>
+                                <i class="fa-solid fa-user-check ha-solicitante-icon"></i>
+                                <div class="ha-solicitante-card-content">
+                                    <div class="ha-solicitante-card-title">Soy el propietario</div>
+                                </div>
+                            </label>
+                            <label class="ha-solicitante-card" data-value="no-propietario" onclick="selectSolicitanteType('no-propietario')">
+                                <input type="radio" name="solicitante_type" value="no-propietario">
+                                <span class="ha-solicitante-radio"></span>
+                                <i class="fa-solid fa-user ha-solicitante-icon"></i>
+                                <div class="ha-solicitante-card-content">
+                                    <div class="ha-solicitante-card-title">No soy el propietario</div>
+                                </div>
+                            </label>
                         </div>
                     </div>
 
@@ -1835,13 +1973,26 @@ function hoja_asiento_form_shortcode() {
                         <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #e0e6ed;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                                 <span>Servicio de Hoja de Asiento:</span>
-                                <strong>29,99€</strong>
+                                <strong>18,99€</strong>
                             </div>
                             <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-top: 10px; border-top: 1px solid #e0e6ed;">
                                 <strong>Total a pagar:</strong>
-                                <strong style="color: rgb(var(--primary)); font-size: 18px;">29,99€</strong>
+                                <strong style="color: rgb(var(--primary)); font-size: 18px;">18,99€</strong>
                             </div>
                         </div>
+                    </div>
+
+                    <div style="margin:16px 0;padding:14px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;">
+                        <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:8px;">Código de descuento (opcional)</label>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <input type="text" id="ha-coupon-input" placeholder="Introduce tu código" maxlength="30"
+                                   style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;text-transform:uppercase;">
+                            <button type="button" id="ha-coupon-btn"
+                                    style="padding:8px 16px;background:#016d86;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;white-space:nowrap;">
+                                Aplicar
+                            </button>
+                        </div>
+                        <div id="ha-coupon-msg" style="display:none;font-size:13px;margin-top:6px;"></div>
                     </div>
 
                     <!-- Términos y condiciones -->
@@ -1866,6 +2017,10 @@ function hoja_asiento_form_shortcode() {
             </form>
         </div>
     </div>
+
+    <!-- Cupón hidden inputs -->
+    <input type="hidden" id="ha-coupon-code" name="coupon_code" value="">
+    <input type="hidden" id="ha-coupon-discount" name="coupon_discount" value="0">
 
     <!-- Formulario oculto para Redsys -->
     <form id="ha-redsys-form" action="" method="POST" style="display:none;">
@@ -1934,8 +2089,9 @@ function hoja_asiento_form_shortcode() {
             // Variables globales
             let signaturePad;
             let haIsSubmitting = false;
-            let currentPrice = 29.99;
-            const basePrice = 29.99;
+            let currentPrice = 18.99;
+            const basePrice = 18.99;
+            let solicitanteType = 'propietario';
 
             // Almacenamiento de archivos
             const fileStorage = {
@@ -2017,6 +2173,32 @@ function hoja_asiento_form_shortcode() {
             // Inicializar inputs de archivo
             initFileUpload('upload-dni-propietario', 'preview-dni-propietario');
 
+            // Selector propietario / no-propietario
+            window.selectSolicitanteType = function(type) {
+                solicitanteType = type;
+                // Actualizar visual de las cards
+                document.querySelectorAll('.ha-solicitante-card').forEach(card => {
+                    card.classList.toggle('selected', card.dataset.value === type);
+                });
+                // Actualizar radio buttons
+                const radio = document.querySelector(`input[name="solicitante_type"][value="${type}"]`);
+                if (radio) radio.checked = true;
+                // Actualizar navegación sidebar y botones
+                updateFormMode(type);
+            };
+
+            function updateFormMode(type) {
+                const navDocs = document.querySelector('.ha-nav-item[data-page-id="page-documents"]');
+                const navAuth = document.querySelector('.ha-nav-item[data-page-id="page-authorization"]');
+                if (type === 'no-propietario') {
+                    if (navDocs) navDocs.style.display = 'none';
+                    if (navAuth) navAuth.style.display = 'none';
+                } else {
+                    if (navDocs) navDocs.style.display = '';
+                    if (navAuth) navAuth.style.display = '';
+                }
+            }
+
             // Navegación entre páginas
             const formPages = document.querySelectorAll('.ha-form-page');
             const navItems = document.querySelectorAll('.ha-nav-item');
@@ -2032,8 +2214,9 @@ function hoja_asiento_form_shortcode() {
                     }
                 });
 
-                navItems.forEach((nav, index) => {
-                    nav.classList.toggle('active', index === currentPageIndex);
+                // Match nav items by data-page-id instead of index (handles hidden items)
+                navItems.forEach(nav => {
+                    nav.classList.toggle('active', nav.getAttribute('data-page-id') === pageId);
                 });
 
                 // Cambiar contenido del sidebar según la página
@@ -2091,11 +2274,15 @@ function hoja_asiento_form_shortcode() {
                 return isValid;
             }
 
-            // Event listeners para navegación
+            // Event listeners para navegación (con lógica condicional propietario/no-propietario)
             document.querySelectorAll('.ha-btn-next').forEach(btn => {
                 btn.addEventListener('click', function() {
                     if (hojaAsientoValidateCurrentPage()) {
-                        const nextPage = this.getAttribute('data-next');
+                        let nextPage = this.getAttribute('data-next');
+                        // Si no-propietario y estamos en pág 1, saltar directo a pago
+                        if (solicitanteType === 'no-propietario' && nextPage === 'page-documents') {
+                            nextPage = 'page-payment';
+                        }
                         hojaAsientoShowPage(nextPage);
                     }
                 });
@@ -2103,7 +2290,11 @@ function hoja_asiento_form_shortcode() {
 
             document.querySelectorAll('.ha-btn-prev').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    const prevPage = this.getAttribute('data-prev');
+                    let prevPage = this.getAttribute('data-prev');
+                    // Si no-propietario y estamos en pago, volver directo a pág 1
+                    if (solicitanteType === 'no-propietario' && prevPage === 'page-authorization') {
+                        prevPage = 'page-personal-info';
+                    }
                     hojaAsientoShowPage(prevPage);
                 });
             });
@@ -2112,6 +2303,10 @@ function hoja_asiento_form_shortcode() {
                 nav.addEventListener('click', function(e) {
                     e.preventDefault();
                     const pageId = this.getAttribute('data-page-id');
+                    // Bloquear click en páginas ocultas para no-propietario
+                    if (solicitanteType === 'no-propietario' && (pageId === 'page-documents' || pageId === 'page-authorization')) {
+                        return;
+                    }
                     hojaAsientoShowPage(pageId);
                 });
             });
@@ -2343,11 +2538,13 @@ function hoja_asiento_form_shortcode() {
                     return;
                 }
 
-                // Validar firma
-                if (signaturePad.isEmpty() && (!mainSignatureData || mainSignatureData === null)) {
-                    alert('Por favor, firme el documento de autorización.');
-                    hojaAsientoShowPage('page-authorization');
-                    return;
+                // Validar firma (solo si es propietario)
+                if (solicitanteType === 'propietario') {
+                    if (signaturePad.isEmpty() && (!mainSignatureData || mainSignatureData === null)) {
+                        alert('Por favor, firme el documento de autorización.');
+                        hojaAsientoShowPage('page-authorization');
+                        return;
+                    }
                 }
 
                 // Validar email
@@ -2376,34 +2573,36 @@ function hoja_asiento_form_shortcode() {
                     const generatedOrderId = '00' + timestamp.toString().padStart(10, '0');
                     console.log('HA: OrderID generado:', generatedOrderId);
 
-                    // 2. Recopilar archivos en base64
+                    // 2. Recopilar archivos en base64 (solo si es propietario)
                     const filesArray = [];
-                    const fileCategories = Object.keys(fileStorage);
-                    for (const category of fileCategories) {
-                        const files = fileStorage[category] || [];
-                        for (const file of files) {
-                            const base64 = await fileToBase64(file);
+                    if (solicitanteType === 'propietario') {
+                        const fileCategories = Object.keys(fileStorage);
+                        for (const category of fileCategories) {
+                            const files = fileStorage[category] || [];
+                            for (const file of files) {
+                                const base64 = await fileToBase64(file);
+                                filesArray.push({
+                                    fieldName: category,
+                                    fileName: file.name,
+                                    mimeType: file.type,
+                                    data: base64
+                                });
+                            }
+                        }
+
+                        // Añadir firma
+                        const signatureData = mainSignatureData || signaturePad.toDataURL();
+                        if (signatureData) {
                             filesArray.push({
-                                fieldName: category,
-                                fileName: file.name,
-                                mimeType: file.type,
-                                data: base64
+                                fieldName: 'firma',
+                                fileName: 'firma.png',
+                                mimeType: 'image/png',
+                                data: signatureData
                             });
                         }
                     }
 
-                    // Añadir firma
-                    const signatureData = mainSignatureData || signaturePad.toDataURL();
-                    if (signatureData) {
-                        filesArray.push({
-                            fieldName: 'firma',
-                            fileName: 'firma.png',
-                            mimeType: 'image/png',
-                            data: signatureData
-                        });
-                    }
-
-                    console.log('HA: Archivos preparados:', filesArray.length);
+                    console.log('HA: Archivos preparados:', filesArray.length, '| Modo:', solicitanteType);
 
                     // 3. Enviar datos al API temporal
                     const captureData = {
@@ -2417,8 +2616,9 @@ function hoja_asiento_form_shortcode() {
                             phone: document.getElementById('customer_phone').value.trim()
                         },
                         serviceData: {
-                            vesselName: document.getElementById('vessel_name')?.value?.trim() || '',
-                            vesselRegistration: document.getElementById('vessel_registration')?.value?.trim() || ''
+                            vesselName: document.getElementById('boat_name')?.value?.trim() || '',
+                            vesselRegistration: document.getElementById('boat_matricula')?.value?.trim() || '',
+                            solicitanteType: solicitanteType
                         },
                         pricing: {
                             amount: currentPrice,
@@ -2427,7 +2627,12 @@ function hoja_asiento_form_shortcode() {
                         metadata: {
                             timestamp: Date.now(),
                             formId: 'ha'
-                        }
+                        },
+                        ga_client_id: (function() { var m = document.cookie.match(/_ga=GA\d+\.\d+\.(.+)/); return m ? m[1] : ''; })(),
+                        gclid: new URLSearchParams(window.location.search).get('gclid') || sessionStorage.getItem('gclid') || '',
+                        ga_session_id: (function() { var c = document.cookie.match(/_ga_[A-Z0-9]+=GS\d+\.\d+\.(.+?)(?:\.|$)/); return c ? c[1] : ''; })(),
+                        couponCode: document.getElementById('ha-coupon-code')?.value || '',
+                        couponDiscount: parseFloat(document.getElementById('ha-coupon-discount')?.value || 0)
                     };
 
                     const captureResponse = await fetch('https://tramitfy.org/api/temporal/capture', {
@@ -2448,6 +2653,7 @@ function hoja_asiento_form_shortcode() {
                     paymentData.append('action', 'ha_create_redsys_payment');
                     paymentData.append('amount', currentPrice);
                     paymentData.append('orderId', generatedOrderId);
+                    paymentData.append('couponDiscount', document.getElementById('ha-coupon-discount')?.value || '0');
 
                     const ajaxUrl = '<?php echo admin_url("admin-ajax.php"); ?>';
                     const response = await fetch(ajaxUrl, {
@@ -2778,7 +2984,7 @@ function hoja_asiento_form_shortcode() {
                     document.getElementById('customer_phone').value = '682246937';
                     
                     // Rellenar datos del barco
-                    document.getElementById('boat_name').value = 'Tramitfy Test';
+                    document.getElementById('boat_name').value = 'Test Admin';
                     document.getElementById('boat_matricula').value = 'MA-1234-AB';
 
                     // Marcar términos
@@ -2801,6 +3007,55 @@ function hoja_asiento_form_shortcode() {
 
             // Inicializar la primera página
             hojaAsientoShowPage('page-personal-info');
+        });
+    })();
+
+    // Cupón HA
+    function updatePriceWithCoupon_ha(discount) {
+        currentPrice = Math.max(0, basePrice - discount);
+        const els = document.querySelectorAll('#ha-price-display-total');
+        els.forEach(el => { el.textContent = currentPrice.toFixed(2).replace('.', ',') + '€'; });
+    }
+
+    (function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            const btn = document.getElementById('ha-coupon-btn');
+            const input = document.getElementById('ha-coupon-input');
+            const msg = document.getElementById('ha-coupon-msg');
+            const hiddenCode = document.getElementById('ha-coupon-code');
+            const hiddenDiscount = document.getElementById('ha-coupon-discount');
+            if (!btn) return;
+            btn.addEventListener('click', async function() {
+                const code = (input?.value || '').trim().toUpperCase();
+                if (!code) return;
+                btn.disabled = true; btn.textContent = '...';
+                msg.style.display = 'none';
+                try {
+                    const r = await fetch('https://tramitfy.org/api/coupons/validate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code })
+                    });
+                    const data = await r.json();
+                    if (data.valid) {
+                        hiddenCode.value = data.code;
+                        hiddenDiscount.value = data.clientDiscount;
+                        updatePriceWithCoupon_ha(data.clientDiscount);
+                        msg.style.cssText = 'display:block;color:#16a34a;font-weight:600;';
+                        msg.textContent = '✓ ' + data.message;
+                        btn.textContent = '✓'; btn.style.background = '#16a34a';
+                        input.disabled = true; btn.disabled = true;
+                    } else {
+                        msg.style.cssText = 'display:block;color:#dc2626;';
+                        msg.textContent = '✗ ' + (data.error || 'Cupón no válido');
+                        btn.disabled = false; btn.textContent = 'Aplicar';
+                    }
+                } catch(e) {
+                    msg.style.cssText = 'display:block;color:#dc2626;';
+                    msg.textContent = 'Error de conexión.';
+                    btn.disabled = false; btn.textContent = 'Aplicar';
+                }
+            });
         });
     })();
     </script>
@@ -2980,7 +3235,7 @@ function send_hoja_asiento_to_tramitfy() {
             'customerEmail' => isset($_POST['customer_email']) ? sanitize_email($_POST['customer_email']) : '',
             'customerPhone' => isset($_POST['customer_phone']) ? sanitize_text_field($_POST['customer_phone']) : '',
             'renewalType' => isset($_POST['renewal_type']) ? sanitize_text_field($_POST['renewal_type']) : 'duplicado',
-            'finalAmount' => isset($_POST['final_amount']) ? floatval($_POST['final_amount']) : 29.99,
+            'finalAmount' => isset($_POST['final_amount']) ? floatval($_POST['final_amount']) : 18.99,
             'paymentIntentId' => isset($_POST['payment_intent_id']) ? sanitize_text_field($_POST['payment_intent_id']) : '',
             'hasSignature' => isset($_POST['has_signature']) ? sanitize_text_field($_POST['has_signature']) : '',
             'couponCode' => isset($_POST['coupon_code']) ? sanitize_text_field($_POST['coupon_code']) : '',
@@ -3318,7 +3573,7 @@ function send_hoja_asiento_emails() {
         $customerDni = isset($_POST['customerDni']) ? sanitize_text_field($_POST['customerDni']) : '';
         $customerPhone = isset($_POST['customerPhone']) ? sanitize_text_field($_POST['customerPhone']) : '';
         $renewalType = isset($_POST['renewalType']) ? sanitize_text_field($_POST['renewalType']) : 'renovacion';
-        $finalAmount = isset($_POST['finalAmount']) ? floatval($_POST['finalAmount']) : 29.99;
+        $finalAmount = isset($_POST['finalAmount']) ? floatval($_POST['finalAmount']) : 18.99;
         $paymentIntentId = isset($_POST['paymentIntentId']) ? sanitize_text_field($_POST['paymentIntentId']) : '';
         $tramiteId = isset($_POST['tramiteId']) ? sanitize_text_field($_POST['tramiteId']) : '';
         $tramiteDbId = isset($_POST['tramiteDbId']) ? sanitize_text_field($_POST['tramiteDbId']) : '';
@@ -3608,7 +3863,7 @@ function send_hoja_asiento_emails() {
                         </tr>
                         <tr>
                             <td style='color: #666;'>Modo Pago:</td>
-                            <td style='color: #333; font-weight: 600;'>" . HA_REDSYS_MODE . "</td>
+                            <td style='color: #333; font-weight: 600;'>Redsys TPV</td>
                         </tr>
                     </table>
                 </div>

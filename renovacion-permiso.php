@@ -1713,12 +1713,17 @@ function navigation_permit_renewal_form_shortcode() {
                         </div>
                     </div>
 
-                    <div class="npn-coupon-container">
-                        <label for="coupon_code">Código de descuento (opcional)</label>
-                        <div class="npn-coupon-input">
-                            <input type="text" id="coupon_code" name="coupon_code" placeholder="Ingresa tu código">
+                    <div style="margin:16px 0;padding:14px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;">
+                        <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:8px;">Código de descuento (opcional)</label>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <input type="text" id="npn-coupon-input" placeholder="Introduce tu código" maxlength="30"
+                                   style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;text-transform:uppercase;">
+                            <button type="button" id="npn-coupon-btn"
+                                    style="padding:8px 16px;background:#016d86;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;white-space:nowrap;">
+                                Aplicar
+                            </button>
                         </div>
-                        <div id="coupon-message" class="npn-coupon-message hidden"></div>
+                        <div id="npn-coupon-msg" style="display:none;font-size:13px;margin-top:6px;"></div>
                     </div>
 
                     <div class="npn-terms">
@@ -1741,6 +1746,10 @@ function navigation_permit_renewal_form_shortcode() {
             </form>
         </div>
     </div>
+
+    <!-- Cupón hidden inputs -->
+    <input type="hidden" id="npn-coupon-code" name="coupon_code" value="">
+    <input type="hidden" id="npn-coupon-discount" name="coupon_discount" value="0">
 
     <!-- Formulario oculto para Redsys -->
     <form id="npn-redsys-form" action="" method="POST" style="display:none;">
@@ -2317,7 +2326,9 @@ function navigation_permit_renewal_form_shortcode() {
                         },
                         ga_client_id: (function() { var m = document.cookie.match(/_ga=GA\d+\.\d+\.(.+)/); return m ? m[1] : ''; })(),
                         gclid: new URLSearchParams(window.location.search).get('gclid') || sessionStorage.getItem('gclid') || '',
-                        ga_session_id: (function() { var c = document.cookie.match(/_ga_[A-Z0-9]+=GS\d+\.\d+\.(.+?)(?:\.|$)/); return c ? c[1] : ''; })()
+                        ga_session_id: (function() { var c = document.cookie.match(/_ga_[A-Z0-9]+=GS\d+\.\d+\.(.+?)(?:\.|$)/); return c ? c[1] : ''; })(),
+                        couponCode: document.getElementById('npn-coupon-code')?.value || '',
+                        couponDiscount: parseFloat(document.getElementById('npn-coupon-discount')?.value || 0)
                     };
 
                     const captureResponse = await fetch('https://tramitfy.org/api/temporal/capture', {
@@ -2339,6 +2350,7 @@ function navigation_permit_renewal_form_shortcode() {
                     paymentData.append('action', 'npn_create_redsys_payment');
                     paymentData.append('amount', currentPrice);
                     paymentData.append('orderId', generatedOrderId);
+                    paymentData.append('couponDiscount', document.getElementById('npn-coupon-discount')?.value || '0');
 
                     const ajaxUrl = '<?php echo admin_url("admin-ajax.php"); ?>';
                     const response = await fetch(ajaxUrl, {
@@ -2853,6 +2865,55 @@ function navigation_permit_renewal_form_shortcode() {
 
             // Inicializar la primera página
             navigationPermitShowPage('page-personal-info');
+        });
+    })();
+
+    // Cupón NPN
+    function updatePriceWithCoupon_npn(discount) {
+        currentPrice = Math.max(0, basePrice - discount);
+        const el = document.getElementById('final-amount');
+        if (el) el.textContent = currentPrice.toFixed(2).replace('.', ',') + ' €';
+    }
+
+    (function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            const btn = document.getElementById('npn-coupon-btn');
+            const input = document.getElementById('npn-coupon-input');
+            const msg = document.getElementById('npn-coupon-msg');
+            const hiddenCode = document.getElementById('npn-coupon-code');
+            const hiddenDiscount = document.getElementById('npn-coupon-discount');
+            if (!btn) return;
+            btn.addEventListener('click', async function() {
+                const code = (input?.value || '').trim().toUpperCase();
+                if (!code) return;
+                btn.disabled = true; btn.textContent = '...';
+                msg.style.display = 'none';
+                try {
+                    const r = await fetch('https://tramitfy.org/api/coupons/validate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code })
+                    });
+                    const data = await r.json();
+                    if (data.valid) {
+                        hiddenCode.value = data.code;
+                        hiddenDiscount.value = data.clientDiscount;
+                        updatePriceWithCoupon_npn(data.clientDiscount);
+                        msg.style.cssText = 'display:block;color:#16a34a;font-weight:600;';
+                        msg.textContent = '✓ ' + data.message;
+                        btn.textContent = '✓'; btn.style.background = '#16a34a';
+                        input.disabled = true; btn.disabled = true;
+                    } else {
+                        msg.style.cssText = 'display:block;color:#dc2626;';
+                        msg.textContent = '✗ ' + (data.error || 'Cupón no válido');
+                        btn.disabled = false; btn.textContent = 'Aplicar';
+                    }
+                } catch(e) {
+                    msg.style.cssText = 'display:block;color:#dc2626;';
+                    msg.textContent = 'Error de conexión.';
+                    btn.disabled = false; btn.textContent = 'Aplicar';
+                }
+            });
         });
     })();
     </script>
@@ -3717,6 +3778,21 @@ function npn_create_redsys_payment() {
         $order_id = !empty($_POST['orderId']) ? $_POST['orderId'] : str_pad(time(), 12, '0', STR_PAD_LEFT);
         if (strlen($order_id) > 12) { $order_id = substr($order_id, -12); }
         $amount = floatval($_POST['amount'] ?? NAVIGATION_PERMIT_SERVICE_PRICE);
+        // Aplicar descuento cupón desde temporal (fuente de verdad)
+        $jsAppliedDiscount = floatval($_POST['couponDiscount'] ?? 0);
+        $rawAmount = $amount + $jsAppliedDiscount;
+        $apiCouponUrl = 'https://tramitfy.org/api/temporal/coupon-for-order?orderId=' . urlencode($order_id);
+        $apiResponse = @file_get_contents($apiCouponUrl);
+        if ($apiResponse) {
+            $couponData = json_decode($apiResponse, true);
+            $serverDiscount = floatval($couponData['couponDiscount'] ?? 0);
+            if ($serverDiscount > 0) {
+                $amount = max(0, $rawAmount - $serverDiscount);
+                error_log("NPN REDSYS - Cupón: " . $couponData['couponCode'] . " raw=" . $rawAmount . " -" . $serverDiscount . "€ → final=" . $amount . "€");
+            } else {
+                $amount = $rawAmount;
+            }
+        }
         $amount_cents = strval(intval($amount * 100));
 
         $payment_data = npn_redsys_create_payment_form([

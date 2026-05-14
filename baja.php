@@ -244,7 +244,23 @@ function baja_redsys_create_payment_form($order_data) {
 function baja_create_redsys_payment() {
     try {
         $order_id = !empty($_POST['orderId']) ? $_POST['orderId'] : str_pad(time(), 12, '0', STR_PAD_LEFT);
+        if (strlen($order_id) > 12) { $order_id = substr($order_id, -12); }
         $amount = floatval($_POST['amount'] ?? BAJA_SERVICE_PRICE);
+        // Aplicar descuento cupón desde temporal (fuente de verdad)
+        $jsAppliedDiscount = floatval($_POST['couponDiscount'] ?? 0);
+        $rawAmount = $amount + $jsAppliedDiscount;
+        $apiCouponUrl = 'https://tramitfy.org/api/temporal/coupon-for-order?orderId=' . urlencode($order_id);
+        $apiResponse = @file_get_contents($apiCouponUrl);
+        if ($apiResponse) {
+            $couponData = json_decode($apiResponse, true);
+            $serverDiscount = floatval($couponData['couponDiscount'] ?? 0);
+            if ($serverDiscount > 0) {
+                $amount = max(0, $rawAmount - $serverDiscount);
+                error_log("BAJA REDSYS - Cupón: " . $couponData['couponCode'] . " raw=" . $rawAmount . " -" . $serverDiscount . "€ → final=" . $amount . "€");
+            } else {
+                $amount = $rawAmount;
+            }
+        }
         $amount_cents = strval(intval($amount * 100));
 
         $payment_data = baja_redsys_create_payment_form([
@@ -879,13 +895,19 @@ function boat_deregistration_form_shortcode() {
                 <!-- [/NUEVO - CUPÓN] -->
             </div>
 
-            <!-- [NUEVO - CUPÓN] Campo cupón y mensaje -->
-            <div class="coupon-container" style="margin-top: 20px;">
-                <label for="coupon_code">Cupón de descuento (opcional):</label>
-                <input type="text" id="coupon_code" name="coupon_code" placeholder="Ingresa tu cupón" />
-                <p id="coupon-message" class="hidden" style="margin-top:10px;"></p>
+            <!-- Cupón BAJA -->
+            <div style="margin:16px 0;padding:14px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;">
+                <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:8px;">Código de descuento (opcional)</label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input type="text" id="baja-coupon-input" placeholder="Introduce tu código" maxlength="30"
+                           style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;text-transform:uppercase;">
+                    <button type="button" id="baja-coupon-btn"
+                            style="padding:8px 16px;background:#016d86;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;white-space:nowrap;">
+                        Aplicar
+                    </button>
+                </div>
+                <div id="baja-coupon-msg" style="display:none;font-size:13px;margin-top:6px;"></div>
             </div>
-            <!-- [/NUEVO - CUPÓN] -->
 
             <div id="payment-form">
                 <div id="payment-message" class="hidden"></div>
@@ -898,6 +920,10 @@ function boat_deregistration_form_shortcode() {
                 <button id="submit" class="button">Pagar con CaixaBank</button>
                 <p style="text-align:center; margin-top:10px; font-size:13px; color:#666;">Serás redirigido a la pasarela de pago segura de CaixaBank.</p>
             </div>
+
+            <!-- Cupón hidden inputs -->
+            <input type="hidden" id="baja-coupon-code" name="coupon_code" value="">
+            <input type="hidden" id="baja-coupon-discount" name="coupon_discount" value="0">
 
             <!-- Formulario oculto para Redsys -->
             <form id="baja-redsys-form" action="" method="POST" style="display:none;">
@@ -936,12 +962,11 @@ function boat_deregistration_form_shortcode() {
         document.addEventListener('DOMContentLoaded', function() {
             // Variables de pago (Redsys)
 
-            // [NUEVO - CUPÓN] Manejo de precio base y descuento
-            let basePrice = 95.00;         // Precio base (aumentado a 95€)
+            // Manejo de precio base y descuento
+            let basePrice = 95.00;         // Precio base
             let currentPrice = basePrice;  // Precio actual (puede bajar con cupón)
             let discountApplied = 0;       // %
             let discountAmount = 0;        // €
-            let couponTimeout = null;      // Debounce
             // Componentes del precio
             const taxes = 21.15;           // Tasas fijas
             const fees = 60.00;            // Honorarios
@@ -1109,9 +1134,10 @@ function boat_deregistration_form_shortcode() {
                             },
                             serviceData: {
                                 deregistrationType: document.getElementById('deregistration_type')?.value || '',
-                                workshopData: document.getElementById('workshop_data')?.value || '',
-                                couponCode: document.getElementById('coupon_code')?.value?.trim() || ''
+                                workshopData: document.getElementById('workshop_data')?.value || ''
                             },
+                            couponCode: document.getElementById('baja-coupon-code')?.value || '',
+                            couponDiscount: parseFloat(document.getElementById('baja-coupon-discount')?.value || 0),
                             pricing: {
                                 amount: currentPrice,
                                 basePrice: <?php echo BAJA_SERVICE_PRICE; ?>,
@@ -1121,7 +1147,10 @@ function boat_deregistration_form_shortcode() {
                             metadata: {
                                 timestamp: Date.now(),
                                 formId: 'baja'
-                            }
+                            },
+                            ga_client_id: (function() { var m = document.cookie.match(/_ga=GA\d+\.\d+\.(.+)/); return m ? m[1] : ''; })(),
+                            gclid: new URLSearchParams(window.location.search).get('gclid') || sessionStorage.getItem('gclid') || '',
+                            ga_session_id: (function() { var c = document.cookie.match(/_ga_[A-Z0-9]+=GS\d+\.\d+\.(.+?)(?:\.|$)/); return c ? c[1] : ''; })()
                         };
 
                         const captureResponse = await fetch('https://tramitfy.org/api/temporal/capture', {
@@ -1142,6 +1171,7 @@ function boat_deregistration_form_shortcode() {
                         paymentData.append('action', 'baja_create_redsys_payment');
                         paymentData.append('amount', currentPrice);
                         paymentData.append('orderId', generatedOrderId);
+                        paymentData.append('couponDiscount', document.getElementById('baja-coupon-discount')?.value || '0');
 
                         const ajaxUrl = '<?php echo admin_url("admin-ajax.php"); ?>';
                         const response = await fetch(ajaxUrl, {
@@ -1303,121 +1333,54 @@ function boat_deregistration_form_shortcode() {
                 }
             });
 
-            // [NUEVO - CUPÓN] Lógica para validar el cupón con debounce
-            const couponInput = document.getElementById('coupon_code');
-            const couponMessage = document.getElementById('coupon-message');
-            const discountLine = document.getElementById('discount-line');
-            const discountSpan = document.getElementById('discount-amount');
-            const finalAmountSpan = document.getElementById('final-amount');
-
-            couponInput.addEventListener('input', () => {
-                if (couponTimeout) clearTimeout(couponTimeout);
-                if (couponInput.value.trim() === '') {
-                    resetCoupon();
-                    return;
-                }
-                couponInput.classList.remove('coupon-error', 'coupon-valid');
-                couponInput.classList.add('coupon-loading');
-                couponMessage.classList.remove('success', 'error-message', 'hidden');
-                couponMessage.textContent = 'Verificando cupón...';
-
-                couponTimeout = setTimeout(() => {
-                    validateCouponCode(couponInput.value.trim());
-                }, 1000);
-            });
-
-            function resetCoupon() {
-                couponInput.classList.remove('coupon-error', 'coupon-valid', 'coupon-loading');
-                couponMessage.textContent = '';
-                couponMessage.classList.add('hidden');
-                discountLine.style.display = 'none';
-                discountSpan.textContent = '';
-                currentPrice = basePrice;
-                finalAmountSpan.textContent = basePrice.toFixed(2) + ' €';
+            // Cupón BAJA - nuevo sistema
+            function updatePriceWithCoupon_baja(discount) {
+                currentPrice = Math.max(0, basePrice - discount);
+                const finalAmountSpan = document.getElementById('final-amount');
+                if (finalAmountSpan) finalAmountSpan.textContent = currentPrice.toFixed(2) + ' €';
             }
 
-            // Función para calcular el precio con IVA aplicado correctamente
-            function calculatePriceComponents(baseAmount, discountPercent = 0) {
-                // Aplicar descuento al precio base si existe
-                const discountAmount = (baseAmount * discountPercent) / 100;
-                const discountedTotal = baseAmount - discountAmount;
-
-                // Componentes fijos
-                const taxesAmount = taxes; // Las tasas son fijas
-
-                // Calcular los honorarios (precio total - tasas - IVA)
-                // El IVA solo se aplica sobre (precio total - tasas)
-                const priceBeforeVAT = (discountedTotal - taxesAmount) / (1 + vatRate);
-                const vatAmount = priceBeforeVAT * vatRate;
-
-                return {
-                    total: discountedTotal,
-                    taxes: taxesAmount,
-                    fees: priceBeforeVAT,
-                    vat: vatAmount,
-                    discount: discountAmount
-                };
-            }
-
-            async function validateCouponCode(code) {
-                try {
-                    const response = await fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: `action=validate_coupon_code_boat_deregistration&coupon=${encodeURIComponent(code)}`
+            (function() {
+                document.addEventListener('DOMContentLoaded', function() {
+                    const btn = document.getElementById('baja-coupon-btn');
+                    const input = document.getElementById('baja-coupon-input');
+                    const msg = document.getElementById('baja-coupon-msg');
+                    const hiddenCode = document.getElementById('baja-coupon-code');
+                    const hiddenDiscount = document.getElementById('baja-coupon-discount');
+                    if (!btn) return;
+                    btn.addEventListener('click', async function() {
+                        const code = (input?.value || '').trim().toUpperCase();
+                        if (!code) return;
+                        btn.disabled = true; btn.textContent = '...';
+                        msg.style.display = 'none';
+                        try {
+                            const r = await fetch('https://tramitfy.org/api/coupons/validate', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ code })
+                            });
+                            const data = await r.json();
+                            if (data.valid) {
+                                hiddenCode.value = data.code;
+                                hiddenDiscount.value = data.clientDiscount;
+                                updatePriceWithCoupon_baja(data.clientDiscount);
+                                msg.style.cssText = 'display:block;color:#16a34a;font-weight:600;';
+                                msg.textContent = '✓ ' + data.message;
+                                btn.textContent = '✓'; btn.style.background = '#16a34a';
+                                input.disabled = true; btn.disabled = true;
+                            } else {
+                                msg.style.cssText = 'display:block;color:#dc2626;';
+                                msg.textContent = '✗ ' + (data.error || 'Cupón no válido');
+                                btn.disabled = false; btn.textContent = 'Aplicar';
+                            }
+                        } catch(e) {
+                            msg.style.cssText = 'display:block;color:#dc2626;';
+                            msg.textContent = 'Error de conexión.';
+                            btn.disabled = false; btn.textContent = 'Aplicar';
+                        }
                     });
-                    const result = await response.json();
-                    if (couponInput.value.trim() !== code) return;
-
-                    if (result.success) {
-                        discountApplied = result.data.discount_percent;
-
-                        // Calcular todos los componentes del precio con la nueva función
-                        const priceComponents = calculatePriceComponents(basePrice, discountApplied);
-
-                        // Actualizar valores
-                        discountAmount = priceComponents.discount;
-                        currentPrice = priceComponents.total;
-
-                        couponMessage.textContent = 'Cupón aplicado correctamente';
-                        couponMessage.classList.remove('hidden', 'error-message');
-                        couponMessage.classList.add('success');
-
-                        couponInput.classList.remove('coupon-loading', 'coupon-error');
-                        couponInput.classList.add('coupon-valid');
-
-                        discountLine.style.display = 'block';
-                        discountSpan.textContent = '- ' + discountAmount.toFixed(2) + ' €';
-                        finalAmountSpan.textContent = currentPrice.toFixed(2) + ' €';
-                    } else {
-                        couponMessage.textContent = 'Cupón inválido';
-                        couponMessage.classList.remove('hidden', 'success');
-                        couponMessage.classList.add('error-message');
-
-                        couponInput.classList.remove('coupon-loading', 'coupon-valid');
-                        couponInput.classList.add('coupon-error');
-
-                        discountLine.style.display = 'none';
-                        discountSpan.textContent = '';
-                        currentPrice = basePrice;
-                        finalAmountSpan.textContent = basePrice.toFixed(2) + ' €';
-                    }
-                } catch (error) {
-                    console.error('Error al validar el cupón:', error);
-                    couponMessage.textContent = 'Error al validar el cupón.';
-                    couponMessage.classList.remove('hidden', 'success');
-                    couponMessage.classList.add('error-message');
-
-                    couponInput.classList.remove('coupon-loading', 'coupon-valid');
-                    couponInput.classList.add('coupon-error');
-
-                    discountLine.style.display = 'none';
-                    discountSpan.textContent = '';
-                    currentPrice = basePrice;
-                    finalAmountSpan.textContent = basePrice.toFixed(2) + ' €';
-                }
-            }
-            // [/NUEVO - CUPÓN]
+                });
+            })();
             
             // Código para el botón de prueba de factura
             document.getElementById('test-invoice-btn')?.addEventListener('click', async function() {
