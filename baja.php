@@ -1341,44 +1341,42 @@ function boat_deregistration_form_shortcode() {
             }
 
             (function() {
-                document.addEventListener('DOMContentLoaded', function() {
-                    const btn = document.getElementById('baja-coupon-btn');
-                    const input = document.getElementById('baja-coupon-input');
-                    const msg = document.getElementById('baja-coupon-msg');
-                    const hiddenCode = document.getElementById('baja-coupon-code');
-                    const hiddenDiscount = document.getElementById('baja-coupon-discount');
-                    if (!btn) return;
-                    btn.addEventListener('click', async function() {
-                        const code = (input?.value || '').trim().toUpperCase();
-                        if (!code) return;
-                        btn.disabled = true; btn.textContent = '...';
-                        msg.style.display = 'none';
-                        try {
-                            const r = await fetch('https://tramitfy.org/api/coupons/validate', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ code })
-                            });
-                            const data = await r.json();
-                            if (data.valid) {
-                                hiddenCode.value = data.code;
-                                hiddenDiscount.value = data.clientDiscount;
-                                updatePriceWithCoupon_baja(data.clientDiscount);
-                                msg.style.cssText = 'display:block;color:#16a34a;font-weight:600;';
-                                msg.textContent = '✓ ' + data.message;
-                                btn.textContent = '✓'; btn.style.background = '#16a34a';
-                                input.disabled = true; btn.disabled = true;
-                            } else {
-                                msg.style.cssText = 'display:block;color:#dc2626;';
-                                msg.textContent = '✗ ' + (data.error || 'Cupón no válido');
-                                btn.disabled = false; btn.textContent = 'Aplicar';
-                            }
-                        } catch(e) {
+                const btn = document.getElementById('baja-coupon-btn');
+                const input = document.getElementById('baja-coupon-input');
+                const msg = document.getElementById('baja-coupon-msg');
+                const hiddenCode = document.getElementById('baja-coupon-code');
+                const hiddenDiscount = document.getElementById('baja-coupon-discount');
+                if (!btn) return;
+                btn.addEventListener('click', async function() {
+                    const code = (input?.value || '').trim().toUpperCase();
+                    if (!code) return;
+                    btn.disabled = true; btn.textContent = '...';
+                    msg.style.display = 'none';
+                    try {
+                        const r = await fetch('https://tramitfy.org/api/coupons/validate', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ code })
+                        });
+                        const data = await r.json();
+                        if (data.valid) {
+                            hiddenCode.value = data.code;
+                            hiddenDiscount.value = data.clientDiscount;
+                            updatePriceWithCoupon_baja(data.clientDiscount);
+                            msg.style.cssText = 'display:block;color:#16a34a;font-weight:600;';
+                            msg.textContent = '✓ ' + data.message;
+                            btn.textContent = '✓'; btn.style.background = '#16a34a';
+                            input.disabled = true; btn.disabled = true;
+                        } else {
                             msg.style.cssText = 'display:block;color:#dc2626;';
-                            msg.textContent = 'Error de conexión.';
+                            msg.textContent = '✗ ' + (data.error || 'Cupón no válido');
                             btn.disabled = false; btn.textContent = 'Aplicar';
                         }
-                    });
+                    } catch(e) {
+                        msg.style.cssText = 'display:block;color:#dc2626;';
+                        msg.textContent = 'Error de conexión.';
+                        btn.disabled = false; btn.textContent = 'Aplicar';
+                    }
                 });
             })();
             
@@ -1442,32 +1440,6 @@ add_shortcode('boat_deregistration_form', 'boat_deregistration_form_shortcode');
 add_action('wp_ajax_baja_create_redsys_payment', 'baja_create_redsys_payment');
 add_action('wp_ajax_nopriv_baja_create_redsys_payment', 'baja_create_redsys_payment');
 
-/**
- * [NUEVO - CUPÓN] Endpoint para validar el cupón
- */
-add_action('wp_ajax_validate_coupon_code_boat_deregistration', 'validate_coupon_code_boat_deregistration');
-add_action('wp_ajax_nopriv_validate_coupon_code_boat_deregistration', 'validate_coupon_code_boat_deregistration');
-
-function validate_coupon_code_boat_deregistration() {
-    $valid_coupons = array(
-        'DESCUENTO10' => 10,
-        'DESCUENTO20' => 20,
-        'VERANO15'    => 15,
-        'BLACK50'     => 50,
-    );
-
-    $coupon = isset($_POST['coupon']) ? sanitize_text_field($_POST['coupon']) : '';
-    $coupon_upper = strtoupper($coupon);
-
-    if (isset($valid_coupons[$coupon_upper])) {
-        $discount_percent = $valid_coupons[$coupon_upper];
-        wp_send_json_success(['discount_percent' => $discount_percent]);
-    } else {
-        wp_send_json_error('Cupón inválido');
-    }
-    wp_die();
-}
-/* [/NUEVO - CUPÓN] */
 
 /**
  * Endpoint para generar una factura de prueba

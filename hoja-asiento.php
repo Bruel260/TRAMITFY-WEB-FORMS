@@ -1973,11 +1973,11 @@ function hoja_asiento_form_shortcode() {
                         <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #e0e6ed;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                                 <span>Servicio de Hoja de Asiento:</span>
-                                <strong>18,99€</strong>
+                                <strong id="ha-price-service">18,99€</strong>
                             </div>
                             <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-top: 10px; border-top: 1px solid #e0e6ed;">
                                 <strong>Total a pagar:</strong>
-                                <strong style="color: rgb(var(--primary)); font-size: 18px;">18,99€</strong>
+                                <strong id="ha-price-total" style="color: rgb(var(--primary)); font-size: 18px;">18,99€</strong>
                             </div>
                         </div>
                     </div>
@@ -3013,8 +3013,13 @@ function hoja_asiento_form_shortcode() {
     // Cupón HA
     function updatePriceWithCoupon_ha(discount) {
         currentPrice = Math.max(0, basePrice - discount);
-        const els = document.querySelectorAll('#ha-price-display-total');
-        els.forEach(el => { el.textContent = currentPrice.toFixed(2).replace('.', ',') + '€'; });
+        const formatted = currentPrice.toFixed(2).replace('.', ',') + '€';
+        const el1 = document.querySelector('.ha-price-amount');
+        const el2 = document.getElementById('ha-price-service');
+        const el3 = document.getElementById('ha-price-total');
+        if (el1) el1.textContent = formatted;
+        if (el2) el2.textContent = formatted;
+        if (el3) el3.textContent = formatted;
     }
 
     (function() {

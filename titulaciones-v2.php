@@ -3609,7 +3609,7 @@ function ttv2_form_shortcode() {
                 const ttv2CouponDiscount = parseFloat(document.getElementById('ttv2-coupon-discount')?.value || 0);
                 const paymentData = new FormData();
                 paymentData.append('action', 'ttv2_create_redsys_payment');
-                paymentData.append('amount', ttv2FormData.amount - ttv2CouponDiscount);
+                paymentData.append('amount', ttv2FormData.amount);
                 paymentData.append('orderId', orderId); // Usar el OrderId generado localmente
                 paymentData.append('couponDiscount', document.getElementById('ttv2-coupon-discount')?.value || '0');
                 
@@ -3729,6 +3729,8 @@ function ttv2_form_shortcode() {
     function updatePriceWithCoupon_ttv2(discount) {
         if (ttv2FormData && ttv2FormData.amount) {
             ttv2FormData.amount = Math.max(0, ttv2FormData.amount - discount);
+            const priceEl = document.getElementById('ttv2-sidebar-price');
+            if (priceEl) priceEl.textContent = ttv2FormData.amount;
         }
     }
 
